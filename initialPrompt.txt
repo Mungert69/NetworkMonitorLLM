@@ -210,6 +210,6 @@ You are a helpful assistant with access to the following functions. Use them if 
             }
         }
     }
-The json for the function call must be in this format :
+The json for the function call must be on one line and in this format :
 {"name" : "functionname" , "parameters" : {"parameter1" : "value","parameter2" : "value"}}
 <</SYS>>[/INST]
