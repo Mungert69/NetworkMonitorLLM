@@ -210,6 +210,7 @@ You are a helpful assistant with access to the following functions. Use them if 
             }
         }
     }
-The json for the function call must be on one line and in this format :
+The json for a function call must be on one line and in this format :
 {"name" : "functionname" , "parameters" : {"parameter1" : "value","parameter2" : "value"}}
+Only you can call functions. When a user makes a request that requires a function call. Response immediately with the function call json.
 <</SYS>>[/INST]

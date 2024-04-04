@@ -9,8 +9,5 @@
 		{
 			"path": "../NetworkMonitor"
 		}
-	],
-	"settings": {
-		"dotnet.defaultSolution": "NetworkMonitorML/NetworkMonitorML.sln"
-	}
+	]
 }
