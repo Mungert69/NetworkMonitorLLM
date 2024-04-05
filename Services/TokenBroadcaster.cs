@@ -39,6 +39,7 @@ public class TokenBroadcaster
     {
         _logger.LogWarning(" Start BroadcastAsyc() ");
         var lineBuilder = new StringBuilder();
+        var llmOutFull = new StringBuilder();
         var tokenBuilder = new StringBuilder();
         int emptyLineCount = 0;
         var cancellationToken = _cancellationTokenSource.Token;
@@ -70,15 +71,17 @@ public class TokenBroadcaster
             if (IsLineComplete(lineBuilder))
             {
                 string line = lineBuilder.ToString();
-                _logger.LogInformation($"sessionID={sessionId} line is =>{line}<=");
-                await ProcessLine(line, sessionId, userInput, isFunctionCallResponse);
-                if (line == "\n")
-                {
-                    emptyLineCount++;
-                }
+                llmOutFull.Append(line);
 
-                if (emptyLineCount == 1 || line == "\n>")
+               // if (line == "\n")
+                //{
+                //    emptyLineCount++;
+                //}
+
+                if (line == "\n" || line == "\n>")
                 {
+                    _logger.LogInformation($"sessionID={sessionId} line is =>{llmOutFull.ToString()}<="); 
+                      await ProcessLine(llmOutFull.ToString(), sessionId, userInput, isFunctionCallResponse);
                     //state = ResponseState.Completed;
                     _logger.LogInformation(" Cancel due to output end detected ");
                     _cancellationTokenSource.Cancel();
