@@ -19,7 +19,7 @@ You are a helpful assistant with access to the following functions. Use them if 
                 "endPointType": {
                     "maxLength": 50,
                     "type": "string",
-                    "description": "The end point type. End point types are : quantum is a quantum safe encryption test, http (both port 80 and 443) is a website ping, https is a ssl certificate check, httphtml is a website html load, icmp is a host ping, dns is a dns lookup, smtp is an email server helo message confirmation and rawconnect is a low level raw socket connection",
+                    "description": "The end point type. End point types are : quantum is a quantum safe encryption test, http (default port 443) is a website ping, https is a ssl certificate check, httphtml is a website html load, icmp is a host ping, dns is a dns lookup, smtp is an email server helo message confirmation and rawconnect is a low level raw socket connection",
                     "nullable": true
                 },
                 "port": {
@@ -77,7 +77,7 @@ You are a helpful assistant with access to the following functions. Use them if 
                 },
                 "setEndPointType": {
                     "type": "string",
-                    "description": "The end point type. End point types are : quantum is a quantum safe encryption test, http (both port 80 and 443) is a website ping, https is a ssl certificate check, httphtml is a website html load, icmp is a host ping, dns is a dns lookup, smtp is an email server helo message confirmation and rawconnect is a low level raw socket connection",
+                    "description": "The end point type. End point types are : quantum is a quantum safe encryption test, http (default port 443) is a website ping, https is a ssl certificate check, httphtml is a website html load, icmp is a host ping, dns is a dns lookup, smtp is an email server helo message confirmation and rawconnect is a low level raw socket connection",
                     "nullable": true
                 },
                 "setPort": {
@@ -141,7 +141,7 @@ You are a helpful assistant with access to the following functions. Use them if 
                 },
                 "endPointType": {
                     "type": "string",
-                    "description": "Return hosts with end point type. The end point type. End point types are : quantum is a quantum safe encryption test, http (both port 80 and 443) is a website ping, https is a ssl certificate check, httphtml is a website html load, icmp is a host ping, dns is a dns lookup, smtp is an email server helo message confirmation and rawconnect is a low level raw socket connection",
+                    "description": "Return hosts with end point type. The end point type. End point types are : quantum is a quantum safe encryption test, http (default port 443) is a website ping, https is a ssl certificate check, httphtml is a website html load, icmp is a host ping, dns is a dns lookup, smtp is an email server helo message confirmation and rawconnect is a low level raw socket connection",
                     "nullable": true
                 },
                 "alertSent": {
@@ -204,13 +204,13 @@ You are a helpful assistant with access to the following functions. Use them if 
                 },
                 "endPointType": {
                     "type": "string",
-                    "description": "Return hosts with end point type. The end point type. End point types are : quantum is a quantum safe encryption test, http (both port 80 and 443) is a website ping, https is a ssl certificate check, httphtml is a website html load, icmp is a host ping, dns is a dns lookup, smtp is an email server helo message confirmation and rawconnect is a low level raw socket connection",
+                    "description": "Return hosts with end point type. The end point type. End point types are : quantum is a quantum safe encryption test, http (default port 443) is a website ping, https is a ssl certificate check, httphtml is a website html load, icmp is a host ping, dns is a dns lookup, smtp is an email server helo message confirmation and rawconnect is a low level raw socket connection",
                     "nullable": true
                 }
             }
         }
     }
-When you need to call a function use this format :
+When you need to call a function only use this format:
 {"name" : "functionname" , "parameters" : {"parameter1" : "value","parameter2" : "value"}}
 Give the user feedback from FUNCTION RESPONSE: before calling the next function.
 <</SYS>>[/INST]
