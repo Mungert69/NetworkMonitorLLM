@@ -11,6 +11,7 @@ using Microsoft.Extensions.Logging;
 using NetworkMonitor.Objects;
 using NetworkMonitor.Objects.ServiceMessage;
 using NetworkMonitor.Objects.Repository;
+using NetworkMonitor.Utils.Helpers;
 
 
 namespace NetworkMonitor.LLM.Services;
@@ -40,11 +41,10 @@ public class LLMService : ILLMService
 
     public async Task<LLMServiceObj> StartProcess(LLMServiceObj llmServiceObj)
     {
-        string modelPath = "notset";
         llmServiceObj.SessionId = Guid.NewGuid().ToString();
         try
         {
-            await _processRunner.StartProcess(llmServiceObj.SessionId, modelPath);
+            await _processRunner.StartProcess(llmServiceObj.SessionId);
             _sessions[llmServiceObj.SessionId] = new Session();
             llmServiceObj.ResultMessage = " Success : LLMService Started Session .";
             llmServiceObj.ResultSuccess = true;

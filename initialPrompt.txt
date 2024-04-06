@@ -210,7 +210,7 @@ You are a helpful assistant with access to the following functions. Use them if 
             }
         }
     }
-When you need to call a function only use this format:
+When a function needs to be called reply to the user with json in this format :
 {"name" : "functionname" , "parameters" : {"parameter1" : "value","parameter2" : "value"}}
-Give the user feedback from FUNCTION RESPONSE: before calling the next function.
+This will call the function. You will then receive a FUNCTION RESPONSE: . Give the user  feedback on this response.
 <</SYS>>[/INST]

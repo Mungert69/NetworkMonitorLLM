@@ -9,11 +9,13 @@ using System.Collections.Generic;
 using System.Collections.Concurrent;
 using Microsoft.Extensions.Logging;
 using NetworkMonitor.Objects.ServiceMessage;
+using NetworkMonitor.Objects;
+using NetworkMonitor.Utils.Helpers;
 namespace NetworkMonitor.LLM.Services;
 // LLMProcessRunner.cs
 public interface ILLMProcessRunner
 {
-    Task StartProcess(string sessionId, string modelPath, ProcessWrapper? testProcess = null);
+    Task StartProcess(string sessionId,ProcessWrapper? testProcess = null);
     Task SendInputAndGetResponse(string sessionId, string userInput, bool isFunctionCallResponse);
     void RemoveProcess(string sessionId);
 }
@@ -25,22 +27,24 @@ public class LLMProcessRunner : ILLMProcessRunner
 
     private ILogger _logger;
     private ILLMResponseProcessor _responseProcessor;
+    private MLParams _mlParams;
     private readonly SemaphoreSlim _inputStreamSemaphore = new SemaphoreSlim(1, 1);
-    public LLMProcessRunner(ILogger<LLMProcessRunner> logger, ILLMResponseProcessor responseProcessor)
+    public LLMProcessRunner(ILogger<LLMProcessRunner> logger, ILLMResponseProcessor responseProcessor,ISystemParamsHelper systemParamsHelper)
     {
         _logger = logger;
         _responseProcessor = responseProcessor;
+        _mlParams = systemParamsHelper.GetMLParams();
     }
-    public void SetStartInfo(ProcessStartInfo startInfo, string modelPath)
+    public void SetStartInfo(ProcessStartInfo startInfo, string modelPath, string modelFileName)
     {
-        startInfo.FileName = "/home/mahadeva/code/llama.cpp/build/bin/main";
-        startInfo.Arguments = "-c 6000 -n 6000 -m /home/mahadeva/code/models/dolphin-2.6-mistral-7b-dpo-laser-function-calling-Q4_K_M.gguf  --prompt-cache /home/mahadeva/context.gguf --prompt-cache-ro  -f /home/mahadeva/initialPrompt.txt -ins --keep -1 --temp 0";
+        startInfo.FileName = $"{modelPath}llama.cpp/build/bin/main";
+        startInfo.Arguments = $"-c 6000 -n 6000 -m {modelPath+modelFileName}  --prompt-cache {modelPath}context.gguf --prompt-cache-ro  -f {modelPath}initialPrompt.txt -ins --keep -1 --temp 0";
         startInfo.UseShellExecute = false;
         startInfo.RedirectStandardInput = true;
         startInfo.RedirectStandardOutput = true;
         startInfo.CreateNoWindow = true;
     }
-    public async Task StartProcess(string sessionId, string modelPath, ProcessWrapper? testProcess = null)
+    public async Task StartProcess(string sessionId, ProcessWrapper? testProcess = null)
     {
         if (_processes.ContainsKey(sessionId))
             throw new Exception("Process already running for this session");
@@ -49,7 +53,7 @@ public class LLMProcessRunner : ILLMProcessRunner
         if (testProcess == null)
         {
             process = new ProcessWrapper();
-            SetStartInfo(process.StartInfo, modelPath);
+            SetStartInfo(process.StartInfo, _mlParams.LlmModelPath, _mlParams.LlmModelFileName);
         }
         else
         {

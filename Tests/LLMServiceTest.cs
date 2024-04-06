@@ -9,6 +9,7 @@ using Moq;
 using Xunit;
 using NetworkMonitor.Objects.ServiceMessage;
 using NetworkMonitor.Objects.Repository;
+using NetworkMonitor.Utils.Helpers;
 
 namespace NetworkMonitor.LLM.Services;
 
@@ -19,6 +20,7 @@ public class LLMProcessRunnerTests
       private readonly Mock<ILogger<LLMResponseProcessor>> _loggerLLMResponseProcessorMock;
        private readonly Mock<ILogger<LLMProcessRunner>> _loggerLLMProcessRunnerMock;
                private readonly Mock<IRabbitRepo> _rabbitRepoMock;
+    private readonly Mock<ISystemParamsHelper> _systemParamsHelperMock;
        public LLMProcessRunnerTests()
         {
             _loggerLLMServiceMock = new Mock<ILogger<LLMService>>();
@@ -26,6 +28,7 @@ public class LLMProcessRunnerTests
         _loggerLLMProcessRunnerMock = new Mock<ILogger<LLMProcessRunner>>();
         _loggerLLMResponseProcessorMock = new Mock<ILogger<LLMResponseProcessor>>();
                     _rabbitRepoMock = new Mock<IRabbitRepo>();
+        _systemParamsHelperMock = new Mock<ISystemParamsHelper>();
         }
 
     [Fact]
@@ -41,11 +44,11 @@ public class LLMProcessRunnerTests
                });
                 var mockResponseProcessor = new Mock<ILLMResponseProcessor>();
         mockProcessWrapper.Setup(p => p.Start());
-        var processRunner = new LLMProcessRunner(_loggerLLMProcessRunnerMock.Object,mockResponseProcessor.Object);
+        var processRunner = new LLMProcessRunner(_loggerLLMProcessRunnerMock.Object,mockResponseProcessor.Object, _systemParamsHelperMock.Object);
 
 
         // Act
-        await processRunner.StartProcess("test","path/to/model",mockProcessWrapper.Object);
+        await processRunner.StartProcess("test",mockProcessWrapper.Object);
 
         // Assert
         mockProcessWrapper.Verify(p => p.Start(), Times.Once);
@@ -95,8 +98,8 @@ public class LLMProcessRunnerTests
         mockResponseProcessor.Setup(p => p.ProcessLLMOutput(It.IsAny<LLMServiceObj>()))
             .Returns(Task.CompletedTask);
 
-        var processRunner = new LLMProcessRunner(_loggerLLMProcessRunnerMock.Object,mockResponseProcessor.Object);
-       await processRunner.StartProcess("test","path/to/model",mockProcessWrapper.Object);
+        var processRunner = new LLMProcessRunner(_loggerLLMProcessRunnerMock.Object,mockResponseProcessor.Object,_systemParamsHelperMock.Object);
+       await processRunner.StartProcess("test",mockProcessWrapper.Object);
         // Act
         await processRunner.SendInputAndGetResponse(serviceObj.SessionId,serviceObj.UserInput, serviceObj.IsFunctionCallResponse);
 
