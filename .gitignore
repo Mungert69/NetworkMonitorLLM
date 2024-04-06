@@ -341,7 +341,7 @@ healthchecksdb
 /Deploy/runtimes/win/lib/netcoreapp2.1
 /Deploy
 /Report20210116-1159.diagsession
-appsettings*.json
+appsettings.json
 https.pfx
 https-freenetworkmonitor.pfx
 *.sentinel
