@@ -70,24 +70,27 @@ public class TokenBroadcaster
 
             if (IsLineComplete(lineBuilder))
             {
+
                 string line = lineBuilder.ToString();
-                llmOutFull.Append(line);
-
-               // if (line == "\n")
-                //{
-                //    emptyLineCount++;
-                //}
-
-                if (line == "\n" || line == "\n>")
+                if (line != userInput)
                 {
-                    _logger.LogInformation($"sessionID={sessionId} line is =>{llmOutFull.ToString()}<="); 
-                      await ProcessLine(llmOutFull.ToString(), sessionId, userInput, isFunctionCallResponse);
-                    //state = ResponseState.Completed;
-                    _logger.LogInformation(" Cancel due to output end detected ");
-                    _cancellationTokenSource.Cancel();
+                    llmOutFull.Append(line);
+
+                    // if (line == "\n")
+                    //{
+                    //    emptyLineCount++;
+                    //}
+
+                    if (line == "\n" || line == "\n>")
+                    {
+                        _logger.LogInformation($"sessionID={sessionId} line is =>{llmOutFull.ToString()}<=");
+                        await ProcessLine(llmOutFull.ToString(), sessionId, userInput, isFunctionCallResponse);
+                        //state = ResponseState.Completed;
+                        _logger.LogInformation(" Cancel due to output end detected ");
+                        _cancellationTokenSource.Cancel();
+                    }
+
                 }
-
-
                 lineBuilder.Clear();
             }
 
@@ -129,7 +132,7 @@ public class TokenBroadcaster
         {
             string jsonLine = ParseInputForJson(line);
             //string cleanLine = line;
-            if (line != jsonLine )
+            if (line != jsonLine)
             {
                 _logger.LogInformation($" ProcessLLMOutput(call_func) -> {jsonLine}");
                 responseServiceObj = new LLMServiceObj() { SessionId = sessionId, UserInput = userInput };
