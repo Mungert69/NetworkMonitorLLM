@@ -353,3 +353,4 @@ nohup.out
 /data/*
 /.mono
 nohup.out
+main.log

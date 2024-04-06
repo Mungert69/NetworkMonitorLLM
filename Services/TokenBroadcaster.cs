@@ -72,7 +72,7 @@ public class TokenBroadcaster
             {
 
                 string line = lineBuilder.ToString();
-                if (line != userInput)
+                if (!line.StartsWith(userInput))
                 {
                     llmOutFull.Append(line);
 
