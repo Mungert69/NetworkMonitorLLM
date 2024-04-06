@@ -23596,3 +23596,1485 @@ generate: n_ctx = 6000, n_batch = 2048, n_predict = 6000, n_keep = 2558
        SERVICE : CheckLatestHosts : PublishMonitorPingInfos :  Success : published PredictMonitorStatuses . 
 2024-04-04 23:46:31 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
       Service : UpdatePingInfos : For Processor AuthID 1 Success : updated 9 MonitorPingInfos , 263 PingInfos.
+/home/mahadeva/code/NetworkMonitorData/Data/PingInfoHelper.cs(25,29): warning CS8619: Nullability of reference types in value of type 'Dictionary<ushort, string?>' doesn't match target type 'Dictionary<ushort, string>'. [/home/mahadeva/code/NetworkMonitorData/NetworkMonitorData.csproj]
+/home/mahadeva/code/NetworkMonitorData/Data/PingInfoHelper.cs(58,45): warning CS8601: Possible null reference assignment. [/home/mahadeva/code/NetworkMonitorData/NetworkMonitorData.csproj]
+/home/mahadeva/code/NetworkMonitorData/Data/PingInfoHelper.cs(59,38): warning CS8604: Possible null reference argument for parameter 'key' in 'ushort Dictionary<string, ushort>.this[string key]'. [/home/mahadeva/code/NetworkMonitorData/NetworkMonitorData.csproj]
+/home/mahadeva/code/NetworkMonitorData/Services/RabbitListener.cs(440,17): warning CS4014: Because this call is not awaited, execution of the current method continues before the call is completed. Consider applying the 'await' operator to the result of the call. [/home/mahadeva/code/NetworkMonitorData/NetworkMonitorData.csproj]
+/home/mahadeva/code/NetworkMonitorData/Services/ProcessorBrokerService.cs(82,38): warning CS1998: This async method lacks 'await' operators and will run synchronously. Consider using the 'await' operator to await non-blocking API calls, or 'await Task.Run(...)' to do CPU-bound work on a background thread. [/home/mahadeva/code/NetworkMonitorData/NetworkMonitorData.csproj]
+/usr/share/dotnet/sdk/8.0.203/Containers/build/Microsoft.NET.Build.Containers.targets(194,5): warning : Microsoft.NET.Build.Containers NuGet package is explicitly referenced. Consider removing the package reference to Microsoft.NET.Build.Containers as it is now part of .NET SDK. [/home/mahadeva/code/NetworkMonitorLLM/NetworkMonitorLLM.csproj]
+2024-04-06 01:02:56 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
+      Public IP address of this service is 213.199.46.193
+2024-04-06 01:02:56 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
+       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.freenetworkmonitor.click .IPAdress = 
+2024-04-06 01:02:56 info: NetworkMonitor.Objects.Repository.RabbitRepo[0]
+       RabbitRepo : ConnectAndSetUp :  Success : RabbitRepo Connected to RabbitMQ serverdevrabbitmq:5672
+2024-04-06 01:02:57 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
+      Public IP address of this service is 213.199.46.193
+2024-04-06 01:02:57 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
+       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.freenetworkmonitor.click .IPAdress = 
+2024-04-06 01:02:57 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+       Rabbit Setup :  Success : Connected to devrabbitmq:5672 . Setup RabbitListener messages were :  RabbitListener DeclareQueues :  Srv-LLMService-llmStartSession  Srv-LLMService-llmUserInput  Srv-LLMService-llmRemoveSession  : Success : Declared all queues  Success : Declared all consumers  RabbitRepo BindChannelToConsumer :  Success :  bound all consumers to queues 
+2024-04-06 01:02:57 info: Microsoft.Hosting.Lifetime[0]
+      Application started. Press Ctrl+C to shut down.
+2024-04-06 01:02:57 info: Microsoft.Hosting.Lifetime[0]
+      Hosting environment: Production
+2024-04-06 01:02:57 info: Microsoft.Hosting.Lifetime[0]
+      Content root path: /home/mahadeva/code/NetworkMonitorLLM
+2024-04-06 01:03:23 info: Microsoft.Hosting.Lifetime[0]
+      Application is shutting down...
+/usr/share/dotnet/sdk/8.0.203/Containers/build/Microsoft.NET.Build.Containers.targets(194,5): warning : Microsoft.NET.Build.Containers NuGet package is explicitly referenced. Consider removing the package reference to Microsoft.NET.Build.Containers as it is now part of .NET SDK. [/home/mahadeva/code/NetworkMonitorLLM/NetworkMonitorLLM.csproj]
+2024-04-06 01:04:05 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
+      Public IP address of this service is 213.199.46.193
+2024-04-06 01:04:05 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
+       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.freenetworkmonitor.click .IPAdress = 
+2024-04-06 01:04:05 info: NetworkMonitor.Objects.Repository.RabbitRepo[0]
+       RabbitRepo : ConnectAndSetUp :  Success : RabbitRepo Connected to RabbitMQ serverdevrabbitmq:5672
+2024-04-06 01:04:05 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
+      Public IP address of this service is 213.199.46.193
+2024-04-06 01:04:05 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
+       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.freenetworkmonitor.click .IPAdress = 
+2024-04-06 01:04:05 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+       Rabbit Setup :  Success : Connected to devrabbitmq:5672 . Setup RabbitListener messages were :  RabbitListener DeclareQueues :  Srv-LLMService-llmStartSession  Srv-LLMService-llmUserInput  Srv-LLMService-llmRemoveSession  : Success : Declared all queues  Success : Declared all consumers  RabbitRepo BindChannelToConsumer :  Success :  bound all consumers to queues 
+2024-04-06 01:04:05 info: Microsoft.Hosting.Lifetime[0]
+      Application started. Press Ctrl+C to shut down.
+2024-04-06 01:04:05 info: Microsoft.Hosting.Lifetime[0]
+      Hosting environment: Production
+2024-04-06 01:04:05 info: Microsoft.Hosting.Lifetime[0]
+      Content root path: /home/mahadeva/code/NetworkMonitorLLM
+2024-04-06 01:04:11 fail: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+      Process is not running for this session
+2024-04-06 01:04:13 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       LLM Service : Start Process for sessionsId f0561e83-ae99-4449-a6b5-ac1646134aed
+Log start
+main: build = 2431 (4755afd1)
+main: built with cc (Debian 12.2.0-14) 12.2.0 for x86_64-linux-gnu
+main: seed  = 1712358253
+llama_model_loader: loaded meta data with 23 key-value pairs and 291 tensors from /home/mahadeva/code/models/dolphin-2.6-mistral-7b-dpo-laser-function-calling-Q4_K_M.gguf (version GGUF V3 (latest))
+llama_model_loader: Dumping metadata keys/values. Note: KV overrides do not apply in this output.
+llama_model_loader: - kv   0:                       general.architecture str              = llama
+llama_model_loader: - kv   1:                               general.name str              = .
+llama_model_loader: - kv   2:                       llama.context_length u32              = 32768
+llama_model_loader: - kv   3:                     llama.embedding_length u32              = 4096
+llama_model_loader: - kv   4:                          llama.block_count u32              = 32
+llama_model_loader: - kv   5:                  llama.feed_forward_length u32              = 14336
+llama_model_loader: - kv   6:                 llama.rope.dimension_count u32              = 128
+llama_model_loader: - kv   7:                 llama.attention.head_count u32              = 32
+llama_model_loader: - kv   8:              llama.attention.head_count_kv u32              = 8
+llama_model_loader: - kv   9:     llama.attention.layer_norm_rms_epsilon f32              = 0.000010
+llama_model_loader: - kv  10:                       llama.rope.freq_base f32              = 10000.000000
+llama_model_loader: - kv  11:                          general.file_type u32              = 15
+llama_model_loader: - kv  12:                       tokenizer.ggml.model str              = llama
+llama_model_loader: - kv  13:                      tokenizer.ggml.tokens arr[str,32001]   = ["<unk>", "<s>", "</s>", "<0x00>", "<...
+llama_model_loader: - kv  14:                      tokenizer.ggml.scores arr[f32,32001]   = [0.000000, 0.000000, 0.000000, 0.0000...
+llama_model_loader: - kv  15:                  tokenizer.ggml.token_type arr[i32,32001]   = [2, 3, 3, 6, 6, 6, 6, 6, 6, 6, 6, 6, ...
+llama_model_loader: - kv  16:                tokenizer.ggml.bos_token_id u32              = 1
+llama_model_loader: - kv  17:                tokenizer.ggml.eos_token_id u32              = 2
+llama_model_loader: - kv  18:            tokenizer.ggml.unknown_token_id u32              = 0
+llama_model_loader: - kv  19:            tokenizer.ggml.padding_token_id u32              = 2
+llama_model_loader: - kv  20:               tokenizer.ggml.add_bos_token bool             = true
+llama_model_loader: - kv  21:               tokenizer.ggml.add_eos_token bool             = false
+llama_model_loader: - kv  22:               general.quantization_version u32              = 2
+llama_model_loader: - type  f32:   65 tensors
+llama_model_loader: - type q4_K:  193 tensors
+llama_model_loader: - type q6_K:   33 tensors
+llm_load_vocab: special tokens definition check successful ( 260/32001 ).
+llm_load_print_meta: format           = GGUF V3 (latest)
+llm_load_print_meta: arch             = llama
+llm_load_print_meta: vocab type       = SPM
+llm_load_print_meta: n_vocab          = 32001
+llm_load_print_meta: n_merges         = 0
+llm_load_print_meta: n_ctx_train      = 32768
+llm_load_print_meta: n_embd           = 4096
+llm_load_print_meta: n_head           = 32
+llm_load_print_meta: n_head_kv        = 8
+llm_load_print_meta: n_layer          = 32
+llm_load_print_meta: n_rot            = 128
+llm_load_print_meta: n_embd_head_k    = 128
+llm_load_print_meta: n_embd_head_v    = 128
+llm_load_print_meta: n_gqa            = 4
+llm_load_print_meta: n_embd_k_gqa     = 1024
+llm_load_print_meta: n_embd_v_gqa     = 1024
+llm_load_print_meta: f_norm_eps       = 0.0e+00
+llm_load_print_meta: f_norm_rms_eps   = 1.0e-05
+llm_load_print_meta: f_clamp_kqv      = 0.0e+00
+llm_load_print_meta: f_max_alibi_bias = 0.0e+00
+llm_load_print_meta: n_ff             = 14336
+llm_load_print_meta: n_expert         = 0
+llm_load_print_meta: n_expert_used    = 0
+llm_load_print_meta: causal attn      = 1
+llm_load_print_meta: pooling type     = 0
+llm_load_print_meta: rope type        = 0
+llm_load_print_meta: rope scaling     = linear
+llm_load_print_meta: freq_base_train  = 10000.0
+llm_load_print_meta: freq_scale_train = 1
+llm_load_print_meta: n_yarn_orig_ctx  = 32768
+llm_load_print_meta: rope_finetuned   = unknown
+llm_load_print_meta: ssm_d_conv       = 0
+llm_load_print_meta: ssm_d_inner      = 0
+llm_load_print_meta: ssm_d_state      = 0
+llm_load_print_meta: ssm_dt_rank      = 0
+llm_load_print_meta: model type       = 7B
+llm_load_print_meta: model ftype      = Q4_K - Medium
+llm_load_print_meta: model params     = 7.24 B
+llm_load_print_meta: model size       = 4.07 GiB (4.83 BPW) 
+llm_load_print_meta: general.name     = .
+llm_load_print_meta: BOS token        = 1 '<s>'
+llm_load_print_meta: EOS token        = 2 '</s>'
+llm_load_print_meta: UNK token        = 0 '<unk>'
+llm_load_print_meta: PAD token        = 2 '</s>'
+llm_load_print_meta: LF token         = 13 '<0x0A>'
+llm_load_tensors: ggml ctx size =    0.11 MiB
+llm_load_tensors:        CPU buffer size =  4165.37 MiB
+................................................................................................
+llama_new_context_with_model: n_ctx      = 6000
+llama_new_context_with_model: n_batch    = 2048
+llama_new_context_with_model: n_ubatch   = 512
+llama_new_context_with_model: freq_base  = 10000.0
+llama_new_context_with_model: freq_scale = 1
+llama_kv_cache_init:        CPU KV buffer size =   750.00 MiB
+llama_new_context_with_model: KV self size  =  750.00 MiB, K (f16):  375.00 MiB, V (f16):  375.00 MiB
+llama_new_context_with_model:        CPU  output buffer size =   250.01 MiB
+llama_new_context_with_model:        CPU compute buffer size =   418.72 MiB
+llama_new_context_with_model: graph splits: 1
+
+system_info: n_threads = 4 / 8 | AVX = 1 | AVX_VNNI = 0 | AVX2 = 1 | AVX512 = 0 | AVX512_VBMI = 0 | AVX512_VNNI = 0 | FMA = 1 | NEON = 0 | ARM_FMA = 0 | F16C = 1 | FP16_VA = 0 | WASM_SIMD = 0 | BLAS = 1 | SSE3 = 1 | SSSE3 = 1 | VSX = 0 | MATMUL_INT8 = 0 | 
+main: attempting to load saved session from '/home/mahadeva/context.gguf'
+main: loaded a session with prompt size of 2585 tokens
+main: session file has exact match for prompt!
+main: interactive mode on.
+Reverse prompt: '### Instruction:
+
+'
+sampling: 
+	repeat_last_n = 64, repeat_penalty = 1.100, frequency_penalty = 0.000, presence_penalty = 0.000
+	top_k = 40, tfs_z = 1.000, top_p = 0.950, min_p = 0.050, typical_p = 1.000, temp = 0.000
+	mirostat = 0, mirostat_lr = 0.100, mirostat_ent = 5.000
+sampling order: 
+CFG -> Penalties -> top_k -> tfs_z -> typical_p -> top_p -> min_p -> temperature 
+generate: n_ctx = 6000, n_batch = 2048, n_predict = 6000, n_keep = 2585
+
+
+== Running in interactive mode. ==
+ - Press Ctrl+C to interject at any time.
+ - Press Return to return control to LLaMa.
+ - To return control without starting a new line, end your input with '/'.
+ - If you want to submit another line, end your input with '\'.
+
+2024-04-06 01:04:17 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       LLMService Process Started 
+2024-04-06 01:04:17 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+      LLM process started for session f0561e83-ae99-4449-a6b5-ac1646134aed
+2024-04-06 01:04:17 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+       Success : LLMService Started Session .
+2024-04-06 01:04:24 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+       Start User Input give me a list of hosts that I am monitoring
+2024-04-06 01:04:24 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+        LLMService : SendInputAndGetResponse() :
+2024-04-06 01:04:24 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       ProcessLLMOutput(user input) -> give me a list of hosts that I am monitoring
+2024-04-06 01:04:24 warn: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Start BroadcastAsyc() 
+2024-04-06 01:04:33 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+      sessionID=f0561e83-ae99-4449-a6b5-ac1646134aed line is => <functioncall> {"name": "GetHostList", "parameters": {}}</functioncall>
+      
+      <=
+2024-04-06 01:04:33 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       ProcessLLMOutput(call_func) -> {"name": "GetHostList", "parameters": {}}
+2024-04-06 01:04:33 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Cancel due to output end detected 
+2024-04-06 01:04:33 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       --> Finshed LLM Interaction 
+2024-04-06 01:04:33 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+      MessageAPI : UserInput :  Processed UserInput :give me a list of hosts that I am monitoring
+2024-04-06 01:04:33 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+       Start User Input [{"address" : "test.com", "monitorIPID" : 77, "endPointType" : "http", "port" : 0, "enabled" : True, }]
+2024-04-06 01:04:33 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+        LLMService : SendInputAndGetResponse() :
+2024-04-06 01:04:33 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       ProcessLLMOutput(user input) -> FUNCTION RESPONSE: [{"address" : "test.com", "monitorIPID" : 77, "endPointType" : "http", "port" : 0, "enabled" : True, }]
+2024-04-06 01:04:33 warn: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Start BroadcastAsyc() 
+2024-04-06 01:05:05 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+      sessionID=f0561e83-ae99-4449-a6b5-ac1646134aed line is =>>  I have retrieved the list of hosts you are monitoring. Here is the information for one of them:
+      Host Address: test.com
+      Host ID: 77
+      End Point Type: http
+      Port: 0 (standard port for HTTP)
+      Enabled: True
+      
+      <=
+2024-04-06 01:05:05 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Cancel due to output end detected 
+2024-04-06 01:05:05 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       --> Finshed LLM Interaction 
+2024-04-06 01:05:05 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+      MessageAPI : UserInput :  Processed UserInput :FUNCTION RESPONSE: [{"address" : "test.com", "monitorIPID" : 77, "endPointType" : "http", "port" : 0, "enabled" : True, }]
+2024-04-06 01:05:20 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+       Start User Input can you give me the latest data for this host
+2024-04-06 01:05:20 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+        LLMService : SendInputAndGetResponse() :
+2024-04-06 01:05:20 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       ProcessLLMOutput(user input) -> can you give me the latest data for this host
+2024-04-06 01:05:20 warn: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Start BroadcastAsyc() 
+2024-04-06 01:05:31 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+      sessionID=f0561e83-ae99-4449-a6b5-ac1646134aed line is =>>  <functioncall> {"name": "GetHostData", "parameters": {"monitorIPID" : 77, "dataSetId" : 0}}</functioncall>
+      
+      <=
+2024-04-06 01:05:31 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       ProcessLLMOutput(call_func) -> {"name": "GetHostData", "parameters": {"monitorIPID" : 77, "dataSetId" : 0}}
+2024-04-06 01:05:31 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Cancel due to output end detected 
+2024-04-06 01:05:31 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       --> Finshed LLM Interaction 
+2024-04-06 01:05:31 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+      MessageAPI : UserInput :  Processed UserInput :can you give me the latest data for this host
+2024-04-06 01:05:31 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+       Start User Input { " Address is required for this query. " }
+2024-04-06 01:05:31 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+        LLMService : SendInputAndGetResponse() :
+2024-04-06 01:05:31 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       ProcessLLMOutput(user input) -> FUNCTION RESPONSE: { " Address is required for this query. " }
+2024-04-06 01:05:31 warn: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Start BroadcastAsyc() 
+2024-04-06 01:05:58 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+      sessionID=f0561e83-ae99-4449-a6b5-ac1646134aed line is =>>  I'm sorry, but to get the latest data for a host, you need to provide its address.
+      
+      <=
+2024-04-06 01:05:58 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Cancel due to output end detected 
+2024-04-06 01:05:58 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       --> Finshed LLM Interaction 
+2024-04-06 01:05:58 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+      MessageAPI : UserInput :  Processed UserInput :FUNCTION RESPONSE: { " Address is required for this query. " }
+2024-04-06 01:07:11 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       LLM Service : Start Process for sessionsId 532a4662-db39-4451-9438-dfaa5978d120
+Log start
+main: build = 2431 (4755afd1)
+main: built with cc (Debian 12.2.0-14) 12.2.0 for x86_64-linux-gnu
+main: seed  = 1712358431
+llama_model_loader: loaded meta data with 23 key-value pairs and 291 tensors from /home/mahadeva/code/models/dolphin-2.6-mistral-7b-dpo-laser-function-calling-Q4_K_M.gguf (version GGUF V3 (latest))
+llama_model_loader: Dumping metadata keys/values. Note: KV overrides do not apply in this output.
+llama_model_loader: - kv   0:                       general.architecture str              = llama
+llama_model_loader: - kv   1:                               general.name str              = .
+llama_model_loader: - kv   2:                       llama.context_length u32              = 32768
+llama_model_loader: - kv   3:                     llama.embedding_length u32              = 4096
+llama_model_loader: - kv   4:                          llama.block_count u32              = 32
+llama_model_loader: - kv   5:                  llama.feed_forward_length u32              = 14336
+llama_model_loader: - kv   6:                 llama.rope.dimension_count u32              = 128
+llama_model_loader: - kv   7:                 llama.attention.head_count u32              = 32
+llama_model_loader: - kv   8:              llama.attention.head_count_kv u32              = 8
+llama_model_loader: - kv   9:     llama.attention.layer_norm_rms_epsilon f32              = 0.000010
+llama_model_loader: - kv  10:                       llama.rope.freq_base f32              = 10000.000000
+llama_model_loader: - kv  11:                          general.file_type u32              = 15
+llama_model_loader: - kv  12:                       tokenizer.ggml.model str              = llama
+llama_model_loader: - kv  13:                      tokenizer.ggml.tokens arr[str,32001]   = ["<unk>", "<s>", "</s>", "<0x00>", "<...
+llama_model_loader: - kv  14:                      tokenizer.ggml.scores arr[f32,32001]   = [0.000000, 0.000000, 0.000000, 0.0000...
+llama_model_loader: - kv  15:                  tokenizer.ggml.token_type arr[i32,32001]   = [2, 3, 3, 6, 6, 6, 6, 6, 6, 6, 6, 6, ...
+llama_model_loader: - kv  16:                tokenizer.ggml.bos_token_id u32              = 1
+llama_model_loader: - kv  17:                tokenizer.ggml.eos_token_id u32              = 2
+llama_model_loader: - kv  18:            tokenizer.ggml.unknown_token_id u32              = 0
+llama_model_loader: - kv  19:            tokenizer.ggml.padding_token_id u32              = 2
+llama_model_loader: - kv  20:               tokenizer.ggml.add_bos_token bool             = true
+llama_model_loader: - kv  21:               tokenizer.ggml.add_eos_token bool             = false
+llama_model_loader: - kv  22:               general.quantization_version u32              = 2
+llama_model_loader: - type  f32:   65 tensors
+llama_model_loader: - type q4_K:  193 tensors
+llama_model_loader: - type q6_K:   33 tensors
+llm_load_vocab: special tokens definition check successful ( 260/32001 ).
+llm_load_print_meta: format           = GGUF V3 (latest)
+llm_load_print_meta: arch             = llama
+llm_load_print_meta: vocab type       = SPM
+llm_load_print_meta: n_vocab          = 32001
+llm_load_print_meta: n_merges         = 0
+llm_load_print_meta: n_ctx_train      = 32768
+llm_load_print_meta: n_embd           = 4096
+llm_load_print_meta: n_head           = 32
+llm_load_print_meta: n_head_kv        = 8
+llm_load_print_meta: n_layer          = 32
+llm_load_print_meta: n_rot            = 128
+llm_load_print_meta: n_embd_head_k    = 128
+llm_load_print_meta: n_embd_head_v    = 128
+llm_load_print_meta: n_gqa            = 4
+llm_load_print_meta: n_embd_k_gqa     = 1024
+llm_load_print_meta: n_embd_v_gqa     = 1024
+llm_load_print_meta: f_norm_eps       = 0.0e+00
+llm_load_print_meta: f_norm_rms_eps   = 1.0e-05
+llm_load_print_meta: f_clamp_kqv      = 0.0e+00
+llm_load_print_meta: f_max_alibi_bias = 0.0e+00
+llm_load_print_meta: n_ff             = 14336
+llm_load_print_meta: n_expert         = 0
+llm_load_print_meta: n_expert_used    = 0
+llm_load_print_meta: causal attn      = 1
+llm_load_print_meta: pooling type     = 0
+llm_load_print_meta: rope type        = 0
+llm_load_print_meta: rope scaling     = linear
+llm_load_print_meta: freq_base_train  = 10000.0
+llm_load_print_meta: freq_scale_train = 1
+llm_load_print_meta: n_yarn_orig_ctx  = 32768
+llm_load_print_meta: rope_finetuned   = unknown
+llm_load_print_meta: ssm_d_conv       = 0
+llm_load_print_meta: ssm_d_inner      = 0
+llm_load_print_meta: ssm_d_state      = 0
+llm_load_print_meta: ssm_dt_rank      = 0
+llm_load_print_meta: model type       = 7B
+llm_load_print_meta: model ftype      = Q4_K - Medium
+llm_load_print_meta: model params     = 7.24 B
+llm_load_print_meta: model size       = 4.07 GiB (4.83 BPW) 
+llm_load_print_meta: general.name     = .
+llm_load_print_meta: BOS token        = 1 '<s>'
+llm_load_print_meta: EOS token        = 2 '</s>'
+llm_load_print_meta: UNK token        = 0 '<unk>'
+llm_load_print_meta: PAD token        = 2 '</s>'
+llm_load_print_meta: LF token         = 13 '<0x0A>'
+llm_load_tensors: ggml ctx size =    0.11 MiB
+llm_load_tensors:        CPU buffer size =  4165.37 MiB
+................................................................................................
+llama_new_context_with_model: n_ctx      = 6000
+llama_new_context_with_model: n_batch    = 2048
+llama_new_context_with_model: n_ubatch   = 512
+llama_new_context_with_model: freq_base  = 10000.0
+llama_new_context_with_model: freq_scale = 1
+llama_kv_cache_init:        CPU KV buffer size =   750.00 MiB
+llama_new_context_with_model: KV self size  =  750.00 MiB, K (f16):  375.00 MiB, V (f16):  375.00 MiB
+llama_new_context_with_model:        CPU  output buffer size =   250.01 MiB
+llama_new_context_with_model:        CPU compute buffer size =   418.72 MiB
+llama_new_context_with_model: graph splits: 1
+
+system_info: n_threads = 4 / 8 | AVX = 1 | AVX_VNNI = 0 | AVX2 = 1 | AVX512 = 0 | AVX512_VBMI = 0 | AVX512_VNNI = 0 | FMA = 1 | NEON = 0 | ARM_FMA = 0 | F16C = 1 | FP16_VA = 0 | WASM_SIMD = 0 | BLAS = 1 | SSE3 = 1 | SSSE3 = 1 | VSX = 0 | MATMUL_INT8 = 0 | 
+main: attempting to load saved session from '/home/mahadeva/context.gguf'
+main: loaded a session with prompt size of 2585 tokens
+main: session file has exact match for prompt!
+main: interactive mode on.
+Reverse prompt: '### Instruction:
+
+'
+sampling: 
+	repeat_last_n = 64, repeat_penalty = 1.100, frequency_penalty = 0.000, presence_penalty = 0.000
+	top_k = 40, tfs_z = 1.000, top_p = 0.950, min_p = 0.050, typical_p = 1.000, temp = 0.000
+	mirostat = 0, mirostat_lr = 0.100, mirostat_ent = 5.000
+sampling order: 
+CFG -> Penalties -> top_k -> tfs_z -> typical_p -> top_p -> min_p -> temperature 
+generate: n_ctx = 6000, n_batch = 2048, n_predict = 6000, n_keep = 2585
+
+
+== Running in interactive mode. ==
+ - Press Ctrl+C to interject at any time.
+ - Press Return to return control to LLaMa.
+ - To return control without starting a new line, end your input with '/'.
+ - If you want to submit another line, end your input with '\'.
+
+2024-04-06 01:07:16 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       LLMService Process Started 
+2024-04-06 01:07:16 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+      LLM process started for session 532a4662-db39-4451-9438-dfaa5978d120
+2024-04-06 01:07:16 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+       Success : LLMService Started Session .
+2024-04-06 01:07:24 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+       Start User Input give me a list of hosts I am monitoring
+2024-04-06 01:07:24 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+        LLMService : SendInputAndGetResponse() :
+2024-04-06 01:07:24 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       ProcessLLMOutput(user input) -> give me a list of hosts I am monitoring
+2024-04-06 01:07:24 warn: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Start BroadcastAsyc() 
+2024-04-06 01:07:32 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+      sessionID=532a4662-db39-4451-9438-dfaa5978d120 line is => <functioncall> {"name": "GetHostList", "parameters": {}}</functioncall>
+      
+      <=
+2024-04-06 01:07:32 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       ProcessLLMOutput(call_func) -> {"name": "GetHostList", "parameters": {}}
+2024-04-06 01:07:32 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Cancel due to output end detected 
+2024-04-06 01:07:32 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       --> Finshed LLM Interaction 
+2024-04-06 01:07:32 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+      MessageAPI : UserInput :  Processed UserInput :give me a list of hosts I am monitoring
+2024-04-06 01:07:32 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+       Start User Input [{"address" : "test.com", "monitorIPID" : 77, "endPointType" : "http", "port" : 0, "enabled" : True, }]
+2024-04-06 01:07:32 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+        LLMService : SendInputAndGetResponse() :
+2024-04-06 01:07:32 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       ProcessLLMOutput(user input) -> FUNCTION RESPONSE: [{"address" : "test.com", "monitorIPID" : 77, "endPointType" : "http", "port" : 0, "enabled" : True, }]
+2024-04-06 01:07:32 warn: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Start BroadcastAsyc() 
+2024-04-06 01:08:03 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+      sessionID=532a4662-db39-4451-9438-dfaa5978d120 line is =>>  I have retrieved the list of hosts you are monitoring. Here is the information for one of them:
+      Host Address: test.com
+      Host ID: 77
+      End Point Type: http
+      Port: 0 (standard port for HTTP)
+      Enabled: True
+      
+      <=
+2024-04-06 01:08:03 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Cancel due to output end detected 
+2024-04-06 01:08:03 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       --> Finshed LLM Interaction 
+2024-04-06 01:08:03 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+      MessageAPI : UserInput :  Processed UserInput :FUNCTION RESPONSE: [{"address" : "test.com", "monitorIPID" : 77, "endPointType" : "http", "port" : 0, "enabled" : True, }]
+2024-04-06 01:08:15 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+       Start User Input can you give me the latest data for this host
+2024-04-06 01:08:15 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+        LLMService : SendInputAndGetResponse() :
+2024-04-06 01:08:15 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       ProcessLLMOutput(user input) -> can you give me the latest data for this host
+2024-04-06 01:08:15 warn: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Start BroadcastAsyc() 
+2024-04-06 01:08:26 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+      sessionID=532a4662-db39-4451-9438-dfaa5978d120 line is =>>  <functioncall> {"name": "GetHostData", "parameters": {"monitorIPID" : 77, "dataSetId" : 0}}</functioncall>
+      
+      <=
+2024-04-06 01:08:26 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       ProcessLLMOutput(call_func) -> {"name": "GetHostData", "parameters": {"monitorIPID" : 77, "dataSetId" : 0}}
+2024-04-06 01:08:26 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Cancel due to output end detected 
+2024-04-06 01:08:26 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       --> Finshed LLM Interaction 
+2024-04-06 01:08:26 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+      MessageAPI : UserInput :  Processed UserInput :can you give me the latest data for this host
+2024-04-06 01:08:26 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+       Start User Input { " Address is required for this query. " }
+2024-04-06 01:08:26 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+        LLMService : SendInputAndGetResponse() :
+2024-04-06 01:08:26 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       ProcessLLMOutput(user input) -> FUNCTION RESPONSE: { " Address is required for this query. " }
+2024-04-06 01:08:26 warn: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Start BroadcastAsyc() 
+2024-04-06 01:08:53 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+      sessionID=532a4662-db39-4451-9438-dfaa5978d120 line is =>>  I'm sorry, but to get the latest data for a host, you need to provide its address.
+      
+      <=
+2024-04-06 01:08:53 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Cancel due to output end detected 
+2024-04-06 01:08:53 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       --> Finshed LLM Interaction 
+2024-04-06 01:08:53 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+      MessageAPI : UserInput :  Processed UserInput :FUNCTION RESPONSE: { " Address is required for this query. " }
+2024-04-06 01:16:43 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       LLM Service : Start Process for sessionsId 4da081d8-d901-45c2-8662-b5a9800f51de
+Log start
+main: build = 2431 (4755afd1)
+main: built with cc (Debian 12.2.0-14) 12.2.0 for x86_64-linux-gnu
+main: seed  = 1712359003
+llama_model_loader: loaded meta data with 23 key-value pairs and 291 tensors from /home/mahadeva/code/models/dolphin-2.6-mistral-7b-dpo-laser-function-calling-Q4_K_M.gguf (version GGUF V3 (latest))
+llama_model_loader: Dumping metadata keys/values. Note: KV overrides do not apply in this output.
+llama_model_loader: - kv   0:                       general.architecture str              = llama
+llama_model_loader: - kv   1:                               general.name str              = .
+llama_model_loader: - kv   2:                       llama.context_length u32              = 32768
+llama_model_loader: - kv   3:                     llama.embedding_length u32              = 4096
+llama_model_loader: - kv   4:                          llama.block_count u32              = 32
+llama_model_loader: - kv   5:                  llama.feed_forward_length u32              = 14336
+llama_model_loader: - kv   6:                 llama.rope.dimension_count u32              = 128
+llama_model_loader: - kv   7:                 llama.attention.head_count u32              = 32
+llama_model_loader: - kv   8:              llama.attention.head_count_kv u32              = 8
+llama_model_loader: - kv   9:     llama.attention.layer_norm_rms_epsilon f32              = 0.000010
+llama_model_loader: - kv  10:                       llama.rope.freq_base f32              = 10000.000000
+llama_model_loader: - kv  11:                          general.file_type u32              = 15
+llama_model_loader: - kv  12:                       tokenizer.ggml.model str              = llama
+llama_model_loader: - kv  13:                      tokenizer.ggml.tokens arr[str,32001]   = ["<unk>", "<s>", "</s>", "<0x00>", "<...
+llama_model_loader: - kv  14:                      tokenizer.ggml.scores arr[f32,32001]   = [0.000000, 0.000000, 0.000000, 0.0000...
+llama_model_loader: - kv  15:                  tokenizer.ggml.token_type arr[i32,32001]   = [2, 3, 3, 6, 6, 6, 6, 6, 6, 6, 6, 6, ...
+llama_model_loader: - kv  16:                tokenizer.ggml.bos_token_id u32              = 1
+llama_model_loader: - kv  17:                tokenizer.ggml.eos_token_id u32              = 2
+llama_model_loader: - kv  18:            tokenizer.ggml.unknown_token_id u32              = 0
+llama_model_loader: - kv  19:            tokenizer.ggml.padding_token_id u32              = 2
+llama_model_loader: - kv  20:               tokenizer.ggml.add_bos_token bool             = true
+llama_model_loader: - kv  21:               tokenizer.ggml.add_eos_token bool             = false
+llama_model_loader: - kv  22:               general.quantization_version u32              = 2
+llama_model_loader: - type  f32:   65 tensors
+llama_model_loader: - type q4_K:  193 tensors
+llama_model_loader: - type q6_K:   33 tensors
+llm_load_vocab: special tokens definition check successful ( 260/32001 ).
+llm_load_print_meta: format           = GGUF V3 (latest)
+llm_load_print_meta: arch             = llama
+llm_load_print_meta: vocab type       = SPM
+llm_load_print_meta: n_vocab          = 32001
+llm_load_print_meta: n_merges         = 0
+llm_load_print_meta: n_ctx_train      = 32768
+llm_load_print_meta: n_embd           = 4096
+llm_load_print_meta: n_head           = 32
+llm_load_print_meta: n_head_kv        = 8
+llm_load_print_meta: n_layer          = 32
+llm_load_print_meta: n_rot            = 128
+llm_load_print_meta: n_embd_head_k    = 128
+llm_load_print_meta: n_embd_head_v    = 128
+llm_load_print_meta: n_gqa            = 4
+llm_load_print_meta: n_embd_k_gqa     = 1024
+llm_load_print_meta: n_embd_v_gqa     = 1024
+llm_load_print_meta: f_norm_eps       = 0.0e+00
+llm_load_print_meta: f_norm_rms_eps   = 1.0e-05
+llm_load_print_meta: f_clamp_kqv      = 0.0e+00
+llm_load_print_meta: f_max_alibi_bias = 0.0e+00
+llm_load_print_meta: n_ff             = 14336
+llm_load_print_meta: n_expert         = 0
+llm_load_print_meta: n_expert_used    = 0
+llm_load_print_meta: causal attn      = 1
+llm_load_print_meta: pooling type     = 0
+llm_load_print_meta: rope type        = 0
+llm_load_print_meta: rope scaling     = linear
+llm_load_print_meta: freq_base_train  = 10000.0
+llm_load_print_meta: freq_scale_train = 1
+llm_load_print_meta: n_yarn_orig_ctx  = 32768
+llm_load_print_meta: rope_finetuned   = unknown
+llm_load_print_meta: ssm_d_conv       = 0
+llm_load_print_meta: ssm_d_inner      = 0
+llm_load_print_meta: ssm_d_state      = 0
+llm_load_print_meta: ssm_dt_rank      = 0
+llm_load_print_meta: model type       = 7B
+llm_load_print_meta: model ftype      = Q4_K - Medium
+llm_load_print_meta: model params     = 7.24 B
+llm_load_print_meta: model size       = 4.07 GiB (4.83 BPW) 
+llm_load_print_meta: general.name     = .
+llm_load_print_meta: BOS token        = 1 '<s>'
+llm_load_print_meta: EOS token        = 2 '</s>'
+llm_load_print_meta: UNK token        = 0 '<unk>'
+llm_load_print_meta: PAD token        = 2 '</s>'
+llm_load_print_meta: LF token         = 13 '<0x0A>'
+llm_load_tensors: ggml ctx size =    0.11 MiB
+llm_load_tensors:        CPU buffer size =  4165.37 MiB
+................................................................................................
+llama_new_context_with_model: n_ctx      = 6000
+llama_new_context_with_model: n_batch    = 2048
+llama_new_context_with_model: n_ubatch   = 512
+llama_new_context_with_model: freq_base  = 10000.0
+llama_new_context_with_model: freq_scale = 1
+llama_kv_cache_init:        CPU KV buffer size =   750.00 MiB
+llama_new_context_with_model: KV self size  =  750.00 MiB, K (f16):  375.00 MiB, V (f16):  375.00 MiB
+llama_new_context_with_model:        CPU  output buffer size =   250.01 MiB
+llama_new_context_with_model:        CPU compute buffer size =   418.72 MiB
+llama_new_context_with_model: graph splits: 1
+
+system_info: n_threads = 4 / 8 | AVX = 1 | AVX_VNNI = 0 | AVX2 = 1 | AVX512 = 0 | AVX512_VBMI = 0 | AVX512_VNNI = 0 | FMA = 1 | NEON = 0 | ARM_FMA = 0 | F16C = 1 | FP16_VA = 0 | WASM_SIMD = 0 | BLAS = 1 | SSE3 = 1 | SSSE3 = 1 | VSX = 0 | MATMUL_INT8 = 0 | 
+main: attempting to load saved session from '/home/mahadeva/context.gguf'
+main: loaded a session with prompt size of 2585 tokens
+main: session file has exact match for prompt!
+main: interactive mode on.
+Reverse prompt: '### Instruction:
+
+'
+sampling: 
+	repeat_last_n = 64, repeat_penalty = 1.100, frequency_penalty = 0.000, presence_penalty = 0.000
+	top_k = 40, tfs_z = 1.000, top_p = 0.950, min_p = 0.050, typical_p = 1.000, temp = 0.000
+	mirostat = 0, mirostat_lr = 0.100, mirostat_ent = 5.000
+sampling order: 
+CFG -> Penalties -> top_k -> tfs_z -> typical_p -> top_p -> min_p -> temperature 
+generate: n_ctx = 6000, n_batch = 2048, n_predict = 6000, n_keep = 2585
+
+
+== Running in interactive mode. ==
+ - Press Ctrl+C to interject at any time.
+ - Press Return to return control to LLaMa.
+ - To return control without starting a new line, end your input with '/'.
+ - If you want to submit another line, end your input with '\'.
+
+2024-04-06 01:16:48 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       LLMService Process Started 
+2024-04-06 01:16:48 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+      LLM process started for session 4da081d8-d901-45c2-8662-b5a9800f51de
+2024-04-06 01:16:48 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+       Success : LLMService Started Session .
+2024-04-06 01:16:57 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+       Start User Input what host am I monitoring
+2024-04-06 01:16:57 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+        LLMService : SendInputAndGetResponse() :
+2024-04-06 01:16:57 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       ProcessLLMOutput(user input) -> what host am I monitoring
+2024-04-06 01:16:57 warn: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Start BroadcastAsyc() 
+2024-04-06 01:17:10 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+      sessionID=4da081d8-d901-45c2-8662-b5a9800f51de line is => To get the details of the hosts you are monitoring, you can use the "GetHostList" function. Here's how you can call it: {"name": "GetHostList", "parameters": {}}
+      
+      <=
+2024-04-06 01:17:10 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Cancel due to output end detected 
+2024-04-06 01:17:10 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       --> Finshed LLM Interaction 
+2024-04-06 01:17:10 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+      MessageAPI : UserInput :  Processed UserInput :what host am I monitoring
+2024-04-06 01:17:29 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+       Start User Input call it
+2024-04-06 01:17:29 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+        LLMService : SendInputAndGetResponse() :
+2024-04-06 01:17:29 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       ProcessLLMOutput(user input) -> call it
+2024-04-06 01:17:29 warn: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Start BroadcastAsyc() 
+2024-04-06 01:17:33 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+      sessionID=4da081d8-d901-45c2-8662-b5a9800f51de line is =>>  {"name": "GetHostList", "parameters": {}}
+      
+      <=
+2024-04-06 01:17:33 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       ProcessLLMOutput(call_func) -> {"name": "GetHostList", "parameters": {}}
+2024-04-06 01:17:33 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Cancel due to output end detected 
+2024-04-06 01:17:33 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       --> Finshed LLM Interaction 
+2024-04-06 01:17:33 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+      MessageAPI : UserInput :  Processed UserInput :call it
+2024-04-06 01:17:34 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+       Start User Input [{"address" : "test.com", "monitorIPID" : 77, "endPointType" : "http", "port" : 0, "enabled" : True, }]
+2024-04-06 01:17:34 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+        LLMService : SendInputAndGetResponse() :
+2024-04-06 01:17:34 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       ProcessLLMOutput(user input) -> FUNCTION RESPONSE: [{"address" : "test.com", "monitorIPID" : 77, "endPointType" : "http", "port" : 0, "enabled" : True, }]
+2024-04-06 01:17:34 warn: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Start BroadcastAsyc() 
+2024-04-06 01:18:02 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+      sessionID=4da081d8-d901-45c2-8662-b5a9800f51de line is =>>  The host you are monitoring is test.com with an ID of 77. It's an HTTP endpoint on port 80 (since it's the standard for HTTP) and is currently enabled.
+      
+      <=
+2024-04-06 01:18:02 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Cancel due to output end detected 
+2024-04-06 01:18:02 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       --> Finshed LLM Interaction 
+2024-04-06 01:18:02 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+      MessageAPI : UserInput :  Processed UserInput :FUNCTION RESPONSE: [{"address" : "test.com", "monitorIPID" : 77, "endPointType" : "http", "port" : 0, "enabled" : True, }]
+2024-04-06 01:18:55 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+       Start User Input can you get the latest data for this host
+2024-04-06 01:18:55 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+        LLMService : SendInputAndGetResponse() :
+2024-04-06 01:18:55 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       ProcessLLMOutput(user input) -> can you get the latest data for this host
+2024-04-06 01:18:55 warn: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Start BroadcastAsyc() 
+2024-04-06 01:19:08 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+      sessionID=4da081d8-d901-45c2-8662-b5a9800f51de line is =>>  Yes, I can get the latest monitoring data for a host. You can use the "GetHostData" function for that. Here's how you can call it: {"name": "GetHostData", "parameters": {}}
+      
+      <=
+2024-04-06 01:19:08 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Cancel due to output end detected 
+2024-04-06 01:19:08 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       --> Finshed LLM Interaction 
+2024-04-06 01:19:08 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+      MessageAPI : UserInput :  Processed UserInput :can you get the latest data for this host
+2024-04-06 01:19:20 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+       Start User Input can you always call the function rather than telling me how to call it
+2024-04-06 01:19:20 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+        LLMService : SendInputAndGetResponse() :
+2024-04-06 01:19:20 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       ProcessLLMOutput(user input) -> can you always call the function rather than telling me how to call it
+2024-04-06 01:19:20 warn: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Start BroadcastAsyc() 
+2024-04-06 01:19:40 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+      sessionID=4da081d8-d901-45c2-8662-b5a9800f51de line is =>>  I'm sorry, but as an AI, I can only perform tasks that are explicitly requested. In this case, I can help you get the latest monitoring data for a host by calling the "GetHostData" function. You don't need to know how to call it, just provide me with the details of the host you want to monitor.
+      
+      <=
+2024-04-06 01:19:40 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Cancel due to output end detected 
+2024-04-06 01:19:40 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       --> Finshed LLM Interaction 
+2024-04-06 01:19:40 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+      MessageAPI : UserInput :  Processed UserInput :can you always call the function rather than telling me how to call it
+2024-04-06 01:19:57 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+       Start User Input the host that you have retrieved the data for
+2024-04-06 01:19:57 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+        LLMService : SendInputAndGetResponse() :
+2024-04-06 01:19:57 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       ProcessLLMOutput(user input) -> the host that you have retrieved the data for
+2024-04-06 01:19:57 warn: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Start BroadcastAsyc() 
+2024-04-06 01:20:13 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+      sessionID=4da081d8-d901-45c2-8662-b5a9800f51de line is =>>  I'm sorry, but I can't provide you with the details of a specific host without knowing its ID or address. You can use the "GetHostList" function to get a list of all the hosts you are monitoring and then choose the one you want to retrieve data for.
+      
+      <=
+2024-04-06 01:20:13 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Cancel due to output end detected 
+2024-04-06 01:20:13 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       --> Finshed LLM Interaction 
+2024-04-06 01:20:13 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+      MessageAPI : UserInput :  Processed UserInput :the host that you have retrieved the data for
+2024-04-06 01:20:17 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+       Start User Input what hosts am I monitoring
+2024-04-06 01:20:17 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+        LLMService : SendInputAndGetResponse() :
+2024-04-06 01:20:17 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       ProcessLLMOutput(user input) -> what hosts am I monitoring
+2024-04-06 01:20:17 warn: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Start BroadcastAsyc() 
+2024-04-06 01:20:30 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+      sessionID=4da081d8-d901-45c2-8662-b5a9800f51de line is =>>  To get a list of all the hosts you are monitoring, you can use the "GetHostList" function. Here's how you can call it: {"name": "GetHostList", "parameters": {}}
+      
+      <=
+2024-04-06 01:20:30 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Cancel due to output end detected 
+2024-04-06 01:20:30 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       --> Finshed LLM Interaction 
+2024-04-06 01:20:30 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+      MessageAPI : UserInput :  Processed UserInput :what hosts am I monitoring
+2024-04-06 01:20:38 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+       Start User Input please call it
+2024-04-06 01:20:38 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+        LLMService : SendInputAndGetResponse() :
+2024-04-06 01:20:38 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       ProcessLLMOutput(user input) -> please call it
+2024-04-06 01:20:38 warn: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Start BroadcastAsyc() 
+2024-04-06 01:20:43 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+      sessionID=4da081d8-d901-45c2-8662-b5a9800f51de line is =>>  {"name": "GetHostList", "parameters": {}}
+      
+      <=
+2024-04-06 01:20:43 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       ProcessLLMOutput(call_func) -> {"name": "GetHostList", "parameters": {}}
+2024-04-06 01:20:43 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Cancel due to output end detected 
+2024-04-06 01:20:43 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       --> Finshed LLM Interaction 
+2024-04-06 01:20:43 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+      MessageAPI : UserInput :  Processed UserInput :please call it
+2024-04-06 01:20:43 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+       Start User Input [{"address" : "test.com", "monitorIPID" : 77, "endPointType" : "http", "port" : 0, "enabled" : True, }]
+2024-04-06 01:20:43 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+        LLMService : SendInputAndGetResponse() :
+2024-04-06 01:20:43 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       ProcessLLMOutput(user input) -> FUNCTION RESPONSE: [{"address" : "test.com", "monitorIPID" : 77, "endPointType" : "http", "port" : 0, "enabled" : True, }]
+2024-04-06 01:20:43 warn: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Start BroadcastAsyc() 
+2024-04-06 01:21:11 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+      sessionID=4da081d8-d901-45c2-8662-b5a9800f51de line is =>>  The hosts you are monitoring are test.com with an ID of 77. It's an HTTP endpoint on port 80 (since it's the standard for HTTP) and is currently enabled.
+      
+      <=
+2024-04-06 01:21:11 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Cancel due to output end detected 
+2024-04-06 01:21:11 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       --> Finshed LLM Interaction 
+2024-04-06 01:21:11 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+      MessageAPI : UserInput :  Processed UserInput :FUNCTION RESPONSE: [{"address" : "test.com", "monitorIPID" : 77, "endPointType" : "http", "port" : 0, "enabled" : True, }]
+2024-04-06 01:21:17 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+       Start User Input can you change the port to 443
+2024-04-06 01:21:17 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+        LLMService : SendInputAndGetResponse() :
+2024-04-06 01:21:17 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       ProcessLLMOutput(user input) -> can you change the port to 443
+2024-04-06 01:21:17 warn: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Start BroadcastAsyc() 
+2024-04-06 01:21:31 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+      sessionID=4da081d8-d901-45c2-8662-b5a9800f51de line is =>>  Yes, I can help you change the port for a host. You need to use the "EditHost" function for that. Here's how you can call it: {"name": "EditHost", "parameters": {}}
+      
+      <=
+2024-04-06 01:21:31 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Cancel due to output end detected 
+2024-04-06 01:21:31 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       --> Finshed LLM Interaction 
+2024-04-06 01:21:31 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+      MessageAPI : UserInput :  Processed UserInput :can you change the port to 443
+2024-04-06 01:21:44 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+       Start User Input call it and change the port to 443
+2024-04-06 01:21:44 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+        LLMService : SendInputAndGetResponse() :
+2024-04-06 01:21:44 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       ProcessLLMOutput(user input) -> call it and change the port to 443
+2024-04-06 01:21:44 warn: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Start BroadcastAsyc() 
+2024-04-06 01:21:50 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+      sessionID=4da081d8-d901-45c2-8662-b5a9800f51de line is =>>  {"name": "EditHost", "parameters": {}}
+      
+      <=
+2024-04-06 01:21:50 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       ProcessLLMOutput(call_func) -> {"name": "EditHost", "parameters": {}}
+2024-04-06 01:21:50 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Cancel due to output end detected 
+2024-04-06 01:21:50 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       --> Finshed LLM Interaction 
+2024-04-06 01:21:50 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+      MessageAPI : UserInput :  Processed UserInput :call it and change the port to 443
+2024-04-06 01:21:50 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+       Start User Input { "Error : In order to edit you need MonitorIPID. Call GetMonitorIPsWithFilterAuth with the host Address to get the host ID." }
+2024-04-06 01:21:50 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+        LLMService : SendInputAndGetResponse() :
+2024-04-06 01:21:50 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       ProcessLLMOutput(user input) -> FUNCTION RESPONSE: { "Error : In order to edit you need MonitorIPID. Call GetMonitorIPsWithFilterAuth with the host Address to get the host ID." }
+2024-04-06 01:21:50 warn: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Start BroadcastAsyc() 
+2024-04-06 01:22:28 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+      sessionID=4da081d8-d901-45c2-8662-b5a9800f51de line is =>>  To change the port for a specific host, you first need to know its ID. You can use the "GetHostList" function to get a list of all your hosts and then find the one you want to edit. Once you have the ID, you can call the "EditHost" function with the new port.
+      
+      <=
+2024-04-06 01:22:28 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Cancel due to output end detected 
+2024-04-06 01:22:28 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       --> Finshed LLM Interaction 
+2024-04-06 01:22:28 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+      MessageAPI : UserInput :  Processed UserInput :FUNCTION RESPONSE: { "Error : In order to edit you need MonitorIPID. Call GetMonitorIPsWithFilterAuth with the host Address to get the host ID." }
+2024-04-06 01:22:40 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+       Start User Input use the id you got earlier
+2024-04-06 01:22:40 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+        LLMService : SendInputAndGetResponse() :
+2024-04-06 01:22:40 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       ProcessLLMOutput(user input) -> use the id you got earlier
+2024-04-06 01:22:40 warn: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Start BroadcastAsyc() 
+2024-04-06 01:22:48 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+      sessionID=4da081d8-d901-45c2-8662-b5a9800f51de line is =>>  Sure, I can help you with that. Please provide me with the ID of the host you want to edit.
+      
+      <=
+2024-04-06 01:22:48 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Cancel due to output end detected 
+2024-04-06 01:22:48 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       --> Finshed LLM Interaction 
+2024-04-06 01:22:48 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+      MessageAPI : UserInput :  Processed UserInput :use the id you got earlier
+2024-04-06 01:23:10 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+       Start User Input 77
+2024-04-06 01:23:10 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+        LLMService : SendInputAndGetResponse() :
+2024-04-06 01:23:10 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       ProcessLLMOutput(user input) -> 77
+2024-04-06 01:23:10 warn: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Start BroadcastAsyc() 
+2024-04-06 01:23:21 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+      sessionID=4da081d8-d901-45c2-8662-b5a9800f51de line is =>>  Great, I have the ID of the host you want to edit. Now, you can call the "EditHost" function with this ID and the new port number.
+      
+      <=
+2024-04-06 01:23:21 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Cancel due to output end detected 
+2024-04-06 01:23:21 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       --> Finshed LLM Interaction 
+2024-04-06 01:23:21 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+      MessageAPI : UserInput :  Processed UserInput :77
+2024-04-06 01:23:30 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+       Start User Input do it
+2024-04-06 01:23:30 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+        LLMService : SendInputAndGetResponse() :
+2024-04-06 01:23:30 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       ProcessLLMOutput(user input) -> do it
+2024-04-06 01:23:30 warn: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Start BroadcastAsyc() 
+2024-04-06 01:23:35 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+      sessionID=4da081d8-d901-45c2-8662-b5a9800f51de line is =>>  {"name": "EditHost", "parameters": {}}
+      
+      <=
+2024-04-06 01:23:35 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       ProcessLLMOutput(call_func) -> {"name": "EditHost", "parameters": {}}
+2024-04-06 01:23:35 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Cancel due to output end detected 
+2024-04-06 01:23:35 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       --> Finshed LLM Interaction 
+2024-04-06 01:23:35 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+      MessageAPI : UserInput :  Processed UserInput :do it
+2024-04-06 01:23:35 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+       Start User Input { "Error : In order to edit you need MonitorIPID. Call GetMonitorIPsWithFilterAuth with the host Address to get the host ID." }
+2024-04-06 01:23:35 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+        LLMService : SendInputAndGetResponse() :
+2024-04-06 01:23:35 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       ProcessLLMOutput(user input) -> FUNCTION RESPONSE: { "Error : In order to edit you need MonitorIPID. Call GetMonitorIPsWithFilterAuth with the host Address to get the host ID." }
+2024-04-06 01:23:35 warn: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Start BroadcastAsyc() 
+2024-04-06 01:24:15 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+      sessionID=4da081d8-d901-45c2-8662-b5a9800f51de line is =>>  I'm sorry, but I can't edit the host for you without its ID. You need to use the "GetHostList" function to get a list of all your hosts and then find the one you want to edit. Once you have the ID, you can call the "EditHost" function with the new port number.
+      
+      <=
+2024-04-06 01:24:15 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Cancel due to output end detected 
+2024-04-06 01:24:15 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       --> Finshed LLM Interaction 
+2024-04-06 01:24:15 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+      MessageAPI : UserInput :  Processed UserInput :FUNCTION RESPONSE: { "Error : In order to edit you need MonitorIPID. Call GetMonitorIPsWithFilterAuth with the host Address to get the host ID." }
+2024-04-06 01:24:45 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+       Start User Input id 77
+2024-04-06 01:24:45 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+        LLMService : SendInputAndGetResponse() :
+2024-04-06 01:24:45 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       ProcessLLMOutput(user input) -> id 77
+2024-04-06 01:24:45 warn: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Start BroadcastAsyc() 
+2024-04-06 01:24:55 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+      sessionID=4da081d8-d901-45c2-8662-b5a9800f51de line is =>>  Great, I have the ID of the host you want to edit. Now, you can call the "EditHost" function with this ID and the new port number.
+      
+      <=
+2024-04-06 01:24:55 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Cancel due to output end detected 
+2024-04-06 01:24:55 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       --> Finshed LLM Interaction 
+2024-04-06 01:24:55 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+      MessageAPI : UserInput :  Processed UserInput :id 77
+2024-04-06 01:25:09 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+       Start User Input edit host with id 77 set port 443
+2024-04-06 01:25:09 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+        LLMService : SendInputAndGetResponse() :
+2024-04-06 01:25:09 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       ProcessLLMOutput(user input) -> edit host with id 77 set port 443
+2024-04-06 01:25:09 warn: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Start BroadcastAsyc() 
+2024-04-06 01:25:15 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+      sessionID=4da081d8-d901-45c2-8662-b5a9800f51de line is =>>  {"name": "EditHost", "parameters": {}}
+      
+      <=
+2024-04-06 01:25:15 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       ProcessLLMOutput(call_func) -> {"name": "EditHost", "parameters": {}}
+2024-04-06 01:25:15 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Cancel due to output end detected 
+2024-04-06 01:25:15 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       --> Finshed LLM Interaction 
+2024-04-06 01:25:15 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+      MessageAPI : UserInput :  Processed UserInput :edit host with id 77 set port 443
+2024-04-06 01:25:15 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+       Start User Input { "Error : In order to edit you need MonitorIPID. Call GetMonitorIPsWithFilterAuth with the host Address to get the host ID." }
+2024-04-06 01:25:15 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+        LLMService : SendInputAndGetResponse() :
+2024-04-06 01:25:15 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       ProcessLLMOutput(user input) -> FUNCTION RESPONSE: { "Error : In order to edit you need MonitorIPID. Call GetMonitorIPsWithFilterAuth with the host Address to get the host ID." }
+2024-04-06 01:25:15 warn: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Start BroadcastAsyc() 
+2024-04-06 01:25:57 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+      sessionID=4da081d8-d901-45c2-8662-b5a9800f51de line is =>>  I'm sorry, but I can't edit the host for you without its ID. You need to use the "GetHostList" function to get a list of all your hosts and then find the one you want to edit. Once you have the ID, you can call the "EditHost" function with the new port number.
+      
+      <=
+2024-04-06 01:25:57 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Cancel due to output end detected 
+2024-04-06 01:25:57 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       --> Finshed LLM Interaction 
+2024-04-06 01:25:57 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+      MessageAPI : UserInput :  Processed UserInput :FUNCTION RESPONSE: { "Error : In order to edit you need MonitorIPID. Call GetMonitorIPsWithFilterAuth with the host Address to get the host ID." }
+2024-04-06 01:25:58 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+       Start User Input I just gave you the id
+2024-04-06 01:25:58 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+        LLMService : SendInputAndGetResponse() :
+2024-04-06 01:25:58 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       ProcessLLMOutput(user input) -> I just gave you the id
+2024-04-06 01:25:58 warn: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Start BroadcastAsyc() 
+2024-04-06 01:26:12 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+      sessionID=4da081d8-d901-45c2-8662-b5a9800f51de line is =>>  Thank you for providing me with the ID of the host. Now, you can call the "EditHost" function to edit the host's settings. Here's how you can do it: {"name": "EditHost", "parameters": {}}
+      
+      <=
+2024-04-06 01:26:12 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Cancel due to output end detected 
+2024-04-06 01:26:12 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       --> Finshed LLM Interaction 
+2024-04-06 01:26:12 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+      MessageAPI : UserInput :  Processed UserInput :I just gave you the id
+2024-04-06 01:26:24 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+       Start User Input no that not right you need to add the id
+2024-04-06 01:26:24 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+        LLMService : SendInputAndGetResponse() :
+2024-04-06 01:26:24 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       ProcessLLMOutput(user input) -> no that not right you need to add the id
+2024-04-06 01:26:24 warn: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Start BroadcastAsyc() 
+2024-04-06 01:26:44 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+      sessionID=4da081d8-d901-45c2-8662-b5a9800f51de line is =>>  I'm sorry, but I can't edit the host for you without its ID. You need to use the "GetHostList" function to get a list of all your hosts and then find the one you want to edit. Once you have the ID, you can call the "EditHost" function with the new port number.
+      
+      <=
+2024-04-06 01:26:44 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Cancel due to output end detected 
+2024-04-06 01:26:44 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       --> Finshed LLM Interaction 
+2024-04-06 01:26:44 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+      MessageAPI : UserInput :  Processed UserInput :no that not right you need to add the id
+2024-04-06 01:34:09 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       LLM Service : Start Process for sessionsId 170060d9-b2c1-4165-adf2-3a3ca388ccf2
+Log start
+main: build = 2431 (4755afd1)
+main: built with cc (Debian 12.2.0-14) 12.2.0 for x86_64-linux-gnu
+main: seed  = 1712360049
+llama_model_loader: loaded meta data with 23 key-value pairs and 291 tensors from /home/mahadeva/code/models/dolphin-2.6-mistral-7b-dpo-laser-function-calling-Q4_K_M.gguf (version GGUF V3 (latest))
+llama_model_loader: Dumping metadata keys/values. Note: KV overrides do not apply in this output.
+llama_model_loader: - kv   0:                       general.architecture str              = llama
+llama_model_loader: - kv   1:                               general.name str              = .
+llama_model_loader: - kv   2:                       llama.context_length u32              = 32768
+llama_model_loader: - kv   3:                     llama.embedding_length u32              = 4096
+llama_model_loader: - kv   4:                          llama.block_count u32              = 32
+llama_model_loader: - kv   5:                  llama.feed_forward_length u32              = 14336
+llama_model_loader: - kv   6:                 llama.rope.dimension_count u32              = 128
+llama_model_loader: - kv   7:                 llama.attention.head_count u32              = 32
+llama_model_loader: - kv   8:              llama.attention.head_count_kv u32              = 8
+llama_model_loader: - kv   9:     llama.attention.layer_norm_rms_epsilon f32              = 0.000010
+llama_model_loader: - kv  10:                       llama.rope.freq_base f32              = 10000.000000
+llama_model_loader: - kv  11:                          general.file_type u32              = 15
+llama_model_loader: - kv  12:                       tokenizer.ggml.model str              = llama
+llama_model_loader: - kv  13:                      tokenizer.ggml.tokens arr[str,32001]   = ["<unk>", "<s>", "</s>", "<0x00>", "<...
+llama_model_loader: - kv  14:                      tokenizer.ggml.scores arr[f32,32001]   = [0.000000, 0.000000, 0.000000, 0.0000...
+llama_model_loader: - kv  15:                  tokenizer.ggml.token_type arr[i32,32001]   = [2, 3, 3, 6, 6, 6, 6, 6, 6, 6, 6, 6, ...
+llama_model_loader: - kv  16:                tokenizer.ggml.bos_token_id u32              = 1
+llama_model_loader: - kv  17:                tokenizer.ggml.eos_token_id u32              = 2
+llama_model_loader: - kv  18:            tokenizer.ggml.unknown_token_id u32              = 0
+llama_model_loader: - kv  19:            tokenizer.ggml.padding_token_id u32              = 2
+llama_model_loader: - kv  20:               tokenizer.ggml.add_bos_token bool             = true
+llama_model_loader: - kv  21:               tokenizer.ggml.add_eos_token bool             = false
+llama_model_loader: - kv  22:               general.quantization_version u32              = 2
+llama_model_loader: - type  f32:   65 tensors
+llama_model_loader: - type q4_K:  193 tensors
+llama_model_loader: - type q6_K:   33 tensors
+llm_load_vocab: special tokens definition check successful ( 260/32001 ).
+llm_load_print_meta: format           = GGUF V3 (latest)
+llm_load_print_meta: arch             = llama
+llm_load_print_meta: vocab type       = SPM
+llm_load_print_meta: n_vocab          = 32001
+llm_load_print_meta: n_merges         = 0
+llm_load_print_meta: n_ctx_train      = 32768
+llm_load_print_meta: n_embd           = 4096
+llm_load_print_meta: n_head           = 32
+llm_load_print_meta: n_head_kv        = 8
+llm_load_print_meta: n_layer          = 32
+llm_load_print_meta: n_rot            = 128
+llm_load_print_meta: n_embd_head_k    = 128
+llm_load_print_meta: n_embd_head_v    = 128
+llm_load_print_meta: n_gqa            = 4
+llm_load_print_meta: n_embd_k_gqa     = 1024
+llm_load_print_meta: n_embd_v_gqa     = 1024
+llm_load_print_meta: f_norm_eps       = 0.0e+00
+llm_load_print_meta: f_norm_rms_eps   = 1.0e-05
+llm_load_print_meta: f_clamp_kqv      = 0.0e+00
+llm_load_print_meta: f_max_alibi_bias = 0.0e+00
+llm_load_print_meta: n_ff             = 14336
+llm_load_print_meta: n_expert         = 0
+llm_load_print_meta: n_expert_used    = 0
+llm_load_print_meta: causal attn      = 1
+llm_load_print_meta: pooling type     = 0
+llm_load_print_meta: rope type        = 0
+llm_load_print_meta: rope scaling     = linear
+llm_load_print_meta: freq_base_train  = 10000.0
+llm_load_print_meta: freq_scale_train = 1
+llm_load_print_meta: n_yarn_orig_ctx  = 32768
+llm_load_print_meta: rope_finetuned   = unknown
+llm_load_print_meta: ssm_d_conv       = 0
+llm_load_print_meta: ssm_d_inner      = 0
+llm_load_print_meta: ssm_d_state      = 0
+llm_load_print_meta: ssm_dt_rank      = 0
+llm_load_print_meta: model type       = 7B
+llm_load_print_meta: model ftype      = Q4_K - Medium
+llm_load_print_meta: model params     = 7.24 B
+llm_load_print_meta: model size       = 4.07 GiB (4.83 BPW) 
+llm_load_print_meta: general.name     = .
+llm_load_print_meta: BOS token        = 1 '<s>'
+llm_load_print_meta: EOS token        = 2 '</s>'
+llm_load_print_meta: UNK token        = 0 '<unk>'
+llm_load_print_meta: PAD token        = 2 '</s>'
+llm_load_print_meta: LF token         = 13 '<0x0A>'
+llm_load_tensors: ggml ctx size =    0.11 MiB
+llm_load_tensors:        CPU buffer size =  4165.37 MiB
+................................................................................................
+llama_new_context_with_model: n_ctx      = 6000
+llama_new_context_with_model: n_batch    = 2048
+llama_new_context_with_model: n_ubatch   = 512
+llama_new_context_with_model: freq_base  = 10000.0
+llama_new_context_with_model: freq_scale = 1
+llama_kv_cache_init:        CPU KV buffer size =   750.00 MiB
+llama_new_context_with_model: KV self size  =  750.00 MiB, K (f16):  375.00 MiB, V (f16):  375.00 MiB
+llama_new_context_with_model:        CPU  output buffer size =   250.01 MiB
+llama_new_context_with_model:        CPU compute buffer size =   418.72 MiB
+llama_new_context_with_model: graph splits: 1
+
+system_info: n_threads = 4 / 8 | AVX = 1 | AVX_VNNI = 0 | AVX2 = 1 | AVX512 = 0 | AVX512_VBMI = 0 | AVX512_VNNI = 0 | FMA = 1 | NEON = 0 | ARM_FMA = 0 | F16C = 1 | FP16_VA = 0 | WASM_SIMD = 0 | BLAS = 1 | SSE3 = 1 | SSSE3 = 1 | VSX = 0 | MATMUL_INT8 = 0 | 
+main: attempting to load saved session from '/home/mahadeva/context.gguf'
+main: loaded a session with prompt size of 2585 tokens
+main: session file has exact match for prompt!
+main: interactive mode on.
+Reverse prompt: '### Instruction:
+
+'
+sampling: 
+	repeat_last_n = 64, repeat_penalty = 1.100, frequency_penalty = 0.000, presence_penalty = 0.000
+	top_k = 40, tfs_z = 1.000, top_p = 0.950, min_p = 0.050, typical_p = 1.000, temp = 0.000
+	mirostat = 0, mirostat_lr = 0.100, mirostat_ent = 5.000
+sampling order: 
+CFG -> Penalties -> top_k -> tfs_z -> typical_p -> top_p -> min_p -> temperature 
+generate: n_ctx = 6000, n_batch = 2048, n_predict = 6000, n_keep = 2585
+
+
+== Running in interactive mode. ==
+ - Press Ctrl+C to interject at any time.
+ - Press Return to return control to LLaMa.
+ - To return control without starting a new line, end your input with '/'.
+ - If you want to submit another line, end your input with '\'.
+
+2024-04-06 01:34:16 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       LLMService Process Started 
+2024-04-06 01:34:16 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+      LLM process started for session 170060d9-b2c1-4165-adf2-3a3ca388ccf2
+2024-04-06 01:34:16 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+       Success : LLMService Started Session .
+2024-04-06 01:34:21 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+       Start User Input what hosts am I monitoring
+2024-04-06 01:34:21 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+        LLMService : SendInputAndGetResponse() :
+2024-04-06 01:34:21 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       ProcessLLMOutput(user input) -> what hosts am I monitoring
+2024-04-06 01:34:21 warn: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Start BroadcastAsyc() 
+2024-04-06 01:34:34 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+      sessionID=170060d9-b2c1-4165-adf2-3a3ca388ccf2 line is => To get a list of the hosts you are monitoring, you can use the "GetHostList" function. Here's how to call it: {"name": "GetHostList", "parameters": {}}
+      
+      <=
+2024-04-06 01:34:34 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Cancel due to output end detected 
+2024-04-06 01:34:34 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       --> Finshed LLM Interaction 
+2024-04-06 01:34:34 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+      MessageAPI : UserInput :  Processed UserInput :what hosts am I monitoring
+2024-04-06 01:44:57 info: Microsoft.Hosting.Lifetime[0]
+      Application is shutting down...
+/home/mahadeva/code/NetworkMonitor/Objects/DTOs/MonitorPingInfoView.cs(119,87): warning CS8625: Cannot convert null literal to non-nullable reference type. [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Objects/Connection/NetConnectConfig.cs(180,104): warning CS8625: Cannot convert null literal to non-nullable reference type. [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Utils/JsonUtils.cs(171,114): warning CS8601: Possible null reference assignment. [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Utils/PredictStatusAlertComparer.cs(9,17): warning CS8767: Nullability of reference types in type of parameter 'x' of 'bool PredictStatusAlertComparer.Equals(PredictStatusAlert x, PredictStatusAlert y)' doesn't match implicitly implemented member 'bool IEqualityComparer<PredictStatusAlert>.Equals(PredictStatusAlert? x, PredictStatusAlert? y)' (possibly because of nullability attributes). [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Utils/PredictStatusAlertComparer.cs(9,17): warning CS8767: Nullability of reference types in type of parameter 'y' of 'bool PredictStatusAlertComparer.Equals(PredictStatusAlert x, PredictStatusAlert y)' doesn't match implicitly implemented member 'bool IEqualityComparer<PredictStatusAlert>.Equals(PredictStatusAlert? x, PredictStatusAlert? y)' (possibly because of nullability attributes). [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Utils/MonitorStatusAlertComparer.cs(6,17): warning CS8767: Nullability of reference types in type of parameter 'x' of 'bool MonitorStatusAlertComparer.Equals(MonitorStatusAlert x, MonitorStatusAlert y)' doesn't match implicitly implemented member 'bool IEqualityComparer<MonitorStatusAlert>.Equals(MonitorStatusAlert? x, MonitorStatusAlert? y)' (possibly because of nullability attributes). [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Utils/MonitorStatusAlertComparer.cs(6,17): warning CS8767: Nullability of reference types in type of parameter 'y' of 'bool MonitorStatusAlertComparer.Equals(MonitorStatusAlert x, MonitorStatusAlert y)' doesn't match implicitly implemented member 'bool IEqualityComparer<MonitorStatusAlert>.Equals(MonitorStatusAlert? x, MonitorStatusAlert? y)' (possibly because of nullability attributes). [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Objects/TestUser.cs(11,16): warning CS8618: Non-nullable property 'Email' must contain a non-null value when exiting constructor. Consider declaring the property as nullable. [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Utils/JsonUtils.cs(45,36): warning CS8600: Converting null literal or possible null value to non-nullable type. [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Utils/JsonUtils.cs(46,36): warning CS8600: Converting null literal or possible null value to non-nullable type. [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Utils/JsonUtils.cs(47,32): warning CS8619: Nullability of reference types in value of type '(string? e, string? n)' doesn't match target type '(string e, string n)?'. [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Objects/DTOs/MonitorPingInfoView.cs(25,12): warning CS8618: Non-nullable event 'OnShowPopupRequested' must contain a non-null value when exiting constructor. Consider declaring the event as nullable. [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Utils/JsonUtils.cs(175,53): warning CS8600: Converting null literal or possible null value to non-nullable type. [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Utils/JsonUtils.cs(183,39): warning CS8600: Converting null literal or possible null value to non-nullable type. [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Utils/JsonUtils.cs(183,36): warning CS8600: Converting null literal or possible null value to non-nullable type. [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Utils/JsonUtils.cs(183,36): warning CS8603: Possible null reference return. [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Utils/JsonUtils.cs(199,62): warning CS8604: Possible null reference argument for parameter 's' in 'DateTime DateTime.Parse(string s, IFormatProvider? provider, DateTimeStyles styles)'. [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Objects/DTOs/MonitorPingInfoView.cs(108,20): warning CS0219: The variable 'outerCircleRadius' is assigned but its value is never used [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Objects/DTOs/MonitorPingInfoView.cs(109,20): warning CS0219: The variable 'indicatorDiameter' is assigned but its value is never used [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Utils/Helpers/APIHelper.cs(25,40): warning CS8600: Converting null literal or possible null value to non-nullable type. [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Utils/Helpers/APIHelper.cs(35,34): warning CS8601: Possible null reference assignment. [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Utils/Helpers/APIHelper.cs(46,20): warning CS8619: Nullability of reference types in value of type 'TResultObj<T>' doesn't match target type 'TResultObj<T?>'. [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Objects/FunctionCallData.cs(4,19): warning CS8618: Non-nullable property 'function' must contain a non-null value when exiting constructor. Consider declaring the property as nullable. [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Objects/FunctionCallData.cs(5,19): warning CS8618: Non-nullable property 'name' must contain a non-null value when exiting constructor. Consider declaring the property as nullable. [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Objects/FunctionCallData.cs(6,39): warning CS8618: Non-nullable property 'arguments' must contain a non-null value when exiting constructor. Consider declaring the property as nullable. [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Objects/FunctionCallData.cs(7,39): warning CS8618: Non-nullable property 'parameters' must contain a non-null value when exiting constructor. Consider declaring the property as nullable. [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Objects/Repository/RabbitRepo.cs(58,16): warning CS8618: Non-nullable field '_logger' must contain a non-null value when exiting constructor. Consider declaring the field as nullable. [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Objects/Repository/RabbitRepo.cs(58,16): warning CS8618: Non-nullable field '_factory' must contain a non-null value when exiting constructor. Consider declaring the field as nullable. [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Objects/Repository/RabbitRepo.cs(58,16): warning CS8618: Non-nullable field '_netConfig' must contain a non-null value when exiting constructor. Consider declaring the field as nullable. [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Objects/Repository/RabbitRepo.cs(58,16): warning CS8618: Non-nullable field '_systemUrl' must contain a non-null value when exiting constructor. Consider declaring the field as nullable. [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Objects/Repository/RabbitRepo.cs(89,17): warning CS4014: Because this call is not awaited, execution of the current method continues before the call is completed. Consider applying the 'await' operator to the result of the call. [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Objects/Repository/RabbitRepo.cs(80,16): warning CS8618: Non-nullable field '_logger' must contain a non-null value when exiting constructor. Consider declaring the field as nullable. [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Objects/Repository/RabbitRepo.cs(80,16): warning CS8618: Non-nullable field '_factory' must contain a non-null value when exiting constructor. Consider declaring the field as nullable. [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Objects/Repository/RabbitRepo.cs(80,16): warning CS8618: Non-nullable field '_netConfig' must contain a non-null value when exiting constructor. Consider declaring the field as nullable. [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Objects/Repository/RabbitRepo.cs(80,16): warning CS8618: Non-nullable field '_systemUrl' must contain a non-null value when exiting constructor. Consider declaring the field as nullable. [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Objects/ServiceMessage/LLMServiceObj.cs(6,16): warning CS8618: Non-nullable field 'requestSessionId' must contain a non-null value when exiting constructor. Consider declaring the field as nullable. [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Objects/ServiceMessage/LLMServiceObj.cs(6,16): warning CS8618: Non-nullable field 'sessionId' must contain a non-null value when exiting constructor. Consider declaring the field as nullable. [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Objects/ServiceMessage/LLMServiceObj.cs(6,16): warning CS8618: Non-nullable field 'userInput' must contain a non-null value when exiting constructor. Consider declaring the field as nullable. [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Objects/ServiceMessage/LLMServiceObj.cs(6,16): warning CS8618: Non-nullable field 'jsonFunction' must contain a non-null value when exiting constructor. Consider declaring the field as nullable. [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Objects/ServiceMessage/LLMServiceObj.cs(6,16): warning CS8618: Non-nullable field 'llmMessage' must contain a non-null value when exiting constructor. Consider declaring the field as nullable. [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Objects/ServiceMessage/LLMServiceObj.cs(6,16): warning CS8618: Non-nullable field 'resultMessage' must contain a non-null value when exiting constructor. Consider declaring the field as nullable. [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Objects/ServiceMessage/LLMServiceObj.cs(6,16): warning CS8618: Non-nullable field 'functionCallData' must contain a non-null value when exiting constructor. Consider declaring the field as nullable. [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Objects/Repository/RabbitRepo.cs(105,38): warning CS1998: This async method lacks 'await' operators and will run synchronously. Consider using the 'await' operator to await non-blocking API calls, or 'await Task.Run(...)' to do CPU-bound work on a background thread. [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Objects/Repository/ProcessorStateRabbitListner.cs(39,13): warning CS4014: Because this call is not awaited, execution of the current method continues before the call is completed. Consider applying the 'await' operator to the result of the call. [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Objects/Repository/RabbitListenerBase.cs(31,16): warning CS8618: Non-nullable field '_instanceName' must contain a non-null value when exiting constructor. Consider declaring the field as nullable. [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Objects/Repository/RabbitListenerBase.cs(31,16): warning CS8618: Non-nullable field '_factory' must contain a non-null value when exiting constructor. Consider declaring the field as nullable. [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Objects/Repository/RabbitListenerBase.cs(41,27): warning CS1998: This async method lacks 'await' operators and will run synchronously. Consider using the 'await' operator to await non-blocking API calls, or 'await Task.Run(...)' to do CPU-bound work on a background thread. [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Objects/Repository/RabbitRepo.cs(212,17): warning CS4014: Because this call is not awaited, execution of the current method continues before the call is completed. Consider applying the 'await' operator to the result of the call. [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Objects/Repository/RabbitListenerBase.cs(179,13): warning CS4014: Because this call is not awaited, execution of the current method continues before the call is completed. Consider applying the 'await' operator to the result of the call. [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Objects/Repository/RabbitRepo.cs(330,30): warning CS0168: The variable 'ex' is declared but never used [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Objects/Repository/RabbitRepo.cs(376,30): warning CS0168: The variable 'ex' is declared but never used [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Objects/Repository/RabbitRepo.cs(395,30): warning CS0168: The variable 'ex' is declared but never used [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Objects/Repository/RabbitRepo.cs(451,30): warning CS0168: The variable 'ex' is declared but never used [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Objects/PredictStatus.cs(61,17): warning CS0169: The field 'PredictStatus._downCount' is never used [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Objects/PredictStatus.cs(59,19): warning CS0169: The field 'PredictStatus._isUp' is never used [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Objects/Repository/RabbitRepo.cs(41,22): warning CS0414: The field 'RabbitRepo._isRunning' is assigned but its value is never used [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Utils/Helpers/SystemParamsHelper.cs(95,39): warning IL3050: Using member 'Microsoft.Extensions.Configuration.ConfigurationBinder.Get<T>(IConfiguration)' which has 'RequiresDynamicCodeAttribute' can break functionality when AOT compiling. Binding strongly typed objects to configuration values requires generating dynamic code at runtime, for example instantiating generic types. [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Utils/Helpers/SystemParamsHelper.cs(125,33): warning IL3050: Using member 'Microsoft.Extensions.Configuration.ConfigurationBinder.Get<T>(IConfiguration)' which has 'RequiresDynamicCodeAttribute' can break functionality when AOT compiling. Binding strongly typed objects to configuration values requires generating dynamic code at runtime, for example instantiating generic types. [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Utils/Helpers/SystemParamsHelper.cs(38,23): warning CA1416: This call site is reachable on all platforms. 'WindowsBuiltInRole.Administrator' is only supported on: 'windows'. (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1416) [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Utils/Helpers/SystemParamsHelper.cs(37,57): warning CA1416: This call site is reachable on all platforms. 'WindowsPrincipal' is only supported on: 'windows'. (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1416) [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Utils/Helpers/SystemParamsHelper.cs(37,57): warning CA1416: This call site is reachable on all platforms. 'WindowsPrincipal.IsInRole(WindowsBuiltInRole)' is only supported on: 'windows'. (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1416) [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitor/Utils/Helpers/SystemParamsHelper.cs(37,78): warning CA1416: This call site is reachable on all platforms. 'WindowsIdentity.GetCurrent()' is only supported on: 'windows'. (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1416) [/home/mahadeva/code/NetworkMonitor/NetworkMonitor.csproj]
+/home/mahadeva/code/NetworkMonitorData/Data/PingInfoHelper.cs(25,29): warning CS8619: Nullability of reference types in value of type 'Dictionary<ushort, string?>' doesn't match target type 'Dictionary<ushort, string>'. [/home/mahadeva/code/NetworkMonitorData/NetworkMonitorData.csproj]
+/home/mahadeva/code/NetworkMonitorData/Data/PingInfoHelper.cs(58,45): warning CS8601: Possible null reference assignment. [/home/mahadeva/code/NetworkMonitorData/NetworkMonitorData.csproj]
+/home/mahadeva/code/NetworkMonitorData/Data/PingInfoHelper.cs(59,38): warning CS8604: Possible null reference argument for parameter 'key' in 'ushort Dictionary<string, ushort>.this[string key]'. [/home/mahadeva/code/NetworkMonitorData/NetworkMonitorData.csproj]
+/home/mahadeva/code/NetworkMonitorData/Services/ProcessorBrokerService.cs(82,38): warning CS1998: This async method lacks 'await' operators and will run synchronously. Consider using the 'await' operator to await non-blocking API calls, or 'await Task.Run(...)' to do CPU-bound work on a background thread. [/home/mahadeva/code/NetworkMonitorData/NetworkMonitorData.csproj]
+/home/mahadeva/code/NetworkMonitorData/Services/RabbitListener.cs(440,17): warning CS4014: Because this call is not awaited, execution of the current method continues before the call is completed. Consider applying the 'await' operator to the result of the call. [/home/mahadeva/code/NetworkMonitorData/NetworkMonitorData.csproj]
+/home/mahadeva/code/NetworkMonitorLLM/Services/ProcessWrapper.cs(74,16): warning CS8619: Nullability of reference types in value of type 'Task<string?>' doesn't match target type 'Task<string>'. [/home/mahadeva/code/NetworkMonitorLLM/NetworkMonitorLLM.csproj]
+/home/mahadeva/code/NetworkMonitorLLM/Services/TokenBroadcaster.cs(22,12): warning CS8618: Non-nullable event 'LineReceived' must contain a non-null value when exiting constructor. Consider declaring the event as nullable. [/home/mahadeva/code/NetworkMonitorLLM/NetworkMonitorLLM.csproj]
+/home/mahadeva/code/NetworkMonitorLLM/Services/ProcessWrapper.cs(37,16): warning CS8619: Nullability of reference types in value of type 'Task<string?>' doesn't match target type 'Task<string>'. [/home/mahadeva/code/NetworkMonitorLLM/NetworkMonitorLLM.csproj]
+/home/mahadeva/code/NetworkMonitorLLM/Services/LLMService.cs(167,49): warning CS8600: Converting null literal or possible null value to non-nullable type. [/home/mahadeva/code/NetworkMonitorLLM/NetworkMonitorLLM.csproj]
+/home/mahadeva/code/NetworkMonitorLLM/Services/LLMService.cs(170,26): warning CS0168: The variable 'ex' is declared but never used [/home/mahadeva/code/NetworkMonitorLLM/NetworkMonitorLLM.csproj]
+/home/mahadeva/code/NetworkMonitorLLM/Services/LLMService.cs(186,26): warning CS0168: The variable 'ex' is declared but never used [/home/mahadeva/code/NetworkMonitorLLM/NetworkMonitorLLM.csproj]
+/home/mahadeva/code/NetworkMonitorLLM/Services/LLMProcessorRunner.cs(121,59): warning CS8600: Converting null literal or possible null value to non-nullable type. [/home/mahadeva/code/NetworkMonitorLLM/NetworkMonitorLLM.csproj]
+/home/mahadeva/code/NetworkMonitorLLM/Services/LLMService.cs(91,71): warning CS8604: Possible null reference argument for parameter 'key' in 'bool ConcurrentDictionary<string, Session>.TryGetValue(string key, out Session value)'. [/home/mahadeva/code/NetworkMonitorLLM/NetworkMonitorLLM.csproj]
+/home/mahadeva/code/NetworkMonitorLLM/Services/TokenBroadcaster.cs(44,13): warning CS0219: The variable 'emptyLineCount' is assigned but its value is never used [/home/mahadeva/code/NetworkMonitorLLM/NetworkMonitorLLM.csproj]
+/home/mahadeva/code/NetworkMonitorLLM/Tests/LLMServiceTest.cs(82,21): warning CS8603: Possible null reference return. [/home/mahadeva/code/NetworkMonitorLLM/NetworkMonitorLLM.csproj]
+/home/mahadeva/code/NetworkMonitorLLM/Tests/LLMServiceTest.cs(86,21): warning CS8603: Possible null reference return. [/home/mahadeva/code/NetworkMonitorLLM/NetworkMonitorLLM.csproj]
+/home/mahadeva/code/NetworkMonitorLLM/Tests/LLMServiceTest.cs(79,24): warning CS1998: This async method lacks 'await' operators and will run synchronously. Consider using the 'await' operator to await non-blocking API calls, or 'await Task.Run(...)' to do CPU-bound work on a background thread. [/home/mahadeva/code/NetworkMonitorLLM/NetworkMonitorLLM.csproj]
+/home/mahadeva/code/NetworkMonitorLLM/Tests/LLMServiceTest.cs(76,13): warning CS0219: The variable 'shouldContinue' is assigned but its value is never used [/home/mahadeva/code/NetworkMonitorLLM/NetworkMonitorLLM.csproj]
+/home/mahadeva/code/NetworkMonitorLLM/Services/TokenBroadcaster.cs(18,45): warning CS0067: The event 'TokenBroadcaster.LineReceived' is never used [/home/mahadeva/code/NetworkMonitorLLM/NetworkMonitorLLM.csproj]
+/usr/share/dotnet/sdk/8.0.203/Containers/build/Microsoft.NET.Build.Containers.targets(194,5): warning : Microsoft.NET.Build.Containers NuGet package is explicitly referenced. Consider removing the package reference to Microsoft.NET.Build.Containers as it is now part of .NET SDK. [/home/mahadeva/code/NetworkMonitorLLM/NetworkMonitorLLM.csproj]
+2024-04-06 01:45:50 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
+      Public IP address of this service is 213.199.46.193
+2024-04-06 01:45:50 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
+       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.freenetworkmonitor.click .IPAdress = 
+2024-04-06 01:45:50 info: NetworkMonitor.Objects.Repository.RabbitRepo[0]
+       RabbitRepo : ConnectAndSetUp :  Success : RabbitRepo Connected to RabbitMQ serverdevrabbitmq:5672
+2024-04-06 01:45:50 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
+      Public IP address of this service is 213.199.46.193
+2024-04-06 01:45:50 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
+       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.freenetworkmonitor.click .IPAdress = 
+2024-04-06 01:45:50 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+       Rabbit Setup :  Success : Connected to devrabbitmq:5672 . Setup RabbitListener messages were :  RabbitListener DeclareQueues :  Srv-LLMService-llmStartSession  Srv-LLMService-llmUserInput  Srv-LLMService-llmRemoveSession  : Success : Declared all queues  Success : Declared all consumers  RabbitRepo BindChannelToConsumer :  Success :  bound all consumers to queues 
+2024-04-06 01:45:50 info: Microsoft.Hosting.Lifetime[0]
+      Application started. Press Ctrl+C to shut down.
+2024-04-06 01:45:50 info: Microsoft.Hosting.Lifetime[0]
+      Hosting environment: Production
+2024-04-06 01:45:50 info: Microsoft.Hosting.Lifetime[0]
+      Content root path: /home/mahadeva/code/NetworkMonitorLLM
+2024-04-06 01:47:32 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       LLM Service : Start Process for sessionsId d36ed554-e5c7-49c8-bb39-ff36da4c6165
+Log start
+main: build = 2431 (4755afd1)
+main: built with cc (Debian 12.2.0-14) 12.2.0 for x86_64-linux-gnu
+main: seed  = 1712360852
+llama_model_loader: loaded meta data with 23 key-value pairs and 291 tensors from /home/mahadeva/code/models/dolphin-2.6-mistral-7b-dpo-laser-function-calling-Q4_K_M.gguf (version GGUF V3 (latest))
+llama_model_loader: Dumping metadata keys/values. Note: KV overrides do not apply in this output.
+llama_model_loader: - kv   0:                       general.architecture str              = llama
+llama_model_loader: - kv   1:                               general.name str              = .
+llama_model_loader: - kv   2:                       llama.context_length u32              = 32768
+llama_model_loader: - kv   3:                     llama.embedding_length u32              = 4096
+llama_model_loader: - kv   4:                          llama.block_count u32              = 32
+llama_model_loader: - kv   5:                  llama.feed_forward_length u32              = 14336
+llama_model_loader: - kv   6:                 llama.rope.dimension_count u32              = 128
+llama_model_loader: - kv   7:                 llama.attention.head_count u32              = 32
+llama_model_loader: - kv   8:              llama.attention.head_count_kv u32              = 8
+llama_model_loader: - kv   9:     llama.attention.layer_norm_rms_epsilon f32              = 0.000010
+llama_model_loader: - kv  10:                       llama.rope.freq_base f32              = 10000.000000
+llama_model_loader: - kv  11:                          general.file_type u32              = 15
+llama_model_loader: - kv  12:                       tokenizer.ggml.model str              = llama
+llama_model_loader: - kv  13:                      tokenizer.ggml.tokens arr[str,32001]   = ["<unk>", "<s>", "</s>", "<0x00>", "<...
+llama_model_loader: - kv  14:                      tokenizer.ggml.scores arr[f32,32001]   = [0.000000, 0.000000, 0.000000, 0.0000...
+llama_model_loader: - kv  15:                  tokenizer.ggml.token_type arr[i32,32001]   = [2, 3, 3, 6, 6, 6, 6, 6, 6, 6, 6, 6, ...
+llama_model_loader: - kv  16:                tokenizer.ggml.bos_token_id u32              = 1
+llama_model_loader: - kv  17:                tokenizer.ggml.eos_token_id u32              = 2
+llama_model_loader: - kv  18:            tokenizer.ggml.unknown_token_id u32              = 0
+llama_model_loader: - kv  19:            tokenizer.ggml.padding_token_id u32              = 2
+llama_model_loader: - kv  20:               tokenizer.ggml.add_bos_token bool             = true
+llama_model_loader: - kv  21:               tokenizer.ggml.add_eos_token bool             = false
+llama_model_loader: - kv  22:               general.quantization_version u32              = 2
+llama_model_loader: - type  f32:   65 tensors
+llama_model_loader: - type q4_K:  193 tensors
+llama_model_loader: - type q6_K:   33 tensors
+llm_load_vocab: special tokens definition check successful ( 260/32001 ).
+llm_load_print_meta: format           = GGUF V3 (latest)
+llm_load_print_meta: arch             = llama
+llm_load_print_meta: vocab type       = SPM
+llm_load_print_meta: n_vocab          = 32001
+llm_load_print_meta: n_merges         = 0
+llm_load_print_meta: n_ctx_train      = 32768
+llm_load_print_meta: n_embd           = 4096
+llm_load_print_meta: n_head           = 32
+llm_load_print_meta: n_head_kv        = 8
+llm_load_print_meta: n_layer          = 32
+llm_load_print_meta: n_rot            = 128
+llm_load_print_meta: n_embd_head_k    = 128
+llm_load_print_meta: n_embd_head_v    = 128
+llm_load_print_meta: n_gqa            = 4
+llm_load_print_meta: n_embd_k_gqa     = 1024
+llm_load_print_meta: n_embd_v_gqa     = 1024
+llm_load_print_meta: f_norm_eps       = 0.0e+00
+llm_load_print_meta: f_norm_rms_eps   = 1.0e-05
+llm_load_print_meta: f_clamp_kqv      = 0.0e+00
+llm_load_print_meta: f_max_alibi_bias = 0.0e+00
+llm_load_print_meta: n_ff             = 14336
+llm_load_print_meta: n_expert         = 0
+llm_load_print_meta: n_expert_used    = 0
+llm_load_print_meta: causal attn      = 1
+llm_load_print_meta: pooling type     = 0
+llm_load_print_meta: rope type        = 0
+llm_load_print_meta: rope scaling     = linear
+llm_load_print_meta: freq_base_train  = 10000.0
+llm_load_print_meta: freq_scale_train = 1
+llm_load_print_meta: n_yarn_orig_ctx  = 32768
+llm_load_print_meta: rope_finetuned   = unknown
+llm_load_print_meta: ssm_d_conv       = 0
+llm_load_print_meta: ssm_d_inner      = 0
+llm_load_print_meta: ssm_d_state      = 0
+llm_load_print_meta: ssm_dt_rank      = 0
+llm_load_print_meta: model type       = 7B
+llm_load_print_meta: model ftype      = Q4_K - Medium
+llm_load_print_meta: model params     = 7.24 B
+llm_load_print_meta: model size       = 4.07 GiB (4.83 BPW) 
+llm_load_print_meta: general.name     = .
+llm_load_print_meta: BOS token        = 1 '<s>'
+llm_load_print_meta: EOS token        = 2 '</s>'
+llm_load_print_meta: UNK token        = 0 '<unk>'
+llm_load_print_meta: PAD token        = 2 '</s>'
+llm_load_print_meta: LF token         = 13 '<0x0A>'
+llm_load_tensors: ggml ctx size =    0.11 MiB
+llm_load_tensors:        CPU buffer size =  4165.37 MiB
+................................................................................................
+llama_new_context_with_model: n_ctx      = 6000
+llama_new_context_with_model: n_batch    = 2048
+llama_new_context_with_model: n_ubatch   = 512
+llama_new_context_with_model: freq_base  = 10000.0
+llama_new_context_with_model: freq_scale = 1
+llama_kv_cache_init:        CPU KV buffer size =   750.00 MiB
+llama_new_context_with_model: KV self size  =  750.00 MiB, K (f16):  375.00 MiB, V (f16):  375.00 MiB
+llama_new_context_with_model:        CPU  output buffer size =   250.01 MiB
+llama_new_context_with_model:        CPU compute buffer size =   418.72 MiB
+llama_new_context_with_model: graph splits: 1
+
+system_info: n_threads = 4 / 8 | AVX = 1 | AVX_VNNI = 0 | AVX2 = 1 | AVX512 = 0 | AVX512_VBMI = 0 | AVX512_VNNI = 0 | FMA = 1 | NEON = 0 | ARM_FMA = 0 | F16C = 1 | FP16_VA = 0 | WASM_SIMD = 0 | BLAS = 1 | SSE3 = 1 | SSSE3 = 1 | VSX = 0 | MATMUL_INT8 = 0 | 
+main: attempting to load saved session from '/home/mahadeva/context.gguf'
+main: loaded a session with prompt size of 2545 tokens
+main: session file has exact match for prompt!
+main: interactive mode on.
+Reverse prompt: '### Instruction:
+
+'
+sampling: 
+	repeat_last_n = 64, repeat_penalty = 1.100, frequency_penalty = 0.000, presence_penalty = 0.000
+	top_k = 40, tfs_z = 1.000, top_p = 0.950, min_p = 0.050, typical_p = 1.000, temp = 0.000
+	mirostat = 0, mirostat_lr = 0.100, mirostat_ent = 5.000
+sampling order: 
+CFG -> Penalties -> top_k -> tfs_z -> typical_p -> top_p -> min_p -> temperature 
+generate: n_ctx = 6000, n_batch = 2048, n_predict = 6000, n_keep = 2545
+
+
+== Running in interactive mode. ==
+ - Press Ctrl+C to interject at any time.
+ - Press Return to return control to LLaMa.
+ - To return control without starting a new line, end your input with '/'.
+ - If you want to submit another line, end your input with '\'.
+
+2024-04-06 01:48:03 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       LLMService Process Started 
+2024-04-06 01:48:03 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+      LLM process started for session d36ed554-e5c7-49c8-bb39-ff36da4c6165
+2024-04-06 01:48:03 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+       Success : LLMService Started Session .
+2024-04-06 01:55:19 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       LLM Service : Remove Process for sessionsId d36ed554-e5c7-49c8-bb39-ff36da4c6165
+2024-04-06 01:55:19 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+      LLM process removed for session d36ed554-e5c7-49c8-bb39-ff36da4c6165
+2024-04-06 01:55:19 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+       Success : LLMService Removed Session .
+2024-04-06 01:55:20 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       LLM Service : Start Process for sessionsId ca37f3b2-7f4d-4213-bdac-c8e06ec176c6
+Log start
+main: build = 2431 (4755afd1)
+main: built with cc (Debian 12.2.0-14) 12.2.0 for x86_64-linux-gnu
+main: seed  = 1712361320
+llama_model_loader: loaded meta data with 23 key-value pairs and 291 tensors from /home/mahadeva/code/models/dolphin-2.6-mistral-7b-dpo-laser-function-calling-Q4_K_M.gguf (version GGUF V3 (latest))
+llama_model_loader: Dumping metadata keys/values. Note: KV overrides do not apply in this output.
+llama_model_loader: - kv   0:                       general.architecture str              = llama
+llama_model_loader: - kv   1:                               general.name str              = .
+llama_model_loader: - kv   2:                       llama.context_length u32              = 32768
+llama_model_loader: - kv   3:                     llama.embedding_length u32              = 4096
+llama_model_loader: - kv   4:                          llama.block_count u32              = 32
+llama_model_loader: - kv   5:                  llama.feed_forward_length u32              = 14336
+llama_model_loader: - kv   6:                 llama.rope.dimension_count u32              = 128
+llama_model_loader: - kv   7:                 llama.attention.head_count u32              = 32
+llama_model_loader: - kv   8:              llama.attention.head_count_kv u32              = 8
+llama_model_loader: - kv   9:     llama.attention.layer_norm_rms_epsilon f32              = 0.000010
+llama_model_loader: - kv  10:                       llama.rope.freq_base f32              = 10000.000000
+llama_model_loader: - kv  11:                          general.file_type u32              = 15
+llama_model_loader: - kv  12:                       tokenizer.ggml.model str              = llama
+llama_model_loader: - kv  13:                      tokenizer.ggml.tokens arr[str,32001]   = ["<unk>", "<s>", "</s>", "<0x00>", "<...
+llama_model_loader: - kv  14:                      tokenizer.ggml.scores arr[f32,32001]   = [0.000000, 0.000000, 0.000000, 0.0000...
+llama_model_loader: - kv  15:                  tokenizer.ggml.token_type arr[i32,32001]   = [2, 3, 3, 6, 6, 6, 6, 6, 6, 6, 6, 6, ...
+llama_model_loader: - kv  16:                tokenizer.ggml.bos_token_id u32              = 1
+llama_model_loader: - kv  17:                tokenizer.ggml.eos_token_id u32              = 2
+llama_model_loader: - kv  18:            tokenizer.ggml.unknown_token_id u32              = 0
+llama_model_loader: - kv  19:            tokenizer.ggml.padding_token_id u32              = 2
+llama_model_loader: - kv  20:               tokenizer.ggml.add_bos_token bool             = true
+llama_model_loader: - kv  21:               tokenizer.ggml.add_eos_token bool             = false
+llama_model_loader: - kv  22:               general.quantization_version u32              = 2
+llama_model_loader: - type  f32:   65 tensors
+llama_model_loader: - type q4_K:  193 tensors
+llama_model_loader: - type q6_K:   33 tensors
+llm_load_vocab: special tokens definition check successful ( 260/32001 ).
+llm_load_print_meta: format           = GGUF V3 (latest)
+llm_load_print_meta: arch             = llama
+llm_load_print_meta: vocab type       = SPM
+llm_load_print_meta: n_vocab          = 32001
+llm_load_print_meta: n_merges         = 0
+llm_load_print_meta: n_ctx_train      = 32768
+llm_load_print_meta: n_embd           = 4096
+llm_load_print_meta: n_head           = 32
+llm_load_print_meta: n_head_kv        = 8
+llm_load_print_meta: n_layer          = 32
+llm_load_print_meta: n_rot            = 128
+llm_load_print_meta: n_embd_head_k    = 128
+llm_load_print_meta: n_embd_head_v    = 128
+llm_load_print_meta: n_gqa            = 4
+llm_load_print_meta: n_embd_k_gqa     = 1024
+llm_load_print_meta: n_embd_v_gqa     = 1024
+llm_load_print_meta: f_norm_eps       = 0.0e+00
+llm_load_print_meta: f_norm_rms_eps   = 1.0e-05
+llm_load_print_meta: f_clamp_kqv      = 0.0e+00
+llm_load_print_meta: f_max_alibi_bias = 0.0e+00
+llm_load_print_meta: n_ff             = 14336
+llm_load_print_meta: n_expert         = 0
+llm_load_print_meta: n_expert_used    = 0
+llm_load_print_meta: causal attn      = 1
+llm_load_print_meta: pooling type     = 0
+llm_load_print_meta: rope type        = 0
+llm_load_print_meta: rope scaling     = linear
+llm_load_print_meta: freq_base_train  = 10000.0
+llm_load_print_meta: freq_scale_train = 1
+llm_load_print_meta: n_yarn_orig_ctx  = 32768
+llm_load_print_meta: rope_finetuned   = unknown
+llm_load_print_meta: ssm_d_conv       = 0
+llm_load_print_meta: ssm_d_inner      = 0
+llm_load_print_meta: ssm_d_state      = 0
+llm_load_print_meta: ssm_dt_rank      = 0
+llm_load_print_meta: model type       = 7B
+llm_load_print_meta: model ftype      = Q4_K - Medium
+llm_load_print_meta: model params     = 7.24 B
+llm_load_print_meta: model size       = 4.07 GiB (4.83 BPW) 
+llm_load_print_meta: general.name     = .
+llm_load_print_meta: BOS token        = 1 '<s>'
+llm_load_print_meta: EOS token        = 2 '</s>'
+llm_load_print_meta: UNK token        = 0 '<unk>'
+llm_load_print_meta: PAD token        = 2 '</s>'
+llm_load_print_meta: LF token         = 13 '<0x0A>'
+llm_load_tensors: ggml ctx size =    0.11 MiB
+llm_load_tensors:        CPU buffer size =  4165.37 MiB
+................................................................................................
+llama_new_context_with_model: n_ctx      = 6000
+llama_new_context_with_model: n_batch    = 2048
+llama_new_context_with_model: n_ubatch   = 512
+llama_new_context_with_model: freq_base  = 10000.0
+llama_new_context_with_model: freq_scale = 1
+llama_kv_cache_init:        CPU KV buffer size =   750.00 MiB
+llama_new_context_with_model: KV self size  =  750.00 MiB, K (f16):  375.00 MiB, V (f16):  375.00 MiB
+llama_new_context_with_model:        CPU  output buffer size =   250.01 MiB
+llama_new_context_with_model:        CPU compute buffer size =   418.72 MiB
+llama_new_context_with_model: graph splits: 1
+
+system_info: n_threads = 4 / 8 | AVX = 1 | AVX_VNNI = 0 | AVX2 = 1 | AVX512 = 0 | AVX512_VBMI = 0 | AVX512_VNNI = 0 | FMA = 1 | NEON = 0 | ARM_FMA = 0 | F16C = 1 | FP16_VA = 0 | WASM_SIMD = 0 | BLAS = 1 | SSE3 = 1 | SSSE3 = 1 | VSX = 0 | MATMUL_INT8 = 0 | 
+main: attempting to load saved session from '/home/mahadeva/context.gguf'
+main: loaded a session with prompt size of 2545 tokens
+main: session file has exact match for prompt!
+main: interactive mode on.
+Reverse prompt: '### Instruction:
+
+'
+sampling: 
+	repeat_last_n = 64, repeat_penalty = 1.100, frequency_penalty = 0.000, presence_penalty = 0.000
+	top_k = 40, tfs_z = 1.000, top_p = 0.950, min_p = 0.050, typical_p = 1.000, temp = 0.000
+	mirostat = 0, mirostat_lr = 0.100, mirostat_ent = 5.000
+sampling order: 
+CFG -> Penalties -> top_k -> tfs_z -> typical_p -> top_p -> min_p -> temperature 
+generate: n_ctx = 6000, n_batch = 2048, n_predict = 6000, n_keep = 2545
+
+
+== Running in interactive mode. ==
+ - Press Ctrl+C to interject at any time.
+ - Press Return to return control to LLaMa.
+ - To return control without starting a new line, end your input with '/'.
+ - If you want to submit another line, end your input with '\'.
+
+2024-04-06 01:55:24 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       LLMService Process Started 
+2024-04-06 01:55:24 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+      LLM process started for session ca37f3b2-7f4d-4213-bdac-c8e06ec176c6
+2024-04-06 01:55:24 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+       Success : LLMService Started Session .
+2024-04-06 01:55:34 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+       Start User Input what hosts am I monitoring
+2024-04-06 01:55:34 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+        LLMService : SendInputAndGetResponse() :
+2024-04-06 01:55:34 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       ProcessLLMOutput(user input) -> what hosts am I monitoring
+2024-04-06 01:55:34 warn: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Start BroadcastAsyc() 
+2024-04-06 01:55:40 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+      sessionID=ca37f3b2-7f4d-4213-bdac-c8e06ec176c6 line is =>what hosts am I monitoring
+       {"name": "GetHostList", "parameters": {}}
+      
+      <=
+2024-04-06 01:55:40 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Cancel due to output end detected 
+2024-04-06 01:55:40 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       --> Finshed LLM Interaction 
+2024-04-06 01:55:40 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+      MessageAPI : UserInput :  Processed UserInput :what hosts am I monitoring
+2024-04-06 01:57:54 info: Microsoft.Hosting.Lifetime[0]
+      Application is shutting down...
