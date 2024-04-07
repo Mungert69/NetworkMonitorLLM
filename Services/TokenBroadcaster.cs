@@ -14,13 +14,15 @@ public class TokenBroadcaster
 {
     private readonly ILLMResponseProcessor _responseProcessor;
     private readonly ILogger _logger;
+    private int _newLineEndCount;
     public event Func<object, string, Task> LineReceived;
     private CancellationTokenSource _cancellationTokenSource;
-    public TokenBroadcaster(ILLMResponseProcessor responseProcessor, ILogger logger)
+    public TokenBroadcaster(ILLMResponseProcessor responseProcessor, ILogger logger, int newLineEndCount)
     {
         _responseProcessor = responseProcessor;
         _logger = logger;
         _cancellationTokenSource = new CancellationTokenSource();
+        _newLineEndCount = newLineEndCount;
     }
     public async Task ReInit(string sessionId)
     {
@@ -34,8 +36,11 @@ public class TokenBroadcaster
         var llmOutFull = new StringBuilder();
         var tokenBuilder = new StringBuilder();
         var cancellationToken = _cancellationTokenSource.Token;
+        int newlineCounter = 0;
+        bool isNewline = false;
         while (!cancellationToken.IsCancellationRequested)
         {
+
             byte[] buffer = new byte[1];
             int charRead = await process.StandardOutput.ReadAsync(buffer, 0, buffer.Length);
             string textChunk = Encoding.UTF8.GetString(buffer, 0, charRead);
@@ -46,9 +51,19 @@ public class TokenBroadcaster
             {
                 string token = tokenBuilder.ToString();
                 token = token.Replace("/\b", "");
+                Console.WriteLine(token);
                 tokenBuilder.Clear();
                 var serviceObj = new LLMServiceObj { SessionId = sessionId, LlmMessage = token };
                 await _responseProcessor.ProcessLLMOutput(serviceObj);
+                if (isNewline && token == "> ")
+                {
+                    _logger.LogInformation($"sessionID={sessionId} line is =>{llmOutFull.ToString()}<=");
+                    await ProcessLine(llmOutFull.ToString(), sessionId, userInput, isFunctionCallResponse);
+                    //state = ResponseState.Completed;
+                    _logger.LogInformation(" Cancel due to output end detected ");
+                    _cancellationTokenSource.Cancel();
+                }
+                else isNewline = false;
             }
             if (IsLineComplete(lineBuilder))
             {
@@ -56,14 +71,8 @@ public class TokenBroadcaster
                 if (!line.Equals(userInput + "\n") && !line.Equals("> " + userInput + "\n"))
                 {
                     llmOutFull.Append(line);
-                    if (line == "\n" || line == "\n>")
-                    {
-                        _logger.LogInformation($"sessionID={sessionId} line is =>{llmOutFull.ToString()}<=");
-                        await ProcessLine(llmOutFull.ToString(), sessionId, userInput, isFunctionCallResponse);
-                        //state = ResponseState.Completed;
-                        _logger.LogInformation(" Cancel due to output end detected ");
-                        _cancellationTokenSource.Cancel();
-                    }
+                    if (line == "\n") isNewline = true;
+
                 }
                 else
                 {
@@ -136,7 +145,7 @@ public class TokenBroadcaster
         bool foundEnd = false;
         int startIndex = input.IndexOf('{');
         // If '{' is not found or is too far into the input, return the original input
-        if (startIndex == -1 )
+        if (startIndex == -1 || startIndex > 20)
         {
             return input;
         }
