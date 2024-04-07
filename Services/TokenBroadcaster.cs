@@ -32,6 +32,14 @@ public class TokenBroadcaster
     public async Task BroadcastAsync(ProcessWrapper process, string sessionId, string userInput, bool isFunctionCallResponse)
     {
         _logger.LogWarning(" Start BroadcastAsyc() ");
+        // trim up to / otherwise it won't match 
+        string copyUserInput = userInput;
+        int startIndex = userInput.IndexOf('/');
+        // If '{' is not found or is too far into the input, return the original input
+        if (startIndex != -1)
+        {
+            copyUserInput = userInput.Substring(0, startIndex);
+        }
         var lineBuilder = new StringBuilder();
         var llmOutFull = new StringBuilder();
         var tokenBuilder = new StringBuilder();
@@ -68,16 +76,15 @@ public class TokenBroadcaster
             if (IsLineComplete(lineBuilder))
             {
                 string line = lineBuilder.ToString();
-                if (!line.Equals(userInput + "\n") && !line.Equals("> " + userInput + "\n"))
-                {
-                    llmOutFull.Append(line);
-                    if (line == "\n") isNewline = true;
-
-                }
-                else
+                if (line.Equals(userInput + "\n") || line.StartsWith(copyUserInput))
                 {
                     var serviceObj = new LLMServiceObj { SessionId = sessionId, LlmMessage = "\nAssistant: " };
                     await _responseProcessor.ProcessLLMOutput(serviceObj);
+                }
+                else
+                {
+                    llmOutFull.Append(line);
+                    if (line == "\n") isNewline = true;
                 }
                 lineBuilder.Clear();
             }
