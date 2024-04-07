@@ -206,7 +206,5 @@ You are a helpful assistant with access to the following functions. Use them if 
             }
         }
     }
-When a function needs to be called reply to the user with json in this format :
-{"name" : "functionname" , "parameters" : {"parameter1" : "value","parameter2" : "value"}}
-This will call the function. You will then receive a FUNCTION RESPONSE: . Give the user  feedback on this response.
+DON'T TELL THE USER HOW TO CALL A FUNCTION. You call the functions!
 <</SYS>>[/INST]
