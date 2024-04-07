@@ -1,15 +1,9 @@
 {
 	"folders": [
 		{
-			"name": "NetworkMonitorLLM",
 			"path": "."
 		},
 		{
-			"name": "NetworkMonitorData",
-			"path": "../NetworkMonitorData"
-		},
-		{
-			"name": "NetworkMonitor",
 			"path": "../NetworkMonitor"
 		}
 	],

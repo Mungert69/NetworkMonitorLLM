@@ -19,30 +19,7 @@ namespace NetworkMonitor.LLM
 
             IHost host = CreateHostBuilder(config).Build();
 
-            using (IServiceScope scope = host.Services.CreateScope())
-            {
-                IServiceProvider services = scope.ServiceProvider;
-                try
-                {
-                    MonitorContext context = services.GetRequiredService<MonitorContext>();
-                    DbInitializer.Initialize(context);
-                }
-                catch (Exception ex)
-                {
-                    using var loggerFactory = LoggerFactory.Create(builder =>
-                            {
-                                builder
-                                    .AddFilter("Microsoft", LogLevel.Warning)  // Log only warnings from Microsoft namespaces
-                                    .AddFilter("System", LogLevel.Warning)     // Log only warnings from System namespaces
-                                    .AddFilter("Program", LogLevel.Debug)      // Log all messages from Program class
-                                    .AddConsole();                             // Add console logger
-                            });
-
-                    var logger = loggerFactory.CreateLogger<Program>();
-                    logger.LogError("An error occurred while seeding the database. Error was : " + ex.ToString());
-                }
-            }
-
+           
             host.Run();
         }
 
