@@ -1,11 +1,10 @@
 <s>[INST] <<SYS>>
 You are a helpful assistant with access to the following functions. Use them if required -
     {
-        "name": "AddHost",
+        "name": "add_host",
         "description": "Add a host to be monitored.",
         "required": [
-            "address",
-            "addUserEmail"
+            "address"
         ],
         "parameters": {
             "type": "object",
@@ -16,15 +15,15 @@ You are a helpful assistant with access to the following functions. Use them if 
                     "description": "The host address",
                     "nullable": true
                 },
-                "endPointType": {
+                "endpoint": {
                     "maxLength": 50,
                     "type": "string",
-                    "description": "The end point type. End point types are : quantum is a quantum safe encryption test, http (default port 443) is a website ping, https is a ssl certificate check, httphtml is a website html load, icmp is a host ping, dns is a dns lookup, smtp is an email server helo message confirmation and rawconnect is a low level raw socket connection",
+                    "description": "The endpoint type. Endpoint types are : quantum is a quantum safe encryption test, http is a website ping, https is a ssl certificate check, httphtml is a website html load, icmp is a host ping, dns is a dns lookup, smtp is an email server helo message confirmation and rawconnect is a low level raw socket connection",
                     "nullable": true
                 },
                 "port": {
                     "type": "integer",
-                    "description": "The port of the service being monitored. It will be zero if it is the standard port for the host end point type. Note the standard port for end point type http is 80 or 443 depending on the url of the host",
+                    "description": "The port of the service being monitored. It will be zero if it is the standard port for the host end point type. Note the standard port for end point type http 443",
                     "format": "int32"
                 },
                 "timeout": {
@@ -32,67 +31,64 @@ You are a helpful assistant with access to the following functions. Use them if 
                     "description": "The time to wait for a timeout in milliseconds",
                     "format": "int32"
                 },
-                "addUserEmail": {
+                "email": {
                     "maxLength": 255,
                     "type": "string",
-                    "description": "When the host is down alerts are sent to this email address. When adding hosts every host must have an email address assigned to it. The email address along a valid EditAuthKey identifies the user and allows them to edit hosts they add.",
+                    "description": "When the host is down alerts are sent to this email address. If as user is logged in their login email will be used. If they are not logged in then they must supply an email.",
                     "nullable": true
                 }
             }
         }
     }
     {
-        "name": "EditHost",
-        "description": "Edit a host's monitoring configuration. This function is used to update, not view, a hosts configuration.",
-        "required": [
-            "editAuthKey"
-        ],
+        "name": "edit_host",
+        "description": "Edit a host's monitoring configuration. This function is used to update a hosts configuration.",
         "parameters": {
             "type": "object",
             "properties": {
-                "editAuthKey": {
+                "auth_key": {
                     "type": "string",
-                    "description": "This is a string that is used to authenticate the Edit action for non authorised users. This key is returned when adding a host for the first time. It should be stored and sent with subsequent edit requests",
+                    "description": "This is a string that is used to authenticate the Edit action for a user who is not logged in. This key is returned when adding a host for the first time. It should be stored and sent with subsequent edit requests",
                     "nullable": true
                 },
-                "addUserEmail": {
+                "email": {
                     "type": "string",
-                    "description": "Users email address.",
+                    "description": "The users email address.",
                     "nullable": true
                 },
-                "monitorIPID": {
+                "id": {
                     "type": "integer",
-                    "description": "This is the host ID used for identifying the host. It is obtained when adding a host.",
+                    "description": "This is the host id used for identifying the host. It is obtained when adding a host.",
                     "format": "int32"
                 },
-                "setEnabled": {
+                "enabled": {
                     "type": "boolean",
-                    "description": "Is Host enabled",
+                    "description": "Is host enabled",
                     "nullable": true
                 },
-                "setAddress": {
+                "address": {
                     "type": "string",
                     "description": "Host address",
                     "nullable": true
                 },
-                "setEndPointType": {
+                "endpoint": {
                     "type": "string",
-                    "description": "The end point type. End point types are : quantum is a quantum safe encryption test, http (default port 443) is a website ping, https is a ssl certificate check, httphtml is a website html load, icmp is a host ping, dns is a dns lookup, smtp is an email server helo message confirmation and rawconnect is a low level raw socket connection",
+                    "description": "The endpoint type. Endpoint types are : quantum is a quantum safe encryption test, http is a website ping, https is a ssl certificate check, httphtml is a website html load, icmp is a host ping, dns is a dns lookup, smtp is an email server helo message confirmation and rawconnect is a low level raw socket connection",
                     "nullable": true
                 },
-                "setPort": {
+                "port": {
                     "type": "integer",
-                    "description": "Port of the service being monitored. It should be zero if it is the standard port for the host end point type.  Note the standard port for end point type http is 80 or 443 depending on the url of the host",
+                    "description": "Port of the service being monitored. It should be zero if it is the standard port for the host end point type.  Note the standard port for end point type http is 443",
                     "format": "int32",
                     "nullable": true
                 },
-                "setTimeout": {
+                "timeout": {
                     "type": "integer",
                     "description": "Time to wait for a timeout in milliseconds. If a timeout occurs the host is considered to be down",
                     "format": "int32",
                     "nullable": true
                 },
-                "setHidden": {
+                "hidden": {
                     "type": "boolean",
                     "description": "Is the host is hidden. Setting this to true effectively deletes the host from future monitoring",
                     "nullable": true
@@ -101,20 +97,20 @@ You are a helpful assistant with access to the following functions. Use them if 
         }
     }
     {
-        "name": "GetHostData",
+        "name": "get_host_data",
         "description": "Get monitoring status for a host. To get the current data, set dataSetId to zero. For historic data instead set dateStart and dateEnd to get data within that range. All input and output times are UTC.",
         "parameters": {
             "type": "object",
             "properties": {
-                "dataSetId": {
+                "dataset_id": {
                     "type": "integer",
-                    "description": "DataSetIs for selecting MonitorPingInfos. Don't set this if the date range is set. DataSetID=0 is the current running monitor data set.",
+                    "description": "A dataset_id is a set of data over a time range. Don't set this if the date range is set. DataSetID=0 is the current running monitor data set.",
                     "format": "int32",
                     "nullable": true
                 },
-                "monitorIPID": {
+                "id": {
                     "type": "integer",
-                    "description": "Return host with ID",
+                    "description": "Return host with id",
                     "format": "int32",
                     "nullable": true
                 },
@@ -123,7 +119,7 @@ You are a helpful assistant with access to the following functions. Use them if 
                     "description": "Return host with address",
                     "nullable": true
                 },
-                "addUserEmail": {
+                "email": {
                     "type": "string",
                     "description": "Return hosts with this email associated",
                     "nullable": true
@@ -135,34 +131,34 @@ You are a helpful assistant with access to the following functions. Use them if 
                 },
                 "port": {
                     "type": "integer",
-                    "description": "Return host with port. It will be zero if it is the standard port for the host end point type. Note the standard port for end point type http is 80 or 443 depending on the url of the host",
+                    "description": "Return host with port. It will be zero if it is the standard port for the host end point type. Note the standard port for end point type http is 443",
                     "format": "int32",
                     "nullable": true
                 },
-                "endPointType": {
+                "endpoint": {
                     "type": "string",
-                    "description": "Return hosts with end point type. The end point type. End point types are : quantum is a quantum safe encryption test, http (default port 443) is a website ping, https is a ssl certificate check, httphtml is a website html load, icmp is a host ping, dns is a dns lookup, smtp is an email server helo message confirmation and rawconnect is a low level raw socket connection",
+                    "description": "Return hosts with endpoint type. The endpoint type. End point types are : quantum is a quantum safe encryption test, http is a website ping, https is a ssl certificate check, httphtml is a website html load, icmp is a host ping, dns is a dns lookup, smtp is an email server helo message confirmation and rawconnect is a low level raw socket connection",
                     "nullable": true
                 },
-                "alertSent": {
+                "alert_sent": {
                     "type": "boolean",
                     "description": "Return hosts that have a host down alert sent set",
                     "nullable": true
                 },
-                "alertFlag": {
+                "alert_flag": {
                     "type": "boolean",
                     "description": "Return hosts that have a host down alert flag set. This can be used to get host the are up or down",
                     "nullable": true
                 },
-                "dateStart": {
+                "date_start": {
                     "type": "string",
-                    "description": "The UTC start time to query from. When used with DateEnd this gives a range of times to filter on. Note input is assumed to be UTC.",
+                    "description": "The UTC start time to query from. When used with date_end this gives a range of times to filter on",
                     "format": "date-time",
                     "nullable": true
                 },
-                "dateEnd": {
+                "date_end": {
                     "type": "string",
-                    "description": "The UTC end time to query to.",
+                    "description": "The UTC end time to query to",
                     "format": "date-time",
                     "nullable": true
                 }
@@ -170,14 +166,14 @@ You are a helpful assistant with access to the following functions. Use them if 
         }
     }
     {
-        "name": "GetHostList",
+        "name": "get_host_list",
         "description": "Get a list of host configurations.",
         "parameters": {
             "type": "object",
             "properties": {
-                "monitorIPID": {
+                "id": {
                     "type": "integer",
-                    "description": "Return host with ID",
+                    "description": "Return host with id",
                     "format": "int32",
                     "nullable": true
                 },
@@ -186,7 +182,7 @@ You are a helpful assistant with access to the following functions. Use them if 
                     "description": "Return host with address",
                     "nullable": true
                 },
-                "addUserEmail": {
+                "email": {
                     "type": "string",
                     "description": "Return hosts with this email associated",
                     "nullable": true
@@ -198,13 +194,13 @@ You are a helpful assistant with access to the following functions. Use them if 
                 },
                 "port": {
                     "type": "integer",
-                    "description": "Return hosts with port. It will be zero if it is the standard port for the host end point type.  Note the standard port for end point type http is 80 or 443 depending on the url of the host",
+                    "description": "Return hosts with port. It will be zero if it is the standard port for the host end point type.  Note the standard port for end point type http is 443",
                     "format": "int32",
                     "nullable": true
                 },
-                "endPointType": {
+                "endpoint": {
                     "type": "string",
-                    "description": "Return hosts with end point type. The end point type. End point types are : quantum is a quantum safe encryption test, http (default port 443) is a website ping, https is a ssl certificate check, httphtml is a website html load, icmp is a host ping, dns is a dns lookup, smtp is an email server helo message confirmation and rawconnect is a low level raw socket connection",
+                    "description": "Return hosts with endpoint type. The endpoint type. End point types are : quantum is a quantum safe encryption test, http (default port 443) is a website ping, https is a ssl certificate check, httphtml is a website html load, icmp is a host ping, dns is a dns lookup, smtp is an email server helo message confirmation and rawconnect is a low level raw socket connection",
                     "nullable": true
                 }
             }
