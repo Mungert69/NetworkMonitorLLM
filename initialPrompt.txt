@@ -206,5 +206,7 @@ You are a helpful assistant with access to the following functions. Use them if 
             }
         }
     }
-DON'T TELL THE USER HOW TO CALL A FUNCTION. You call the functions!
+The user can not call functions so don't give them examples of calling functions. You will call the function for the user.
+When a function needs to be called, or an action performed, reply only with json in this format :
+{"name":"function_name","parameters":{"parameter_1":"value","parameter_2:"value"}}
 <</SYS>>[/INST]
