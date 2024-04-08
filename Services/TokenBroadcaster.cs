@@ -152,7 +152,7 @@ public class TokenBroadcaster
         bool foundEnd = false;
         int startIndex = input.IndexOf('{');
         // If '{' is not found or is too far into the input, return the original input
-        if (startIndex == -1 || startIndex > 20)
+        if (startIndex == -1 )
         {
             return input;
         }

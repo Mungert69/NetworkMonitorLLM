@@ -1,106 +1,106 @@
-[1712454548] Log start
-[1712454548] Cmd: /home/mahadeva/code/models/llama.cpp/build/bin/main -c 5000 -n 5000 -m /home/mahadeva/code/models/dolphin-2.6-mistral-7b-dpo-laser-function-calling-Q4_K_M.gguf --prompt-cache /home/mahadeva/code/models/context.gguf --prompt-cache-ro -f /home/mahadeva/code/models/initialPrompt.txt -ins --keep -1 --temp 0
-[1712454548] main: build = 2431 (4755afd1)
-[1712454548] main: built with cc (Debian 12.2.0-14) 12.2.0 for x86_64-linux-gnu
-[1712454548] main: seed  = 1712454548
-[1712454548] main: llama backend init
-[1712454548] main: load the model and apply lora adapter, if any
-[1712454548] llama_model_loader: loaded meta data with 23 key-value pairs and 291 tensors from /home/mahadeva/code/models/dolphin-2.6-mistral-7b-dpo-laser-function-calling-Q4_K_M.gguf (version GGUF V3 (latest))
-[1712454548] llama_model_loader: Dumping metadata keys/values. Note: KV overrides do not apply in this output.
-[1712454548] llama_model_loader: - kv   0:                       general.architecture str              = llama
-[1712454548] llama_model_loader: - kv   1:                               general.name str              = .
-[1712454548] llama_model_loader: - kv   2:                       llama.context_length u32              = 32768
-[1712454548] llama_model_loader: - kv   3:                     llama.embedding_length u32              = 4096
-[1712454548] llama_model_loader: - kv   4:                          llama.block_count u32              = 32
-[1712454548] llama_model_loader: - kv   5:                  llama.feed_forward_length u32              = 14336
-[1712454548] llama_model_loader: - kv   6:                 llama.rope.dimension_count u32              = 128
-[1712454548] llama_model_loader: - kv   7:                 llama.attention.head_count u32              = 32
-[1712454548] llama_model_loader: - kv   8:              llama.attention.head_count_kv u32              = 8
-[1712454548] llama_model_loader: - kv   9:     llama.attention.layer_norm_rms_epsilon f32              = 0.000010
-[1712454548] llama_model_loader: - kv  10:                       llama.rope.freq_base f32              = 10000.000000
-[1712454548] llama_model_loader: - kv  11:                          general.file_type u32              = 15
-[1712454548] llama_model_loader: - kv  12:                       tokenizer.ggml.model str              = llama
-[1712454548] llama_model_loader: - kv  13:                      tokenizer.ggml.tokens arr[str,32001]   = ["<unk>", "<s>", "</s>", "<0x00>", "<...
-[1712454548] llama_model_loader: - kv  14:                      tokenizer.ggml.scores arr[f32,32001]   = [0.000000, 0.000000, 0.000000, 0.0000...
-[1712454548] llama_model_loader: - kv  15:                  tokenizer.ggml.token_type arr[i32,32001]   = [2, 3, 3, 6, 6, 6, 6, 6, 6, 6, 6, 6, ...
-[1712454548] llama_model_loader: - kv  16:                tokenizer.ggml.bos_token_id u32              = 1
-[1712454548] llama_model_loader: - kv  17:                tokenizer.ggml.eos_token_id u32              = 2
-[1712454548] llama_model_loader: - kv  18:            tokenizer.ggml.unknown_token_id u32              = 0
-[1712454548] llama_model_loader: - kv  19:            tokenizer.ggml.padding_token_id u32              = 2
-[1712454548] llama_model_loader: - kv  20:               tokenizer.ggml.add_bos_token bool             = true
-[1712454548] llama_model_loader: - kv  21:               tokenizer.ggml.add_eos_token bool             = false
-[1712454548] llama_model_loader: - kv  22:               general.quantization_version u32              = 2
-[1712454548] llama_model_loader: - type  f32:   65 tensors
-[1712454548] llama_model_loader: - type q4_K:  193 tensors
-[1712454548] llama_model_loader: - type q6_K:   33 tensors
-[1712454548] llm_load_vocab: special tokens definition check successful ( 260/32001 ).
-[1712454548] llm_load_print_meta: format           = GGUF V3 (latest)
-[1712454548] llm_load_print_meta: arch             = llama
-[1712454548] llm_load_print_meta: vocab type       = SPM
-[1712454548] llm_load_print_meta: n_vocab          = 32001
-[1712454548] llm_load_print_meta: n_merges         = 0
-[1712454548] llm_load_print_meta: n_ctx_train      = 32768
-[1712454548] llm_load_print_meta: n_embd           = 4096
-[1712454548] llm_load_print_meta: n_head           = 32
-[1712454548] llm_load_print_meta: n_head_kv        = 8
-[1712454548] llm_load_print_meta: n_layer          = 32
-[1712454548] llm_load_print_meta: n_rot            = 128
-[1712454548] llm_load_print_meta: n_embd_head_k    = 128
-[1712454548] llm_load_print_meta: n_embd_head_v    = 128
-[1712454548] llm_load_print_meta: n_gqa            = 4
-[1712454548] llm_load_print_meta: n_embd_k_gqa     = 1024
-[1712454548] llm_load_print_meta: n_embd_v_gqa     = 1024
-[1712454548] llm_load_print_meta: f_norm_eps       = 0.0e+00
-[1712454548] llm_load_print_meta: f_norm_rms_eps   = 1.0e-05
-[1712454548] llm_load_print_meta: f_clamp_kqv      = 0.0e+00
-[1712454548] llm_load_print_meta: f_max_alibi_bias = 0.0e+00
-[1712454548] llm_load_print_meta: n_ff             = 14336
-[1712454548] llm_load_print_meta: n_expert         = 0
-[1712454548] llm_load_print_meta: n_expert_used    = 0
-[1712454548] llm_load_print_meta: causal attn      = 1
-[1712454548] llm_load_print_meta: pooling type     = 0
-[1712454548] llm_load_print_meta: rope type        = 0
-[1712454548] llm_load_print_meta: rope scaling     = linear
-[1712454548] llm_load_print_meta: freq_base_train  = 10000.0
-[1712454548] llm_load_print_meta: freq_scale_train = 1
-[1712454548] llm_load_print_meta: n_yarn_orig_ctx  = 32768
-[1712454548] llm_load_print_meta: rope_finetuned   = unknown
-[1712454548] llm_load_print_meta: ssm_d_conv       = 0
-[1712454548] llm_load_print_meta: ssm_d_inner      = 0
-[1712454548] llm_load_print_meta: ssm_d_state      = 0
-[1712454548] llm_load_print_meta: ssm_dt_rank      = 0
-[1712454548] llm_load_print_meta: model type       = 7B
-[1712454548] llm_load_print_meta: model ftype      = Q4_K - Medium
-[1712454548] llm_load_print_meta: model params     = 7.24 B
-[1712454548] llm_load_print_meta: model size       = 4.07 GiB (4.83 BPW) 
-[1712454548] llm_load_print_meta: general.name     = .
-[1712454548] llm_load_print_meta: BOS token        = 1 '<s>'
-[1712454548] llm_load_print_meta: EOS token        = 2 '</s>'
-[1712454548] llm_load_print_meta: UNK token        = 0 '<unk>'
-[1712454548] llm_load_print_meta: PAD token        = 2 '</s>'
-[1712454548] llm_load_print_meta: LF token         = 13 '<0x0A>'
-[1712454548] llm_load_tensors: ggml ctx size =    0.11 MiB
-[1712454548] llm_load_tensors:        CPU buffer size =  4165.37 MiB
-[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] .[1712454548] 
-[1712454548] llama_new_context_with_model: n_ctx      = 5000
-[1712454548] llama_new_context_with_model: n_batch    = 2048
-[1712454548] llama_new_context_with_model: n_ubatch   = 512
-[1712454548] llama_new_context_with_model: freq_base  = 10000.0
-[1712454548] llama_new_context_with_model: freq_scale = 1
-[1712454549] llama_kv_cache_init:        CPU KV buffer size =   625.00 MiB
-[1712454549] llama_new_context_with_model: KV self size  =  625.00 MiB, K (f16):  312.50 MiB, V (f16):  312.50 MiB
-[1712454549] llama_new_context_with_model:        CPU  output buffer size =   250.01 MiB
-[1712454549] llama_new_context_with_model:        CPU compute buffer size =   354.27 MiB
-[1712454549] llama_new_context_with_model: graph splits: 1
-[1712454549] warming up the model with an empty run
-[1712454550] n_ctx: 5000
-[1712454550] 
-[1712454550] system_info: n_threads = 4 / 8 | AVX = 1 | AVX_VNNI = 0 | AVX2 = 1 | AVX512 = 0 | AVX512_VBMI = 0 | AVX512_VNNI = 0 | FMA = 1 | NEON = 0 | ARM_FMA = 0 | F16C = 1 | FP16_VA = 0 | WASM_SIMD = 0 | BLAS = 1 | SSE3 = 1 | SSSE3 = 1 | VSX = 0 | MATMUL_INT8 = 0 | 
-[1712454550] main: attempting to load saved session from '/home/mahadeva/code/models/context.gguf'
-[1712454552] main: loaded a session with prompt size of 2370 tokens
-[1712454552] add_bos: 1
-[1712454552] tokenize the prompt
-[1712454552] prompt: "<s>[INST] <<SYS>>
+[1712601781] Log start
+[1712601781] Cmd: /home/mahadeva/code/models/llama.cpp/build/bin/main -c 4000 -n 4000 -m /home/mahadeva/code/models/dolphin-2.6-mistral-7b-dpo-laser-function-calling-Q4_K_M.gguf --prompt-cache /home/mahadeva/code/models/context.gguf --prompt-cache-ro -f /home/mahadeva/code/models/initialPrompt.txt -ins --keep -1 --temp 0
+[1712601781] main: build = 2431 (4755afd1)
+[1712601781] main: built with cc (Debian 12.2.0-14) 12.2.0 for x86_64-linux-gnu
+[1712601781] main: seed  = 1712601781
+[1712601781] main: llama backend init
+[1712601781] main: load the model and apply lora adapter, if any
+[1712601781] llama_model_loader: loaded meta data with 23 key-value pairs and 291 tensors from /home/mahadeva/code/models/dolphin-2.6-mistral-7b-dpo-laser-function-calling-Q4_K_M.gguf (version GGUF V3 (latest))
+[1712601781] llama_model_loader: Dumping metadata keys/values. Note: KV overrides do not apply in this output.
+[1712601781] llama_model_loader: - kv   0:                       general.architecture str              = llama
+[1712601781] llama_model_loader: - kv   1:                               general.name str              = .
+[1712601781] llama_model_loader: - kv   2:                       llama.context_length u32              = 32768
+[1712601781] llama_model_loader: - kv   3:                     llama.embedding_length u32              = 4096
+[1712601781] llama_model_loader: - kv   4:                          llama.block_count u32              = 32
+[1712601781] llama_model_loader: - kv   5:                  llama.feed_forward_length u32              = 14336
+[1712601781] llama_model_loader: - kv   6:                 llama.rope.dimension_count u32              = 128
+[1712601781] llama_model_loader: - kv   7:                 llama.attention.head_count u32              = 32
+[1712601781] llama_model_loader: - kv   8:              llama.attention.head_count_kv u32              = 8
+[1712601781] llama_model_loader: - kv   9:     llama.attention.layer_norm_rms_epsilon f32              = 0.000010
+[1712601781] llama_model_loader: - kv  10:                       llama.rope.freq_base f32              = 10000.000000
+[1712601781] llama_model_loader: - kv  11:                          general.file_type u32              = 15
+[1712601781] llama_model_loader: - kv  12:                       tokenizer.ggml.model str              = llama
+[1712601781] llama_model_loader: - kv  13:                      tokenizer.ggml.tokens arr[str,32001]   = ["<unk>", "<s>", "</s>", "<0x00>", "<...
+[1712601781] llama_model_loader: - kv  14:                      tokenizer.ggml.scores arr[f32,32001]   = [0.000000, 0.000000, 0.000000, 0.0000...
+[1712601781] llama_model_loader: - kv  15:                  tokenizer.ggml.token_type arr[i32,32001]   = [2, 3, 3, 6, 6, 6, 6, 6, 6, 6, 6, 6, ...
+[1712601781] llama_model_loader: - kv  16:                tokenizer.ggml.bos_token_id u32              = 1
+[1712601781] llama_model_loader: - kv  17:                tokenizer.ggml.eos_token_id u32              = 2
+[1712601781] llama_model_loader: - kv  18:            tokenizer.ggml.unknown_token_id u32              = 0
+[1712601781] llama_model_loader: - kv  19:            tokenizer.ggml.padding_token_id u32              = 2
+[1712601781] llama_model_loader: - kv  20:               tokenizer.ggml.add_bos_token bool             = true
+[1712601781] llama_model_loader: - kv  21:               tokenizer.ggml.add_eos_token bool             = false
+[1712601781] llama_model_loader: - kv  22:               general.quantization_version u32              = 2
+[1712601781] llama_model_loader: - type  f32:   65 tensors
+[1712601781] llama_model_loader: - type q4_K:  193 tensors
+[1712601781] llama_model_loader: - type q6_K:   33 tensors
+[1712601781] llm_load_vocab: special tokens definition check successful ( 260/32001 ).
+[1712601781] llm_load_print_meta: format           = GGUF V3 (latest)
+[1712601781] llm_load_print_meta: arch             = llama
+[1712601781] llm_load_print_meta: vocab type       = SPM
+[1712601781] llm_load_print_meta: n_vocab          = 32001
+[1712601781] llm_load_print_meta: n_merges         = 0
+[1712601781] llm_load_print_meta: n_ctx_train      = 32768
+[1712601781] llm_load_print_meta: n_embd           = 4096
+[1712601781] llm_load_print_meta: n_head           = 32
+[1712601781] llm_load_print_meta: n_head_kv        = 8
+[1712601781] llm_load_print_meta: n_layer          = 32
+[1712601781] llm_load_print_meta: n_rot            = 128
+[1712601781] llm_load_print_meta: n_embd_head_k    = 128
+[1712601781] llm_load_print_meta: n_embd_head_v    = 128
+[1712601781] llm_load_print_meta: n_gqa            = 4
+[1712601781] llm_load_print_meta: n_embd_k_gqa     = 1024
+[1712601781] llm_load_print_meta: n_embd_v_gqa     = 1024
+[1712601781] llm_load_print_meta: f_norm_eps       = 0.0e+00
+[1712601781] llm_load_print_meta: f_norm_rms_eps   = 1.0e-05
+[1712601781] llm_load_print_meta: f_clamp_kqv      = 0.0e+00
+[1712601781] llm_load_print_meta: f_max_alibi_bias = 0.0e+00
+[1712601781] llm_load_print_meta: n_ff             = 14336
+[1712601781] llm_load_print_meta: n_expert         = 0
+[1712601781] llm_load_print_meta: n_expert_used    = 0
+[1712601781] llm_load_print_meta: causal attn      = 1
+[1712601781] llm_load_print_meta: pooling type     = 0
+[1712601781] llm_load_print_meta: rope type        = 0
+[1712601781] llm_load_print_meta: rope scaling     = linear
+[1712601781] llm_load_print_meta: freq_base_train  = 10000.0
+[1712601781] llm_load_print_meta: freq_scale_train = 1
+[1712601781] llm_load_print_meta: n_yarn_orig_ctx  = 32768
+[1712601781] llm_load_print_meta: rope_finetuned   = unknown
+[1712601781] llm_load_print_meta: ssm_d_conv       = 0
+[1712601781] llm_load_print_meta: ssm_d_inner      = 0
+[1712601781] llm_load_print_meta: ssm_d_state      = 0
+[1712601781] llm_load_print_meta: ssm_dt_rank      = 0
+[1712601781] llm_load_print_meta: model type       = 7B
+[1712601781] llm_load_print_meta: model ftype      = Q4_K - Medium
+[1712601781] llm_load_print_meta: model params     = 7.24 B
+[1712601781] llm_load_print_meta: model size       = 4.07 GiB (4.83 BPW) 
+[1712601781] llm_load_print_meta: general.name     = .
+[1712601781] llm_load_print_meta: BOS token        = 1 '<s>'
+[1712601781] llm_load_print_meta: EOS token        = 2 '</s>'
+[1712601781] llm_load_print_meta: UNK token        = 0 '<unk>'
+[1712601781] llm_load_print_meta: PAD token        = 2 '</s>'
+[1712601781] llm_load_print_meta: LF token         = 13 '<0x0A>'
+[1712601781] llm_load_tensors: ggml ctx size =    0.11 MiB
+[1712601782] llm_load_tensors:        CPU buffer size =  4165.37 MiB
+[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] .[1712601782] 
+[1712601782] llama_new_context_with_model: n_ctx      = 4000
+[1712601782] llama_new_context_with_model: n_batch    = 2048
+[1712601782] llama_new_context_with_model: n_ubatch   = 512
+[1712601782] llama_new_context_with_model: freq_base  = 10000.0
+[1712601782] llama_new_context_with_model: freq_scale = 1
+[1712601782] llama_kv_cache_init:        CPU KV buffer size =   500.00 MiB
+[1712601782] llama_new_context_with_model: KV self size  =  500.00 MiB, K (f16):  250.00 MiB, V (f16):  250.00 MiB
+[1712601782] llama_new_context_with_model:        CPU  output buffer size =   250.01 MiB
+[1712601782] llama_new_context_with_model:        CPU compute buffer size =   289.82 MiB
+[1712601782] llama_new_context_with_model: graph splits: 1
+[1712601782] warming up the model with an empty run
+[1712601784] n_ctx: 4000
+[1712601784] 
+[1712601784] system_info: n_threads = 4 / 8 | AVX = 1 | AVX_VNNI = 0 | AVX2 = 1 | AVX512 = 0 | AVX512_VBMI = 0 | AVX512_VNNI = 0 | FMA = 1 | NEON = 0 | ARM_FMA = 0 | F16C = 1 | FP16_VA = 0 | WASM_SIMD = 0 | BLAS = 1 | SSE3 = 1 | SSSE3 = 1 | VSX = 0 | MATMUL_INT8 = 0 | 
+[1712601784] main: attempting to load saved session from '/home/mahadeva/code/models/context.gguf'
+[1712601785] main: loaded a session with prompt size of 2018 tokens
+[1712601785] add_bos: 1
+[1712601785] tokenize the prompt
+[1712601785] prompt: "<s>[INST] <<SYS>>
 You are a helpful assistant with access to the following functions. Use them if required -
     {
         "name": "add_host",
@@ -130,7 +130,7 @@ You are a helpful assistant with access to the following functions. Use them if 
                 },
                 "timeout": {
                     "type": "integer",
-                    "description": "The time to wait for a timeout in milliseconds",
+                    "description": "The time to wait for a timeout in milliseconds. Default is 59000",
                     "format": "int32"
                 },
                 "email": {
@@ -175,18 +175,18 @@ You are a helpful assistant with access to the following functions. Use them if 
                 },
                 "endpoint": {
                     "type": "string",
-                    "description": "The endpoint type. Endpoint types are : quantum is a quantum safe encryption test, http is a website ping, https is a ssl certificate check, httphtml is a website html load, icmp is a host ping, dns is a dns lookup, smtp is an email server helo message confirmation and rawconnect is a low level raw socket connection",
+                    "description": "The endpoint type",
                     "nullable": true
                 },
                 "port": {
                     "type": "integer",
-                    "description": "Port of the service being monitored. It should be zero if it is the standard port for the host end point type.  Note the standard port for end point type http is 443",
+                    "description": "The port",
                     "format": "int32",
                     "nullable": true
                 },
                 "timeout": {
                     "type": "integer",
-                    "description": "Time to wait for a timeout in milliseconds. If a timeout occurs the host is considered to be down",
+                    "description": "Time to wait for a timeout in milliseconds.",
                     "format": "int32",
                     "nullable": true
                 },
@@ -206,7 +206,7 @@ You are a helpful assistant with access to the following functions. Use them if 
             "properties": {
                 "dataset_id": {
                     "type": "integer",
-                    "description": "A dataset_id is a set of data over a time range. Don't set this if the date range is set. DataSetID=0 is the current running monitor data set.",
+                    "description": "Set dataset_id to zero for the latest data. Leave it null if you set date_start or data_end to retrieve historic data",
                     "format": "int32",
                     "nullable": true
                 },
@@ -233,13 +233,13 @@ You are a helpful assistant with access to the following functions. Use them if 
                 },
                 "port": {
                     "type": "integer",
-                    "description": "Return host with port. It will be zero if it is the standard port for the host end point type. Note the standard port for end point type http is 443",
+                    "description": "Return host with port",
                     "format": "int32",
                     "nullable": true
                 },
                 "endpoint": {
                     "type": "string",
-                    "description": "Return hosts with endpoint type. The endpoint type. End point types are : quantum is a quantum safe encryption test, http is a website ping, https is a ssl certificate check, httphtml is a website html load, icmp is a host ping, dns is a dns lookup, smtp is an email server helo message confirmation and rawconnect is a low level raw socket connection",
+                    "description": "Return hosts with endpoint type",
                     "nullable": true
                 },
                 "alert_sent": {
@@ -296,13 +296,13 @@ You are a helpful assistant with access to the following functions. Use them if 
                 },
                 "port": {
                     "type": "integer",
-                    "description": "Return hosts with port. It will be zero if it is the standard port for the host end point type.  Note the standard port for end point type http is 443",
+                    "description": "Return hosts with port",
                     "format": "int32",
                     "nullable": true
                 },
                 "endpoint": {
                     "type": "string",
-                    "description": "Return hosts with endpoint type. The endpoint type. End point types are : quantum is a quantum safe encryption test, http (default port 443) is a website ping, https is a ssl certificate check, httphtml is a website html load, icmp is a host ping, dns is a dns lookup, smtp is an email server helo message confirmation and rawconnect is a low level raw socket connection",
+                    "description": "Return hosts with endpoint type",
                     "nullable": true
                 }
             }
@@ -310,215 +310,521 @@ You are a helpful assistant with access to the following functions. Use them if 
     }
 DON'T TELL THE USER HOW TO CALL A FUNCTION. You call the functions!
 <</SYS>>[/INST]"
-[1712454552] tokens: [ '':1, '':1, '[':28792, 'INST':16289, ']':28793, ' <<':2087, 'SYS':18741, '>>':4060, '':13, 'You':1976, ' are':460, ' a':264, ' helpful':10865, ' assistant':13892, ' with':395, ' access':2735, ' to':298, ' the':272, ' following':2296, ' functions':5572, '.':28723, ' Use':5938, ' them':706, ' if':513, ' required':3030, ' -':387, '':13, '   ':2287, ' {':371, '':13, '       ':5390, ' "':345, 'name':861, '":':1264, ' "':345, 'add':988, '_':28730, 'host':3404, '",':548, '':13, '       ':5390, ' "':345, 'description':6518, '":':1264, ' "':345, 'Add':1991, ' a':264, ' host':3434, ' to':298, ' be':347, ' mon':1326, 'it':279, 'ored':2455, '.",':9191, '':13, '       ':5390, ' "':345, 'required':10893, '":':1264, ' [':733, '':13, '           ':17422, ' "':345, 'address':5540, '"':28739, '':13, '       ':5390, ' ],':12052, '':13, '       ':5390, ' "':345, 'parameters':11438, '":':1264, ' {':371, '':13, '           ':17422, ' "':345, 'type':1123, '":':1264, ' "':345, 'object':2814, '",':548, '':13, '           ':17422, ' "':345, 'properties':10723, '":':1264, ' {':371, '':13, '              ':1417, ' ':28705, ' "':345, 'address':5540, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'max':2416, 'Length':4645, '":':1264, ' ':28705, '5':28782, '1':28740, '2':28750, ',':28725, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'string':1427, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'The':1014, ' host':3434, ' address':2962, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'nullable':21777, '":':1264, ' true':1132, '':13, '              ':1417, ' ':28705, ' },':1630, '':13, '              ':1417, ' ':28705, ' "':345, 'endpoint':15153, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'max':2416, 'Length':4645, '":':1264, ' ':28705, '5':28782, '0':28734, ',':28725, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'string':1427, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'The':1014, ' endpoint':15329, ' type':1212, '.':28723, ' End':5764, 'point':2275, ' types':4514, ' are':460, ' :':714, ' quantum':10915, ' is':349, ' a':264, ' quantum':10915, ' safe':5023, ' encryption':27591, ' test':1369, ',':28725, ' http':3550, ' is':349, ' a':264, ' website':4400, ' p':284, 'ing':288, ',':28725, ' https':4449, ' is':349, ' a':264, ' s':268, 'sl':2181, ' certificate':15743, ' check':1877, ',':28725, ' http':3550, 'html':3391, ' is':349, ' a':264, ' website':4400, ' html':12383, ' load':3442, ',':28725, ' ic':19699, 'mp':1447, ' is':349, ' a':264, ' host':3434, ' p':284, 'ing':288, ',':28725, ' d':281, 'ns':2925, ' is':349, ' a':264, ' d':281, 'ns':2925, ' lookup':21275, ',':28725, ' sm':991, 'tp':8024, ' is':349, ' an':396, ' email':4927, ' server':5116, ' he':400, 'lo':731, ' message':2928, ' confirmation':22511, ' and':304, ' raw':8435, 'connect':7182, ' is':349, ' a':264, ' low':2859, ' level':2184, ' raw':8435, ' socket':13889, ' connection':5132, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'nullable':21777, '":':1264, ' true':1132, '':13, '              ':1417, ' ':28705, ' },':1630, '':13, '              ':1417, ' ':28705, ' "':345, 'port':483, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'integer':14296, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'The':1014, ' port':2248, ' of':302, ' the':272, ' service':2372, ' being':1250, ' mon':1326, 'it':279, 'ored':2455, '.':28723, ' It':661, ' will':622, ' be':347, ' zero':6129, ' if':513, ' it':378, ' is':349, ' the':272, ' standard':4787, ' port':2248, ' for':354, ' the':272, ' host':3434, ' end':948, ' point':1305, ' type':1212, '.':28723, ' Note':6096, ' the':272, ' standard':4787, ' port':2248, ' for':354, ' end':948, ' point':1305, ' type':1212, ' http':3550, ' ':28705, '4':28781, '4':28781, '3':28770, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'format':3762, '":':1264, ' "':345, 'int':501, '3':28770, '2':28750, '"':28739, '':13, '              ':1417, ' ':28705, ' },':1630, '':13, '              ':1417, ' ':28705, ' "':345, 'timeout':9761, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'integer':14296, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'The':1014, ' time':727, ' to':298, ' wait':2444, ' for':354, ' a':264, ' timeout':11965, ' in':297, ' mill':2545, 'iseconds':24589, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'format':3762, '":':1264, ' "':345, 'int':501, '3':28770, '2':28750, '"':28739, '':13, '              ':1417, ' ':28705, ' },':1630, '':13, '              ':1417, ' ':28705, ' "':345, 'email':6604, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'max':2416, 'Length':4645, '":':1264, ' ':28705, '2':28750, '5':28782, '5':28782, ',':28725, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'string':1427, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'When':7477, ' the':272, ' host':3434, ' is':349, ' down':1060, ' al':389, 'erts':9916, ' are':460, ' sent':2662, ' to':298, ' this':456, ' email':4927, ' address':2962, '.':28723, ' If':1047, ' as':390, ' user':2188, ' is':349, ' logged':27036, ' in':297, ' their':652, ' login':14570, ' email':4927, ' will':622, ' be':347, ' used':1307, '.':28723, ' If':1047, ' they':590, ' are':460, ' not':459, ' logged':27036, ' in':297, ' then':868, ' they':590, ' must':1580, ' supply':8002, ' an':396, ' email':4927, '.",':9191, '':13, '                ':359, '   ':2287, ' "':345, 'nullable':21777, '":':1264, ' true':1132, '':13, '              ':1417, ' ':28705, ' }':443, '':13, '           ':17422, ' }':443, '':13, '       ':5390, ' }':443, '':13, '   ':2287, ' }':443, '':13, '   ':2287, ' {':371, '':13, '       ':5390, ' "':345, 'name':861, '":':1264, ' "':345, 'edit':7128, '_':28730, 'host':3404, '",':548, '':13, '       ':5390, ' "':345, 'description':6518, '":':1264, ' "':345, 'Edit':8470, ' a':264, ' host':3434, ''':28742, 's':28713, ' monitoring':16882, ' configuration':7427, '.':28723, ' This':851, ' function':908, ' is':349, ' used':1307, ' to':298, ' update':4009, ' a':264, ' hosts':19666, ' configuration':7427, '.",':9191, '':13, '       ':5390, ' "':345, 'parameters':11438, '":':1264, ' {':371, '':13, '           ':17422, ' "':345, 'type':1123, '":':1264, ' "':345, 'object':2814, '",':548, '':13, '           ':17422, ' "':345, 'properties':10723, '":':1264, ' {':371, '':13, '              ':1417, ' ':28705, ' "':345, 'auth':6414, '_':28730, 'key':1499, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'string':1427, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'This':3260, ' is':349, ' a':264, ' string':1423, ' that':369, ' is':349, ' used':1307, ' to':298, ' aut':1206, 'hent':5577, 'icate':5749, ' the':272, ' Edit':12838, ' action':2992, ' for':354, ' a':264, ' user':2188, ' who':693, ' is':349, ' not':459, ' logged':27036, ' in':297, '.':28723, ' This':851, ' key':1945, ' is':349, ' returned':4253, ' when':739, ' adding':8833, ' a':264, ' host':3434, ' for':354, ' the':272, ' first':907, ' time':727, '.':28723, ' It':661, ' should':1023, ' be':347, ' stored':11141, ' and':304, ' sent':2662, ' with':395, ' subsequent':14235, ' edit':10659, ' requests':9828, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'nullable':21777, '":':1264, ' true':1132, '':13, '              ':1417, ' ':28705, ' },':1630, '':13, '              ':1417, ' ':28705, ' "':345, 'email':6604, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'string':1427, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'The':1014, ' users':5443, ' email':4927, ' address':2962, '.",':9191, '':13, '                ':359, '   ':2287, ' "':345, 'nullable':21777, '":':1264, ' true':1132, '':13, '              ':1417, ' ':28705, ' },':1630, '':13, '              ':1417, ' ':28705, ' "':345, 'id':313, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'integer':14296, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'This':3260, ' is':349, ' the':272, ' host':3434, ' id':1910, ' used':1307, ' for':354, ' identifying':21653, ' the':272, ' host':3434, '.':28723, ' It':661, ' is':349, ' obtained':7365, ' when':739, ' adding':8833, ' a':264, ' host':3434, '.",':9191, '':13, '                ':359, '   ':2287, ' "':345, 'format':3762, '":':1264, ' "':345, 'int':501, '3':28770, '2':28750, '"':28739, '':13, '              ':1417, ' ':28705, ' },':1630, '':13, '              ':1417, ' ':28705, ' "':345, 'enabled':9474, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'boolean':8490, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'Is':2301, ' host':3434, ' enabled':9651, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'nullable':21777, '":':1264, ' true':1132, '':13, '              ':1417, ' ':28705, ' },':1630, '':13, '              ':1417, ' ':28705, ' "':345, 'address':5540, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'string':1427, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'Host':7287, ' address':2962, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'nullable':21777, '":':1264, ' true':1132, '':13, '              ':1417, ' ':28705, ' },':1630, '':13, '              ':1417, ' ':28705, ' "':345, 'endpoint':15153, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'string':1427, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'The':1014, ' endpoint':15329, ' type':1212, '.':28723, ' End':5764, 'point':2275, ' types':4514, ' are':460, ' :':714, ' quantum':10915, ' is':349, ' a':264, ' quantum':10915, ' safe':5023, ' encryption':27591, ' test':1369, ',':28725, ' http':3550, ' is':349, ' a':264, ' website':4400, ' p':284, 'ing':288, ',':28725, ' https':4449, ' is':349, ' a':264, ' s':268, 'sl':2181, ' certificate':15743, ' check':1877, ',':28725, ' http':3550, 'html':3391, ' is':349, ' a':264, ' website':4400, ' html':12383, ' load':3442, ',':28725, ' ic':19699, 'mp':1447, ' is':349, ' a':264, ' host':3434, ' p':284, 'ing':288, ',':28725, ' d':281, 'ns':2925, ' is':349, ' a':264, ' d':281, 'ns':2925, ' lookup':21275, ',':28725, ' sm':991, 'tp':8024, ' is':349, ' an':396, ' email':4927, ' server':5116, ' he':400, 'lo':731, ' message':2928, ' confirmation':22511, ' and':304, ' raw':8435, 'connect':7182, ' is':349, ' a':264, ' low':2859, ' level':2184, ' raw':8435, ' socket':13889, ' connection':5132, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'nullable':21777, '":':1264, ' true':1132, '':13, '              ':1417, ' ':28705, ' },':1630, '':13, '              ':1417, ' ':28705, ' "':345, 'port':483, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'integer':14296, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'Port':6411, ' of':302, ' the':272, ' service':2372, ' being':1250, ' mon':1326, 'it':279, 'ored':2455, '.':28723, ' It':661, ' should':1023, ' be':347, ' zero':6129, ' if':513, ' it':378, ' is':349, ' the':272, ' standard':4787, ' port':2248, ' for':354, ' the':272, ' host':3434, ' end':948, ' point':1305, ' type':1212, '.':28723, ' ':28705, ' Note':6096, ' the':272, ' standard':4787, ' port':2248, ' for':354, ' end':948, ' point':1305, ' type':1212, ' http':3550, ' is':349, ' ':28705, '4':28781, '4':28781, '3':28770, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'format':3762, '":':1264, ' "':345, 'int':501, '3':28770, '2':28750, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'nullable':21777, '":':1264, ' true':1132, '':13, '              ':1417, ' ':28705, ' },':1630, '':13, '              ':1417, ' ':28705, ' "':345, 'timeout':9761, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'integer':14296, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'Time':2098, ' to':298, ' wait':2444, ' for':354, ' a':264, ' timeout':11965, ' in':297, ' mill':2545, 'iseconds':24589, '.':28723, ' If':1047, ' a':264, ' timeout':11965, ' occurs':12022, ' the':272, ' host':3434, ' is':349, ' considered':4525, ' to':298, ' be':347, ' down':1060, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'format':3762, '":':1264, ' "':345, 'int':501, '3':28770, '2':28750, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'nullable':21777, '":':1264, ' true':1132, '':13, '              ':1417, ' ':28705, ' },':1630, '':13, '              ':1417, ' ':28705, ' "':345, 'hidden':9748, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'boolean':8490, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'Is':2301, ' the':272, ' host':3434, ' is':349, ' hidden':7918, '.':28723, ' Setting':23433, ' this':456, ' to':298, ' true':1132, ' effectively':11466, ' delet':21750, 'es':274, ' the':272, ' host':3434, ' from':477, ' future':3437, ' monitoring':16882, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'nullable':21777, '":':1264, ' true':1132, '':13, '              ':1417, ' ':28705, ' }':443, '':13, '           ':17422, ' }':443, '':13, '       ':5390, ' }':443, '':13, '   ':2287, ' }':443, '':13, '   ':2287, ' {':371, '':13, '       ':5390, ' "':345, 'name':861, '":':1264, ' "':345, 'get':527, '_':28730, 'host':3404, '_':28730, 'data':1056, '",':548, '':13, '       ':5390, ' "':345, 'description':6518, '":':1264, ' "':345, 'Get':1458, ' monitoring':16882, ' status':3425, ' for':354, ' a':264, ' host':3434, '.':28723, ' To':1791, ' get':625, ' the':272, ' current':1868, ' data':1178, ',':28725, ' set':808, ' data':1178, 'Set':1436, 'Id':1018, ' to':298, ' zero':6129, '.':28723, ' For':1263, ' historic':15799, ' data':1178, ' instead':3519, ' set':808, ' date':3608, 'Start':4130, ' and':304, ' date':3608, 'End':3861, ' to':298, ' get':625, ' data':1178, ' within':2373, ' that':369, ' range':2819, '.':28723, ' All':1682, ' input':2787, ' and':304, ' output':3825, ' times':2421, ' are':460, ' UTC':21811, '.",':9191, '':13, '       ':5390, ' "':345, 'parameters':11438, '":':1264, ' {':371, '':13, '           ':17422, ' "':345, 'type':1123, '":':1264, ' "':345, 'object':2814, '",':548, '':13, '           ':17422, ' "':345, 'properties':10723, '":':1264, ' {':371, '':13, '              ':1417, ' ':28705, ' "':345, 'dataset':18200, '_':28730, 'id':313, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'integer':14296, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'A':28741, ' dataset':13466, '_':28730, 'id':313, ' is':349, ' a':264, ' set':808, ' of':302, ' data':1178, ' over':754, ' a':264, ' time':727, ' range':2819, '.':28723, ' Don':3189, ''':28742, 't':28707, ' set':808, ' this':456, ' if':513, ' the':272, ' date':3608, ' range':2819, ' is':349, ' set':808, '.':28723, ' Data':5284, 'Set':1436, 'ID':1138, '=':28746, '0':28734, ' is':349, ' the':272, ' current':1868, ' running':3822, ' monitor':9009, ' data':1178, ' set':808, '.",':9191, '':13, '                ':359, '   ':2287, ' "':345, 'format':3762, '":':1264, ' "':345, 'int':501, '3':28770, '2':28750, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'nullable':21777, '":':1264, ' true':1132, '':13, '              ':1417, ' ':28705, ' },':1630, '':13, '              ':1417, ' ':28705, ' "':345, 'id':313, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'integer':14296, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'Return':6168, ' host':3434, ' with':395, ' id':1910, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'format':3762, '":':1264, ' "':345, 'int':501, '3':28770, '2':28750, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'nullable':21777, '":':1264, ' true':1132, '':13, '              ':1417, ' ':28705, ' },':1630, '':13, '              ':1417, ' ':28705, ' "':345, 'address':5540, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'string':1427, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'Return':6168, ' host':3434, ' with':395, ' address':2962, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'nullable':21777, '":':1264, ' true':1132, '':13, '              ':1417, ' ':28705, ' },':1630, '':13, '              ':1417, ' ':28705, ' "':345, 'email':6604, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'string':1427, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'Return':6168, ' hosts':19666, ' with':395, ' this':456, ' email':4927, ' associated':5363, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'nullable':21777, '":':1264, ' true':1132, '':13, '              ':1417, ' ':28705, ' }':443, '':13, '              ':1417, ' ':28705, ' "':345, 'enabled':9474, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'boolean':8490, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'Return':6168, ' hosts':19666, ' with':395, ' enabled':9651, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'nullable':21777, '":':1264, ' true':1132, '':13, '              ':1417, ' ':28705, ' },':1630, '':13, '              ':1417, ' ':28705, ' "':345, 'port':483, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'integer':14296, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'Return':6168, ' host':3434, ' with':395, ' port':2248, '.':28723, ' It':661, ' will':622, ' be':347, ' zero':6129, ' if':513, ' it':378, ' is':349, ' the':272, ' standard':4787, ' port':2248, ' for':354, ' the':272, ' host':3434, ' end':948, ' point':1305, ' type':1212, '.':28723, ' Note':6096, ' the':272, ' standard':4787, ' port':2248, ' for':354, ' end':948, ' point':1305, ' type':1212, ' http':3550, ' is':349, ' ':28705, '4':28781, '4':28781, '3':28770, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'format':3762, '":':1264, ' "':345, 'int':501, '3':28770, '2':28750, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'nullable':21777, '":':1264, ' true':1132, '':13, '              ':1417, ' ':28705, ' },':1630, '':13, '              ':1417, ' ':28705, ' "':345, 'endpoint':15153, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'string':1427, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'Return':6168, ' hosts':19666, ' with':395, ' endpoint':15329, ' type':1212, '.':28723, ' The':415, ' endpoint':15329, ' type':1212, '.':28723, ' End':5764, ' point':1305, ' types':4514, ' are':460, ' :':714, ' quantum':10915, ' is':349, ' a':264, ' quantum':10915, ' safe':5023, ' encryption':27591, ' test':1369, ',':28725, ' http':3550, ' is':349, ' a':264, ' website':4400, ' p':284, 'ing':288, ',':28725, ' https':4449, ' is':349, ' a':264, ' s':268, 'sl':2181, ' certificate':15743, ' check':1877, ',':28725, ' http':3550, 'html':3391, ' is':349, ' a':264, ' website':4400, ' html':12383, ' load':3442, ',':28725, ' ic':19699, 'mp':1447, ' is':349, ' a':264, ' host':3434, ' p':284, 'ing':288, ',':28725, ' d':281, 'ns':2925, ' is':349, ' a':264, ' d':281, 'ns':2925, ' lookup':21275, ',':28725, ' sm':991, 'tp':8024, ' is':349, ' an':396, ' email':4927, ' server':5116, ' he':400, 'lo':731, ' message':2928, ' confirmation':22511, ' and':304, ' raw':8435, 'connect':7182, ' is':349, ' a':264, ' low':2859, ' level':2184, ' raw':8435, ' socket':13889, ' connection':5132, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'nullable':21777, '":':1264, ' true':1132, '':13, '              ':1417, ' ':28705, ' },':1630, '':13, '              ':1417, ' ':28705, ' "':345, 'alert':14762, '_':28730, 'sent':16788, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'boolean':8490, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'Return':6168, ' hosts':19666, ' that':369, ' have':506, ' a':264, ' host':3434, ' down':1060, ' alert':10977, ' sent':2662, ' set':808, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'nullable':21777, '":':1264, ' true':1132, '':13, '              ':1417, ' ':28705, ' },':1630, '':13, '              ':1417, ' ':28705, ' "':345, 'alert':14762, '_':28730, 'flag':7914, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'boolean':8490, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'Return':6168, ' hosts':19666, ' that':369, ' have':506, ' a':264, ' host':3434, ' down':1060, ' alert':10977, ' flag':6673, ' set':808, '.':28723, ' This':851, ' can':541, ' be':347, ' used':1307, ' to':298, ' get':625, ' host':3434, ' the':272, ' are':460, ' up':582, ' or':442, ' down':1060, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'nullable':21777, '":':1264, ' true':1132, '':13, '              ':1417, ' ':28705, ' },':1630, '':13, '              ':1417, ' ':28705, ' "':345, 'date':1408, '_':28730, 'start':2521, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'string':1427, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'The':1014, ' UTC':21811, ' start':1149, ' time':727, ' to':298, ' query':5709, ' from':477, '.':28723, ' When':1684, ' used':1307, ' with':395, ' date':3608, '_':28730, 'end':416, ' this':456, ' gives':5212, ' a':264, ' range':2819, ' of':302, ' times':2421, ' to':298, ' filter':5531, ' on':356, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'format':3762, '":':1264, ' "':345, 'date':1408, '-':28733, 'time':1536, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'nullable':21777, '":':1264, ' true':1132, '':13, '              ':1417, ' ':28705, ' },':1630, '':13, '              ':1417, ' ':28705, ' "':345, 'date':1408, '_':28730, 'end':416, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'string':1427, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'The':1014, ' UTC':21811, ' end':948, ' time':727, ' to':298, ' query':5709, ' to':298, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'format':3762, '":':1264, ' "':345, 'date':1408, '-':28733, 'time':1536, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'nullable':21777, '":':1264, ' true':1132, '':13, '              ':1417, ' ':28705, ' }':443, '':13, '           ':17422, ' }':443, '':13, '       ':5390, ' }':443, '':13, '   ':2287, ' }':443, '':13, '   ':2287, ' {':371, '':13, '       ':5390, ' "':345, 'name':861, '":':1264, ' "':345, 'get':527, '_':28730, 'host':3404, '_':28730, 'list':1703, '",':548, '':13, '       ':5390, ' "':345, 'description':6518, '":':1264, ' "':345, 'Get':1458, ' a':264, ' list':1274, ' of':302, ' host':3434, ' configurations':24991, '.",':9191, '':13, '       ':5390, ' "':345, 'parameters':11438, '":':1264, ' {':371, '':13, '           ':17422, ' "':345, 'type':1123, '":':1264, ' "':345, 'object':2814, '",':548, '':13, '           ':17422, ' "':345, 'properties':10723, '":':1264, ' {':371, '':13, '              ':1417, ' ':28705, ' "':345, 'id':313, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'integer':14296, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'Return':6168, ' host':3434, ' with':395, ' id':1910, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'format':3762, '":':1264, ' "':345, 'int':501, '3':28770, '2':28750, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'nullable':21777, '":':1264, ' true':1132, '':13, '              ':1417, ' ':28705, ' },':1630, '':13, '              ':1417, ' ':28705, ' "':345, 'address':5540, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'string':1427, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'Return':6168, ' host':3434, ' with':395, ' address':2962, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'nullable':21777, '":':1264, ' true':1132, '':13, '              ':1417, ' ':28705, ' },':1630, '':13, '              ':1417, ' ':28705, ' "':345, 'email':6604, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'string':1427, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'Return':6168, ' hosts':19666, ' with':395, ' this':456, ' email':4927, ' associated':5363, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'nullable':21777, '":':1264, ' true':1132, '':13, '              ':1417, ' ':28705, ' }':443, '':13, '              ':1417, ' ':28705, ' "':345, 'enabled':9474, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'boolean':8490, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'Return':6168, ' hosts':19666, ' with':395, ' enabled':9651, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'nullable':21777, '":':1264, ' true':1132, '':13, '              ':1417, ' ':28705, ' },':1630, '':13, '              ':1417, ' ':28705, ' "':345, 'port':483, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'integer':14296, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'Return':6168, ' hosts':19666, ' with':395, ' port':2248, '.':28723, ' It':661, ' will':622, ' be':347, ' zero':6129, ' if':513, ' it':378, ' is':349, ' the':272, ' standard':4787, ' port':2248, ' for':354, ' the':272, ' host':3434, ' end':948, ' point':1305, ' type':1212, '.':28723, ' ':28705, ' Note':6096, ' the':272, ' standard':4787, ' port':2248, ' for':354, ' end':948, ' point':1305, ' type':1212, ' http':3550, ' is':349, ' ':28705, '4':28781, '4':28781, '3':28770, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'format':3762, '":':1264, ' "':345, 'int':501, '3':28770, '2':28750, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'nullable':21777, '":':1264, ' true':1132, '':13, '              ':1417, ' ':28705, ' },':1630, '':13, '              ':1417, ' ':28705, ' "':345, 'endpoint':15153, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'string':1427, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'Return':6168, ' hosts':19666, ' with':395, ' endpoint':15329, ' type':1212, '.':28723, ' The':415, ' endpoint':15329, ' type':1212, '.':28723, ' End':5764, ' point':1305, ' types':4514, ' are':460, ' :':714, ' quantum':10915, ' is':349, ' a':264, ' quantum':10915, ' safe':5023, ' encryption':27591, ' test':1369, ',':28725, ' http':3550, ' (':325, 'default':2833, ' port':2248, ' ':28705, '4':28781, '4':28781, '3':28770, ')':28731, ' is':349, ' a':264, ' website':4400, ' p':284, 'ing':288, ',':28725, ' https':4449, ' is':349, ' a':264, ' s':268, 'sl':2181, ' certificate':15743, ' check':1877, ',':28725, ' http':3550, 'html':3391, ' is':349, ' a':264, ' website':4400, ' html':12383, ' load':3442, ',':28725, ' ic':19699, 'mp':1447, ' is':349, ' a':264, ' host':3434, ' p':284, 'ing':288, ',':28725, ' d':281, 'ns':2925, ' is':349, ' a':264, ' d':281, 'ns':2925, ' lookup':21275, ',':28725, ' sm':991, 'tp':8024, ' is':349, ' an':396, ' email':4927, ' server':5116, ' he':400, 'lo':731, ' message':2928, ' confirmation':22511, ' and':304, ' raw':8435, 'connect':7182, ' is':349, ' a':264, ' low':2859, ' level':2184, ' raw':8435, ' socket':13889, ' connection':5132, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'nullable':21777, '":':1264, ' true':1132, '':13, '              ':1417, ' ':28705, ' }':443, '':13, '           ':17422, ' }':443, '':13, '       ':5390, ' }':443, '':13, '   ':2287, ' }':443, '':13, 'D':28757, 'ON':832, ''':28742, 'T':28738, ' T':320, 'ELL':25035, ' THE':3799, ' US':2223, 'ER':725, ' HO':12203, 'W':28780, ' TO':6991, ' C':334, 'ALL':4945, ' A':330, ' FUN':28318, 'CTION':5324, '.':28723, ' You':995, ' call':1034, ' the':272, ' functions':5572, '!':28808, '':13, '<':28789, '</':700, 'SYS':18741, '>>':4060, '[':28792, '/':28748, 'INST':16289, ']':28793 ]
-[1712454552] main: session file has exact match for prompt!
-[1712454552] recalculate the cached logits (check): embd_inp.empty() false, n_matching_session_tokens 2370, embd_inp.size() 2370, session_tokens.size() 2370, embd_inp.size() 2370
-[1712454552] inp_pfx: [ '':1, ' ':28705, '':13, '':13, '###':27332, ' Inst':3133, 'ruction':3112, ':':28747, '':13, '':13 ]
-[1712454552] inp_sfx: [ ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, '':13 ]
-[1712454552] cml_pfx: [ '':1, ' ':28705, '':13, '<|im_start|>':32000, 'user':1838, '':13 ]
-[1712454552] cml_sfx: [ ' <':523, '|':28766, 'im':321, '_':28730, 'end':416, '|':28766, '>':28767, '':13, '<|im_start|>':32000, 'ass':489, 'istant':11143, '':13 ]
-[1712454552] main: interactive mode on.
-[1712454552] Reverse prompt: '### Instruction:
+[1712601785] tokens: [ '':1, '':1, '[':28792, 'INST':16289, ']':28793, ' <<':2087, 'SYS':18741, '>>':4060, '':13, 'You':1976, ' are':460, ' a':264, ' helpful':10865, ' assistant':13892, ' with':395, ' access':2735, ' to':298, ' the':272, ' following':2296, ' functions':5572, '.':28723, ' Use':5938, ' them':706, ' if':513, ' required':3030, ' -':387, '':13, '   ':2287, ' {':371, '':13, '       ':5390, ' "':345, 'name':861, '":':1264, ' "':345, 'add':988, '_':28730, 'host':3404, '",':548, '':13, '       ':5390, ' "':345, 'description':6518, '":':1264, ' "':345, 'Add':1991, ' a':264, ' host':3434, ' to':298, ' be':347, ' mon':1326, 'it':279, 'ored':2455, '.",':9191, '':13, '       ':5390, ' "':345, 'required':10893, '":':1264, ' [':733, '':13, '           ':17422, ' "':345, 'address':5540, '"':28739, '':13, '       ':5390, ' ],':12052, '':13, '       ':5390, ' "':345, 'parameters':11438, '":':1264, ' {':371, '':13, '           ':17422, ' "':345, 'type':1123, '":':1264, ' "':345, 'object':2814, '",':548, '':13, '           ':17422, ' "':345, 'properties':10723, '":':1264, ' {':371, '':13, '              ':1417, ' ':28705, ' "':345, 'address':5540, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'max':2416, 'Length':4645, '":':1264, ' ':28705, '5':28782, '1':28740, '2':28750, ',':28725, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'string':1427, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'The':1014, ' host':3434, ' address':2962, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'nullable':21777, '":':1264, ' true':1132, '':13, '              ':1417, ' ':28705, ' },':1630, '':13, '              ':1417, ' ':28705, ' "':345, 'endpoint':15153, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'max':2416, 'Length':4645, '":':1264, ' ':28705, '5':28782, '0':28734, ',':28725, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'string':1427, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'The':1014, ' endpoint':15329, ' type':1212, '.':28723, ' End':5764, 'point':2275, ' types':4514, ' are':460, ' :':714, ' quantum':10915, ' is':349, ' a':264, ' quantum':10915, ' safe':5023, ' encryption':27591, ' test':1369, ',':28725, ' http':3550, ' is':349, ' a':264, ' website':4400, ' p':284, 'ing':288, ',':28725, ' https':4449, ' is':349, ' a':264, ' s':268, 'sl':2181, ' certificate':15743, ' check':1877, ',':28725, ' http':3550, 'html':3391, ' is':349, ' a':264, ' website':4400, ' html':12383, ' load':3442, ',':28725, ' ic':19699, 'mp':1447, ' is':349, ' a':264, ' host':3434, ' p':284, 'ing':288, ',':28725, ' d':281, 'ns':2925, ' is':349, ' a':264, ' d':281, 'ns':2925, ' lookup':21275, ',':28725, ' sm':991, 'tp':8024, ' is':349, ' an':396, ' email':4927, ' server':5116, ' he':400, 'lo':731, ' message':2928, ' confirmation':22511, ' and':304, ' raw':8435, 'connect':7182, ' is':349, ' a':264, ' low':2859, ' level':2184, ' raw':8435, ' socket':13889, ' connection':5132, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'nullable':21777, '":':1264, ' true':1132, '':13, '              ':1417, ' ':28705, ' },':1630, '':13, '              ':1417, ' ':28705, ' "':345, 'port':483, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'integer':14296, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'The':1014, ' port':2248, ' of':302, ' the':272, ' service':2372, ' being':1250, ' mon':1326, 'it':279, 'ored':2455, '.':28723, ' It':661, ' will':622, ' be':347, ' zero':6129, ' if':513, ' it':378, ' is':349, ' the':272, ' standard':4787, ' port':2248, ' for':354, ' the':272, ' host':3434, ' end':948, ' point':1305, ' type':1212, '.':28723, ' Note':6096, ' the':272, ' standard':4787, ' port':2248, ' for':354, ' end':948, ' point':1305, ' type':1212, ' http':3550, ' ':28705, '4':28781, '4':28781, '3':28770, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'format':3762, '":':1264, ' "':345, 'int':501, '3':28770, '2':28750, '"':28739, '':13, '              ':1417, ' ':28705, ' },':1630, '':13, '              ':1417, ' ':28705, ' "':345, 'timeout':9761, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'integer':14296, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'The':1014, ' time':727, ' to':298, ' wait':2444, ' for':354, ' a':264, ' timeout':11965, ' in':297, ' mill':2545, 'iseconds':24589, '.':28723, ' Default':9707, ' is':349, ' ':28705, '5':28782, '9':28774, '0':28734, '0':28734, '0':28734, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'format':3762, '":':1264, ' "':345, 'int':501, '3':28770, '2':28750, '"':28739, '':13, '              ':1417, ' ':28705, ' },':1630, '':13, '              ':1417, ' ':28705, ' "':345, 'email':6604, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'max':2416, 'Length':4645, '":':1264, ' ':28705, '2':28750, '5':28782, '5':28782, ',':28725, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'string':1427, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'When':7477, ' the':272, ' host':3434, ' is':349, ' down':1060, ' al':389, 'erts':9916, ' are':460, ' sent':2662, ' to':298, ' this':456, ' email':4927, ' address':2962, '.':28723, ' If':1047, ' as':390, ' user':2188, ' is':349, ' logged':27036, ' in':297, ' their':652, ' login':14570, ' email':4927, ' will':622, ' be':347, ' used':1307, '.':28723, ' If':1047, ' they':590, ' are':460, ' not':459, ' logged':27036, ' in':297, ' then':868, ' they':590, ' must':1580, ' supply':8002, ' an':396, ' email':4927, '.",':9191, '':13, '                ':359, '   ':2287, ' "':345, 'nullable':21777, '":':1264, ' true':1132, '':13, '              ':1417, ' ':28705, ' }':443, '':13, '           ':17422, ' }':443, '':13, '       ':5390, ' }':443, '':13, '   ':2287, ' }':443, '':13, '   ':2287, ' {':371, '':13, '       ':5390, ' "':345, 'name':861, '":':1264, ' "':345, 'edit':7128, '_':28730, 'host':3404, '",':548, '':13, '       ':5390, ' "':345, 'description':6518, '":':1264, ' "':345, 'Edit':8470, ' a':264, ' host':3434, ''':28742, 's':28713, ' monitoring':16882, ' configuration':7427, '.':28723, ' This':851, ' function':908, ' is':349, ' used':1307, ' to':298, ' update':4009, ' a':264, ' hosts':19666, ' configuration':7427, '.",':9191, '':13, '       ':5390, ' "':345, 'parameters':11438, '":':1264, ' {':371, '':13, '           ':17422, ' "':345, 'type':1123, '":':1264, ' "':345, 'object':2814, '",':548, '':13, '           ':17422, ' "':345, 'properties':10723, '":':1264, ' {':371, '':13, '              ':1417, ' ':28705, ' "':345, 'auth':6414, '_':28730, 'key':1499, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'string':1427, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'This':3260, ' is':349, ' a':264, ' string':1423, ' that':369, ' is':349, ' used':1307, ' to':298, ' aut':1206, 'hent':5577, 'icate':5749, ' the':272, ' Edit':12838, ' action':2992, ' for':354, ' a':264, ' user':2188, ' who':693, ' is':349, ' not':459, ' logged':27036, ' in':297, '.':28723, ' This':851, ' key':1945, ' is':349, ' returned':4253, ' when':739, ' adding':8833, ' a':264, ' host':3434, ' for':354, ' the':272, ' first':907, ' time':727, '.':28723, ' It':661, ' should':1023, ' be':347, ' stored':11141, ' and':304, ' sent':2662, ' with':395, ' subsequent':14235, ' edit':10659, ' requests':9828, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'nullable':21777, '":':1264, ' true':1132, '':13, '              ':1417, ' ':28705, ' },':1630, '':13, '              ':1417, ' ':28705, ' "':345, 'email':6604, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'string':1427, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'The':1014, ' users':5443, ' email':4927, ' address':2962, '.",':9191, '':13, '                ':359, '   ':2287, ' "':345, 'nullable':21777, '":':1264, ' true':1132, '':13, '              ':1417, ' ':28705, ' },':1630, '':13, '              ':1417, ' ':28705, ' "':345, 'id':313, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'integer':14296, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'This':3260, ' is':349, ' the':272, ' host':3434, ' id':1910, ' used':1307, ' for':354, ' identifying':21653, ' the':272, ' host':3434, '.':28723, ' It':661, ' is':349, ' obtained':7365, ' when':739, ' adding':8833, ' a':264, ' host':3434, '.",':9191, '':13, '                ':359, '   ':2287, ' "':345, 'format':3762, '":':1264, ' "':345, 'int':501, '3':28770, '2':28750, '"':28739, '':13, '              ':1417, ' ':28705, ' },':1630, '':13, '              ':1417, ' ':28705, ' "':345, 'enabled':9474, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'boolean':8490, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'Is':2301, ' host':3434, ' enabled':9651, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'nullable':21777, '":':1264, ' true':1132, '':13, '              ':1417, ' ':28705, ' },':1630, '':13, '              ':1417, ' ':28705, ' "':345, 'address':5540, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'string':1427, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'Host':7287, ' address':2962, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'nullable':21777, '":':1264, ' true':1132, '':13, '              ':1417, ' ':28705, ' },':1630, '':13, '              ':1417, ' ':28705, ' "':345, 'endpoint':15153, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'string':1427, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'The':1014, ' endpoint':15329, ' type':1212, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'nullable':21777, '":':1264, ' true':1132, '':13, '              ':1417, ' ':28705, ' },':1630, '':13, '              ':1417, ' ':28705, ' "':345, 'port':483, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'integer':14296, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'The':1014, ' port':2248, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'format':3762, '":':1264, ' "':345, 'int':501, '3':28770, '2':28750, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'nullable':21777, '":':1264, ' true':1132, '':13, '              ':1417, ' ':28705, ' },':1630, '':13, '              ':1417, ' ':28705, ' "':345, 'timeout':9761, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'integer':14296, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'Time':2098, ' to':298, ' wait':2444, ' for':354, ' a':264, ' timeout':11965, ' in':297, ' mill':2545, 'iseconds':24589, '.",':9191, '':13, '                ':359, '   ':2287, ' "':345, 'format':3762, '":':1264, ' "':345, 'int':501, '3':28770, '2':28750, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'nullable':21777, '":':1264, ' true':1132, '':13, '              ':1417, ' ':28705, ' },':1630, '':13, '              ':1417, ' ':28705, ' "':345, 'hidden':9748, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'boolean':8490, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'Is':2301, ' the':272, ' host':3434, ' is':349, ' hidden':7918, '.':28723, ' Setting':23433, ' this':456, ' to':298, ' true':1132, ' effectively':11466, ' delet':21750, 'es':274, ' the':272, ' host':3434, ' from':477, ' future':3437, ' monitoring':16882, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'nullable':21777, '":':1264, ' true':1132, '':13, '              ':1417, ' ':28705, ' }':443, '':13, '           ':17422, ' }':443, '':13, '       ':5390, ' }':443, '':13, '   ':2287, ' }':443, '':13, '   ':2287, ' {':371, '':13, '       ':5390, ' "':345, 'name':861, '":':1264, ' "':345, 'get':527, '_':28730, 'host':3404, '_':28730, 'data':1056, '",':548, '':13, '       ':5390, ' "':345, 'description':6518, '":':1264, ' "':345, 'Get':1458, ' monitoring':16882, ' status':3425, ' for':354, ' a':264, ' host':3434, '.':28723, ' To':1791, ' get':625, ' the':272, ' current':1868, ' data':1178, ',':28725, ' set':808, ' data':1178, 'Set':1436, 'Id':1018, ' to':298, ' zero':6129, '.':28723, ' For':1263, ' historic':15799, ' data':1178, ' instead':3519, ' set':808, ' date':3608, 'Start':4130, ' and':304, ' date':3608, 'End':3861, ' to':298, ' get':625, ' data':1178, ' within':2373, ' that':369, ' range':2819, '.':28723, ' All':1682, ' input':2787, ' and':304, ' output':3825, ' times':2421, ' are':460, ' UTC':21811, '.",':9191, '':13, '       ':5390, ' "':345, 'parameters':11438, '":':1264, ' {':371, '':13, '           ':17422, ' "':345, 'type':1123, '":':1264, ' "':345, 'object':2814, '",':548, '':13, '           ':17422, ' "':345, 'properties':10723, '":':1264, ' {':371, '':13, '              ':1417, ' ':28705, ' "':345, 'dataset':18200, '_':28730, 'id':313, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'integer':14296, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'Set':1436, ' dataset':13466, '_':28730, 'id':313, ' to':298, ' zero':6129, ' for':354, ' the':272, ' latest':7345, ' data':1178, '.':28723, ' Leave':25487, ' it':378, ' null':1241, ' if':513, ' you':368, ' set':808, ' date':3608, '_':28730, 'start':2521, ' or':442, ' data':1178, '_':28730, 'end':416, ' to':298, ' retrieve':20132, ' historic':15799, ' data':1178, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'format':3762, '":':1264, ' "':345, 'int':501, '3':28770, '2':28750, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'nullable':21777, '":':1264, ' true':1132, '':13, '              ':1417, ' ':28705, ' },':1630, '':13, '              ':1417, ' ':28705, ' "':345, 'id':313, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'integer':14296, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'Return':6168, ' host':3434, ' with':395, ' id':1910, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'format':3762, '":':1264, ' "':345, 'int':501, '3':28770, '2':28750, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'nullable':21777, '":':1264, ' true':1132, '':13, '              ':1417, ' ':28705, ' },':1630, '':13, '              ':1417, ' ':28705, ' "':345, 'address':5540, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'string':1427, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'Return':6168, ' host':3434, ' with':395, ' address':2962, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'nullable':21777, '":':1264, ' true':1132, '':13, '              ':1417, ' ':28705, ' },':1630, '':13, '              ':1417, ' ':28705, ' "':345, 'email':6604, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'string':1427, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'Return':6168, ' hosts':19666, ' with':395, ' this':456, ' email':4927, ' associated':5363, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'nullable':21777, '":':1264, ' true':1132, '':13, '              ':1417, ' ':28705, ' }':443, '':13, '              ':1417, ' ':28705, ' "':345, 'enabled':9474, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'boolean':8490, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'Return':6168, ' hosts':19666, ' with':395, ' enabled':9651, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'nullable':21777, '":':1264, ' true':1132, '':13, '              ':1417, ' ':28705, ' },':1630, '':13, '              ':1417, ' ':28705, ' "':345, 'port':483, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'integer':14296, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'Return':6168, ' host':3434, ' with':395, ' port':2248, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'format':3762, '":':1264, ' "':345, 'int':501, '3':28770, '2':28750, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'nullable':21777, '":':1264, ' true':1132, '':13, '              ':1417, ' ':28705, ' },':1630, '':13, '              ':1417, ' ':28705, ' "':345, 'endpoint':15153, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'string':1427, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'Return':6168, ' hosts':19666, ' with':395, ' endpoint':15329, ' type':1212, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'nullable':21777, '":':1264, ' true':1132, '':13, '              ':1417, ' ':28705, ' },':1630, '':13, '              ':1417, ' ':28705, ' "':345, 'alert':14762, '_':28730, 'sent':16788, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'boolean':8490, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'Return':6168, ' hosts':19666, ' that':369, ' have':506, ' a':264, ' host':3434, ' down':1060, ' alert':10977, ' sent':2662, ' set':808, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'nullable':21777, '":':1264, ' true':1132, '':13, '              ':1417, ' ':28705, ' },':1630, '':13, '              ':1417, ' ':28705, ' "':345, 'alert':14762, '_':28730, 'flag':7914, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'boolean':8490, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'Return':6168, ' hosts':19666, ' that':369, ' have':506, ' a':264, ' host':3434, ' down':1060, ' alert':10977, ' flag':6673, ' set':808, '.':28723, ' This':851, ' can':541, ' be':347, ' used':1307, ' to':298, ' get':625, ' host':3434, ' the':272, ' are':460, ' up':582, ' or':442, ' down':1060, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'nullable':21777, '":':1264, ' true':1132, '':13, '              ':1417, ' ':28705, ' },':1630, '':13, '              ':1417, ' ':28705, ' "':345, 'date':1408, '_':28730, 'start':2521, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'string':1427, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'The':1014, ' UTC':21811, ' start':1149, ' time':727, ' to':298, ' query':5709, ' from':477, '.':28723, ' When':1684, ' used':1307, ' with':395, ' date':3608, '_':28730, 'end':416, ' this':456, ' gives':5212, ' a':264, ' range':2819, ' of':302, ' times':2421, ' to':298, ' filter':5531, ' on':356, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'format':3762, '":':1264, ' "':345, 'date':1408, '-':28733, 'time':1536, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'nullable':21777, '":':1264, ' true':1132, '':13, '              ':1417, ' ':28705, ' },':1630, '':13, '              ':1417, ' ':28705, ' "':345, 'date':1408, '_':28730, 'end':416, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'string':1427, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'The':1014, ' UTC':21811, ' end':948, ' time':727, ' to':298, ' query':5709, ' to':298, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'format':3762, '":':1264, ' "':345, 'date':1408, '-':28733, 'time':1536, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'nullable':21777, '":':1264, ' true':1132, '':13, '              ':1417, ' ':28705, ' }':443, '':13, '           ':17422, ' }':443, '':13, '       ':5390, ' }':443, '':13, '   ':2287, ' }':443, '':13, '   ':2287, ' {':371, '':13, '       ':5390, ' "':345, 'name':861, '":':1264, ' "':345, 'get':527, '_':28730, 'host':3404, '_':28730, 'list':1703, '",':548, '':13, '       ':5390, ' "':345, 'description':6518, '":':1264, ' "':345, 'Get':1458, ' a':264, ' list':1274, ' of':302, ' host':3434, ' configurations':24991, '.",':9191, '':13, '       ':5390, ' "':345, 'parameters':11438, '":':1264, ' {':371, '':13, '           ':17422, ' "':345, 'type':1123, '":':1264, ' "':345, 'object':2814, '",':548, '':13, '           ':17422, ' "':345, 'properties':10723, '":':1264, ' {':371, '':13, '              ':1417, ' ':28705, ' "':345, 'id':313, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'integer':14296, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'Return':6168, ' host':3434, ' with':395, ' id':1910, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'format':3762, '":':1264, ' "':345, 'int':501, '3':28770, '2':28750, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'nullable':21777, '":':1264, ' true':1132, '':13, '              ':1417, ' ':28705, ' },':1630, '':13, '              ':1417, ' ':28705, ' "':345, 'address':5540, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'string':1427, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'Return':6168, ' host':3434, ' with':395, ' address':2962, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'nullable':21777, '":':1264, ' true':1132, '':13, '              ':1417, ' ':28705, ' },':1630, '':13, '              ':1417, ' ':28705, ' "':345, 'email':6604, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'string':1427, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'Return':6168, ' hosts':19666, ' with':395, ' this':456, ' email':4927, ' associated':5363, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'nullable':21777, '":':1264, ' true':1132, '':13, '              ':1417, ' ':28705, ' }':443, '':13, '              ':1417, ' ':28705, ' "':345, 'enabled':9474, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'boolean':8490, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'Return':6168, ' hosts':19666, ' with':395, ' enabled':9651, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'nullable':21777, '":':1264, ' true':1132, '':13, '              ':1417, ' ':28705, ' },':1630, '':13, '              ':1417, ' ':28705, ' "':345, 'port':483, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'integer':14296, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'Return':6168, ' hosts':19666, ' with':395, ' port':2248, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'format':3762, '":':1264, ' "':345, 'int':501, '3':28770, '2':28750, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'nullable':21777, '":':1264, ' true':1132, '':13, '              ':1417, ' ':28705, ' },':1630, '':13, '              ':1417, ' ':28705, ' "':345, 'endpoint':15153, '":':1264, ' {':371, '':13, '                ':359, '   ':2287, ' "':345, 'type':1123, '":':1264, ' "':345, 'string':1427, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'description':6518, '":':1264, ' "':345, 'Return':6168, ' hosts':19666, ' with':395, ' endpoint':15329, ' type':1212, '",':548, '':13, '                ':359, '   ':2287, ' "':345, 'nullable':21777, '":':1264, ' true':1132, '':13, '              ':1417, ' ':28705, ' }':443, '':13, '           ':17422, ' }':443, '':13, '       ':5390, ' }':443, '':13, '   ':2287, ' }':443, '':13, 'D':28757, 'ON':832, ''':28742, 'T':28738, ' T':320, 'ELL':25035, ' THE':3799, ' US':2223, 'ER':725, ' HO':12203, 'W':28780, ' TO':6991, ' C':334, 'ALL':4945, ' A':330, ' FUN':28318, 'CTION':5324, '.':28723, ' You':995, ' call':1034, ' the':272, ' functions':5572, '!':28808, '':13, '<':28789, '</':700, 'SYS':18741, '>>':4060, '[':28792, '/':28748, 'INST':16289, ']':28793 ]
+[1712601785] main: session file has exact match for prompt!
+[1712601785] recalculate the cached logits (check): embd_inp.empty() false, n_matching_session_tokens 2018, embd_inp.size() 2018, session_tokens.size() 2018, embd_inp.size() 2018
+[1712601785] inp_pfx: [ '':1, ' ':28705, '':13, '':13, '###':27332, ' Inst':3133, 'ruction':3112, ':':28747, '':13, '':13 ]
+[1712601785] inp_sfx: [ ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, '':13 ]
+[1712601785] cml_pfx: [ '':1, ' ':28705, '':13, '<|im_start|>':32000, 'user':1838, '':13 ]
+[1712601785] cml_sfx: [ ' <':523, '|':28766, 'im':321, '_':28730, 'end':416, '|':28766, '>':28767, '':13, '<|im_start|>':32000, 'ass':489, 'istant':11143, '':13 ]
+[1712601785] main: interactive mode on.
+[1712601785] Reverse prompt: '### Instruction:
 
 '
-[1712454552] sampling: 
+[1712601785] sampling: 
 	repeat_last_n = 64, repeat_penalty = 1.100, frequency_penalty = 0.000, presence_penalty = 0.000
 	top_k = 40, tfs_z = 1.000, top_p = 0.950, min_p = 0.050, typical_p = 1.000, temp = 0.000
 	mirostat = 0, mirostat_lr = 0.100, mirostat_ent = 5.000
-[1712454552] sampling order: 
+[1712601785] sampling order: 
 CFG -> Penalties -> top_k -> tfs_z -> typical_p -> top_p -> min_p -> temperature 
-[1712454552] generate: n_ctx = 5000, n_batch = 2048, n_predict = 5000, n_keep = 2370
-[1712454552] 
+[1712601785] generate: n_ctx = 4000, n_batch = 2048, n_predict = 4000, n_keep = 2018
+[1712601785] 
 
-[1712454552] == Running in interactive mode. ==
-[1712454552]  - Press Ctrl+C to interject at any time.
-[1712454552]  - Press Return to return control to LLaMa.
+[1712601785] == Running in interactive mode. ==
+[1712601785]  - Press Ctrl+C to interject at any time.
+[1712601785]  - Press Return to return control to LLaMa.
  - To return control without starting a new line, end your input with '/'.
  - If you want to submit another line, end your input with '\'.
 
-[1712454552] embd_inp.size(): 2370, n_consumed: 0
-[1712454552] embd_inp.size(): 2370, n_consumed: 2048
-[1712454552] waiting for user input
-[1712454562] empty line, passing control back
-[1712454562] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' I':315 ]
-[1712454562] n_remain: 4999
-[1712454562] eval: [ ' I':315 ]
-[1712454562] n_past = 2371
-[1712454562] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' I':315, ' need':927 ]
-[1712454562] n_remain: 4998
-[1712454562] eval: [ ' need':927 ]
-[1712454562] n_past = 2372
-[1712454562] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' I':315, ' need':927, ' to':298 ]
-[1712454562] n_remain: 4997
-[1712454562] eval: [ ' to':298 ]
-[1712454562] n_past = 2373
-[1712454562] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' I':315, ' need':927, ' to':298, ' add':967 ]
-[1712454562] n_remain: 4996
-[1712454562] eval: [ ' add':967 ]
-[1712454563] n_past = 2374
-[1712454563] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' I':315, ' need':927, ' to':298, ' add':967, ' a':264 ]
-[1712454563] n_remain: 4995
-[1712454563] eval: [ ' a':264 ]
-[1712454563] n_past = 2375
-[1712454563] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' I':315, ' need':927, ' to':298, ' add':967, ' a':264, ' new':633 ]
-[1712454563] n_remain: 4994
-[1712454563] eval: [ ' new':633 ]
-[1712454563] n_past = 2376
-[1712454563] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' I':315, ' need':927, ' to':298, ' add':967, ' a':264, ' new':633, ' host':3434 ]
-[1712454563] n_remain: 4993
-[1712454563] eval: [ ' host':3434 ]
-[1712454563] n_past = 2377
-[1712454563] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' I':315, ' need':927, ' to':298, ' add':967, ' a':264, ' new':633, ' host':3434, ' to':298 ]
-[1712454563] n_remain: 4992
-[1712454563] eval: [ ' to':298 ]
-[1712454563] n_past = 2378
-[1712454563] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' I':315, ' need':927, ' to':298, ' add':967, ' a':264, ' new':633, ' host':3434, ' to':298, ' monitor':9009 ]
-[1712454563] n_remain: 4991
-[1712454563] eval: [ ' monitor':9009 ]
-[1712454564] n_past = 2379
-[1712454564] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' I':315, ' need':927, ' to':298, ' add':967, ' a':264, ' new':633, ' host':3434, ' to':298, ' monitor':9009, '.':28723 ]
-[1712454564] n_remain: 4990
-[1712454564] eval: [ '.':28723 ]
-[1712454564] n_past = 2380
-[1712454564] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' I':315, ' need':927, ' to':298, ' add':967, ' a':264, ' new':633, ' host':3434, ' to':298, ' monitor':9009, '.':28723, ' Could':13955 ]
-[1712454564] n_remain: 4989
-[1712454564] eval: [ ' Could':13955 ]
-[1712454564] n_past = 2381
-[1712454564] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' I':315, ' need':927, ' to':298, ' add':967, ' a':264, ' new':633, ' host':3434, ' to':298, ' monitor':9009, '.':28723, ' Could':13955, ' you':368 ]
-[1712454564] n_remain: 4988
-[1712454564] eval: [ ' you':368 ]
-[1712454564] n_past = 2382
-[1712454564] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' I':315, ' need':927, ' to':298, ' add':967, ' a':264, ' new':633, ' host':3434, ' to':298, ' monitor':9009, '.':28723, ' Could':13955, ' you':368, ' please':4665 ]
-[1712454564] n_remain: 4987
-[1712454564] eval: [ ' please':4665 ]
-[1712454564] n_past = 2383
-[1712454564] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' I':315, ' need':927, ' to':298, ' add':967, ' a':264, ' new':633, ' host':3434, ' to':298, ' monitor':9009, '.':28723, ' Could':13955, ' you':368, ' please':4665, ' help':1316 ]
-[1712454564] n_remain: 4986
-[1712454564] eval: [ ' help':1316 ]
-[1712454564] n_past = 2384
-[1712454564] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' I':315, ' need':927, ' to':298, ' add':967, ' a':264, ' new':633, ' host':3434, ' to':298, ' monitor':9009, '.':28723, ' Could':13955, ' you':368, ' please':4665, ' help':1316, ' me':528 ]
-[1712454564] n_remain: 4985
-[1712454564] eval: [ ' me':528 ]
-[1712454565] n_past = 2385
-[1712454565] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' I':315, ' need':927, ' to':298, ' add':967, ' a':264, ' new':633, ' host':3434, ' to':298, ' monitor':9009, '.':28723, ' Could':13955, ' you':368, ' please':4665, ' help':1316, ' me':528, ' with':395 ]
-[1712454565] n_remain: 4984
-[1712454565] eval: [ ' with':395 ]
-[1712454565] n_past = 2386
-[1712454565] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' I':315, ' need':927, ' to':298, ' add':967, ' a':264, ' new':633, ' host':3434, ' to':298, ' monitor':9009, '.':28723, ' Could':13955, ' you':368, ' please':4665, ' help':1316, ' me':528, ' with':395, ' that':369 ]
-[1712454565] n_remain: 4983
-[1712454565] eval: [ ' that':369 ]
-[1712454565] n_past = 2387
-[1712454565] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' I':315, ' need':927, ' to':298, ' add':967, ' a':264, ' new':633, ' host':3434, ' to':298, ' monitor':9009, '.':28723, ' Could':13955, ' you':368, ' please':4665, ' help':1316, ' me':528, ' with':395, ' that':369, '?':28804 ]
-[1712454565] n_remain: 4982
-[1712454565] eval: [ '?':28804 ]
-[1712454565] n_past = 2388
-[1712454565] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' I':315, ' need':927, ' to':298, ' add':967, ' a':264, ' new':633, ' host':3434, ' to':298, ' monitor':9009, '.':28723, ' Could':13955, ' you':368, ' please':4665, ' help':1316, ' me':528, ' with':395, ' that':369, '?':28804, '':2 ]
-[1712454565] n_remain: 4981
-[1712454565] found EOS token
-[1712454565] waiting for user input
-[1712454565] empty line, passing control back
-[1712454565] eval: [ '':2 ]
-[1712454565] n_past = 2389
-[1712454565] embd_inp.size(): 2376, n_consumed: 2370
-[1712454565] found antiprompt: ▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅ ### Instruction:
+[1712601785] embd_inp.size(): 2018, n_consumed: 0
+[1712601785] embd_inp.size(): 2018, n_consumed: 2018
+[1712601785] waiting for user input
+[1712601854] empty line, passing control back
+[1712601854] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' I':315 ]
+[1712601854] n_remain: 3999
+[1712601854] eval: [ ' I':315 ]
+[1712601857] n_past = 2019
+[1712601857] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' I':315, ' need':927 ]
+[1712601857] n_remain: 3998
+[1712601857] eval: [ ' need':927 ]
+[1712601859] n_past = 2020
+[1712601859] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' I':315, ' need':927, ' to':298 ]
+[1712601859] n_remain: 3997
+[1712601859] eval: [ ' to':298 ]
+[1712601860] n_past = 2021
+[1712601860] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' I':315, ' need':927, ' to':298, ' add':967 ]
+[1712601860] n_remain: 3996
+[1712601860] eval: [ ' add':967 ]
+[1712601860] n_past = 2022
+[1712601860] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' I':315, ' need':927, ' to':298, ' add':967, ' a':264 ]
+[1712601860] n_remain: 3995
+[1712601860] eval: [ ' a':264 ]
+[1712601862] n_past = 2023
+[1712601862] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' I':315, ' need':927, ' to':298, ' add':967, ' a':264, ' new':633 ]
+[1712601862] n_remain: 3994
+[1712601862] eval: [ ' new':633 ]
+[1712601862] n_past = 2024
+[1712601862] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' I':315, ' need':927, ' to':298, ' add':967, ' a':264, ' new':633, ' host':3434 ]
+[1712601862] n_remain: 3993
+[1712601862] eval: [ ' host':3434 ]
+[1712601863] n_past = 2025
+[1712601863] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' I':315, ' need':927, ' to':298, ' add':967, ' a':264, ' new':633, ' host':3434, ' to':298 ]
+[1712601863] n_remain: 3992
+[1712601863] eval: [ ' to':298 ]
+[1712601863] n_past = 2026
+[1712601863] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' I':315, ' need':927, ' to':298, ' add':967, ' a':264, ' new':633, ' host':3434, ' to':298, ' be':347 ]
+[1712601863] n_remain: 3991
+[1712601863] eval: [ ' be':347 ]
+[1712601864] n_past = 2027
+[1712601864] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' I':315, ' need':927, ' to':298, ' add':967, ' a':264, ' new':633, ' host':3434, ' to':298, ' be':347, ' mon':1326 ]
+[1712601864] n_remain: 3990
+[1712601864] eval: [ ' mon':1326 ]
+[1712601865] n_past = 2028
+[1712601865] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' I':315, ' need':927, ' to':298, ' add':967, ' a':264, ' new':633, ' host':3434, ' to':298, ' be':347, ' mon':1326, 'it':279 ]
+[1712601865] n_remain: 3989
+[1712601865] eval: [ 'it':279 ]
+[1712601866] n_past = 2029
+[1712601866] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' I':315, ' need':927, ' to':298, ' add':967, ' a':264, ' new':633, ' host':3434, ' to':298, ' be':347, ' mon':1326, 'it':279, 'ored':2455 ]
+[1712601866] n_remain: 3988
+[1712601866] eval: [ 'ored':2455 ]
+[1712601866] n_past = 2030
+[1712601866] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' I':315, ' need':927, ' to':298, ' add':967, ' a':264, ' new':633, ' host':3434, ' to':298, ' be':347, ' mon':1326, 'it':279, 'ored':2455, '.':28723 ]
+[1712601866] n_remain: 3987
+[1712601866] eval: [ '.':28723 ]
+[1712601867] n_past = 2031
+[1712601867] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' I':315, ' need':927, ' to':298, ' add':967, ' a':264, ' new':633, ' host':3434, ' to':298, ' be':347, ' mon':1326, 'it':279, 'ored':2455, '.':28723, ' Could':13955 ]
+[1712601867] n_remain: 3986
+[1712601867] eval: [ ' Could':13955 ]
+[1712601868] n_past = 2032
+[1712601868] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' I':315, ' need':927, ' to':298, ' add':967, ' a':264, ' new':633, ' host':3434, ' to':298, ' be':347, ' mon':1326, 'it':279, 'ored':2455, '.':28723, ' Could':13955, ' you':368 ]
+[1712601868] n_remain: 3985
+[1712601868] eval: [ ' you':368 ]
+[1712601869] n_past = 2033
+[1712601869] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' I':315, ' need':927, ' to':298, ' add':967, ' a':264, ' new':633, ' host':3434, ' to':298, ' be':347, ' mon':1326, 'it':279, 'ored':2455, '.':28723, ' Could':13955, ' you':368, ' please':4665 ]
+[1712601869] n_remain: 3984
+[1712601869] eval: [ ' please':4665 ]
+[1712601870] n_past = 2034
+[1712601870] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' I':315, ' need':927, ' to':298, ' add':967, ' a':264, ' new':633, ' host':3434, ' to':298, ' be':347, ' mon':1326, 'it':279, 'ored':2455, '.':28723, ' Could':13955, ' you':368, ' please':4665, ' provide':3084 ]
+[1712601870] n_remain: 3983
+[1712601870] eval: [ ' provide':3084 ]
+[1712601871] n_past = 2035
+[1712601871] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' I':315, ' need':927, ' to':298, ' add':967, ' a':264, ' new':633, ' host':3434, ' to':298, ' be':347, ' mon':1326, 'it':279, 'ored':2455, '.':28723, ' Could':13955, ' you':368, ' please':4665, ' provide':3084, ' me':528 ]
+[1712601871] n_remain: 3982
+[1712601871] eval: [ ' me':528 ]
+[1712601872] n_past = 2036
+[1712601872] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' I':315, ' need':927, ' to':298, ' add':967, ' a':264, ' new':633, ' host':3434, ' to':298, ' be':347, ' mon':1326, 'it':279, 'ored':2455, '.':28723, ' Could':13955, ' you':368, ' please':4665, ' provide':3084, ' me':528, ' with':395 ]
+[1712601872] n_remain: 3981
+[1712601872] eval: [ ' with':395 ]
+[1712601873] n_past = 2037
+[1712601873] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' I':315, ' need':927, ' to':298, ' add':967, ' a':264, ' new':633, ' host':3434, ' to':298, ' be':347, ' mon':1326, 'it':279, 'ored':2455, '.':28723, ' Could':13955, ' you':368, ' please':4665, ' provide':3084, ' me':528, ' with':395, ' the':272 ]
+[1712601873] n_remain: 3980
+[1712601873] eval: [ ' the':272 ]
+[1712601874] n_past = 2038
+[1712601874] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' I':315, ' need':927, ' to':298, ' add':967, ' a':264, ' new':633, ' host':3434, ' to':298, ' be':347, ' mon':1326, 'it':279, 'ored':2455, '.':28723, ' Could':13955, ' you':368, ' please':4665, ' provide':3084, ' me':528, ' with':395, ' the':272, ' details':4162 ]
+[1712601874] n_remain: 3979
+[1712601874] eval: [ ' details':4162 ]
+[1712601875] n_past = 2039
+[1712601875] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' I':315, ' need':927, ' to':298, ' add':967, ' a':264, ' new':633, ' host':3434, ' to':298, ' be':347, ' mon':1326, 'it':279, 'ored':2455, '.':28723, ' Could':13955, ' you':368, ' please':4665, ' provide':3084, ' me':528, ' with':395, ' the':272, ' details':4162, '?':28804 ]
+[1712601875] n_remain: 3978
+[1712601875] eval: [ '?':28804 ]
+[1712601877] n_past = 2040
+[1712601877] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' I':315, ' need':927, ' to':298, ' add':967, ' a':264, ' new':633, ' host':3434, ' to':298, ' be':347, ' mon':1326, 'it':279, 'ored':2455, '.':28723, ' Could':13955, ' you':368, ' please':4665, ' provide':3084, ' me':528, ' with':395, ' the':272, ' details':4162, '?':28804, '':2 ]
+[1712601877] n_remain: 3977
+[1712601877] found EOS token
+[1712601877] waiting for user input
+[1712601877] empty line, passing control back
+[1712601877] eval: [ '':2 ]
+[1712601878] n_past = 2041
+[1712601878] embd_inp.size(): 2024, n_consumed: 2018
+[1712601878] found antiprompt: ▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅ ### Instruction:
 
 
-[1712454565] waiting for user input
-[1712454565] empty line, passing control back
-[1712454565] eval: [ ' ###':774, ' Inst':3133, 'ruction':3112, ':':28747, '':13, '':13 ]
-[1712454566] n_past = 2395
-[1712454566] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '<':28789 ]
-[1712454566] n_remain: 4980
-[1712454566] eval: [ '<':28789 ]
-[1712454566] n_past = 2396
-[1712454566] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '<':28789, 'FUNCTION':16368 ]
-[1712454566] n_remain: 4979
-[1712454566] eval: [ 'FUNCTION':16368 ]
-[1712454567] n_past = 2397
-[1712454567] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '<':28789, 'FUNCTION':16368, '>':28767 ]
-[1712454567] n_remain: 4978
-[1712454567] eval: [ '>':28767 ]
-[1712454567] n_past = 2398
-[1712454567] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '<':28789, 'FUNCTION':16368, '>':28767, ' "':345 ]
-[1712454567] n_remain: 4977
-[1712454567] eval: [ ' "':345 ]
-[1712454567] n_past = 2399
-[1712454567] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '<':28789, 'FUNCTION':16368, '>':28767, ' "':345, 'add':988 ]
-[1712454567] n_remain: 4976
-[1712454567] eval: [ 'add':988 ]
-[1712454567] n_past = 2400
-[1712454567] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '<':28789, 'FUNCTION':16368, '>':28767, ' "':345, 'add':988, '_':28730 ]
-[1712454567] n_remain: 4975
-[1712454567] eval: [ '_':28730 ]
-[1712454567] n_past = 2401
-[1712454567] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '<':28789, 'FUNCTION':16368, '>':28767, ' "':345, 'add':988, '_':28730, 'host':3404 ]
-[1712454567] n_remain: 4974
-[1712454567] eval: [ 'host':3404 ]
-[1712454568] n_past = 2402
-[1712454568] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '<':28789, 'FUNCTION':16368, '>':28767, ' "':345, 'add':988, '_':28730, 'host':3404, '"':28739 ]
-[1712454568] n_remain: 4973
-[1712454568] eval: [ '"':28739 ]
-[1712454568] n_past = 2403
-[1712454568] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '<':28789, 'FUNCTION':16368, '>':28767, ' "':345, 'add':988, '_':28730, 'host':3404, '"':28739, ' <':523 ]
-[1712454568] n_remain: 4972
-[1712454568] eval: [ ' <':523 ]
-[1712454568] n_past = 2404
-[1712454568] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '<':28789, 'FUNCTION':16368, '>':28767, ' "':345, 'add':988, '_':28730, 'host':3404, '"':28739, ' <':523, 'PARAMETER':26242 ]
-[1712454568] n_remain: 4971
-[1712454568] eval: [ 'PARAMETER':26242 ]
-[1712454568] n_past = 2405
-[1712454568] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '<':28789, 'FUNCTION':16368, '>':28767, ' "':345, 'add':988, '_':28730, 'host':3404, '"':28739, ' <':523, 'PARAMETER':26242, 'S':28735 ]
-[1712454568] n_remain: 4970
-[1712454568] eval: [ 'S':28735 ]
-[1712454568] n_past = 2406
-[1712454568] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '<':28789, 'FUNCTION':16368, '>':28767, ' "':345, 'add':988, '_':28730, 'host':3404, '"':28739, ' <':523, 'PARAMETER':26242, 'S':28735, '>':28767 ]
-[1712454568] n_remain: 4969
-[1712454568] eval: [ '>':28767 ]
-[1712454569] n_past = 2407
-[1712454569] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '<':28789, 'FUNCTION':16368, '>':28767, ' "':345, 'add':988, '_':28730, 'host':3404, '"':28739, ' <':523, 'PARAMETER':26242, 'S':28735, '>':28767, ' {'':12012 ]
-[1712454569] n_remain: 4968
-[1712454569] eval: [ ' {'':12012 ]
-[1712454569] n_past = 2408
-[1712454569] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '<':28789, 'FUNCTION':16368, '>':28767, ' "':345, 'add':988, '_':28730, 'host':3404, '"':28739, ' <':523, 'PARAMETER':26242, 'S':28735, '>':28767, ' {'':12012, 'address':5540 ]
-[1712454569] n_remain: 4967
-[1712454569] eval: [ 'address':5540 ]
-[1712454569] n_past = 2409
-[1712454569] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '<':28789, 'FUNCTION':16368, '>':28767, ' "':345, 'add':988, '_':28730, 'host':3404, '"':28739, ' <':523, 'PARAMETER':26242, 'S':28735, '>':28767, ' {'':12012, 'address':5540, '':':1869 ]
-[1712454569] n_remain: 4966
-[1712454569] eval: [ '':':1869 ]
-[1712454569] n_past = 2410
-[1712454569] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '<':28789, 'FUNCTION':16368, '>':28767, ' "':345, 'add':988, '_':28730, 'host':3404, '"':28739, ' <':523, 'PARAMETER':26242, 'S':28735, '>':28767, ' {'':12012, 'address':5540, '':':1869, ' '':464 ]
-[1712454569] n_remain: 4965
-[1712454569] eval: [ ' '':464 ]
-[1712454569] n_past = 2411
-[1712454569] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '<':28789, 'FUNCTION':16368, '>':28767, ' "':345, 'add':988, '_':28730, 'host':3404, '"':28739, ' <':523, 'PARAMETER':26242, 'S':28735, '>':28767, ' {'':12012, 'address':5540, '':':1869, ' '':464, 'your':19262 ]
-[1712454569] n_remain: 4964
-[1712454569] eval: [ 'your':19262 ]
-[1712454570] n_past = 2412
-[1712454570] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '<':28789, 'FUNCTION':16368, '>':28767, ' "':345, 'add':988, '_':28730, 'host':3404, '"':28739, ' <':523, 'PARAMETER':26242, 'S':28735, '>':28767, ' {'':12012, 'address':5540, '':':1869, ' '':464, 'your':19262, '_':28730 ]
-[1712454570] n_remain: 4963
-[1712454570] eval: [ '_':28730 ]
-[1712454570] n_past = 2413
-[1712454570] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '<':28789, 'FUNCTION':16368, '>':28767, ' "':345, 'add':988, '_':28730, 'host':3404, '"':28739, ' <':523, 'PARAMETER':26242, 'S':28735, '>':28767, ' {'':12012, 'address':5540, '':':1869, ' '':464, 'your':19262, '_':28730, 'host':3404 ]
-[1712454570] n_remain: 4962
-[1712454570] eval: [ 'host':3404 ]
-[1712454570] n_past = 2414
-[1712454570] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '<':28789, 'FUNCTION':16368, '>':28767, ' "':345, 'add':988, '_':28730, 'host':3404, '"':28739, ' <':523, 'PARAMETER':26242, 'S':28735, '>':28767, ' {'':12012, 'address':5540, '':':1869, ' '':464, 'your':19262, '_':28730, 'host':3404, '_':28730 ]
-[1712454570] n_remain: 4961
-[1712454570] eval: [ '_':28730 ]
-[1712454570] n_past = 2415
-[1712454570] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '<':28789, 'FUNCTION':16368, '>':28767, ' "':345, 'add':988, '_':28730, 'host':3404, '"':28739, ' <':523, 'PARAMETER':26242, 'S':28735, '>':28767, ' {'':12012, 'address':5540, '':':1869, ' '':464, 'your':19262, '_':28730, 'host':3404, '_':28730, 'address':5540 ]
-[1712454570] n_remain: 4960
-[1712454570] eval: [ 'address':5540 ]
-[1712454570] n_past = 2416
-[1712454570] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '<':28789, 'FUNCTION':16368, '>':28767, ' "':345, 'add':988, '_':28730, 'host':3404, '"':28739, ' <':523, 'PARAMETER':26242, 'S':28735, '>':28767, ' {'':12012, 'address':5540, '':':1869, ' '':464, 'your':19262, '_':28730, 'host':3404, '_':28730, 'address':5540, '',':647 ]
-[1712454570] n_remain: 4959
-[1712454570] eval: [ '',':647 ]
-[1712454571] n_past = 2417
-[1712454571] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '<':28789, 'FUNCTION':16368, '>':28767, ' "':345, 'add':988, '_':28730, 'host':3404, '"':28739, ' <':523, 'PARAMETER':26242, 'S':28735, '>':28767, ' {'':12012, 'address':5540, '':':1869, ' '':464, 'your':19262, '_':28730, 'host':3404, '_':28730, 'address':5540, '',':647, ' '':464 ]
-[1712454571] n_remain: 4958
-[1712454571] eval: [ ' '':464 ]
-[1712454571] n_past = 2418
-[1712454571] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '<':28789, 'FUNCTION':16368, '>':28767, ' "':345, 'add':988, '_':28730, 'host':3404, '"':28739, ' <':523, 'PARAMETER':26242, 'S':28735, '>':28767, ' {'':12012, 'address':5540, '':':1869, ' '':464, 'your':19262, '_':28730, 'host':3404, '_':28730, 'address':5540, '',':647, ' '':464, 'endpoint':15153 ]
-[1712454571] n_remain: 4957
-[1712454571] eval: [ 'endpoint':15153 ]
+[1712601878] waiting for user input
+[1712601878] empty line, passing control back
+[1712601878] eval: [ ' ###':774, ' Inst':3133, 'ruction':3112, ':':28747, '':13, '':13 ]
+[1712601880] n_past = 2047
+[1712601880] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, 'To':1551 ]
+[1712601880] n_remain: 3976
+[1712601880] eval: [ 'To':1551 ]
+[1712601882] n_past = 2048
+[1712601882] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, 'To':1551, ' add':967 ]
+[1712601882] n_remain: 3975
+[1712601882] eval: [ ' add':967 ]
+[1712601882] n_past = 2049
+[1712601882] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, 'To':1551, ' add':967, ' a':264 ]
+[1712601882] n_remain: 3974
+[1712601882] eval: [ ' a':264 ]
+[1712601883] n_past = 2050
+[1712601883] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, 'To':1551, ' add':967, ' a':264, ' new':633 ]
+[1712601883] n_remain: 3973
+[1712601883] eval: [ ' new':633 ]
+[1712601884] n_past = 2051
+[1712601884] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, 'To':1551, ' add':967, ' a':264, ' new':633, ' host':3434 ]
+[1712601884] n_remain: 3972
+[1712601884] eval: [ ' host':3434 ]
+[1712601884] n_past = 2052
+[1712601884] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, 'To':1551, ' add':967, ' a':264, ' new':633, ' host':3434, ' to':298 ]
+[1712601884] n_remain: 3971
+[1712601884] eval: [ ' to':298 ]
+[1712601885] n_past = 2053
+[1712601885] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, 'To':1551, ' add':967, ' a':264, ' new':633, ' host':3434, ' to':298, ' be':347 ]
+[1712601885] n_remain: 3970
+[1712601885] eval: [ ' be':347 ]
+[1712601885] n_past = 2054
+[1712601885] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, 'To':1551, ' add':967, ' a':264, ' new':633, ' host':3434, ' to':298, ' be':347, ' mon':1326 ]
+[1712601885] n_remain: 3969
+[1712601885] eval: [ ' mon':1326 ]
+[1712601885] n_past = 2055
+[1712601885] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, 'To':1551, ' add':967, ' a':264, ' new':633, ' host':3434, ' to':298, ' be':347, ' mon':1326, 'it':279 ]
+[1712601885] n_remain: 3968
+[1712601885] eval: [ 'it':279 ]
+[1712601886] n_past = 2056
+[1712601886] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, 'To':1551, ' add':967, ' a':264, ' new':633, ' host':3434, ' to':298, ' be':347, ' mon':1326, 'it':279, 'ored':2455 ]
+[1712601886] n_remain: 3967
+[1712601886] eval: [ 'ored':2455 ]
+[1712601886] n_past = 2057
+[1712601886] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, 'To':1551, ' add':967, ' a':264, ' new':633, ' host':3434, ' to':298, ' be':347, ' mon':1326, 'it':279, 'ored':2455, ',':28725 ]
+[1712601886] n_remain: 3966
+[1712601886] eval: [ ',':28725 ]
+[1712601887] n_past = 2058
+[1712601887] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, 'To':1551, ' add':967, ' a':264, ' new':633, ' host':3434, ' to':298, ' be':347, ' mon':1326, 'it':279, 'ored':2455, ',':28725, ' you':368 ]
+[1712601887] n_remain: 3965
+[1712601887] eval: [ ' you':368 ]
+[1712601887] n_past = 2059
+[1712601887] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, 'To':1551, ' add':967, ' a':264, ' new':633, ' host':3434, ' to':298, ' be':347, ' mon':1326, 'it':279, 'ored':2455, ',':28725, ' you':368, ' can':541 ]
+[1712601887] n_remain: 3964
+[1712601887] eval: [ ' can':541 ]
+[1712601887] n_past = 2060
+[1712601887] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, 'To':1551, ' add':967, ' a':264, ' new':633, ' host':3434, ' to':298, ' be':347, ' mon':1326, 'it':279, 'ored':2455, ',':28725, ' you':368, ' can':541, ' use':938 ]
+[1712601887] n_remain: 3963
+[1712601887] eval: [ ' use':938 ]
+[1712601888] n_past = 2061
+[1712601888] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, 'To':1551, ' add':967, ' a':264, ' new':633, ' host':3434, ' to':298, ' be':347, ' mon':1326, 'it':279, 'ored':2455, ',':28725, ' you':368, ' can':541, ' use':938, ' the':272 ]
+[1712601888] n_remain: 3962
+[1712601888] eval: [ ' the':272 ]
+[1712601888] n_past = 2062
+[1712601888] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, 'To':1551, ' add':967, ' a':264, ' new':633, ' host':3434, ' to':298, ' be':347, ' mon':1326, 'it':279, 'ored':2455, ',':28725, ' you':368, ' can':541, ' use':938, ' the':272, ' following':2296 ]
+[1712601888] n_remain: 3961
+[1712601888] eval: [ ' following':2296 ]
+[1712601889] n_past = 2063
+[1712601889] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, 'To':1551, ' add':967, ' a':264, ' new':633, ' host':3434, ' to':298, ' be':347, ' mon':1326, 'it':279, 'ored':2455, ',':28725, ' you':368, ' can':541, ' use':938, ' the':272, ' following':2296, ' function':908 ]
+[1712601889] n_remain: 3960
+[1712601889] eval: [ ' function':908 ]
+[1712601889] n_past = 2064
+[1712601889] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, 'To':1551, ' add':967, ' a':264, ' new':633, ' host':3434, ' to':298, ' be':347, ' mon':1326, 'it':279, 'ored':2455, ',':28725, ' you':368, ' can':541, ' use':938, ' the':272, ' following':2296, ' function':908, ':':28747 ]
+[1712601889] n_remain: 3959
+[1712601889] eval: [ ':':28747 ]
+[1712601890] n_past = 2065
+[1712601890] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, 'To':1551, ' add':967, ' a':264, ' new':633, ' host':3434, ' to':298, ' be':347, ' mon':1326, 'it':279, 'ored':2455, ',':28725, ' you':368, ' can':541, ' use':938, ' the':272, ' following':2296, ' function':908, ':':28747, '':13 ]
+[1712601890] n_remain: 3958
+[1712601890] eval: [ '':13 ]
+[1712601890] n_past = 2066
+[1712601890] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, 'To':1551, ' add':967, ' a':264, ' new':633, ' host':3434, ' to':298, ' be':347, ' mon':1326, 'it':279, 'ored':2455, ',':28725, ' you':368, ' can':541, ' use':938, ' the':272, ' following':2296, ' function':908, ':':28747, '':13, '``':13940 ]
+[1712601890] n_remain: 3957
+[1712601890] eval: [ '``':13940 ]
+[1712601890] n_past = 2067
+[1712601890] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, 'To':1551, ' add':967, ' a':264, ' new':633, ' host':3434, ' to':298, ' be':347, ' mon':1326, 'it':279, 'ored':2455, ',':28725, ' you':368, ' can':541, ' use':938, ' the':272, ' following':2296, ' function':908, ':':28747, '':13, '``':13940, '`':28832 ]
+[1712601890] n_remain: 3956
+[1712601890] eval: [ '`':28832 ]
+[1712601891] n_past = 2068
+[1712601891] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, 'To':1551, ' add':967, ' a':264, ' new':633, ' host':3434, ' to':298, ' be':347, ' mon':1326, 'it':279, 'ored':2455, ',':28725, ' you':368, ' can':541, ' use':938, ' the':272, ' following':2296, ' function':908, ':':28747, '':13, '``':13940, '`':28832, '':13 ]
+[1712601891] n_remain: 3955
+[1712601891] eval: [ '':13 ]
+[1712601892] n_past = 2069
+[1712601892] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, 'To':1551, ' add':967, ' a':264, ' new':633, ' host':3434, ' to':298, ' be':347, ' mon':1326, 'it':279, 'ored':2455, ',':28725, ' you':368, ' can':541, ' use':938, ' the':272, ' following':2296, ' function':908, ':':28747, '':13, '``':13940, '`':28832, '':13, '{':28751 ]
+[1712601892] n_remain: 3954
+[1712601892] eval: [ '{':28751 ]
+[1712601892] n_past = 2070
+[1712601892] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, 'To':1551, ' add':967, ' a':264, ' new':633, ' host':3434, ' to':298, ' be':347, ' mon':1326, 'it':279, 'ored':2455, ',':28725, ' you':368, ' can':541, ' use':938, ' the':272, ' following':2296, ' function':908, ':':28747, '':13, '``':13940, '`':28832, '':13, '{':28751, '':13 ]
+[1712601892] n_remain: 3953
+[1712601892] eval: [ '':13 ]
+[1712601892] n_past = 2071
+[1712601892] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, 'To':1551, ' add':967, ' a':264, ' new':633, ' host':3434, ' to':298, ' be':347, ' mon':1326, 'it':279, 'ored':2455, ',':28725, ' you':368, ' can':541, ' use':938, ' the':272, ' following':2296, ' function':908, ':':28747, '':13, '``':13940, '`':28832, '':13, '{':28751, '':13, ' ':28705 ]
+[1712601892] n_remain: 3952
+[1712601892] eval: [ ' ':28705 ]
+[1712601893] n_past = 2072
+[1712601893] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, 'To':1551, ' add':967, ' a':264, ' new':633, ' host':3434, ' to':298, ' be':347, ' mon':1326, 'it':279, 'ored':2455, ',':28725, ' you':368, ' can':541, ' use':938, ' the':272, ' following':2296, ' function':908, ':':28747, '':13, '``':13940, '`':28832, '':13, '{':28751, '':13, ' ':28705, ' "':345 ]
+[1712601893] n_remain: 3951
+[1712601893] eval: [ ' "':345 ]
+[1712601893] n_past = 2073
+[1712601893] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, 'To':1551, ' add':967, ' a':264, ' new':633, ' host':3434, ' to':298, ' be':347, ' mon':1326, 'it':279, 'ored':2455, ',':28725, ' you':368, ' can':541, ' use':938, ' the':272, ' following':2296, ' function':908, ':':28747, '':13, '``':13940, '`':28832, '':13, '{':28751, '':13, ' ':28705, ' "':345, 'name':861 ]
+[1712601893] n_remain: 3950
+[1712601893] eval: [ 'name':861 ]
+[1712601893] n_past = 2074
+[1712601893] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, 'To':1551, ' add':967, ' a':264, ' new':633, ' host':3434, ' to':298, ' be':347, ' mon':1326, 'it':279, 'ored':2455, ',':28725, ' you':368, ' can':541, ' use':938, ' the':272, ' following':2296, ' function':908, ':':28747, '':13, '``':13940, '`':28832, '':13, '{':28751, '':13, ' ':28705, ' "':345, 'name':861, '":':1264 ]
+[1712601893] n_remain: 3949
+[1712601893] eval: [ '":':1264 ]
+[1712601894] n_past = 2075
+[1712601894] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, 'To':1551, ' add':967, ' a':264, ' new':633, ' host':3434, ' to':298, ' be':347, ' mon':1326, 'it':279, 'ored':2455, ',':28725, ' you':368, ' can':541, ' use':938, ' the':272, ' following':2296, ' function':908, ':':28747, '':13, '``':13940, '`':28832, '':13, '{':28751, '':13, ' ':28705, ' "':345, 'name':861, '":':1264, ' "':345 ]
+[1712601894] n_remain: 3948
+[1712601894] eval: [ ' "':345 ]
+[1712601894] n_past = 2076
+[1712601894] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, 'To':1551, ' add':967, ' a':264, ' new':633, ' host':3434, ' to':298, ' be':347, ' mon':1326, 'it':279, 'ored':2455, ',':28725, ' you':368, ' can':541, ' use':938, ' the':272, ' following':2296, ' function':908, ':':28747, '':13, '``':13940, '`':28832, '':13, '{':28751, '':13, ' ':28705, ' "':345, 'name':861, '":':1264, ' "':345, 'add':988 ]
+[1712601894] n_remain: 3947
+[1712601894] eval: [ 'add':988 ]
+[1712601894] n_past = 2077
+[1712601894] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, 'To':1551, ' add':967, ' a':264, ' new':633, ' host':3434, ' to':298, ' be':347, ' mon':1326, 'it':279, 'ored':2455, ',':28725, ' you':368, ' can':541, ' use':938, ' the':272, ' following':2296, ' function':908, ':':28747, '':13, '``':13940, '`':28832, '':13, '{':28751, '':13, ' ':28705, ' "':345, 'name':861, '":':1264, ' "':345, 'add':988, '_':28730 ]
+[1712601894] n_remain: 3946
+[1712601894] eval: [ '_':28730 ]
+[1712601895] n_past = 2078
+[1712601895] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, 'To':1551, ' add':967, ' a':264, ' new':633, ' host':3434, ' to':298, ' be':347, ' mon':1326, 'it':279, 'ored':2455, ',':28725, ' you':368, ' can':541, ' use':938, ' the':272, ' following':2296, ' function':908, ':':28747, '':13, '``':13940, '`':28832, '':13, '{':28751, '':13, ' ':28705, ' "':345, 'name':861, '":':1264, ' "':345, 'add':988, '_':28730, 'host':3404 ]
+[1712601895] n_remain: 3945
+[1712601895] eval: [ 'host':3404 ]
+[1712601895] n_past = 2079
+[1712601895] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, 'To':1551, ' add':967, ' a':264, ' new':633, ' host':3434, ' to':298, ' be':347, ' mon':1326, 'it':279, 'ored':2455, ',':28725, ' you':368, ' can':541, ' use':938, ' the':272, ' following':2296, ' function':908, ':':28747, '':13, '``':13940, '`':28832, '':13, '{':28751, '':13, ' ':28705, ' "':345, 'name':861, '":':1264, ' "':345, 'add':988, '_':28730, 'host':3404, '",':548 ]
+[1712601895] n_remain: 3944
+[1712601895] eval: [ '",':548 ]
+':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' ###':774, ' Inst':3133, 'ruction':3112, ':':28747, '':13, '':13, ' FUN':28318, 'CTION':5324, ' RES':20308, 'P':28753, 'ON':832, 'SE':1151, ':':28747, ' {':371, ' "':345, 'error':1958, ' email':4927, ' missing':6925, '"':28739, ' }':443, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, '':13, ' The':415, ' function':908, ' requires':6948, ' an':396, ' email':4927, ' address':2962, ' to':298, ' be':347, ' provided':3857, '.':28723, ' Please':5919, ' provide':3084, ' the':272, ' email':4927, ' address':2962 ]
+[1712601818] n_remain: 3933
+[1712601818] eval: [ ' address':2962 ]
+[1712601818] n_past = 2117
+[1712601818] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' ###':774, ' Inst':3133, 'ruction':3112, ':':28747, '':13, '':13, ' FUN':28318, 'CTION':5324, ' RES':20308, 'P':28753, 'ON':832, 'SE':1151, ':':28747, ' {':371, ' "':345, 'error':1958, ' email':4927, ' missing':6925, '"':28739, ' }':443, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, '':13, ' The':415, ' function':908, ' requires':6948, ' an':396, ' email':4927, ' address':2962, ' to':298, ' be':347, ' provided':3857, '.':28723, ' Please':5919, ' provide':3084, ' the':272, ' email':4927, ' address':2962, ' for':354 ]
+[1712601818] n_remain: 3932
+[1712601818] eval: [ ' for':354 ]
+[1712601819] n_past = 2118
+[1712601819] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' ###':774, ' Inst':3133, 'ruction':3112, ':':28747, '':13, '':13, ' FUN':28318, 'CTION':5324, ' RES':20308, 'P':28753, 'ON':832, 'SE':1151, ':':28747, ' {':371, ' "':345, 'error':1958, ' email':4927, ' missing':6925, '"':28739, ' }':443, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, '':13, ' The':415, ' function':908, ' requires':6948, ' an':396, ' email':4927, ' address':2962, ' to':298, ' be':347, ' provided':3857, '.':28723, ' Please':5919, ' provide':3084, ' the':272, ' email':4927, ' address':2962, ' for':354, ' the':272 ]
+[1712601819] n_remain: 3931
+[1712601819] eval: [ ' the':272 ]
+[1712601819] n_past = 2119
+[1712601819] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' ###':774, ' Inst':3133, 'ruction':3112, ':':28747, '':13, '':13, ' FUN':28318, 'CTION':5324, ' RES':20308, 'P':28753, 'ON':832, 'SE':1151, ':':28747, ' {':371, ' "':345, 'error':1958, ' email':4927, ' missing':6925, '"':28739, ' }':443, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, '':13, ' The':415, ' function':908, ' requires':6948, ' an':396, ' email':4927, ' address':2962, ' to':298, ' be':347, ' provided':3857, '.':28723, ' Please':5919, ' provide':3084, ' the':272, ' email':4927, ' address':2962, ' for':354, ' the':272, ' host':3434 ]
+[1712601819] n_remain: 3930
+[1712601819] eval: [ ' host':3434 ]
+[1712601819] n_past = 2120
+[1712601819] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' ###':774, ' Inst':3133, 'ruction':3112, ':':28747, '':13, '':13, ' FUN':28318, 'CTION':5324, ' RES':20308, 'P':28753, 'ON':832, 'SE':1151, ':':28747, ' {':371, ' "':345, 'error':1958, ' email':4927, ' missing':6925, '"':28739, ' }':443, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, '':13, ' The':415, ' function':908, ' requires':6948, ' an':396, ' email':4927, ' address':2962, ' to':298, ' be':347, ' provided':3857, '.':28723, ' Please':5919, ' provide':3084, ' the':272, ' email':4927, ' address':2962, ' for':354, ' the':272, ' host':3434, ' you':368 ]
+[1712601819] n_remain: 3929
+[1712601819] eval: [ ' you':368 ]
+[1712601819] n_past = 2121
+[1712601819] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' ###':774, ' Inst':3133, 'ruction':3112, ':':28747, '':13, '':13, ' FUN':28318, 'CTION':5324, ' RES':20308, 'P':28753, 'ON':832, 'SE':1151, ':':28747, ' {':371, ' "':345, 'error':1958, ' email':4927, ' missing':6925, '"':28739, ' }':443, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, '':13, ' The':415, ' function':908, ' requires':6948, ' an':396, ' email':4927, ' address':2962, ' to':298, ' be':347, ' provided':3857, '.':28723, ' Please':5919, ' provide':3084, ' the':272, ' email':4927, ' address':2962, ' for':354, ' the':272, ' host':3434, ' you':368, ' want':947 ]
+[1712601819] n_remain: 3928
+[1712601819] eval: [ ' want':947 ]
+[1712601819] n_past = 2122
+[1712601819] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' ###':774, ' Inst':3133, 'ruction':3112, ':':28747, '':13, '':13, ' FUN':28318, 'CTION':5324, ' RES':20308, 'P':28753, 'ON':832, 'SE':1151, ':':28747, ' {':371, ' "':345, 'error':1958, ' email':4927, ' missing':6925, '"':28739, ' }':443, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, '':13, ' The':415, ' function':908, ' requires':6948, ' an':396, ' email':4927, ' address':2962, ' to':298, ' be':347, ' provided':3857, '.':28723, ' Please':5919, ' provide':3084, ' the':272, ' email':4927, ' address':2962, ' for':354, ' the':272, ' host':3434, ' you':368, ' want':947, ' to':298 ]
+[1712601819] n_remain: 3927
+[1712601819] eval: [ ' to':298 ]
+[1712601820] n_past = 2123
+[1712601820] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' ###':774, ' Inst':3133, 'ruction':3112, ':':28747, '':13, '':13, ' FUN':28318, 'CTION':5324, ' RES':20308, 'P':28753, 'ON':832, 'SE':1151, ':':28747, ' {':371, ' "':345, 'error':1958, ' email':4927, ' missing':6925, '"':28739, ' }':443, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, '':13, ' The':415, ' function':908, ' requires':6948, ' an':396, ' email':4927, ' address':2962, ' to':298, ' be':347, ' provided':3857, '.':28723, ' Please':5919, ' provide':3084, ' the':272, ' email':4927, ' address':2962, ' for':354, ' the':272, ' host':3434, ' you':368, ' want':947, ' to':298, ' add':967 ]
+[1712601820] n_remain: 3926
+[1712601820] eval: [ ' add':967 ]
+[1712601820] n_past = 2124
+[1712601820] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' ###':774, ' Inst':3133, 'ruction':3112, ':':28747, '':13, '':13, ' FUN':28318, 'CTION':5324, ' RES':20308, 'P':28753, 'ON':832, 'SE':1151, ':':28747, ' {':371, ' "':345, 'error':1958, ' email':4927, ' missing':6925, '"':28739, ' }':443, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, '':13, ' The':415, ' function':908, ' requires':6948, ' an':396, ' email':4927, ' address':2962, ' to':298, ' be':347, ' provided':3857, '.':28723, ' Please':5919, ' provide':3084, ' the':272, ' email':4927, ' address':2962, ' for':354, ' the':272, ' host':3434, ' you':368, ' want':947, ' to':298, ' add':967, '.':28723 ]
+[1712601820] n_remain: 3925
+[1712601820] eval: [ '.':28723 ]
+[1712601820] n_past = 2125
+[1712601820] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' ###':774, ' Inst':3133, 'ruction':3112, ':':28747, '':13, '':13, ' FUN':28318, 'CTION':5324, ' RES':20308, 'P':28753, 'ON':832, 'SE':1151, ':':28747, ' {':371, ' "':345, 'error':1958, ' email':4927, ' missing':6925, '"':28739, ' }':443, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, '':13, ' The':415, ' function':908, ' requires':6948, ' an':396, ' email':4927, ' address':2962, ' to':298, ' be':347, ' provided':3857, '.':28723, ' Please':5919, ' provide':3084, ' the':272, ' email':4927, ' address':2962, ' for':354, ' the':272, ' host':3434, ' you':368, ' want':947, ' to':298, ' add':967, '.':28723, '':2 ]
+[1712601820] n_remain: 3924
+[1712601820] found EOS token
+[1712601820] waiting for user input
+[1712601854] empty line, passing control back
+[1712601854] eval: [ '':2 ]
+[1712601857] n_past = 2126
+[1712601857] embd_inp.size(): 2077, n_consumed: 2071
+[1712601857] found antiprompt: ▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅▅ ### Instruction:
+
+
+[1712601857] waiting for user input
+[1712601857] empty line, passing control back
+[1712601857] eval: [ ' ###':774, ' Inst':3133, 'ruction':3112, ':':28747, '':13, '':13 ]
+[1712601859] n_past = 2132
+[1712601859] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' add':967 ]
+[1712601859] n_remain: 3923
+[1712601859] eval: [ ' add':967 ]
+[1712601860] n_past = 2133
+[1712601860] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' add':967, ' host':3434 ]
+[1712601860] n_remain: 3922
+[1712601860] eval: [ ' host':3434 ]
+[1712601861] n_past = 2134
+[1712601861] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' add':967, ' host':3434, ' test':1369 ]
+[1712601861] n_remain: 3921
+[1712601861] eval: [ ' test':1369 ]
+[1712601862] n_past = 2135
+[1712601862] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' add':967, ' host':3434, ' test':1369, '.':28723 ]
+[1712601862] n_remain: 3920
+[1712601862] eval: [ '.':28723 ]
+[1712601862] n_past = 2136
+[1712601862] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' add':967, ' host':3434, ' test':1369, '.':28723, 'com':675 ]
+[1712601862] n_remain: 3919
+[1712601862] eval: [ 'com':675 ]
+[1712601863] n_past = 2137
+[1712601863] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' add':967, ' host':3434, ' test':1369, '.':28723, 'com':675, ' with':395 ]
+[1712601863] n_remain: 3918
+[1712601863] eval: [ ' with':395 ]
+[1712601864] n_past = 2138
+[1712601864] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' add':967, ' host':3434, ' test':1369, '.':28723, 'com':675, ' with':395, ' endpoint':15329 ]
+[1712601864] n_remain: 3917
+[1712601864] eval: [ ' endpoint':15329 ]
+[1712601864] n_past = 2139
+[1712601864] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' add':967, ' host':3434, ' test':1369, '.':28723, 'com':675, ' with':395, ' endpoint':15329, ' http':3550 ]
+[1712601864] n_remain: 3916
+[1712601864] eval: [ ' http':3550 ]
+[1712601866] n_past = 2140
+[1712601866] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' add':967, ' host':3434, ' test':1369, '.':28723, 'com':675, ' with':395, ' endpoint':15329, ' http':3550, ' and':304 ]
+[1712601866] n_remain: 3915
+[1712601866] eval: [ ' and':304 ]
+[1712601866] n_past = 2141
+[1712601866] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' add':967, ' host':3434, ' test':1369, '.':28723, 'com':675, ' with':395, ' endpoint':15329, ' http':3550, ' and':304, ' port':2248 ]
+[1712601866] n_remain: 3914
+[1712601866] eval: [ ' port':2248 ]
+[1712601867] n_past = 2142
+[1712601867] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' add':967, ' host':3434, ' test':1369, '.':28723, 'com':675, ' with':395, ' endpoint':15329, ' http':3550, ' and':304, ' port':2248, ' ':28705 ]
+[1712601867] n_remain: 3913
+[1712601867] eval: [ ' ':28705 ]
+[1712601868] n_past = 2143
+[1712601868] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' add':967, ' host':3434, ' test':1369, '.':28723, 'com':675, ' with':395, ' endpoint':15329, ' http':3550, ' and':304, ' port':2248, ' ':28705, '8':28783 ]
+[1712601868] n_remain: 3912
+[1712601868] eval: [ '8':28783 ]
+[1712601870] n_past = 2144
+[1712601870] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' add':967, ' host':3434, ' test':1369, '.':28723, 'com':675, ' with':395, ' endpoint':15329, ' http':3550, ' and':304, ' port':2248, ' ':28705, '8':28783, '0':28734 ]
+[1712601870] n_remain: 3911
+[1712601870] eval: [ '0':28734 ]
+[1712601871] n_past = 2145
+[1712601871] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' add':967, ' host':3434, ' test':1369, '.':28723, 'com':675, ' with':395, ' endpoint':15329, ' http':3550, ' and':304, ' port':2248, ' ':28705, '8':28783, '0':28734, '':13 ]
+[1712601871] n_remain: 3910
+[1712601871] eval: [ '':13 ]
+[1712601872] n_past = 2146
+[1712601872] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' add':967, ' host':3434, ' test':1369, '.':28723, 'com':675, ' with':395, ' endpoint':15329, ' http':3550, ' and':304, ' port':2248, ' ':28705, '8':28783, '0':28734, '':13, ' ':28705 ]
+[1712601872] n_remain: 3909
+[1712601872] eval: [ ' ':28705 ]
+[1712601872] n_past = 2147
+[1712601872] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' add':967, ' host':3434, ' test':1369, '.':28723, 'com':675, ' with':395, ' endpoint':15329, ' http':3550, ' and':304, ' port':2248, ' ':28705, '8':28783, '0':28734, '':13, ' ':28705, '':13 ]
+[1712601872] n_remain: 3908
+[1712601872] eval: [ '':13 ]
+[1712601873] n_past = 2148
+[1712601873] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' add':967, ' host':3434, ' test':1369, '.':28723, 'com':675, ' with':395, ' endpoint':15329, ' http':3550, ' and':304, ' port':2248, ' ':28705, '8':28783, '0':28734, '':13, ' ':28705, '':13, '':13 ]
+[1712601873] n_remain: 3907
+[1712601873] eval: [ '':13 ]
+[1712601874] n_past = 2149
+[1712601874] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' add':967, ' host':3434, ' test':1369, '.':28723, 'com':675, ' with':395, ' endpoint':15329, ' http':3550, ' and':304, ' port':2248, ' ':28705, '8':28783, '0':28734, '':13, ' ':28705, '':13, '':13, '###':27332 ]
+[1712601874] n_remain: 3906
+[1712601874] eval: [ '###':27332 ]
+[1712601875] n_past = 2150
+[1712601875] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' add':967, ' host':3434, ' test':1369, '.':28723, 'com':675, ' with':395, ' endpoint':15329, ' http':3550, ' and':304, ' port':2248, ' ':28705, '8':28783, '0':28734, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107 ]
+[1712601875] n_remain: 3905
+[1712601875] eval: [ ' Response':12107 ]
+[1712601877] n_past = 2151
+[1712601877] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' add':967, ' host':3434, ' test':1369, '.':28723, 'com':675, ' with':395, ' endpoint':15329, ' http':3550, ' and':304, ' port':2248, ' ':28705, '8':28783, '0':28734, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747 ]
+[1712601877] n_remain: 3904
+[1712601877] eval: [ ':':28747 ]
+[1712601878] n_past = 2152
+[1712601878] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' add':967, ' host':3434, ' test':1369, '.':28723, 'com':675, ' with':395, ' endpoint':15329, ' http':3550, ' and':304, ' port':2248, ' ':28705, '8':28783, '0':28734, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13 ]
+[1712601878] n_remain: 3903
+[1712601878] eval: [ '':13 ]
+[1712601880] n_past = 2153
+[1712601880] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' add':967, ' host':3434, ' test':1369, '.':28723, 'com':675, ' with':395, ' endpoint':15329, ' http':3550, ' and':304, ' port':2248, ' ':28705, '8':28783, '0':28734, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, ' <':523 ]
+[1712601880] n_remain: 3902
+[1712601880] eval: [ ' <':523 ]
+[1712601881] n_past = 2154
+[1712601881] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' add':967, ' host':3434, ' test':1369, '.':28723, 'com':675, ' with':395, ' endpoint':15329, ' http':3550, ' and':304, ' port':2248, ' ':28705, '8':28783, '0':28734, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, ' <':523, 'function':2628 ]
+[1712601881] n_remain: 3901
+[1712601881] eval: [ 'function':2628 ]
+[1712601882] n_past = 2155
+[1712601882] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' add':967, ' host':3434, ' test':1369, '.':28723, 'com':675, ' with':395, ' endpoint':15329, ' http':3550, ' and':304, ' port':2248, ' ':28705, '8':28783, '0':28734, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, ' <':523, 'function':2628, 'call':2845 ]
+[1712601882] n_remain: 3900
+[1712601882] eval: [ 'call':2845 ]
+[1712601883] n_past = 2156
+[1712601883] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' add':967, ' host':3434, ' test':1369, '.':28723, 'com':675, ' with':395, ' endpoint':15329, ' http':3550, ' and':304, ' port':2248, ' ':28705, '8':28783, '0':28734, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, ' <':523, 'function':2628, 'call':2845, '>':28767 ]
+[1712601883] n_remain: 3899
+[1712601883] eval: [ '>':28767 ]
+[1712601884] n_past = 2157
+[1712601884] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' add':967, ' host':3434, ' test':1369, '.':28723, 'com':675, ' with':395, ' endpoint':15329, ' http':3550, ' and':304, ' port':2248, ' ':28705, '8':28783, '0':28734, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, ' <':523, 'function':2628, 'call':2845, '>':28767, ' {"':9830 ]
+[1712601884] n_remain: 3898
+[1712601884] eval: [ ' {"':9830 ]
+[1712601884] n_past = 2158
+[1712601884] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' add':967, ' host':3434, ' test':1369, '.':28723, 'com':675, ' with':395, ' endpoint':15329, ' http':3550, ' and':304, ' port':2248, ' ':28705, '8':28783, '0':28734, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, ' <':523, 'function':2628, 'call':2845, '>':28767, ' {"':9830, 'name':861 ]
+[1712601884] n_remain: 3897
+[1712601884] eval: [ 'name':861 ]
+[1712601885] n_past = 2159
+[1712601885] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' add':967, ' host':3434, ' test':1369, '.':28723, 'com':675, ' with':395, ' endpoint':15329, ' http':3550, ' and':304, ' port':2248, ' ':28705, '8':28783, '0':28734, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, ' <':523, 'function':2628, 'call':2845, '>':28767, ' {"':9830, 'name':861, '":':1264 ]
+[1712601885] n_remain: 3896
+[1712601885] eval: [ '":':1264 ]
+[1712601886] n_past = 2160
+[1712601886] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' add':967, ' host':3434, ' test':1369, '.':28723, 'com':675, ' with':395, ' endpoint':15329, ' http':3550, ' and':304, ' port':2248, ' ':28705, '8':28783, '0':28734, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, ' <':523, 'function':2628, 'call':2845, '>':28767, ' {"':9830, 'name':861, '":':1264, ' "':345 ]
+[1712601886] n_remain: 3895
+[1712601886] eval: [ ' "':345 ]
+[1712601886] n_past = 2161
+[1712601886] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' add':967, ' host':3434, ' test':1369, '.':28723, 'com':675, ' with':395, ' endpoint':15329, ' http':3550, ' and':304, ' port':2248, ' ':28705, '8':28783, '0':28734, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, ' <':523, 'function':2628, 'call':2845, '>':28767, ' {"':9830, 'name':861, '":':1264, ' "':345, 'add':988 ]
+[1712601886] n_remain: 3894
+[1712601886] eval: [ 'add':988 ]
+[1712601887] n_past = 2162
+[1712601887] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' add':967, ' host':3434, ' test':1369, '.':28723, 'com':675, ' with':395, ' endpoint':15329, ' http':3550, ' and':304, ' port':2248, ' ':28705, '8':28783, '0':28734, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, ' <':523, 'function':2628, 'call':2845, '>':28767, ' {"':9830, 'name':861, '":':1264, ' "':345, 'add':988, '_':28730 ]
+[1712601887] n_remain: 3893
+[1712601887] eval: [ '_':28730 ]
+[1712601888] n_past = 2163
+[1712601888] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' add':967, ' host':3434, ' test':1369, '.':28723, 'com':675, ' with':395, ' endpoint':15329, ' http':3550, ' and':304, ' port':2248, ' ':28705, '8':28783, '0':28734, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, ' <':523, 'function':2628, 'call':2845, '>':28767, ' {"':9830, 'name':861, '":':1264, ' "':345, 'add':988, '_':28730, 'host':3404 ]
+[1712601888] n_remain: 3892
+[1712601888] eval: [ 'host':3404 ]
+[1712601888] n_past = 2164
+[1712601888] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' add':967, ' host':3434, ' test':1369, '.':28723, 'com':675, ' with':395, ' endpoint':15329, ' http':3550, ' and':304, ' port':2248, ' ':28705, '8':28783, '0':28734, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, ' <':523, 'function':2628, 'call':2845, '>':28767, ' {"':9830, 'name':861, '":':1264, ' "':345, 'add':988, '_':28730, 'host':3404, '",':548 ]
+[1712601888] n_remain: 3891
+[1712601888] eval: [ '",':548 ]
+[1712601888] n_past = 2165
+[1712601888] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' add':967, ' host':3434, ' test':1369, '.':28723, 'com':675, ' with':395, ' endpoint':15329, ' http':3550, ' and':304, ' port':2248, ' ':28705, '8':28783, '0':28734, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, ' <':523, 'function':2628, 'call':2845, '>':28767, ' {"':9830, 'name':861, '":':1264, ' "':345, 'add':988, '_':28730, 'host':3404, '",':548, ' "':345 ]
+[1712601888] n_remain: 3890
+[1712601888] eval: [ ' "':345 ]
+[1712601889] n_past = 2166
+[1712601889] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' add':967, ' host':3434, ' test':1369, '.':28723, 'com':675, ' with':395, ' endpoint':15329, ' http':3550, ' and':304, ' port':2248, ' ':28705, '8':28783, '0':28734, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, ' <':523, 'function':2628, 'call':2845, '>':28767, ' {"':9830, 'name':861, '":':1264, ' "':345, 'add':988, '_':28730, 'host':3404, '",':548, ' "':345, 'arguments':16684 ]
+[1712601889] n_remain: 3889
+[1712601889] eval: [ 'arguments':16684 ]
+[1712601890] n_past = 2167
+[1712601890] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' add':967, ' host':3434, ' test':1369, '.':28723, 'com':675, ' with':395, ' endpoint':15329, ' http':3550, ' and':304, ' port':2248, ' ':28705, '8':28783, '0':28734, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, ' <':523, 'function':2628, 'call':2845, '>':28767, ' {"':9830, 'name':861, '":':1264, ' "':345, 'add':988, '_':28730, 'host':3404, '",':548, ' "':345, 'arguments':16684, '":':1264 ]
+[1712601890] n_remain: 3888
+[1712601890] eval: [ '":':1264 ]
+[1712601890] n_past = 2168
+[1712601890] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' add':967, ' host':3434, ' test':1369, '.':28723, 'com':675, ' with':395, ' endpoint':15329, ' http':3550, ' and':304, ' port':2248, ' ':28705, '8':28783, '0':28734, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, ' <':523, 'function':2628, 'call':2845, '>':28767, ' {"':9830, 'name':861, '":':1264, ' "':345, 'add':988, '_':28730, 'host':3404, '",':548, ' "':345, 'arguments':16684, '":':1264, ' '':464 ]
+[1712601890] n_remain: 3887
+[1712601890] eval: [ ' '':464 ]
+[1712601890] n_past = 2169
+[1712601890] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' add':967, ' host':3434, ' test':1369, '.':28723, 'com':675, ' with':395, ' endpoint':15329, ' http':3550, ' and':304, ' port':2248, ' ':28705, '8':28783, '0':28734, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, ' <':523, 'function':2628, 'call':2845, '>':28767, ' {"':9830, 'name':861, '":':1264, ' "':345, 'add':988, '_':28730, 'host':3404, '",':548, ' "':345, 'arguments':16684, '":':1264, ' '':464, '{"':6799 ]
+[1712601890] n_remain: 3886
+[1712601890] eval: [ '{"':6799 ]
+[1712601891] n_past = 2170
+[1712601891] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' add':967, ' host':3434, ' test':1369, '.':28723, 'com':675, ' with':395, ' endpoint':15329, ' http':3550, ' and':304, ' port':2248, ' ':28705, '8':28783, '0':28734, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, ' <':523, 'function':2628, 'call':2845, '>':28767, ' {"':9830, 'name':861, '":':1264, ' "':345, 'add':988, '_':28730, 'host':3404, '",':548, ' "':345, 'arguments':16684, '":':1264, ' '':464, '{"':6799, 'address':5540 ]
+[1712601891] n_remain: 3885
+[1712601891] eval: [ 'address':5540 ]
+[1712601891] n_past = 2171
+[1712601891] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' add':967, ' host':3434, ' test':1369, '.':28723, 'com':675, ' with':395, ' endpoint':15329, ' http':3550, ' and':304, ' port':2248, ' ':28705, '8':28783, '0':28734, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, ' <':523, 'function':2628, 'call':2845, '>':28767, ' {"':9830, 'name':861, '":':1264, ' "':345, 'add':988, '_':28730, 'host':3404, '",':548, ' "':345, 'arguments':16684, '":':1264, ' '':464, '{"':6799, 'address':5540, '":':1264 ]
+[1712601891] n_remain: 3884
+[1712601891] eval: [ '":':1264 ]
+[1712601891] n_past = 2172
+[1712601891] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' add':967, ' host':3434, ' test':1369, '.':28723, 'com':675, ' with':395, ' endpoint':15329, ' http':3550, ' and':304, ' port':2248, ' ':28705, '8':28783, '0':28734, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, ' <':523, 'function':2628, 'call':2845, '>':28767, ' {"':9830, 'name':861, '":':1264, ' "':345, 'add':988, '_':28730, 'host':3404, '",':548, ' "':345, 'arguments':16684, '":':1264, ' '':464, '{"':6799, 'address':5540, '":':1264, ' "':345 ]
+[1712601891] n_remain: 3883
+[1712601891] eval: [ ' "':345 ]
+[1712601892] n_past = 2173
+[1712601892] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' add':967, ' host':3434, ' test':1369, '.':28723, 'com':675, ' with':395, ' endpoint':15329, ' http':3550, ' and':304, ' port':2248, ' ':28705, '8':28783, '0':28734, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, ' <':523, 'function':2628, 'call':2845, '>':28767, ' {"':9830, 'name':861, '":':1264, ' "':345, 'add':988, '_':28730, 'host':3404, '",':548, ' "':345, 'arguments':16684, '":':1264, ' '':464, '{"':6799, 'address':5540, '":':1264, ' "':345, 'test':1613 ]
+[1712601892] n_remain: 3882
+[1712601892] eval: [ 'test':1613 ]
+[1712601892] n_past = 2174
+[1712601892] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' add':967, ' host':3434, ' test':1369, '.':28723, 'com':675, ' with':395, ' endpoint':15329, ' http':3550, ' and':304, ' port':2248, ' ':28705, '8':28783, '0':28734, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, ' <':523, 'function':2628, 'call':2845, '>':28767, ' {"':9830, 'name':861, '":':1264, ' "':345, 'add':988, '_':28730, 'host':3404, '",':548, ' "':345, 'arguments':16684, '":':1264, ' '':464, '{"':6799, 'address':5540, '":':1264, ' "':345, 'test':1613, '.':28723 ]
+[1712601892] n_remain: 3881
+[1712601892] eval: [ '.':28723 ]
+[1712601893] n_past = 2175
+[1712601893] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' add':967, ' host':3434, ' test':1369, '.':28723, 'com':675, ' with':395, ' endpoint':15329, ' http':3550, ' and':304, ' port':2248, ' ':28705, '8':28783, '0':28734, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, ' <':523, 'function':2628, 'call':2845, '>':28767, ' {"':9830, 'name':861, '":':1264, ' "':345, 'add':988, '_':28730, 'host':3404, '",':548, ' "':345, 'arguments':16684, '":':1264, ' '':464, '{"':6799, 'address':5540, '":':1264, ' "':345, 'test':1613, '.':28723, 'com':675 ]
+[1712601893] n_remain: 3880
+[1712601893] eval: [ 'com':675 ]
+[1712601893] n_past = 2176
+[1712601893] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' add':967, ' host':3434, ' test':1369, '.':28723, 'com':675, ' with':395, ' endpoint':15329, ' http':3550, ' and':304, ' port':2248, ' ':28705, '8':28783, '0':28734, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, ' <':523, 'function':2628, 'call':2845, '>':28767, ' {"':9830, 'name':861, '":':1264, ' "':345, 'add':988, '_':28730, 'host':3404, '",':548, ' "':345, 'arguments':16684, '":':1264, ' '':464, '{"':6799, 'address':5540, '":':1264, ' "':345, 'test':1613, '.':28723, 'com':675, '",':548 ]
+[1712601893] n_remain: 3879
+[1712601893] eval: [ '",':548 ]
+[1712601893] n_past = 2177
+[1712601893] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' add':967, ' host':3434, ' test':1369, '.':28723, 'com':675, ' with':395, ' endpoint':15329, ' http':3550, ' and':304, ' port':2248, ' ':28705, '8':28783, '0':28734, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, ' <':523, 'function':2628, 'call':2845, '>':28767, ' {"':9830, 'name':861, '":':1264, ' "':345, 'add':988, '_':28730, 'host':3404, '",':548, ' "':345, 'arguments':16684, '":':1264, ' '':464, '{"':6799, 'address':5540, '":':1264, ' "':345, 'test':1613, '.':28723, 'com':675, '",':548, ' "':345 ]
+[1712601893] n_remain: 3878
+[1712601893] eval: [ ' "':345 ]
+[1712601894] n_past = 2178
+[1712601894] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' add':967, ' host':3434, ' test':1369, '.':28723, 'com':675, ' with':395, ' endpoint':15329, ' http':3550, ' and':304, ' port':2248, ' ':28705, '8':28783, '0':28734, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, ' <':523, 'function':2628, 'call':2845, '>':28767, ' {"':9830, 'name':861, '":':1264, ' "':345, 'add':988, '_':28730, 'host':3404, '",':548, ' "':345, 'arguments':16684, '":':1264, ' '':464, '{"':6799, 'address':5540, '":':1264, ' "':345, 'test':1613, '.':28723, 'com':675, '",':548, ' "':345, 'endpoint':15153 ]
+[1712601894] n_remain: 3877
+[1712601894] eval: [ 'endpoint':15153 ]
+[1712601894] n_past = 2179
+[1712601894] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' add':967, ' host':3434, ' test':1369, '.':28723, 'com':675, ' with':395, ' endpoint':15329, ' http':3550, ' and':304, ' port':2248, ' ':28705, '8':28783, '0':28734, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, ' <':523, 'function':2628, 'call':2845, '>':28767, ' {"':9830, 'name':861, '":':1264, ' "':345, 'add':988, '_':28730, 'host':3404, '",':548, ' "':345, 'arguments':16684, '":':1264, ' '':464, '{"':6799, 'address':5540, '":':1264, ' "':345, 'test':1613, '.':28723, 'com':675, '",':548, ' "':345, 'endpoint':15153, '":':1264 ]
+[1712601894] n_remain: 3876
+[1712601894] eval: [ '":':1264 ]
+[1712601894] n_past = 2180
+[1712601894] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' add':967, ' host':3434, ' test':1369, '.':28723, 'com':675, ' with':395, ' endpoint':15329, ' http':3550, ' and':304, ' port':2248, ' ':28705, '8':28783, '0':28734, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, ' <':523, 'function':2628, 'call':2845, '>':28767, ' {"':9830, 'name':861, '":':1264, ' "':345, 'add':988, '_':28730, 'host':3404, '",':548, ' "':345, 'arguments':16684, '":':1264, ' '':464, '{"':6799, 'address':5540, '":':1264, ' "':345, 'test':1613, '.':28723, 'com':675, '",':548, ' "':345, 'endpoint':15153, '":':1264, ' "':345 ]
+[1712601894] n_remain: 3875
+[1712601894] eval: [ ' "':345 ]
+[1712601895] n_past = 2181
+[1712601895] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' add':967, ' host':3434, ' test':1369, '.':28723, 'com':675, ' with':395, ' endpoint':15329, ' http':3550, ' and':304, ' port':2248, ' ':28705, '8':28783, '0':28734, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, ' <':523, 'function':2628, 'call':2845, '>':28767, ' {"':9830, 'name':861, '":':1264, ' "':345, 'add':988, '_':28730, 'host':3404, '",':548, ' "':345, 'arguments':16684, '":':1264, ' '':464, '{"':6799, 'address':5540, '":':1264, ' "':345, 'test':1613, '.':28723, 'com':675, '",':548, ' "':345, 'endpoint':15153, '":':1264, ' "':345, 'http':2872 ]
+[1712601895] n_remain: 3874
+[1712601895] eval: [ 'http':2872 ]
+[1712601895] n_past = 2182
+[1712601895] last: [ '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, '':0, ' add':967, ' host':3434, ' test':1369, '.':28723, 'com':675, ' with':395, ' endpoint':15329, ' http':3550, ' and':304, ' port':2248, ' ':28705, '8':28783, '0':28734, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, ' <':523, 'function':2628, 'call':2845, '>':28767, ' {"':9830, 'name':861, '":':1264, ' "':345, 'add':988, '_':28730, 'host':3404, '",':548, ' "':345, 'arguments':16684, '":':1264, ' '':464, '{"':6799, 'address':5540, '":':1264, ' "':345, 'test':1613, '.':28723, 'com':675, '",':548, ' "':345, 'endpoint':15153, '":':1264, ' "':345, 'http':2872, '",':548 ]
+[1712601895] n_remain: 3873
+[1712601895] eval: [ '",':548 ]
