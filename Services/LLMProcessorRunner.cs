@@ -50,7 +50,8 @@ public class LLMProcessRunner : ILLMProcessRunner
         {
             RemoveProcess(sessionId);
             await _responseProcessor.ProcessEnd(new LLMServiceObj() { SessionId = sessionId, LlmMessage = "Close: Session has timeout. Refresh page to start session again." });
-
+             _logger.LogInformation($" LLM Service : terminated session {sessionId}");
+       
         }
     }
 
