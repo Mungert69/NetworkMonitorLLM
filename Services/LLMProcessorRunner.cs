@@ -4,6 +4,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Threading;
 using System.Diagnostics;
+using System.Linq;
 using System.Text.Json;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
@@ -15,7 +16,7 @@ namespace NetworkMonitor.LLM.Services;
 // LLMProcessRunner.cs
 public interface ILLMProcessRunner
 {
-    Task StartProcess(string sessionId,ProcessWrapper? testProcess = null);
+    Task StartProcess(string sessionId, ProcessWrapper? testProcess = null);
     Task SendInputAndGetResponse(string sessionId, string userInput, bool isFunctionCallResponse);
     void RemoveProcess(string sessionId);
 }
@@ -28,17 +29,35 @@ public class LLMProcessRunner : ILLMProcessRunner
     private ILogger _logger;
     private ILLMResponseProcessor _responseProcessor;
     private MLParams _mlParams;
+    private Timer _idleCheckTimer;
     private readonly SemaphoreSlim _inputStreamSemaphore = new SemaphoreSlim(1, 1);
-    public LLMProcessRunner(ILogger<LLMProcessRunner> logger, ILLMResponseProcessor responseProcessor,ISystemParamsHelper systemParamsHelper)
+    public LLMProcessRunner(ILogger<LLMProcessRunner> logger, ILLMResponseProcessor responseProcessor, ISystemParamsHelper systemParamsHelper)
     {
         _logger = logger;
         _responseProcessor = responseProcessor;
         _mlParams = systemParamsHelper.GetMLParams();
+        _idleCheckTimer = new Timer(async _ => await CheckAndTerminateIdleProcesses(), null, TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(10));
+
     }
+
+    private async Task CheckAndTerminateIdleProcesses()
+    {
+        var idleDuration = TimeSpan.FromMinutes(30);
+        var currentDateTime = DateTime.UtcNow;
+        var sessionsToTerminate = _processes.Where(p => currentDateTime - p.Value.LastActivity > idleDuration).Select(p => p.Key).ToList();
+
+        foreach (var sessionId in sessionsToTerminate)
+        {
+            RemoveProcess(sessionId);
+            await _responseProcessor.ProcessEnd(new LLMServiceObj() { SessionId = sessionId, LlmMessage = "Close: Session has timeout. Refresh page to start session again." });
+
+        }
+    }
+
     public void SetStartInfo(ProcessStartInfo startInfo, string modelPath, string modelFileName)
     {
         startInfo.FileName = $"{modelPath}llama.cpp/build/bin/main";
-        startInfo.Arguments = $"-c 4000 -n 4000 -m {modelPath+modelFileName}  --prompt-cache {modelPath}context.gguf --prompt-cache-ro  -f {modelPath}initialPrompt.txt -ins --keep -1 --temp 0";
+        startInfo.Arguments = $"-c 4000 -n 4000 -m {modelPath + modelFileName}  --prompt-cache {modelPath}context.gguf --prompt-cache-ro  -f {modelPath}initialPrompt.txt -ins --keep -1 --temp 0";
         startInfo.UseShellExecute = false;
         startInfo.RedirectStandardInput = true;
         startInfo.RedirectStandardOutput = true;
@@ -81,9 +100,9 @@ public class LLMProcessRunner : ILLMProcessRunner
             // Always dispose of the process object
             process.Dispose();
         }
-       // _processes.TryRemove(sessionId);
+        // _processes.TryRemove(sessionId);
 
- _processes.TryRemove(sessionId, out _);
+        _processes.TryRemove(sessionId, out _);
 
         _logger.LogInformation($"LLM process removed for session {sessionId}");
     }
@@ -130,13 +149,13 @@ public class LLMProcessRunner : ILLMProcessRunner
         {
             tokenBroadcaster = new TokenBroadcaster(_responseProcessor, _logger, _mlParams.LlmNewLineEndCount);
         }
-          await process.StandardInput.WriteLineAsync(userInput);
-            await process.StandardInput.FlushAsync();
-            _logger.LogInformation($" ProcessLLMOutput(user input) -> {userInput}");
-       
-        
+        await process.StandardInput.WriteLineAsync(userInput);
+        await process.StandardInput.FlushAsync();
+        _logger.LogInformation($" ProcessLLMOutput(user input) -> {userInput}");
+
+
         await tokenBroadcaster.BroadcastAsync(process, sessionId, userInput, isFunctionCallResponse);
-     
+
     }
 }
 

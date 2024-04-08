@@ -132,6 +132,7 @@ public interface ILLMResponseProcessor
 {
     Task ProcessLLMOutput(LLMServiceObj serviceObj);
     Task ProcessFunctionCall(LLMServiceObj serviceObj);
+    Task ProcessEnd(LLMServiceObj serviceObj);
     bool IsFunctionCallResponse(string input);
 }
 
@@ -150,6 +151,13 @@ public class LLMResponseProcessor : ILLMResponseProcessor
     {
         //Console.WriteLine(serviceObj.LlmMessage);
         await _rabbitRepo.PublishAsync<LLMServiceObj>("llmServiceMessage", serviceObj);
+        //return Task.CompletedTask;
+    }
+
+     public async Task ProcessEnd(LLMServiceObj serviceObj)
+    {
+        //Console.WriteLine(serviceObj.LlmMessage);
+        await _rabbitRepo.PublishAsync<LLMServiceObj>("llmServiceEnd", serviceObj);
         //return Task.CompletedTask;
     }
 

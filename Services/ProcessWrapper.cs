@@ -11,6 +11,7 @@ using NetworkMonitor.Objects.ServiceMessage;
 namespace NetworkMonitor.LLM.Services;
 public class ProcessWrapper
 {
+     public DateTime LastActivity { get; set; } = DateTime.UtcNow;
     private Process _process;
     public ProcessWrapper()
     {
