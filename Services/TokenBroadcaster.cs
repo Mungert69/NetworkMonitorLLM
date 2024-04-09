@@ -14,15 +14,13 @@ public class TokenBroadcaster
 {
     private readonly ILLMResponseProcessor _responseProcessor;
     private readonly ILogger _logger;
-    private int _newLineEndCount;
     public event Func<object, string, Task> LineReceived;
     private CancellationTokenSource _cancellationTokenSource;
-    public TokenBroadcaster(ILLMResponseProcessor responseProcessor, ILogger logger, int newLineEndCount)
+    public TokenBroadcaster(ILLMResponseProcessor responseProcessor, ILogger logger)
     {
         _responseProcessor = responseProcessor;
         _logger = logger;
         _cancellationTokenSource = new CancellationTokenSource();
-        _newLineEndCount = newLineEndCount;
     }
     public async Task ReInit(string sessionId)
     {

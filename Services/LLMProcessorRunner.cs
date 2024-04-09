@@ -55,10 +55,10 @@ public class LLMProcessRunner : ILLMProcessRunner
         }
     }
 
-    public void SetStartInfo(ProcessStartInfo startInfo, string modelPath, string modelFileName)
+    public void SetStartInfo(ProcessStartInfo startInfo, MLParams mlParams)
     {
-        startInfo.FileName = $"{modelPath}llama.cpp/build/bin/main";
-        startInfo.Arguments = $"-c 4000 -n 4000 -m {modelPath + modelFileName}  --prompt-cache {modelPath}context.gguf --prompt-cache-ro  -f {modelPath}initialPrompt.txt -ins --keep -1 --temp 0";
+        startInfo.FileName = $"{mlParams.LlmModelPath}llama.cpp/build/bin/main";
+        startInfo.Arguments = $"-c 4000 -n 4000 -m {mlParams.LlmModelPath + mlParams.LlmModelFileName}  --prompt-cache {mlParams.LlmModelPath+mlParams.LlmContextFileName} --prompt-cache-ro  -f {mlParams.LlmModelPath}initialPrompt.txt -ins --keep -1 --temp 0";
         startInfo.UseShellExecute = false;
         startInfo.RedirectStandardInput = true;
         startInfo.RedirectStandardOutput = true;
@@ -73,7 +73,7 @@ public class LLMProcessRunner : ILLMProcessRunner
         if (testProcess == null)
         {
             process = new ProcessWrapper();
-            SetStartInfo(process.StartInfo, _mlParams.LlmModelPath, _mlParams.LlmModelFileName);
+            SetStartInfo(process.StartInfo, _mlParams);
         }
         else
         {
@@ -148,7 +148,7 @@ public class LLMProcessRunner : ILLMProcessRunner
         }
         else
         {
-            tokenBroadcaster = new TokenBroadcaster(_responseProcessor, _logger, _mlParams.LlmNewLineEndCount);
+            tokenBroadcaster = new TokenBroadcaster(_responseProcessor, _logger);
         }
         await process.StandardInput.WriteLineAsync(userInput);
         await process.StandardInput.FlushAsync();
