@@ -30,14 +30,15 @@ public class TokenBroadcaster
     public async Task BroadcastAsync(ProcessWrapper process, string sessionId, string userInput, bool isFunctionCallResponse)
     {
         _logger.LogWarning(" Start BroadcastAsyc() ");
+   
         // trim up to / otherwise it won't match 
         string copyUserInput = userInput;
-        int startIndex = userInput.IndexOf('/');
+       // int startIndex = userInput.IndexOf('/');
         // If '{' is not found or is too far into the input, return the original input
-        if (startIndex != -1)
-        {
-            copyUserInput = userInput.Substring(0, startIndex);
-        }
+        //if (startIndex != -1)
+        //{
+        //    copyUserInput = userInput.Substring(0, startIndex);
+        //}
         var lineBuilder = new StringBuilder();
         var llmOutFull = new StringBuilder();
         var tokenBuilder = new StringBuilder();
@@ -57,11 +58,12 @@ public class TokenBroadcaster
             {
                 string token = tokenBuilder.ToString();
                 token = token.Replace("/\b", "");
-                //Console.WriteLine(token);
+                Console.WriteLine(token);
                 tokenBuilder.Clear();
                 var serviceObj = new LLMServiceObj { SessionId = sessionId, LlmMessage = token };
                 await _responseProcessor.ProcessLLMOutput(serviceObj);
-                if (isNewline && token == "> ")
+                //if (isNewline && token == "> ")
+                if ( token.Contains("<|stop|>"))
                 {
                     _logger.LogInformation($"sessionID={sessionId} line is =>{llmOutFull.ToString()}<=");
                     await ProcessLine(llmOutFull.ToString(), sessionId, userInput, isFunctionCallResponse);
