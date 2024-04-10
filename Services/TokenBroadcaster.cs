@@ -51,10 +51,15 @@ public class TokenBroadcaster
                 }
                 if (isMessageSegmentComplete)
                 {
-                    var serviceObj = new LLMServiceObj { SessionId = sessionId, LlmMessage = messageSegment.Content };
-                    _logger.LogInformation($"sessionID={sessionId} line is =>{llmOutFull.ToString()}<=");
+                    if (isFunctionCallResponse)
+                    {
+                        var responseServiceObj = new LLMServiceObj { SessionId = sessionId };
+                        responseServiceObj.LlmMessage = "</functioncall-complete>";
+                        await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+                    }
+                    //_logger.LogInformation($"sessionID={sessionId} line is =>{llmOutFull.ToString()}<=");
                     await ProcessMessageSegment(messageSegment, sessionId, userInput);
-                    _logger.LogInformation(" Stop detected ");
+                    //_logger.LogInformation(" Stop detected ");
                     _cancellationTokenSource.Cancel();
                     isStopEncountered = true;
                     break;
@@ -119,14 +124,10 @@ public class TokenBroadcaster
     {
         LLMServiceObj responseServiceObj = new LLMServiceObj() { SessionId = sessionId };
         string line = messageSegment.Content;
-        if (messageSegment.From != "user" && messageSegment.From != "assistant")
+
+        if (messageSegment.From == "assistant" && messageSegment.Recipient != "all")
         {
-            responseServiceObj.LlmMessage = "</functioncall-complete>";
-            await _responseProcessor.ProcessLLMOutput(responseServiceObj);
-        }
-        else if (messageSegment.From == "assistant" && messageSegment.Recipient != "all")
-        {
-            var (isJson,jsonLine) = ParseInputForJson(line);
+            var (isJson, jsonLine) = ParseInputForJson(line);
             //string cleanLine = line;
             if (isJson)
             {
@@ -160,7 +161,7 @@ public class TokenBroadcaster
         callFuncJson = "{ \"name\" : \"" + funcName + "\" \"arguments\" : \"" + json + "\"}";
         return callFuncJson;
     }
-    private (bool,string) ParseInputForJson(string input)
+    private (bool, string) ParseInputForJson(string input)
     {
         string newLine = string.Empty;
         // bool foundStart = false;
@@ -169,7 +170,7 @@ public class TokenBroadcaster
         // If '{' is not found or is too far into the input, return the original input
         if (startIndex == -1)
         {
-            return (false,input);
+            return (false, input);
         }
         newLine = input.Substring(startIndex);
         int lastClosingBraceIndex = newLine.LastIndexOf('}');
@@ -178,7 +179,7 @@ public class TokenBroadcaster
             newLine = newLine.Substring(0, lastClosingBraceIndex + 1);
             foundEnd = true;
         }
-        if (foundEnd) return (true,JsonSanitizer.SanitizeJson(newLine));
-        else return (false,input);
+        if (foundEnd) return (true, JsonSanitizer.SanitizeJson(newLine));
+        else return (false, input);
     }
 }
