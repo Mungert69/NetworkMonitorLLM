@@ -8,7 +8,8 @@ using System.Text.Json;
 using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 using NetworkMonitor.Objects.ServiceMessage;
-using NetworkMonitor.Objects;
+using NetworkMonitor.LLM.Services.Objects;
+using System.Text.RegularExpressions;
 namespace NetworkMonitor.LLM.Services;
 public class TokenBroadcaster
 {
@@ -29,100 +30,115 @@ public class TokenBroadcaster
     }
     public async Task BroadcastAsync(ProcessWrapper process, string sessionId, string userInput, bool isFunctionCallResponse)
     {
-        _logger.LogWarning(" Start BroadcastAsyc() ");
-   
-        // trim up to / otherwise it won't match 
-        string copyUserInput = userInput;
-       // int startIndex = userInput.IndexOf('/');
-        // If '{' is not found or is too far into the input, return the original input
-        //if (startIndex != -1)
-        //{
-        //    copyUserInput = userInput.Substring(0, startIndex);
-        //}
-        var lineBuilder = new StringBuilder();
-        var llmOutFull = new StringBuilder();
-        var tokenBuilder = new StringBuilder();
+        _logger.LogWarning(" Start BroadcastAsync() ");
         var cancellationToken = _cancellationTokenSource.Token;
-        int newlineCounter = 0;
-        bool isNewline = false;
+        var llmOutFull = new StringBuilder();
+        bool isStopEncountered = false;
         while (!cancellationToken.IsCancellationRequested)
         {
-
             byte[] buffer = new byte[1];
             int charRead = await process.StandardOutput.ReadAsync(buffer, 0, buffer.Length);
             string textChunk = Encoding.UTF8.GetString(buffer, 0, charRead);
-            lineBuilder.Append(textChunk);
-            char currentChar = (char)charRead;
-            tokenBuilder.Append(textChunk);
-            if (IsTokenComplete(tokenBuilder))
+            llmOutFull.Append(textChunk);
+            //Console.WriteLine(llmOutFull.ToString());
+            var (messageSegment, isWithinContent, isMessageSegmentComplete) = ParseLLMOutput(llmOutFull.ToString());
+            if (messageSegment != null)
             {
-                string token = tokenBuilder.ToString();
-                token = token.Replace("/\b", "");
-                Console.WriteLine(token);
-                tokenBuilder.Clear();
-                var serviceObj = new LLMServiceObj { SessionId = sessionId, LlmMessage = token };
-                await _responseProcessor.ProcessLLMOutput(serviceObj);
-                //if (isNewline && token == "> ")
-                if ( token.Contains("<|stop|>"))
+                if (isWithinContent)
                 {
-                    _logger.LogInformation($"sessionID={sessionId} line is =>{llmOutFull.ToString()}<=");
-                    await ProcessLine(llmOutFull.ToString(), sessionId, userInput, isFunctionCallResponse);
-                    //state = ResponseState.Completed;
-                    _logger.LogInformation(" Cancel due to output end detected ");
-                    _cancellationTokenSource.Cancel();
-                }
-                else isNewline = false;
-            }
-            if (IsLineComplete(lineBuilder))
-            {
-                string line = lineBuilder.ToString();
-                if (line.Equals(userInput + "\n") || line.StartsWith(copyUserInput))
-                {
-                    var serviceObj = new LLMServiceObj { SessionId = sessionId, LlmMessage = "\nAssistant: " };
+                    var serviceObj = new LLMServiceObj { SessionId = sessionId, LlmMessage = textChunk };
                     await _responseProcessor.ProcessLLMOutput(serviceObj);
                 }
-                else
+                if (isMessageSegmentComplete)
                 {
-                    llmOutFull.Append(line);
-                    if (line == "\n") isNewline = true;
+                    var serviceObj = new LLMServiceObj { SessionId = sessionId, LlmMessage = messageSegment.Content };
+                    _logger.LogInformation($"sessionID={sessionId} line is =>{llmOutFull.ToString()}<=");
+                    await ProcessMessageSegment(messageSegment, sessionId, userInput);
+                    _logger.LogInformation(" Stop detected ");
+                    _cancellationTokenSource.Cancel();
+                    isStopEncountered = true;
+                    break;
                 }
-                lineBuilder.Clear();
+            }
+            if (isStopEncountered)
+                break;
+        }
+        _logger.LogInformation(" --> Finished LLM Interaction ");
+    }
+    public static (MessageSegment, bool, bool) ParseLLMOutput(string output)
+    {
+        var regex = new Regex(@"<\|(?<tag>\w+)\|>(?<value>.+?(?=<\|))");
+        string outputClean = output.Replace("\n", ""); // Remove newlines
+        string from = null;
+        string recipient = null;
+        string content = "";
+        bool isWithinContent = false;
+        bool isMessageSegmentComplete = false;
+        if (output.Contains("<|stop|>"))
+        {
+            isMessageSegmentComplete = true;
+        }
+        var matches = regex.Matches(outputClean);
+        foreach (Match match in matches)
+        {
+            var tag = match.Groups["tag"].Value;
+            string value = match.Groups["value"].Value;
+            switch (tag)
+            {
+                case "from":
+                    from = value.Trim();
+                    break;
+                case "recipient":
+                    recipient = value.Trim();
+                    break;
+                case "content":
+                    isWithinContent = true;
+                    content = value.Trim();
+                    break;
             }
         }
-        _logger.LogInformation(" --> Finshed LLM Interaction ");
+        var messageSegment = new MessageSegment()
+        {
+            From = from,
+            Recipient = recipient,
+            Content = content
+        };
+        return (messageSegment, isWithinContent, isMessageSegmentComplete);
     }
-    private bool IsLineComplete(StringBuilder lineBuilder)
+    private static string ReadUntil(string input, int startIndex, char stopChar)
     {
-        return lineBuilder.ToString().EndsWith("\n");
+        var sb = new System.Text.StringBuilder();
+        while (startIndex < input.Length && input[startIndex] != stopChar)
+        {
+            sb.Append(input[startIndex]);
+            startIndex++;
+        }
+        return sb.ToString();
     }
-    private bool IsTokenComplete(StringBuilder tokenBuilder)
-    {
-        string token = tokenBuilder.ToString();
-        if (token.Length > 0 && char.IsWhiteSpace(token[^1])) return true;
-        // Check for whitespace characters that indicate token boundaries
-        return false;
-    }
-    private async Task ProcessLine(string line, string sessionId, string userInput, bool isFunctionCallResponse)
+    private async Task ProcessMessageSegment(MessageSegment messageSegment, string sessionId, string userInput)
     {
         LLMServiceObj responseServiceObj = new LLMServiceObj() { SessionId = sessionId };
-        if (isFunctionCallResponse)
+        string line = messageSegment.Content;
+        if (messageSegment.From != "user" && messageSegment.From != "assistant")
         {
             responseServiceObj.LlmMessage = "</functioncall-complete>";
             await _responseProcessor.ProcessLLMOutput(responseServiceObj);
         }
-        else
+        else if (messageSegment.From == "assistant" && messageSegment.Recipient != "all")
         {
-            string jsonLine = ParseInputForJson(line);
+            var (isJson,jsonLine) = ParseInputForJson(line);
             //string cleanLine = line;
-            if (line != jsonLine)
+            if (isJson)
             {
+                var jsonFunction = "{\"name\" : \"" + messageSegment.Recipient + "\" , \"parameters\" : " + jsonLine + "}";
                 _logger.LogInformation($" ProcessLLMOutput(call_func) -> {jsonLine}");
                 responseServiceObj = new LLMServiceObj() { SessionId = sessionId, UserInput = userInput };
                 responseServiceObj.LlmMessage = "</functioncall>";
                 await _responseProcessor.ProcessLLMOutput(responseServiceObj);
                 responseServiceObj.LlmMessage = "";
                 responseServiceObj.IsFunctionCall = true;
-                responseServiceObj.JsonFunction = jsonLine;
+                responseServiceObj.JsonFunction = jsonFunction;
+                responseServiceObj.FunctionName = messageSegment.Recipient;
                 //responseServiceObj.JsonFunction = CallFuncJson(cleanLine);
                 await _responseProcessor.ProcessFunctionCall(responseServiceObj);
             }
@@ -144,17 +160,16 @@ public class TokenBroadcaster
         callFuncJson = "{ \"name\" : \"" + funcName + "\" \"arguments\" : \"" + json + "\"}";
         return callFuncJson;
     }
-    private string ParseInputForJson(string input)
+    private (bool,string) ParseInputForJson(string input)
     {
-        if (input.Contains("FUNCTION RESPONSE:")) return input;
         string newLine = string.Empty;
         // bool foundStart = false;
         bool foundEnd = false;
         int startIndex = input.IndexOf('{');
         // If '{' is not found or is too far into the input, return the original input
-        if (startIndex == -1 )
+        if (startIndex == -1)
         {
-            return input;
+            return (false,input);
         }
         newLine = input.Substring(startIndex);
         int lastClosingBraceIndex = newLine.LastIndexOf('}');
@@ -163,7 +178,7 @@ public class TokenBroadcaster
             newLine = newLine.Substring(0, lastClosingBraceIndex + 1);
             foundEnd = true;
         }
-        if (foundEnd) return JsonSanitizer.SanitizeJson(newLine);
-        else return input;
+        if (foundEnd) return (true,JsonSanitizer.SanitizeJson(newLine));
+        else return (false,input);
     }
 }
