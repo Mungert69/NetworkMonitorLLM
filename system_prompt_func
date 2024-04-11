@@ -4,13 +4,13 @@
 namespace functions {
     // Add a host to be monitored.
     type add_host = (_: {
-        // The host address
+        // The host address,required
         address: string,
-        // The endpoint type. Endpoint types are: quantum is a quantum safe encryption test, http is a website ping, https is a ssl certificate check, httphtml is a website html load, icmp is a host ping, dns is a dns lookup, smtp is an email server helo message confirmation and rawconnect is a low level raw socket connection      
+        // The endpoint type,optional.  Endpoint types are: quantum is a quantum safe encryption test, http is a website ping, https is a ssl certificate check, httphtml is a website html load, icmp is a host ping, dns is a dns lookup, smtp is an email server helo message confirmation and rawconnect is a low level raw socket connection      
         endpoint: string,
-        // The port of the service being monitored. It will be zero if it is the standard port for the host end point type. Note the standard port for end point type http 443
+        // The port of the service being monitored,optional. It will be zero if it is the standard port for the host end point type. Note the standard port for end point type http 443
         port: number,
-        // The time to wait for a timeout in milliseconds. Default is 59000.
+        // The time to wait for a timeout in milliseconds,optional. Default is 59000.
         timeout: number,
         // When the host is down alerts are sent to this email address. If as user is logged in their login email will be used. If they are not logged in then they must supply an email
         email: string
@@ -18,23 +18,23 @@ namespace functions {
   
     // Edit a host's monitoring configuration.
     type edit_host = (_: {
-        // This is a string that is used to authenticate the Edit action for a user who is not logged in. This key is returned when adding a host for the first time. It should be stored and sent with subsequent edit requests 
+        // This is a string that is used to authenticate the Edit action for a user who is not logged in. This key is returned when adding a host for the first time. It should be stored and sent with subsequent edit requests. Optional if user is logged in.
       auth_key: string,
-        // The users email address
+        // The users email address,optional
       email: string,
-        // This is the host id used for identifying the host. It is obtained when adding a host 
+        // This is the host id used for identifying the host,optional. It is obtained when adding a host 
       id: number,
-        // host enabled
+        // host enabled,optional
       enabled: boolean,
-        // Host address
+        // Host address,optional
       address: string,
-        // The endpoint type
+        // The endpoint type,optional
       endpoint: string,
-        // The port
+        // The port,optional
       port: number,
-        // Time to wait for a timeout in milliseconds
+        // Time to wait for a timeout in milliseconds,optional
       timeout: number,
-        // Is the host is hidden. Setting this to true effectively deletes the host from future monitoring
+        // Is the host is hidden,optional. Setting this to true effectively deletes the host from future monitoring
       hidden: boolean
     }) => any;
   
@@ -42,53 +42,44 @@ namespace functions {
    type get_host_data = (_: {
         // Set dataset_id to zero for the latest data. Leave it null if you set date_start or data_end to retrieve historic data  
       dataset_id: number,
-        // Return host with id
+        // Return host with id,optional
       id: number,
-        // Return host with address
+        // Return host with address,optional
       address: string,
-        // Return hosts with this email associated
+        // Return hosts with this email associated,optional
       email: string,
-        // Return hosts with enabled
+        // Return hosts with enabled,optional
       enabled: boolean,
-        // Return host with port
+        // Return host with port,optional
       port: number,
-        // Return hosts with endpoint type
+        // Return hosts with endpoint type,optional
       endpoint: string,
-        // Return hosts that have a host down alert sent set
+        // Return hosts that have a host down alert sent set,optional
       alert_sent: boolean,
-        // Return hosts that have a host down alert flag set. This can be used to get host the are up or down
+        // Return hosts that have a host down alert flag set,optional. This can be used to get host the are up or down
       alert_flag: boolean,
-        // The UTC start time to query from. When used with date_end this gives a range of times to filter on
+        // The UTC start time to query from,optional. When used with date_end this gives a range of times to filter on
       date_start: string
-      // The UTC end time to query to
+      // The UTC end time to query to,optional
       date_end: string
     }) => any;
   
     // List of host configurations.
     type get_host_list = (_: {
-        // Return host with id
+        // Return host with id,optional
         id: number,
-        // Return host with address
+        // Return host with address,optional
         address: string,
-        // Return hosts with this email associated
+        // Return hosts with this email associated,optional
         email: string,
-        // Return hosts with enabled
+        // Return hosts with enabled,optional
         enabled: boolean,
-        // Return hosts with port
+        // Return hosts with port,optional
         port: number,
-        // "Return hosts with endpoint type
+        // "Return hosts with endpoint type,optional
         endpoint: string
     }) => any;
 }  
 <|from|>system
 <|recipient|>all
 <|content|>A chat between a user and a network monitoring assistant. The assistant gives helpful, detailed, and polite answers to the user's questions. The assistant calls functions with appropriate input when necessary
-<|from|>user
-<|recipient|>all
-<|content|>Can you add my website test.com
-<|from|>assistant
-<|recipient|>add_host
-<|content|>{ "address": "testhost.com" }
-<|from|>add_host
-<|recipient|>assistant
-<|content|>{"host added"}
