@@ -58,7 +58,7 @@ public class LLMProcessRunner : ILLMProcessRunner
     public void SetStartInfo(ProcessStartInfo startInfo, MLParams mlParams)
     {
         startInfo.FileName = $"{mlParams.LlmModelPath}llama.cpp/build/bin/main";
-        startInfo.Arguments = $"-c 4000 -n 4000 -m {mlParams.LlmModelPath + mlParams.LlmModelFileName}  --prompt-cache {mlParams.LlmModelPath+mlParams.LlmContextFileName} --prompt-cache-ro  -f {mlParams.LlmModelPath+mlParams.LlmSystemPrompt}  -ins -r \"<|stop|>\" --keep -1 --temp 0 -t 8";
+        startInfo.Arguments = $"-c 2000 -n 6000 -m {mlParams.LlmModelPath + mlParams.LlmModelFileName}  --prompt-cache {mlParams.LlmModelPath+mlParams.LlmContextFileName} --prompt-cache-ro  -f {mlParams.LlmModelPath+mlParams.LlmSystemPrompt}  -ins -r \"<|stop|>\" --keep -1 --temp 0 -t 8";
         startInfo.UseShellExecute = false;
         startInfo.RedirectStandardInput = true;
         startInfo.RedirectStandardOutput = true;
@@ -150,7 +150,7 @@ public class LLMProcessRunner : ILLMProcessRunner
         {
             tokenBroadcaster = new TokenBroadcaster(_responseProcessor, _logger);
         }
-        userInput = "<|from|>user<|recipient|>all<|content|>" + userInput;
+        if (!isFunctionCallResponse) userInput = "<|from|>user<|recipient|>all<|content|>" + userInput;
         await process.StandardInput.WriteLineAsync(userInput);
         await process.StandardInput.FlushAsync();
         _logger.LogInformation($" ProcessLLMOutput(user input) -> {userInput}");

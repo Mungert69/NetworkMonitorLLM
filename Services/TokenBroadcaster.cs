@@ -33,6 +33,8 @@ public class TokenBroadcaster
         _logger.LogWarning(" Start BroadcastAsync() ");
         var cancellationToken = _cancellationTokenSource.Token;
         var llmOutFull = new StringBuilder();
+        var tokenBuilder = new StringBuilder();
+
         bool isStopEncountered = false;
         while (!cancellationToken.IsCancellationRequested)
         {
@@ -40,26 +42,35 @@ public class TokenBroadcaster
             int charRead = await process.StandardOutput.ReadAsync(buffer, 0, buffer.Length);
             string textChunk = Encoding.UTF8.GetString(buffer, 0, charRead);
             llmOutFull.Append(textChunk);
+            tokenBuilder.Append(textChunk);
+            if (IsTokenComplete(tokenBuilder))
+            {
+                string token = tokenBuilder.ToString();
+                tokenBuilder.Clear();
+                var serviceObj = new LLMServiceObj { SessionId = sessionId, LlmMessage = token };
+                await _responseProcessor.ProcessLLMOutput(serviceObj);
+            }
+
             //Console.WriteLine(llmOutFull.ToString());
             var (messageSegment, isWithinContent, isMessageSegmentComplete) = ParseLLMOutput(llmOutFull.ToString());
             if (messageSegment != null)
             {
-                if (isWithinContent)
-                {
-                    var serviceObj = new LLMServiceObj { SessionId = sessionId, LlmMessage = textChunk };
-                    await _responseProcessor.ProcessLLMOutput(serviceObj);
-                }
+
                 if (isMessageSegmentComplete)
                 {
+                    LLMServiceObj responseServiceObj = new LLMServiceObj { SessionId = sessionId };
                     if (isFunctionCallResponse)
                     {
-                        var responseServiceObj = new LLMServiceObj { SessionId = sessionId };
                         responseServiceObj.LlmMessage = "</functioncall-complete>";
                         await _responseProcessor.ProcessLLMOutput(responseServiceObj);
                     }
                     //_logger.LogInformation($"sessionID={sessionId} line is =>{llmOutFull.ToString()}<=");
                     await ProcessMessageSegment(messageSegment, sessionId, userInput);
                     //_logger.LogInformation(" Stop detected ");
+
+                    // Send last part of llm output
+                    responseServiceObj.LlmMessage = tokenBuilder.ToString();
+                    await _responseProcessor.ProcessLLMOutput(responseServiceObj);
                     _cancellationTokenSource.Cancel();
                     isStopEncountered = true;
                     break;
@@ -69,6 +80,14 @@ public class TokenBroadcaster
                 break;
         }
         _logger.LogInformation(" --> Finished LLM Interaction ");
+    }
+
+    private bool IsTokenComplete(StringBuilder tokenBuilder)
+    {
+        string token = tokenBuilder.ToString();
+        if (token.Length > 0 && char.IsWhiteSpace(token[^1])) return true;
+        // Check for whitespace characters that indicate token boundaries
+        return false;
     }
     public static (MessageSegment, bool, bool) ParseLLMOutput(string output)
     {
