@@ -57,8 +57,8 @@ public class LLMProcessRunner : ILLMProcessRunner
 
     public void SetStartInfo(ProcessStartInfo startInfo, MLParams mlParams)
     {
-        startInfo.FileName = $"{mlParams.LlmModelPath}llama.cpp/build/bin/main";
-        startInfo.Arguments = $"-c 2000 -n 6000 -m {mlParams.LlmModelPath + mlParams.LlmModelFileName}  --prompt-cache {mlParams.LlmModelPath+mlParams.LlmContextFileName} --prompt-cache-ro  -f {mlParams.LlmModelPath+mlParams.LlmSystemPrompt}  -ins -r \"<|stop|>\" --keep -1 --temp 0 -t 8";
+        startInfo.FileName = $"{mlParams.LlmModelPath}llama.cpp/main";
+        startInfo.Arguments = $"-c 2000 -n 6000 -b 224 -m {mlParams.LlmModelPath + mlParams.LlmModelFileName}  --prompt-cache {mlParams.LlmModelPath+mlParams.LlmContextFileName} --prompt-cache-ro  -f {mlParams.LlmModelPath+mlParams.LlmSystemPrompt}  -ins -r \"<|stop|>\" --keep -1 --temp 0 -t 8";
         startInfo.UseShellExecute = false;
         startInfo.RedirectStandardInput = true;
         startInfo.RedirectStandardOutput = true;
@@ -82,6 +82,8 @@ public class LLMProcessRunner : ILLMProcessRunner
         process.Start();
         await WaitForReadySignal(process);
         _processes[sessionId] = process;
+        string userInput = "<|from|>user<|recipient|>all<|content|>Hi";
+        await SendInputAndGetResponse(sessionId, userInput, false);
         _logger.LogInformation($"LLM process started for session {sessionId}");
     }
     public void RemoveProcess(string sessionId)

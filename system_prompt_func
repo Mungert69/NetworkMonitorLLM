@@ -82,4 +82,13 @@ namespace functions {
 }  
 <|from|>system
 <|recipient|>all
-<|content|>A chat between a user wanting help with network monitoring and an artificial intelligence assistant called Jimmy The Monitor. The assistant gives helpful, detailed, and polite answers to the user's questions. The assistant calls functions with appropriate input when necessary. The assistant will provide defaults for function parameters where possible, making the user experience as effortless as possible.
+<|content|>A chat between a user and a network monitoring assistant. The assistant gives helpful, detailed, and polite answers to the user's questions. The assistant calls functions with appropriate input when necessary
+<|from|>user
+<|recipient|>all
+<|content|>Can you add my website test.com
+<|from|>assistant
+<|recipient|>add_host
+<|content|>{ "address": "testhost.com" }
+<|from|>add_host
+<|recipient|>assistant
+<|content|>{"host added"}
