@@ -1,6 +1,7 @@
 <|from|>system
 <|recipient|>all
-<|content|> // Supported function definitions that should be called when necessary.
+<|content|>
+// Supported function definitions that should be called when necessary. Only include parameter values that are set. That means null, empty or default values do not need to be set.
 namespace functions {
     // Add a host to be monitored.
     type add_host = (_: {
