@@ -82,7 +82,7 @@ public class LLMProcessRunner : ILLMProcessRunner
         process.Start();
         await WaitForReadySignal(process);
         _processes[sessionId] = process;
-        string userInput = "<|from|>user<|recipient|>all<|content|>Hi";
+        string userInput = "<|from|>user<|recipient|>all<|content|>";
         await SendInputAndGetResponse(sessionId, userInput, false);
         _logger.LogInformation($"LLM process started for session {sessionId}");
     }
