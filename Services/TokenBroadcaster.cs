@@ -47,6 +47,7 @@ public class TokenBroadcaster
             {
                 string token = tokenBuilder.ToString();
                 tokenBuilder.Clear();
+                token = token.Replace("/\b", "");
                 var serviceObj = new LLMServiceObj { SessionId = sessionId, LlmMessage = token };
                 await _responseProcessor.ProcessLLMOutput(serviceObj);
             }
