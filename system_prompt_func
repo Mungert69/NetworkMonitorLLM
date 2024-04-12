@@ -59,9 +59,9 @@ namespace functions {
       alert_sent: boolean,
         // Return hosts that have a host down alert flag set,optional. This can be used to get host the are up or down
       alert_flag: boolean,
-        // The UTC start time to query from,optional. When used with date_end this gives a range of times to filter on
+        // The start time to query from,optional. When used with date_end this gives a range of times to filter on
       date_start: string
-      // The UTC end time to query to,optional
+      // The end time to query to,optional
       date_end: string
     }) => any;
   
