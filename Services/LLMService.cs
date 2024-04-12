@@ -44,7 +44,11 @@ public class LLMService : ILLMService
         llmServiceObj.SessionId = Guid.NewGuid().ToString();
         try
         {
-            await _processRunner.StartProcess(llmServiceObj.SessionId);
+            var clientTimeZone = llmServiceObj.TimeZone != null
+                                         ? TimeZoneInfo.FindSystemTimeZoneById(llmServiceObj.TimeZone)
+                                         : TimeZoneInfo.Utc;
+            var usersCurrentTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, clientTimeZone);
+            await _processRunner.StartProcess(llmServiceObj.SessionId, usersCurrentTime);
             _sessions[llmServiceObj.SessionId] = new Session();
             llmServiceObj.ResultMessage = " Success : LLMService Started Session .";
             llmServiceObj.ResultSuccess = true;

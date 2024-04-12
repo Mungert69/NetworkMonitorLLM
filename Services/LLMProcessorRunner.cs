@@ -16,7 +16,7 @@ namespace NetworkMonitor.LLM.Services;
 // LLMProcessRunner.cs
 public interface ILLMProcessRunner
 {
-    Task StartProcess(string sessionId, ProcessWrapper? testProcess = null);
+    Task StartProcess(string sessionId, DateTime currentTime, ProcessWrapper? testProcess = null);
     Task SendInputAndGetResponse(string sessionId, string userInput, bool isFunctionCallResponse);
     void RemoveProcess(string sessionId);
 }
@@ -64,7 +64,7 @@ public class LLMProcessRunner : ILLMProcessRunner
         startInfo.RedirectStandardOutput = true;
         startInfo.CreateNoWindow = true;
     }
-    public async Task StartProcess(string sessionId, ProcessWrapper? testProcess = null)
+    public async Task StartProcess(string sessionId, DateTime currentTime, ProcessWrapper? testProcess = null)
     {
         if (_processes.ContainsKey(sessionId))
             throw new Exception("Process already running for this session");
@@ -82,7 +82,7 @@ public class LLMProcessRunner : ILLMProcessRunner
         process.Start();
         await WaitForReadySignal(process);
         _processes[sessionId] = process;
-        string userInput = "<|from|>user<|recipient|>all<|content|>hi";
+        string userInput = $"<|from|>system<|recipient|>all<|content|>The users current time is {currentTime.ToString()}";
         await SendInputAndGetResponse(sessionId, userInput, false);
         _logger.LogInformation($"LLM process started for session {sessionId}");
     }

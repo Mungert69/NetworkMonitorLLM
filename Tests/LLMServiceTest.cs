@@ -48,7 +48,7 @@ public class LLMProcessRunnerTests
 
 
         // Act
-        await processRunner.StartProcess("test",mockProcessWrapper.Object);
+        await processRunner.StartProcess("test",DateTime.Now,mockProcessWrapper.Object );
 
         // Assert
         mockProcessWrapper.Verify(p => p.Start(), Times.Once);
@@ -99,7 +99,7 @@ public class LLMProcessRunnerTests
             .Returns(Task.CompletedTask);
 
         var processRunner = new LLMProcessRunner(_loggerLLMProcessRunnerMock.Object,mockResponseProcessor.Object,_systemParamsHelperMock.Object);
-       await processRunner.StartProcess("test",mockProcessWrapper.Object);
+       await processRunner.StartProcess("test",DateTime.Now,mockProcessWrapper.Object);
         // Act
         await processRunner.SendInputAndGetResponse(serviceObj.SessionId,serviceObj.UserInput, serviceObj.IsFunctionCallResponse);
 

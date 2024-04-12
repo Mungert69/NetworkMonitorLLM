@@ -1,110 +1,110 @@
-[1712898852] Log start
-[1712898852] Cmd: /home/mahadeva/code/models/llama.cpp/main -c 2000 -n 6000 -b 224 -m /home/mahadeva/code/models/functionary-small-v2.4.Q4_0.gguf --prompt-cache /home/mahadeva/code/models/context-func.gguf --prompt-cache-ro -f /home/mahadeva/code/models/system_prompt_func -ins -r <|stop|> --keep -1 --temp 0 -t 7
-[1712898852] main: build = 2650 (1bbdaf6e)
-[1712898852] main: built with cc (Debian 12.2.0-14) 12.2.0 for x86_64-linux-gnu
-[1712898852] main: seed  = 1712898852
-[1712898852] main: llama backend init
-[1712898852] main: load the model and apply lora adapter, if any
-[1712898852] llama_model_loader: loaded meta data with 25 key-value pairs and 291 tensors from /home/mahadeva/code/models/functionary-small-v2.4.Q4_0.gguf (version GGUF V3 (latest))
-[1712898852] llama_model_loader: Dumping metadata keys/values. Note: KV overrides do not apply in this output.
-[1712898852] llama_model_loader: - kv   0:                       general.architecture str              = llama
-[1712898852] llama_model_loader: - kv   1:                               general.name str              = .
-[1712898852] llama_model_loader: - kv   2:                           llama.vocab_size u32              = 32004
-[1712898852] llama_model_loader: - kv   3:                       llama.context_length u32              = 32768
-[1712898852] llama_model_loader: - kv   4:                     llama.embedding_length u32              = 4096
-[1712898852] llama_model_loader: - kv   5:                          llama.block_count u32              = 32
-[1712898852] llama_model_loader: - kv   6:                  llama.feed_forward_length u32              = 14336
-[1712898852] llama_model_loader: - kv   7:                 llama.rope.dimension_count u32              = 128
-[1712898852] llama_model_loader: - kv   8:                 llama.attention.head_count u32              = 32
-[1712898852] llama_model_loader: - kv   9:              llama.attention.head_count_kv u32              = 8
-[1712898852] llama_model_loader: - kv  10:     llama.attention.layer_norm_rms_epsilon f32              = 0.000010
-[1712898852] llama_model_loader: - kv  11:                       llama.rope.freq_base f32              = 1000000.000000
-[1712898852] llama_model_loader: - kv  12:                          general.file_type u32              = 2
-[1712898852] llama_model_loader: - kv  13:                       tokenizer.ggml.model str              = llama
-[1712898852] llama_model_loader: - kv  14:                      tokenizer.ggml.tokens arr[str,32004]   = ["<unk>", "<s>", "</s>", "<0x00>", "<...
-[1712898852] llama_model_loader: - kv  15:                      tokenizer.ggml.scores arr[f32,32004]   = [0.000000, 0.000000, 0.000000, 0.0000...
-[1712898852] llama_model_loader: - kv  16:                  tokenizer.ggml.token_type arr[i32,32004]   = [2, 3, 3, 6, 6, 6, 6, 6, 6, 6, 6, 6, ...
-[1712898852] llama_model_loader: - kv  17:                tokenizer.ggml.bos_token_id u32              = 1
-[1712898852] llama_model_loader: - kv  18:                tokenizer.ggml.eos_token_id u32              = 2
-[1712898852] llama_model_loader: - kv  19:            tokenizer.ggml.unknown_token_id u32              = 0
-[1712898852] llama_model_loader: - kv  20:            tokenizer.ggml.padding_token_id u32              = 2
-[1712898852] llama_model_loader: - kv  21:               tokenizer.ggml.add_bos_token bool             = true
-[1712898852] llama_model_loader: - kv  22:               tokenizer.ggml.add_eos_token bool             = false
-[1712898852] llama_model_loader: - kv  23:                    tokenizer.chat_template str              = {% for message in messages %}\n{% if m...
-[1712898852] llama_model_loader: - kv  24:               general.quantization_version u32              = 2
-[1712898852] llama_model_loader: - type  f32:   65 tensors
-[1712898852] llama_model_loader: - type q4_0:  225 tensors
-[1712898852] llama_model_loader: - type q6_K:    1 tensors
-[1712898852] llm_load_vocab: special tokens definition check successful ( 263/32004 ).
-[1712898852] llm_load_print_meta: format           = GGUF V3 (latest)
-[1712898852] llm_load_print_meta: arch             = llama
-[1712898852] llm_load_print_meta: vocab type       = SPM
-[1712898852] llm_load_print_meta: n_vocab          = 32004
-[1712898852] llm_load_print_meta: n_merges         = 0
-[1712898852] llm_load_print_meta: n_ctx_train      = 32768
-[1712898852] llm_load_print_meta: n_embd           = 4096
-[1712898852] llm_load_print_meta: n_head           = 32
-[1712898852] llm_load_print_meta: n_head_kv        = 8
-[1712898852] llm_load_print_meta: n_layer          = 32
-[1712898852] llm_load_print_meta: n_rot            = 128
-[1712898852] llm_load_print_meta: n_embd_head_k    = 128
-[1712898852] llm_load_print_meta: n_embd_head_v    = 128
-[1712898852] llm_load_print_meta: n_gqa            = 4
-[1712898852] llm_load_print_meta: n_embd_k_gqa     = 1024
-[1712898852] llm_load_print_meta: n_embd_v_gqa     = 1024
-[1712898852] llm_load_print_meta: f_norm_eps       = 0.0e+00
-[1712898852] llm_load_print_meta: f_norm_rms_eps   = 1.0e-05
-[1712898852] llm_load_print_meta: f_clamp_kqv      = 0.0e+00
-[1712898852] llm_load_print_meta: f_max_alibi_bias = 0.0e+00
-[1712898852] llm_load_print_meta: f_logit_scale    = 0.0e+00
-[1712898852] llm_load_print_meta: n_ff             = 14336
-[1712898852] llm_load_print_meta: n_expert         = 0
-[1712898852] llm_load_print_meta: n_expert_used    = 0
-[1712898852] llm_load_print_meta: causal attn      = 1
-[1712898852] llm_load_print_meta: pooling type     = 0
-[1712898852] llm_load_print_meta: rope type        = 0
-[1712898852] llm_load_print_meta: rope scaling     = linear
-[1712898852] llm_load_print_meta: freq_base_train  = 1000000.0
-[1712898852] llm_load_print_meta: freq_scale_train = 1
-[1712898852] llm_load_print_meta: n_yarn_orig_ctx  = 32768
-[1712898852] llm_load_print_meta: rope_finetuned   = unknown
-[1712898852] llm_load_print_meta: ssm_d_conv       = 0
-[1712898852] llm_load_print_meta: ssm_d_inner      = 0
-[1712898852] llm_load_print_meta: ssm_d_state      = 0
-[1712898852] llm_load_print_meta: ssm_dt_rank      = 0
-[1712898852] llm_load_print_meta: model type       = 7B
-[1712898852] llm_load_print_meta: model ftype      = Q4_0
-[1712898852] llm_load_print_meta: model params     = 7.24 B
-[1712898852] llm_load_print_meta: model size       = 3.83 GiB (4.54 BPW) 
-[1712898852] llm_load_print_meta: general.name     = .
-[1712898852] llm_load_print_meta: BOS token        = 1 '<s>'
-[1712898852] llm_load_print_meta: EOS token        = 2 '</s>'
-[1712898852] llm_load_print_meta: UNK token        = 0 '<unk>'
-[1712898852] llm_load_print_meta: PAD token        = 2 '</s>'
-[1712898852] llm_load_print_meta: LF token         = 13 '<0x0A>'
-[1712898852] llm_load_tensors: ggml ctx size =    0.11 MiB
-[1712898852] llm_load_tensors:        CPU buffer size =  3917.89 MiB
-[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] .[1712898852] 
-[1712898852] llama_new_context_with_model: n_ctx      = 2016
-[1712898852] llama_new_context_with_model: n_batch    = 224
-[1712898852] llama_new_context_with_model: n_ubatch   = 224
-[1712898852] llama_new_context_with_model: freq_base  = 1000000.0
-[1712898852] llama_new_context_with_model: freq_scale = 1
-[1712898852] llama_kv_cache_init:        CPU KV buffer size =   252.00 MiB
-[1712898852] llama_new_context_with_model: KV self size  =  252.00 MiB, K (f16):  126.00 MiB, V (f16):  126.00 MiB
-[1712898852] llama_new_context_with_model:        CPU  output buffer size =     0.12 MiB
-[1712898852] llama_new_context_with_model:        CPU compute buffer size =    70.85 MiB
-[1712898852] llama_new_context_with_model: graph nodes  = 1030
-[1712898852] llama_new_context_with_model: graph splits = 1
-[1712898852] warming up the model with an empty run
-[1712898853] n_ctx: 2016
-[1712898853] 
-[1712898853] system_info: n_threads = 7 / 8 | AVX = 1 | AVX_VNNI = 0 | AVX2 = 1 | AVX512 = 0 | AVX512_VBMI = 0 | AVX512_VNNI = 0 | FMA = 1 | NEON = 0 | ARM_FMA = 0 | F16C = 1 | FP16_VA = 0 | WASM_SIMD = 0 | BLAS = 1 | SSE3 = 1 | SSSE3 = 1 | VSX = 0 | MATMUL_INT8 = 0 | 
-[1712898853] main: attempting to load saved session from '/home/mahadeva/code/models/context-func.gguf'
-[1712898853] main: loaded a session with prompt size of 994 tokens
-[1712898853] add_bos: 1
-[1712898853] tokenize the prompt
-[1712898853] prompt: "<|from|>system
+[1712959348] Log start
+[1712959348] Cmd: /home/mahadeva/code/models/llama.cpp/main -c 2000 -n 6000 -b 224 -m /home/mahadeva/code/models/functionary-small-v2.4.Q4_0.gguf --prompt-cache /home/mahadeva/code/models/context-func.gguf --prompt-cache-ro -f /home/mahadeva/code/models/system_prompt_func -ins -r <|stop|> --keep -1 --temp 0 -t 7
+[1712959348] main: build = 2650 (1bbdaf6e)
+[1712959348] main: built with cc (Debian 12.2.0-14) 12.2.0 for x86_64-linux-gnu
+[1712959348] main: seed  = 1712959348
+[1712959348] main: llama backend init
+[1712959348] main: load the model and apply lora adapter, if any
+[1712959348] llama_model_loader: loaded meta data with 25 key-value pairs and 291 tensors from /home/mahadeva/code/models/functionary-small-v2.4.Q4_0.gguf (version GGUF V3 (latest))
+[1712959348] llama_model_loader: Dumping metadata keys/values. Note: KV overrides do not apply in this output.
+[1712959348] llama_model_loader: - kv   0:                       general.architecture str              = llama
+[1712959348] llama_model_loader: - kv   1:                               general.name str              = .
+[1712959348] llama_model_loader: - kv   2:                           llama.vocab_size u32              = 32004
+[1712959348] llama_model_loader: - kv   3:                       llama.context_length u32              = 32768
+[1712959348] llama_model_loader: - kv   4:                     llama.embedding_length u32              = 4096
+[1712959348] llama_model_loader: - kv   5:                          llama.block_count u32              = 32
+[1712959348] llama_model_loader: - kv   6:                  llama.feed_forward_length u32              = 14336
+[1712959348] llama_model_loader: - kv   7:                 llama.rope.dimension_count u32              = 128
+[1712959348] llama_model_loader: - kv   8:                 llama.attention.head_count u32              = 32
+[1712959348] llama_model_loader: - kv   9:              llama.attention.head_count_kv u32              = 8
+[1712959348] llama_model_loader: - kv  10:     llama.attention.layer_norm_rms_epsilon f32              = 0.000010
+[1712959348] llama_model_loader: - kv  11:                       llama.rope.freq_base f32              = 1000000.000000
+[1712959348] llama_model_loader: - kv  12:                          general.file_type u32              = 2
+[1712959348] llama_model_loader: - kv  13:                       tokenizer.ggml.model str              = llama
+[1712959348] llama_model_loader: - kv  14:                      tokenizer.ggml.tokens arr[str,32004]   = ["<unk>", "<s>", "</s>", "<0x00>", "<...
+[1712959348] llama_model_loader: - kv  15:                      tokenizer.ggml.scores arr[f32,32004]   = [0.000000, 0.000000, 0.000000, 0.0000...
+[1712959348] llama_model_loader: - kv  16:                  tokenizer.ggml.token_type arr[i32,32004]   = [2, 3, 3, 6, 6, 6, 6, 6, 6, 6, 6, 6, ...
+[1712959348] llama_model_loader: - kv  17:                tokenizer.ggml.bos_token_id u32              = 1
+[1712959348] llama_model_loader: - kv  18:                tokenizer.ggml.eos_token_id u32              = 2
+[1712959348] llama_model_loader: - kv  19:            tokenizer.ggml.unknown_token_id u32              = 0
+[1712959348] llama_model_loader: - kv  20:            tokenizer.ggml.padding_token_id u32              = 2
+[1712959348] llama_model_loader: - kv  21:               tokenizer.ggml.add_bos_token bool             = true
+[1712959348] llama_model_loader: - kv  22:               tokenizer.ggml.add_eos_token bool             = false
+[1712959348] llama_model_loader: - kv  23:                    tokenizer.chat_template str              = {% for message in messages %}\n{% if m...
+[1712959348] llama_model_loader: - kv  24:               general.quantization_version u32              = 2
+[1712959348] llama_model_loader: - type  f32:   65 tensors
+[1712959348] llama_model_loader: - type q4_0:  225 tensors
+[1712959348] llama_model_loader: - type q6_K:    1 tensors
+[1712959348] llm_load_vocab: special tokens definition check successful ( 263/32004 ).
+[1712959348] llm_load_print_meta: format           = GGUF V3 (latest)
+[1712959348] llm_load_print_meta: arch             = llama
+[1712959348] llm_load_print_meta: vocab type       = SPM
+[1712959348] llm_load_print_meta: n_vocab          = 32004
+[1712959348] llm_load_print_meta: n_merges         = 0
+[1712959348] llm_load_print_meta: n_ctx_train      = 32768
+[1712959348] llm_load_print_meta: n_embd           = 4096
+[1712959348] llm_load_print_meta: n_head           = 32
+[1712959348] llm_load_print_meta: n_head_kv        = 8
+[1712959348] llm_load_print_meta: n_layer          = 32
+[1712959348] llm_load_print_meta: n_rot            = 128
+[1712959348] llm_load_print_meta: n_embd_head_k    = 128
+[1712959348] llm_load_print_meta: n_embd_head_v    = 128
+[1712959348] llm_load_print_meta: n_gqa            = 4
+[1712959348] llm_load_print_meta: n_embd_k_gqa     = 1024
+[1712959348] llm_load_print_meta: n_embd_v_gqa     = 1024
+[1712959348] llm_load_print_meta: f_norm_eps       = 0.0e+00
+[1712959348] llm_load_print_meta: f_norm_rms_eps   = 1.0e-05
+[1712959348] llm_load_print_meta: f_clamp_kqv      = 0.0e+00
+[1712959348] llm_load_print_meta: f_max_alibi_bias = 0.0e+00
+[1712959348] llm_load_print_meta: f_logit_scale    = 0.0e+00
+[1712959348] llm_load_print_meta: n_ff             = 14336
+[1712959348] llm_load_print_meta: n_expert         = 0
+[1712959348] llm_load_print_meta: n_expert_used    = 0
+[1712959348] llm_load_print_meta: causal attn      = 1
+[1712959348] llm_load_print_meta: pooling type     = 0
+[1712959348] llm_load_print_meta: rope type        = 0
+[1712959348] llm_load_print_meta: rope scaling     = linear
+[1712959348] llm_load_print_meta: freq_base_train  = 1000000.0
+[1712959348] llm_load_print_meta: freq_scale_train = 1
+[1712959348] llm_load_print_meta: n_yarn_orig_ctx  = 32768
+[1712959348] llm_load_print_meta: rope_finetuned   = unknown
+[1712959348] llm_load_print_meta: ssm_d_conv       = 0
+[1712959348] llm_load_print_meta: ssm_d_inner      = 0
+[1712959348] llm_load_print_meta: ssm_d_state      = 0
+[1712959348] llm_load_print_meta: ssm_dt_rank      = 0
+[1712959348] llm_load_print_meta: model type       = 7B
+[1712959348] llm_load_print_meta: model ftype      = Q4_0
+[1712959348] llm_load_print_meta: model params     = 7.24 B
+[1712959348] llm_load_print_meta: model size       = 3.83 GiB (4.54 BPW) 
+[1712959348] llm_load_print_meta: general.name     = .
+[1712959348] llm_load_print_meta: BOS token        = 1 '<s>'
+[1712959348] llm_load_print_meta: EOS token        = 2 '</s>'
+[1712959348] llm_load_print_meta: UNK token        = 0 '<unk>'
+[1712959348] llm_load_print_meta: PAD token        = 2 '</s>'
+[1712959348] llm_load_print_meta: LF token         = 13 '<0x0A>'
+[1712959348] llm_load_tensors: ggml ctx size =    0.11 MiB
+[1712959348] llm_load_tensors:        CPU buffer size =  3917.89 MiB
+[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] .[1712959348] 
+[1712959348] llama_new_context_with_model: n_ctx      = 2016
+[1712959348] llama_new_context_with_model: n_batch    = 224
+[1712959348] llama_new_context_with_model: n_ubatch   = 224
+[1712959348] llama_new_context_with_model: freq_base  = 1000000.0
+[1712959348] llama_new_context_with_model: freq_scale = 1
+[1712959348] llama_kv_cache_init:        CPU KV buffer size =   252.00 MiB
+[1712959348] llama_new_context_with_model: KV self size  =  252.00 MiB, K (f16):  126.00 MiB, V (f16):  126.00 MiB
+[1712959348] llama_new_context_with_model:        CPU  output buffer size =     0.12 MiB
+[1712959348] llama_new_context_with_model:        CPU compute buffer size =    70.85 MiB
+[1712959348] llama_new_context_with_model: graph nodes  = 1030
+[1712959348] llama_new_context_with_model: graph splits = 1
+[1712959348] warming up the model with an empty run
+[1712959349] n_ctx: 2016
+[1712959349] 
+[1712959349] system_info: n_threads = 7 / 8 | AVX = 1 | AVX_VNNI = 0 | AVX2 = 1 | AVX512 = 0 | AVX512_VBMI = 0 | AVX512_VNNI = 0 | FMA = 1 | NEON = 0 | ARM_FMA = 0 | F16C = 1 | FP16_VA = 0 | WASM_SIMD = 0 | BLAS = 1 | SSE3 = 1 | SSSE3 = 1 | VSX = 0 | MATMUL_INT8 = 0 | 
+[1712959349] main: attempting to load saved session from '/home/mahadeva/code/models/context-func.gguf'
+[1712959349] main: loaded a session with prompt size of 994 tokens
+[1712959349] add_bos: 1
+[1712959349] tokenize the prompt
+[1712959349] prompt: "<|from|>system
 <|recipient|>all
 <|content|>
 // Supported function definitions that should be called when necessary. Only include parameter values that are set. That means null, empty or default values do not need to be set.
@@ -190,44 +190,179 @@ namespace functions {
 <|from|>system
 <|recipient|>all
 <|content|>A chat between a user and a network monitoring assistant. The assistant gives helpful, detailed, and polite answers to the user's questions. The assistant calls functions with appropriate input when necessary"
-[1712898853] tokens: [ '':1, '<|from|>':32000, 'system':6574, '':13, '<|recipient|>':32001, 'all':455, '':13, '<|content|>':32002, '':13, '//':421, ' Support':10731, 'ed':286, ' function':908, ' definitions':20343, ' that':369, ' should':1023, ' be':347, ' called':1987, ' when':739, ' necessary':4892, '.':28723, ' Only':6352, ' include':3024, ' parameter':5621, ' values':3069, ' that':369, ' are':460, ' set':808, '.':28723, ' That':1725, ' means':2825, ' null':1241, ',':28725, ' empty':4606, ' or':442, ' default':2369, ' values':3069, ' do':511, ' not':459, ' need':927, ' to':298, ' be':347, ' set':808, '.':28723, '':13, 'namespace':14147, ' functions':5572, ' {':371, '':13, '   ':2287, ' //':589, ' Add':3301, ' a':264, ' host':3434, ' to':298, ' be':347, ' mon':1326, 'it':279, 'ored':2455, '.':28723, '':13, '   ':2287, ' type':1212, ' add':967, '_':28730, 'host':3404, ' =':327, ' (_':9453, ':':28747, ' {':371, '':13, '       ':5390, ' //':589, ' The':415, ' host':3434, ' address':2962, ',':28725, 'required':10893, '':13, '       ':5390, ' address':2962, ':':28747, ' string':1423, ',':28725, '':13, '       ':5390, ' //':589, ' The':415, ' endpoint':15329, ' type':1212, ',':28725, 'optional':14496, '.':28723, ' ':28705, ' End':5764, 'point':2275, ' types':4514, ' are':460, ':':28747, ' quantum':10915, ' is':349, ' a':264, ' quantum':10915, ' safe':5023, ' encryption':27591, ' test':1369, ',':28725, ' http':3550, ' is':349, ' a':264, ' website':4400, ' p':284, 'ing':288, ',':28725, ' https':4449, ' is':349, ' a':264, ' s':268, 'sl':2181, ' certificate':15743, ' check':1877, ',':28725, ' http':3550, 'html':3391, ' is':349, ' a':264, ' website':4400, ' html':12383, ' load':3442, ',':28725, ' ic':19699, 'mp':1447, ' is':349, ' a':264, ' host':3434, ' p':284, 'ing':288, ',':28725, ' d':281, 'ns':2925, ' is':349, ' a':264, ' d':281, 'ns':2925, ' lookup':21275, ',':28725, ' sm':991, 'tp':8024, ' is':349, ' an':396, ' email':4927, ' server':5116, ' he':400, 'lo':731, ' message':2928, ' confirmation':22511, ' and':304, ' raw':8435, 'connect':7182, ' is':349, ' a':264, ' low':2859, ' level':2184, ' raw':8435, ' socket':13889, ' connection':5132, '      ':428, '':13, '       ':5390, ' endpoint':15329, ':':28747, ' string':1423, ',':28725, '':13, '       ':5390, ' //':589, ' The':415, ' port':2248, ' of':302, ' the':272, ' service':2372, ' being':1250, ' mon':1326, 'it':279, 'ored':2455, ',':28725, 'optional':14496, '.':28723, ' It':661, ' will':622, ' be':347, ' zero':6129, ' if':513, ' it':378, ' is':349, ' the':272, ' standard':4787, ' port':2248, ' for':354, ' the':272, ' host':3434, ' end':948, ' point':1305, ' type':1212, '.':28723, ' Note':6096, ' the':272, ' standard':4787, ' port':2248, ' for':354, ' end':948, ' point':1305, ' type':1212, ' http':3550, ' ':28705, '4':28781, '4':28781, '3':28770, '':13, '       ':5390, ' port':2248, ':':28747, ' number':1474, ',':28725, '':13, '       ':5390, ' //':589, ' The':415, ' time':727, ' to':298, ' wait':2444, ' for':354, ' a':264, ' timeout':11965, ' in':297, ' mill':2545, 'iseconds':24589, ',':28725, 'optional':14496, '.':28723, ' Default':9707, ' is':349, ' ':28705, '5':28782, '9':28774, '0':28734, '0':28734, '0':28734, '.':28723, '':13, '       ':5390, ' timeout':11965, ':':28747, ' number':1474, ',':28725, '':13, '       ':5390, ' //':589, ' When':1684, ' the':272, ' host':3434, ' is':349, ' down':1060, ' al':389, 'erts':9916, ' are':460, ' sent':2662, ' to':298, ' this':456, ' email':4927, ' address':2962, '.':28723, ' If':1047, ' as':390, ' user':2188, ' is':349, ' logged':27036, ' in':297, ' their':652, ' login':14570, ' email':4927, ' will':622, ' be':347, ' used':1307, '.':28723, ' If':1047, ' they':590, ' are':460, ' not':459, ' logged':27036, ' in':297, ' then':868, ' they':590, ' must':1580, ' supply':8002, ' an':396, ' email':4927, '':13, '       ':5390, ' email':4927, ':':28747, ' string':1423, '':13, '   ':2287, ' })':4984, ' =>':953, ' any':707, ';':28745, '':13, '  ':259, '':13, '   ':2287, ' //':589, ' Edit':12838, ' a':264, ' host':3434, ''':28742, 's':28713, ' monitoring':16882, ' configuration':7427, '.':28723, '':13, '   ':2287, ' type':1212, ' edit':10659, '_':28730, 'host':3404, ' =':327, ' (_':9453, ':':28747, ' {':371, '':13, '       ':5390, ' //':589, ' This':851, ' is':349, ' a':264, ' string':1423, ' that':369, ' is':349, ' used':1307, ' to':298, ' aut':1206, 'hent':5577, 'icate':5749, ' the':272, ' Edit':12838, ' action':2992, ' for':354, ' a':264, ' user':2188, ' who':693, ' is':349, ' not':459, ' logged':27036, ' in':297, '.':28723, ' This':851, ' key':1945, ' is':349, ' returned':4253, ' when':739, ' adding':8833, ' a':264, ' host':3434, ' for':354, ' the':272, ' first':907, ' time':727, '.':28723, ' It':661, ' should':1023, ' be':347, ' stored':11141, ' and':304, ' sent':2662, ' with':395, ' subsequent':14235, ' edit':10659, ' requests':9828, '.':28723, ' Optional':12786, ' if':513, ' user':2188, ' is':349, ' logged':27036, ' in':297, '.':28723, '':13, '     ':355, ' auth':7565, '_':28730, 'key':1499, ':':28747, ' string':1423, ',':28725, '':13, '       ':5390, ' //':589, ' The':415, ' users':5443, ' email':4927, ' address':2962, ',':28725, 'optional':14496, '':13, '     ':355, ' email':4927, ':':28747, ' string':1423, ',':28725, '':13, '       ':5390, ' //':589, ' This':851, ' is':349, ' the':272, ' host':3434, ' id':1910, ' used':1307, ' for':354, ' identifying':21653, ' the':272, ' host':3434, ',':28725, 'optional':14496, '.':28723, ' It':661, ' is':349, ' obtained':7365, ' when':739, ' adding':8833, ' a':264, ' host':3434, ' ':28705, '':13, '     ':355, ' id':1910, ':':28747, ' number':1474, ',':28725, '':13, '       ':5390, ' //':589, ' host':3434, ' enabled':9651, ',':28725, 'optional':14496, '':13, '     ':355, ' enabled':9651, ':':28747, ' boolean':3695, ',':28725, '':13, '       ':5390, ' //':589, ' Host':15511, ' address':2962, ',':28725, 'optional':14496, '':13, '     ':355, ' address':2962, ':':28747, ' string':1423, ',':28725, '':13, '       ':5390, ' //':589, ' The':415, ' endpoint':15329, ' type':1212, ',':28725, 'optional':14496, '':13, '     ':355, ' endpoint':15329, ':':28747, ' string':1423, ',':28725, '':13, '       ':5390, ' //':589, ' The':415, ' port':2248, ',':28725, 'optional':14496, '':13, '     ':355, ' port':2248, ':':28747, ' number':1474, ',':28725, '':13, '       ':5390, ' //':589, ' Time':5329, ' to':298, ' wait':2444, ' for':354, ' a':264, ' timeout':11965, ' in':297, ' mill':2545, 'iseconds':24589, ',':28725, 'optional':14496, '':13, '     ':355, ' timeout':11965, ':':28747, ' number':1474, ',':28725, '':13, '       ':5390, ' //':589, ' Is':1691, ' the':272, ' host':3434, ' is':349, ' hidden':7918, ',':28725, 'optional':14496, '.':28723, ' Setting':23433, ' this':456, ' to':298, ' true':1132, ' effectively':11466, ' delet':21750, 'es':274, ' the':272, ' host':3434, ' from':477, ' future':3437, ' monitoring':16882, '':13, '     ':355, ' hidden':7918, ':':28747, ' boolean':3695, '':13, '   ':2287, ' })':4984, ' =>':953, ' any':707, ';':28745, '':13, '  ':259, '':13, '  ':259, ' //':589, ' Get':2483, ' monitoring':16882, ' status':3425, ' for':354, ' a':264, ' host':3434, '.':28723, ' ':28705, '':13, '  ':259, ' type':1212, ' get':625, '_':28730, 'host':3404, '_':28730, 'data':1056, ' =':327, ' (_':9453, ':':28747, ' {':371, '':13, '       ':5390, ' //':589, ' Set':3286, ' dataset':13466, '_':28730, 'id':313, ' to':298, ' zero':6129, ' for':354, ' the':272, ' latest':7345, ' data':1178, '.':28723, ' Leave':25487, ' it':378, ' null':1241, ' if':513, ' you':368, ' set':808, ' date':3608, '_':28730, 'start':2521, ' or':442, ' data':1178, '_':28730, 'end':416, ' to':298, ' retrieve':20132, ' historic':15799, ' data':1178, '  ':259, '':13, '     ':355, ' dataset':13466, '_':28730, 'id':313, ':':28747, ' number':1474, ',':28725, '':13, '       ':5390, ' //':589, ' Return':4571, ' host':3434, ' with':395, ' id':1910, ',':28725, 'optional':14496, '':13, '     ':355, ' id':1910, ':':28747, ' number':1474, ',':28725, '':13, '       ':5390, ' //':589, ' Return':4571, ' host':3434, ' with':395, ' address':2962, ',':28725, 'optional':14496, '':13, '     ':355, ' address':2962, ':':28747, ' string':1423, ',':28725, '':13, '       ':5390, ' //':589, ' Return':4571, ' hosts':19666, ' with':395, ' this':456, ' email':4927, ' associated':5363, ',':28725, 'optional':14496, '':13, '     ':355, ' email':4927, ':':28747, ' string':1423, ',':28725, '':13, '       ':5390, ' //':589, ' Return':4571, ' hosts':19666, ' with':395, ' enabled':9651, ',':28725, 'optional':14496, '':13, '     ':355, ' enabled':9651, ':':28747, ' boolean':3695, ',':28725, '':13, '       ':5390, ' //':589, ' Return':4571, ' host':3434, ' with':395, ' port':2248, ',':28725, 'optional':14496, '':13, '     ':355, ' port':2248, ':':28747, ' number':1474, ',':28725, '':13, '       ':5390, ' //':589, ' Return':4571, ' hosts':19666, ' with':395, ' endpoint':15329, ' type':1212, ',':28725, 'optional':14496, '':13, '     ':355, ' endpoint':15329, ':':28747, ' string':1423, ',':28725, '':13, '       ':5390, ' //':589, ' Return':4571, ' hosts':19666, ' that':369, ' have':506, ' a':264, ' host':3434, ' down':1060, ' alert':10977, ' sent':2662, ' set':808, ',':28725, 'optional':14496, '':13, '     ':355, ' alert':10977, '_':28730, 'sent':16788, ':':28747, ' boolean':3695, ',':28725, '':13, '       ':5390, ' //':589, ' Return':4571, ' hosts':19666, ' that':369, ' have':506, ' a':264, ' host':3434, ' down':1060, ' alert':10977, ' flag':6673, ' set':808, ',':28725, 'optional':14496, '.':28723, ' This':851, ' can':541, ' be':347, ' used':1307, ' to':298, ' get':625, ' host':3434, ' the':272, ' are':460, ' up':582, ' or':442, ' down':1060, '':13, '     ':355, ' alert':10977, '_':28730, 'flag':7914, ':':28747, ' boolean':3695, ',':28725, '':13, '       ':5390, ' //':589, ' The':415, ' UTC':21811, ' start':1149, ' time':727, ' to':298, ' query':5709, ' from':477, ',':28725, 'optional':14496, '.':28723, ' When':1684, ' used':1307, ' with':395, ' date':3608, '_':28730, 'end':416, ' this':456, ' gives':5212, ' a':264, ' range':2819, ' of':302, ' times':2421, ' to':298, ' filter':5531, ' on':356, '':13, '     ':355, ' date':3608, '_':28730, 'start':2521, ':':28747, ' string':1423, '':13, '     ':355, ' //':589, ' The':415, ' UTC':21811, ' end':948, ' time':727, ' to':298, ' query':5709, ' to':298, ',':28725, 'optional':14496, '':13, '     ':355, ' date':3608, '_':28730, 'end':416, ':':28747, ' string':1423, '':13, '   ':2287, ' })':4984, ' =>':953, ' any':707, ';':28745, '':13, '  ':259, '':13, '   ':2287, ' //':589, ' List':3231, ' of':302, ' host':3434, ' configurations':24991, '.':28723, '':13, '   ':2287, ' type':1212, ' get':625, '_':28730, 'host':3404, '_':28730, 'list':1703, ' =':327, ' (_':9453, ':':28747, ' {':371, '':13, '       ':5390, ' //':589, ' Return':4571, ' host':3434, ' with':395, ' id':1910, ',':28725, 'optional':14496, '':13, '       ':5390, ' id':1910, ':':28747, ' number':1474, ',':28725, '':13, '       ':5390, ' //':589, ' Return':4571, ' host':3434, ' with':395, ' address':2962, ',':28725, 'optional':14496, '':13, '       ':5390, ' address':2962, ':':28747, ' string':1423, ',':28725, '':13, '       ':5390, ' //':589, ' Return':4571, ' hosts':19666, ' with':395, ' this':456, ' email':4927, ' associated':5363, ',':28725, 'optional':14496, '':13, '       ':5390, ' email':4927, ':':28747, ' string':1423, ',':28725, '':13, '       ':5390, ' //':589, ' Return':4571, ' hosts':19666, ' with':395, ' enabled':9651, ',':28725, 'optional':14496, '':13, '       ':5390, ' enabled':9651, ':':28747, ' boolean':3695, ',':28725, '':13, '       ':5390, ' //':589, ' Return':4571, ' hosts':19666, ' with':395, ' port':2248, ',':28725, 'optional':14496, '':13, '       ':5390, ' port':2248, ':':28747, ' number':1474, ',':28725, '':13, '       ':5390, ' //':589, ' "':345, 'Return':6168, ' hosts':19666, ' with':395, ' endpoint':15329, ' type':1212, ',':28725, 'optional':14496, '':13, '       ':5390, ' endpoint':15329, ':':28747, ' string':1423, '':13, '   ':2287, ' })':4984, ' =>':953, ' any':707, ';':28745, '':13, '}':28752, '  ':259, '':13, '<|from|>':32000, 'system':6574, '':13, '<|recipient|>':32001, 'all':455, '':13, '<|content|>':32002, 'A':28741, ' chat':10706, ' between':1444, ' a':264, ' user':2188, ' and':304, ' a':264, ' network':3681, ' monitoring':16882, ' assistant':13892, '.':28723, ' The':415, ' assistant':13892, ' gives':5212, ' helpful':10865, ',':28725, ' detailed':10537, ',':28725, ' and':304, ' polite':27057, ' answers':11194, ' to':298, ' the':272, ' user':2188, ''':28742, 's':28713, ' questions':4224, '.':28723, ' The':415, ' assistant':13892, ' calls':6470, ' functions':5572, ' with':395, ' appropriate':7658, ' input':2787, ' when':739, ' necessary':4892 ]
-[1712898853] main: session file has exact match for prompt!
-[1712898853] recalculate the cached logits (check): embd_inp.empty() false, n_matching_session_tokens 994, embd_inp.size() 994, session_tokens.size() 994, embd_inp.size() 994
-[1712898853] inp_pfx: [ '':1, ' ':28705, '':13, '':13, '###':27332, ' Inst':3133, 'ruction':3112, ':':28747, '':13, '':13 ]
-[1712898853] inp_sfx: [ ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, '':13 ]
-[1712898853] cml_pfx: [ '':1, ' ':28705, '':13, '<':28789, '|':28766, 'im':321, '_':28730, 'start':2521, '|':28766, '>':28767, 'user':1838, '':13 ]
-[1712898853] cml_sfx: [ ' <':523, '|':28766, 'im':321, '_':28730, 'end':416, '|':28766, '>':28767, '':13, '<':28789, '|':28766, 'im':321, '_':28730, 'start':2521, '|':28766, '>':28767, 'ass':489, 'istant':11143, '':13 ]
-[1712898853] main: interactive mode on.
-[1712898853] Reverse prompt: '<|stop|>'
-[1712898853] Reverse prompt: '### Instruction:
+[1712959349] tokens: [ '':1, '<|from|>':32000, 'system':6574, '':13, '<|recipient|>':32001, 'all':455, '':13, '<|content|>':32002, '':13, '//':421, ' Support':10731, 'ed':286, ' function':908, ' definitions':20343, ' that':369, ' should':1023, ' be':347, ' called':1987, ' when':739, ' necessary':4892, '.':28723, ' Only':6352, ' include':3024, ' parameter':5621, ' values':3069, ' that':369, ' are':460, ' set':808, '.':28723, ' That':1725, ' means':2825, ' null':1241, ',':28725, ' empty':4606, ' or':442, ' default':2369, ' values':3069, ' do':511, ' not':459, ' need':927, ' to':298, ' be':347, ' set':808, '.':28723, '':13, 'namespace':14147, ' functions':5572, ' {':371, '':13, '   ':2287, ' //':589, ' Add':3301, ' a':264, ' host':3434, ' to':298, ' be':347, ' mon':1326, 'it':279, 'ored':2455, '.':28723, '':13, '   ':2287, ' type':1212, ' add':967, '_':28730, 'host':3404, ' =':327, ' (_':9453, ':':28747, ' {':371, '':13, '       ':5390, ' //':589, ' The':415, ' host':3434, ' address':2962, ',':28725, 'required':10893, '':13, '       ':5390, ' address':2962, ':':28747, ' string':1423, ',':28725, '':13, '       ':5390, ' //':589, ' The':415, ' endpoint':15329, ' type':1212, ',':28725, 'optional':14496, '.':28723, ' ':28705, ' End':5764, 'point':2275, ' types':4514, ' are':460, ':':28747, ' quantum':10915, ' is':349, ' a':264, ' quantum':10915, ' safe':5023, ' encryption':27591, ' test':1369, ',':28725, ' http':3550, ' is':349, ' a':264, ' website':4400, ' p':284, 'ing':288, ',':28725, ' https':4449, ' is':349, ' a':264, ' s':268, 'sl':2181, ' certificate':15743, ' check':1877, ',':28725, ' http':3550, 'html':3391, ' is':349, ' a':264, ' website':4400, ' html':12383, ' load':3442, ',':28725, ' ic':19699, 'mp':1447, ' is':349, ' a':264, ' host':3434, ' p':284, 'ing':288, ',':28725, ' d':281, 'ns':2925, ' is':349, ' a':264, ' d':281, 'ns':2925, ' lookup':21275, ',':28725, ' sm':991, 'tp':8024, ' is':349, ' an':396, ' email':4927, ' server':5116, ' he':400, 'lo':731, ' message':2928, ' confirmation':22511, ' and':304, ' raw':8435, 'connect':7182, ' is':349, ' a':264, ' low':2859, ' level':2184, ' raw':8435, ' socket':13889, ' connection':5132, '      ':428, '':13, '       ':5390, ' endpoint':15329, ':':28747, ' string':1423, ',':28725, '':13, '       ':5390, ' //':589, ' The':415, ' port':2248, ' of':302, ' the':272, ' service':2372, ' being':1250, ' mon':1326, 'it':279, 'ored':2455, ',':28725, 'optional':14496, '.':28723, ' It':661, ' will':622, ' be':347, ' zero':6129, ' if':513, ' it':378, ' is':349, ' the':272, ' standard':4787, ' port':2248, ' for':354, ' the':272, ' host':3434, ' end':948, ' point':1305, ' type':1212, '.':28723, ' Note':6096, ' the':272, ' standard':4787, ' port':2248, ' for':354, ' end':948, ' point':1305, ' type':1212, ' http':3550, ' ':28705, '4':28781, '4':28781, '3':28770, '':13, '       ':5390, ' port':2248, ':':28747, ' number':1474, ',':28725, '':13, '       ':5390, ' //':589, ' The':415, ' time':727, ' to':298, ' wait':2444, ' for':354, ' a':264, ' timeout':11965, ' in':297, ' mill':2545, 'iseconds':24589, ',':28725, 'optional':14496, '.':28723, ' Default':9707, ' is':349, ' ':28705, '5':28782, '9':28774, '0':28734, '0':28734, '0':28734, '.':28723, '':13, '       ':5390, ' timeout':11965, ':':28747, ' number':1474, ',':28725, '':13, '       ':5390, ' //':589, ' When':1684, ' the':272, ' host':3434, ' is':349, ' down':1060, ' al':389, 'erts':9916, ' are':460, ' sent':2662, ' to':298, ' this':456, ' email':4927, ' address':2962, '.':28723, ' If':1047, ' as':390, ' user':2188, ' is':349, ' logged':27036, ' in':297, ' their':652, ' login':14570, ' email':4927, ' will':622, ' be':347, ' used':1307, '.':28723, ' If':1047, ' they':590, ' are':460, ' not':459, ' logged':27036, ' in':297, ' then':868, ' they':590, ' must':1580, ' supply':8002, ' an':396, ' email':4927, '':13, '       ':5390, ' email':4927, ':':28747, ' string':1423, '':13, '   ':2287, ' })':4984, ' =>':953, ' any':707, ';':28745, '':13, '  ':259, '':13, '   ':2287, ' //':589, ' Edit':12838, ' a':264, ' host':3434, ''':28742, 's':28713, ' monitoring':16882, ' configuration':7427, '.':28723, '':13, '   ':2287, ' type':1212, ' edit':10659, '_':28730, 'host':3404, ' =':327, ' (_':9453, ':':28747, ' {':371, '':13, '       ':5390, ' //':589, ' This':851, ' is':349, ' a':264, ' string':1423, ' that':369, ' is':349, ' used':1307, ' to':298, ' aut':1206, 'hent':5577, 'icate':5749, ' the':272, ' Edit':12838, ' action':2992, ' for':354, ' a':264, ' user':2188, ' who':693, ' is':349, ' not':459, ' logged':27036, ' in':297, '.':28723, ' This':851, ' key':1945, ' is':349, ' returned':4253, ' when':739, ' adding':8833, ' a':264, ' host':3434, ' for':354, ' the':272, ' first':907, ' time':727, '.':28723, ' It':661, ' should':1023, ' be':347, ' stored':11141, ' and':304, ' sent':2662, ' with':395, ' subsequent':14235, ' edit':10659, ' requests':9828, '.':28723, ' Optional':12786, ' if':513, ' user':2188, ' is':349, ' logged':27036, ' in':297, '.':28723, '':13, '     ':355, ' auth':7565, '_':28730, 'key':1499, ':':28747, ' string':1423, ',':28725, '':13, '       ':5390, ' //':589, ' The':415, ' users':5443, ' email':4927, ' address':2962, ',':28725, 'optional':14496, '':13, '     ':355, ' email':4927, ':':28747, ' string':1423, ',':28725, '':13, '       ':5390, ' //':589, ' This':851, ' is':349, ' the':272, ' host':3434, ' id':1910, ' used':1307, ' for':354, ' identifying':21653, ' the':272, ' host':3434, ',':28725, 'optional':14496, '.':28723, ' It':661, ' is':349, ' obtained':7365, ' when':739, ' adding':8833, ' a':264, ' host':3434, ' ':28705, '':13, '     ':355, ' id':1910, ':':28747, ' number':1474, ',':28725, '':13, '       ':5390, ' //':589, ' host':3434, ' enabled':9651, ',':28725, 'optional':14496, '':13, '     ':355, ' enabled':9651, ':':28747, ' boolean':3695, ',':28725, '':13, '       ':5390, ' //':589, ' Host':15511, ' address':2962, ',':28725, 'optional':14496, '':13, '     ':355, ' address':2962, ':':28747, ' string':1423, ',':28725, '':13, '       ':5390, ' //':589, ' The':415, ' endpoint':15329, ' type':1212, ',':28725, 'optional':14496, '':13, '     ':355, ' endpoint':15329, ':':28747, ' string':1423, ',':28725, '':13, '       ':5390, ' //':589, ' The':415, ' port':2248, ',':28725, 'optional':14496, '':13, '     ':355, ' port':2248, ':':28747, ' number':1474, ',':28725, '':13, '       ':5390, ' //':589, ' Time':5329, ' to':298, ' wait':2444, ' for':354, ' a':264, ' timeout':11965, ' in':297, ' mill':2545, 'iseconds':24589, ',':28725, 'optional':14496, '':13, '     ':355, ' timeout':11965, ':':28747, ' number':1474, ',':28725, '':13, '       ':5390, ' //':589, ' Is':1691, ' the':272, ' host':3434, ' is':349, ' hidden':7918, ',':28725, 'optional':14496, '.':28723, ' Setting':23433, ' this':456, ' to':298, ' true':1132, ' effectively':11466, ' delet':21750, 'es':274, ' the':272, ' host':3434, ' from':477, ' future':3437, ' monitoring':16882, '':13, '     ':355, ' hidden':7918, ':':28747, ' boolean':3695, '':13, '   ':2287, ' })':4984, ' =>':953, ' any':707, ';':28745, '':13, '  ':259, '':13, '  ':259, ' //':589, ' Get':2483, ' monitoring':16882, ' status':3425, ' for':354, ' a':264, ' host':3434, '.':28723, ' ':28705, '':13, '  ':259, ' type':1212, ' get':625, '_':28730, 'host':3404, '_':28730, 'data':1056, ' =':327, ' (_':9453, ':':28747, ' {':371, '':13, '       ':5390, ' //':589, ' Set':3286, ' dataset':13466, '_':28730, 'id':313, ' to':298, ' zero':6129, ' for':354, ' the':272, ' latest':7345, ' data':1178, '.':28723, ' Leave':25487, ' it':378, ' null':1241, ' if':513, ' you':368, ' set':808, ' date':3608, '_':28730, 'start':2521, ' or':442, ' data':1178, '_':28730, 'end':416, ' to':298, ' retrieve':20132, ' historic':15799, ' data':1178, '  ':259, '':13, '     ':355, ' dataset':13466, '_':28730, 'id':313, ':':28747, ' number':1474, ',':28725, '':13, '       ':5390, ' //':589, ' Return':4571, ' host':3434, ' with':395, ' id':1910, ',':28725, 'optional':14496, '':13, '     ':355, ' id':1910, ':':28747, ' number':1474, ',':28725, '':13, '       ':5390, ' //':589, ' Return':4571, ' host':3434, ' with':395, ' address':2962, ',':28725, 'optional':14496, '':13, '     ':355, ' address':2962, ':':28747, ' string':1423, ',':28725, '':13, '       ':5390, ' //':589, ' Return':4571, ' hosts':19666, ' with':395, ' this':456, ' email':4927, ' associated':5363, ',':28725, 'optional':14496, '':13, '     ':355, ' email':4927, ':':28747, ' string':1423, ',':28725, '':13, '       ':5390, ' //':589, ' Return':4571, ' hosts':19666, ' with':395, ' enabled':9651, ',':28725, 'optional':14496, '':13, '     ':355, ' enabled':9651, ':':28747, ' boolean':3695, ',':28725, '':13, '       ':5390, ' //':589, ' Return':4571, ' host':3434, ' with':395, ' port':2248, ',':28725, 'optional':14496, '':13, '     ':355, ' port':2248, ':':28747, ' number':1474, ',':28725, '':13, '       ':5390, ' //':589, ' Return':4571, ' hosts':19666, ' with':395, ' endpoint':15329, ' type':1212, ',':28725, 'optional':14496, '':13, '     ':355, ' endpoint':15329, ':':28747, ' string':1423, ',':28725, '':13, '       ':5390, ' //':589, ' Return':4571, ' hosts':19666, ' that':369, ' have':506, ' a':264, ' host':3434, ' down':1060, ' alert':10977, ' sent':2662, ' set':808, ',':28725, 'optional':14496, '':13, '     ':355, ' alert':10977, '_':28730, 'sent':16788, ':':28747, ' boolean':3695, ',':28725, '':13, '       ':5390, ' //':589, ' Return':4571, ' hosts':19666, ' that':369, ' have':506, ' a':264, ' host':3434, ' down':1060, ' alert':10977, ' flag':6673, ' set':808, ',':28725, 'optional':14496, '.':28723, ' This':851, ' can':541, ' be':347, ' used':1307, ' to':298, ' get':625, ' host':3434, ' the':272, ' are':460, ' up':582, ' or':442, ' down':1060, '':13, '     ':355, ' alert':10977, '_':28730, 'flag':7914, ':':28747, ' boolean':3695, ',':28725, '':13, '       ':5390, ' //':589, ' The':415, ' UTC':21811, ' start':1149, ' time':727, ' to':298, ' query':5709, ' from':477, ',':28725, 'optional':14496, '.':28723, ' When':1684, ' used':1307, ' with':395, ' date':3608, '_':28730, 'end':416, ' this':456, ' gives':5212, ' a':264, ' range':2819, ' of':302, ' times':2421, ' to':298, ' filter':5531, ' on':356, '':13, '     ':355, ' date':3608, '_':28730, 'start':2521, ':':28747, ' string':1423, '':13, '     ':355, ' //':589, ' The':415, ' UTC':21811, ' end':948, ' time':727, ' to':298, ' query':5709, ' to':298, ',':28725, 'optional':14496, '':13, '     ':355, ' date':3608, '_':28730, 'end':416, ':':28747, ' string':1423, '':13, '   ':2287, ' })':4984, ' =>':953, ' any':707, ';':28745, '':13, '  ':259, '':13, '   ':2287, ' //':589, ' List':3231, ' of':302, ' host':3434, ' configurations':24991, '.':28723, '':13, '   ':2287, ' type':1212, ' get':625, '_':28730, 'host':3404, '_':28730, 'list':1703, ' =':327, ' (_':9453, ':':28747, ' {':371, '':13, '       ':5390, ' //':589, ' Return':4571, ' host':3434, ' with':395, ' id':1910, ',':28725, 'optional':14496, '':13, '       ':5390, ' id':1910, ':':28747, ' number':1474, ',':28725, '':13, '       ':5390, ' //':589, ' Return':4571, ' host':3434, ' with':395, ' address':2962, ',':28725, 'optional':14496, '':13, '       ':5390, ' address':2962, ':':28747, ' string':1423, ',':28725, '':13, '       ':5390, ' //':589, ' Return':4571, ' hosts':19666, ' with':395, ' this':456, ' email':4927, ' associated':5363, ',':28725, 'optional':14496, '':13, '       ':5390, ' email':4927, ':':28747, ' string':1423, ',':28725, '':13, '       ':5390, ' //':589, ' Return':4571, ' hosts':19666, ' with':395, ' enabled':9651, ',':28725, 'optional':14496, '':13, '       ':5390, ' enabled':9651, ':':28747, ' boolean':3695, ',':28725, '':13, '       ':5390, ' //':589, ' Return':4571, ' hosts':19666, ' with':395, ' port':2248, ',':28725, 'optional':14496, '':13, '       ':5390, ' port':2248, ':':28747, ' number':1474, ',':28725, '':13, '       ':5390, ' //':589, ' "':345, 'Return':6168, ' hosts':19666, ' with':395, ' endpoint':15329, ' type':1212, ',':28725, 'optional':14496, '':13, '       ':5390, ' endpoint':15329, ':':28747, ' string':1423, '':13, '   ':2287, ' })':4984, ' =>':953, ' any':707, ';':28745, '':13, '}':28752, '  ':259, '':13, '<|from|>':32000, 'system':6574, '':13, '<|recipient|>':32001, 'all':455, '':13, '<|content|>':32002, 'A':28741, ' chat':10706, ' between':1444, ' a':264, ' user':2188, ' and':304, ' a':264, ' network':3681, ' monitoring':16882, ' assistant':13892, '.':28723, ' The':415, ' assistant':13892, ' gives':5212, ' helpful':10865, ',':28725, ' detailed':10537, ',':28725, ' and':304, ' polite':27057, ' answers':11194, ' to':298, ' the':272, ' user':2188, ''':28742, 's':28713, ' questions':4224, '.':28723, ' The':415, ' assistant':13892, ' calls':6470, ' functions':5572, ' with':395, ' appropriate':7658, ' input':2787, ' when':739, ' necessary':4892 ]
+[1712959349] main: session file has exact match for prompt!
+[1712959349] recalculate the cached logits (check): embd_inp.empty() false, n_matching_session_tokens 994, embd_inp.size() 994, session_tokens.size() 994, embd_inp.size() 994
+[1712959349] inp_pfx: [ '':1, ' ':28705, '':13, '':13, '###':27332, ' Inst':3133, 'ruction':3112, ':':28747, '':13, '':13 ]
+[1712959349] inp_sfx: [ ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, '':13 ]
+[1712959349] cml_pfx: [ '':1, ' ':28705, '':13, '<':28789, '|':28766, 'im':321, '_':28730, 'start':2521, '|':28766, '>':28767, 'user':1838, '':13 ]
+[1712959349] cml_sfx: [ ' <':523, '|':28766, 'im':321, '_':28730, 'end':416, '|':28766, '>':28767, '':13, '<':28789, '|':28766, 'im':321, '_':28730, 'start':2521, '|':28766, '>':28767, 'ass':489, 'istant':11143, '':13 ]
+[1712959349] main: interactive mode on.
+[1712959349] Reverse prompt: '<|stop|>'
+[1712959349] Reverse prompt: '### Instruction:
 
 '
-[1712898853] sampling: 
+[1712959349] sampling: 
 	repeat_last_n = 64, repeat_penalty = 1.000, frequency_penalty = 0.000, presence_penalty = 0.000
 	top_k = 40, tfs_z = 1.000, top_p = 0.950, min_p = 0.050, typical_p = 1.000, temp = 0.000
 	mirostat = 0, mirostat_lr = 0.100, mirostat_ent = 5.000
-[1712898853] sampling order: 
+[1712959349] sampling order: 
 CFG -> Penalties -> top_k -> tfs_z -> typical_p -> top_p -> min_p -> temperature 
-[1712898853] generate: n_ctx = 2016, n_batch = 224, n_predict = 6000, n_keep = 994
-[1712898853] 
+[1712959349] generate: n_ctx = 2016, n_batch = 224, n_predict = 6000, n_keep = 994
+[1712959349] 
 
-[1712898853] == Running in interactive mode. ==
-[1712898853]  - Press Ctrl+C to interject at any time.
-[1712898853]  - Press Return to return control to LLaMa.
+[1712959349] == Running in interactive mode. ==
+[1712959349]  - Press Ctrl+C to interject at any time.
+[1712959349]  - Press Return to return control to LLaMa.
  - To return control without starting a new line, end your input with '/'.
  - If you want to submit another line, end your input with '\'.
 
-[1712898853] embd_inp.size(): 994, n_consumed: 0
-[1712898853] embd_inp.size(): 994, n_consumed: 224
-[1712898853] embd_inp.size(): 994, n_consumed: 448
-[1712898853] embd_inp.size(): 994, n_consumed: 672
-[1712898853] embd_inp.size(): 994, n_consumed: 896
-[1712898853] waiting for user input
-[1712898853] buffer: '<|from|>user<|content|><|from|>user<|recipient|>all<|content|>hi
+[1712959349] embd_inp.size(): 994, n_consumed: 0
+[1712959349] embd_inp.size(): 994, n_consumed: 224
+[1712959349] embd_inp.size(): 994, n_consumed: 448
+[1712959349] embd_inp.size(): 994, n_consumed: 672
+[1712959349] embd_inp.size(): 994, n_consumed: 896
+[1712959349] waiting for user input
+[1712959349] buffer: '<|from|>user<|recipient|>all<|content|><|from|>system<|recipient|>all<|content|>The users current time is 12/04/2024 23:02:28
 '
-[1712898853] inserting instruction prefix
-[1712898853] input tokens: [ ' <':523, '|':28766, 'from':3211, '|':28766, '>':28767, 'user':1838, '<':28789, '|':28766, 'content':3789, '|':28766, '><':3409, '|':28766, 'from':3211, '|':28766, '>':28767, 'user':1838, '<':28789, '|':28766, 'rec':3354, 'ip':508, 'ient':722, '|':28766, '>':28767, 'all':455, '<':28789, '|':28766, 'content':3789, '|':28766, '>':28767, 'hi':5365, '':13 ]
-[1712898853] inserting instruction suffix
-[1712898853] n_remain: 5969
-[1712898853] embd_inp.size(): 1043, n_consumed: 994
-[1712898853] eval: [ '':1, ' ':28705, '':13, '':13, '###':27332, ' Inst':3133, 'ruction':3112, ':':28747, '':13, '':13, ' <':523, '|':28766, 'from':3211, '|':28766, '>':28767, 'user':1838, '<':28789, '|':28766, 'content':3789, '|':28766, '><':3409, '|':28766, 'from':3211, '|':28766, '>':28767, 'user':1838, '<':28789, '|':28766, 'rec':3354, 'ip':508, 'ient':722, '|':28766, '>':28767, 'all':455, '<':28789, '|':28766, 'content':3789, '|':28766, '>':28767, 'hi':5365, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, '':13 ]
+[1712959349] inserting instruction prefix
+[1712959349] input tokens: [ ' <':523, '|':28766, 'from':3211, '|':28766, '>':28767, 'user':1838, '<':28789, '|':28766, 'rec':3354, 'ip':508, 'ient':722, '|':28766, '>':28767, 'all':455, '<':28789, '|':28766, 'content':3789, '|':28766, '><':3409, '|':28766, 'from':3211, '|':28766, '>':28767, 'system':6574, '<':28789, '|':28766, 'rec':3354, 'ip':508, 'ient':722, '|':28766, '>':28767, 'all':455, '<':28789, '|':28766, 'content':3789, '|':28766, '>':28767, 'The':1014, ' users':5443, ' current':1868, ' time':727, ' is':349, ' ':28705, '1':28740, '2':28750, '/':28748, '0':28734, '4':28781, '/':28748, '2':28750, '0':28734, '2':28750, '4':28781, ' ':28705, '2':28750, '3':28770, ':':28747, '0':28734, '2':28750, ':':28747, '2':28750, '8':28783, '':13 ]
+[1712959349] inserting instruction suffix
+[1712959349] n_remain: 5937
+[1712959349] embd_inp.size(): 1075, n_consumed: 994
+[1712959349] eval: [ '':1, ' ':28705, '':13, '':13, '###':27332, ' Inst':3133, 'ruction':3112, ':':28747, '':13, '':13, ' <':523, '|':28766, 'from':3211, '|':28766, '>':28767, 'user':1838, '<':28789, '|':28766, 'rec':3354, 'ip':508, 'ient':722, '|':28766, '>':28767, 'all':455, '<':28789, '|':28766, 'content':3789, '|':28766, '><':3409, '|':28766, 'from':3211, '|':28766, '>':28767, 'system':6574, '<':28789, '|':28766, 'rec':3354, 'ip':508, 'ient':722, '|':28766, '>':28767, 'all':455, '<':28789, '|':28766, 'content':3789, '|':28766, '>':28767, 'The':1014, ' users':5443, ' current':1868, ' time':727, ' is':349, ' ':28705, '1':28740, '2':28750, '/':28748, '0':28734, '4':28781, '/':28748, '2':28750, '0':28734, '2':28750, '4':28781, ' ':28705, '2':28750, '3':28770, ':':28747, '0':28734, '2':28750, ':':28747, '2':28750, '8':28783, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, '':13 ]
+[1712959374] n_past = 1075
+[1712959374] last: [ 'rec':3354, 'ip':508, 'ient':722, '|':28766, '>':28767, 'all':455, '<':28789, '|':28766, 'content':3789, '|':28766, '><':3409, '|':28766, 'from':3211, '|':28766, '>':28767, 'system':6574, '<':28789, '|':28766, 'rec':3354, 'ip':508, 'ient':722, '|':28766, '>':28767, 'all':455, '<':28789, '|':28766, 'content':3789, '|':28766, '>':28767, 'The':1014, ' users':5443, ' current':1868, ' time':727, ' is':349, ' ':28705, '1':28740, '2':28750, '/':28748, '0':28734, '4':28781, '/':28748, '2':28750, '0':28734, '2':28750, '4':28781, ' ':28705, '2':28750, '3':28770, ':':28747, '0':28734, '2':28750, ':':28747, '2':28750, '8':28783, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, '':13, '<|from|>':32000 ]
+[1712959374] n_remain: 5936
+[1712959374] eval: [ '<|from|>':32000 ]
+[1712959375] n_past = 1076
+[1712959375] last: [ 'ip':508, 'ient':722, '|':28766, '>':28767, 'all':455, '<':28789, '|':28766, 'content':3789, '|':28766, '><':3409, '|':28766, 'from':3211, '|':28766, '>':28767, 'system':6574, '<':28789, '|':28766, 'rec':3354, 'ip':508, 'ient':722, '|':28766, '>':28767, 'all':455, '<':28789, '|':28766, 'content':3789, '|':28766, '>':28767, 'The':1014, ' users':5443, ' current':1868, ' time':727, ' is':349, ' ':28705, '1':28740, '2':28750, '/':28748, '0':28734, '4':28781, '/':28748, '2':28750, '0':28734, '2':28750, '4':28781, ' ':28705, '2':28750, '3':28770, ':':28747, '0':28734, '2':28750, ':':28747, '2':28750, '8':28783, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, '':13, '<|from|>':32000, ' assistant':13892 ]
+[1712959375] n_remain: 5935
+[1712959375] eval: [ ' assistant':13892 ]
+[1712959375] n_past = 1077
+[1712959375] last: [ 'ient':722, '|':28766, '>':28767, 'all':455, '<':28789, '|':28766, 'content':3789, '|':28766, '><':3409, '|':28766, 'from':3211, '|':28766, '>':28767, 'system':6574, '<':28789, '|':28766, 'rec':3354, 'ip':508, 'ient':722, '|':28766, '>':28767, 'all':455, '<':28789, '|':28766, 'content':3789, '|':28766, '>':28767, 'The':1014, ' users':5443, ' current':1868, ' time':727, ' is':349, ' ':28705, '1':28740, '2':28750, '/':28748, '0':28734, '4':28781, '/':28748, '2':28750, '0':28734, '2':28750, '4':28781, ' ':28705, '2':28750, '3':28770, ':':28747, '0':28734, '2':28750, ':':28747, '2':28750, '8':28783, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, '':13, '<|from|>':32000, ' assistant':13892, '':13 ]
+[1712959375] n_remain: 5934
+[1712959375] eval: [ '':13 ]
+[1712959376] n_past = 1078
+[1712959376] last: [ '|':28766, '>':28767, 'all':455, '<':28789, '|':28766, 'content':3789, '|':28766, '><':3409, '|':28766, 'from':3211, '|':28766, '>':28767, 'system':6574, '<':28789, '|':28766, 'rec':3354, 'ip':508, 'ient':722, '|':28766, '>':28767, 'all':455, '<':28789, '|':28766, 'content':3789, '|':28766, '>':28767, 'The':1014, ' users':5443, ' current':1868, ' time':727, ' is':349, ' ':28705, '1':28740, '2':28750, '/':28748, '0':28734, '4':28781, '/':28748, '2':28750, '0':28734, '2':28750, '4':28781, ' ':28705, '2':28750, '3':28770, ':':28747, '0':28734, '2':28750, ':':28747, '2':28750, '8':28783, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, '':13, '<|from|>':32000, ' assistant':13892, '':13, '<|recipient|>':32001 ]
+[1712959376] n_remain: 5933
+[1712959376] eval: [ '<|recipient|>':32001 ]
+[1712959376] n_past = 1079
+[1712959376] last: [ '>':28767, 'all':455, '<':28789, '|':28766, 'content':3789, '|':28766, '><':3409, '|':28766, 'from':3211, '|':28766, '>':28767, 'system':6574, '<':28789, '|':28766, 'rec':3354, 'ip':508, 'ient':722, '|':28766, '>':28767, 'all':455, '<':28789, '|':28766, 'content':3789, '|':28766, '>':28767, 'The':1014, ' users':5443, ' current':1868, ' time':727, ' is':349, ' ':28705, '1':28740, '2':28750, '/':28748, '0':28734, '4':28781, '/':28748, '2':28750, '0':28734, '2':28750, '4':28781, ' ':28705, '2':28750, '3':28770, ':':28747, '0':28734, '2':28750, ':':28747, '2':28750, '8':28783, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, '':13, '<|from|>':32000, ' assistant':13892, '':13, '<|recipient|>':32001, ' all':544 ]
+[1712959376] n_remain: 5932
+[1712959376] eval: [ ' all':544 ]
+[1712959376] n_past = 1080
+[1712959376] last: [ 'all':455, '<':28789, '|':28766, 'content':3789, '|':28766, '><':3409, '|':28766, 'from':3211, '|':28766, '>':28767, 'system':6574, '<':28789, '|':28766, 'rec':3354, 'ip':508, 'ient':722, '|':28766, '>':28767, 'all':455, '<':28789, '|':28766, 'content':3789, '|':28766, '>':28767, 'The':1014, ' users':5443, ' current':1868, ' time':727, ' is':349, ' ':28705, '1':28740, '2':28750, '/':28748, '0':28734, '4':28781, '/':28748, '2':28750, '0':28734, '2':28750, '4':28781, ' ':28705, '2':28750, '3':28770, ':':28747, '0':28734, '2':28750, ':':28747, '2':28750, '8':28783, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, '':13, '<|from|>':32000, ' assistant':13892, '':13, '<|recipient|>':32001, ' all':544, '':13 ]
+[1712959376] n_remain: 5931
+[1712959376] eval: [ '':13 ]
+[1712959376] n_past = 1081
+[1712959376] last: [ '<':28789, '|':28766, 'content':3789, '|':28766, '><':3409, '|':28766, 'from':3211, '|':28766, '>':28767, 'system':6574, '<':28789, '|':28766, 'rec':3354, 'ip':508, 'ient':722, '|':28766, '>':28767, 'all':455, '<':28789, '|':28766, 'content':3789, '|':28766, '>':28767, 'The':1014, ' users':5443, ' current':1868, ' time':727, ' is':349, ' ':28705, '1':28740, '2':28750, '/':28748, '0':28734, '4':28781, '/':28748, '2':28750, '0':28734, '2':28750, '4':28781, ' ':28705, '2':28750, '3':28770, ':':28747, '0':28734, '2':28750, ':':28747, '2':28750, '8':28783, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, '':13, '<|from|>':32000, ' assistant':13892, '':13, '<|recipient|>':32001, ' all':544, '':13, '<|content|>':32002 ]
+[1712959376] n_remain: 5930
+[1712959376] eval: [ '<|content|>':32002 ]
+[1712959376] n_past = 1082
+[1712959376] last: [ '|':28766, 'content':3789, '|':28766, '><':3409, '|':28766, 'from':3211, '|':28766, '>':28767, 'system':6574, '<':28789, '|':28766, 'rec':3354, 'ip':508, 'ient':722, '|':28766, '>':28767, 'all':455, '<':28789, '|':28766, 'content':3789, '|':28766, '>':28767, 'The':1014, ' users':5443, ' current':1868, ' time':727, ' is':349, ' ':28705, '1':28740, '2':28750, '/':28748, '0':28734, '4':28781, '/':28748, '2':28750, '0':28734, '2':28750, '4':28781, ' ':28705, '2':28750, '3':28770, ':':28747, '0':28734, '2':28750, ':':28747, '2':28750, '8':28783, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, '':13, '<|from|>':32000, ' assistant':13892, '':13, '<|recipient|>':32001, ' all':544, '':13, '<|content|>':32002, ' The':415 ]
+[1712959376] n_remain: 5929
+[1712959376] eval: [ ' The':415 ]
+[1712959376] n_past = 1083
+[1712959376] last: [ 'content':3789, '|':28766, '><':3409, '|':28766, 'from':3211, '|':28766, '>':28767, 'system':6574, '<':28789, '|':28766, 'rec':3354, 'ip':508, 'ient':722, '|':28766, '>':28767, 'all':455, '<':28789, '|':28766, 'content':3789, '|':28766, '>':28767, 'The':1014, ' users':5443, ' current':1868, ' time':727, ' is':349, ' ':28705, '1':28740, '2':28750, '/':28748, '0':28734, '4':28781, '/':28748, '2':28750, '0':28734, '2':28750, '4':28781, ' ':28705, '2':28750, '3':28770, ':':28747, '0':28734, '2':28750, ':':28747, '2':28750, '8':28783, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, '':13, '<|from|>':32000, ' assistant':13892, '':13, '<|recipient|>':32001, ' all':544, '':13, '<|content|>':32002, ' The':415, ' current':1868 ]
+[1712959376] n_remain: 5928
+[1712959376] eval: [ ' current':1868 ]
+[1712959377] n_past = 1084
+[1712959377] last: [ '|':28766, '><':3409, '|':28766, 'from':3211, '|':28766, '>':28767, 'system':6574, '<':28789, '|':28766, 'rec':3354, 'ip':508, 'ient':722, '|':28766, '>':28767, 'all':455, '<':28789, '|':28766, 'content':3789, '|':28766, '>':28767, 'The':1014, ' users':5443, ' current':1868, ' time':727, ' is':349, ' ':28705, '1':28740, '2':28750, '/':28748, '0':28734, '4':28781, '/':28748, '2':28750, '0':28734, '2':28750, '4':28781, ' ':28705, '2':28750, '3':28770, ':':28747, '0':28734, '2':28750, ':':28747, '2':28750, '8':28783, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, '':13, '<|from|>':32000, ' assistant':13892, '':13, '<|recipient|>':32001, ' all':544, '':13, '<|content|>':32002, ' The':415, ' current':1868, ' time':727 ]
+[1712959377] n_remain: 5927
+[1712959377] eval: [ ' time':727 ]
+[1712959377] n_past = 1085
+[1712959377] last: [ '><':3409, '|':28766, 'from':3211, '|':28766, '>':28767, 'system':6574, '<':28789, '|':28766, 'rec':3354, 'ip':508, 'ient':722, '|':28766, '>':28767, 'all':455, '<':28789, '|':28766, 'content':3789, '|':28766, '>':28767, 'The':1014, ' users':5443, ' current':1868, ' time':727, ' is':349, ' ':28705, '1':28740, '2':28750, '/':28748, '0':28734, '4':28781, '/':28748, '2':28750, '0':28734, '2':28750, '4':28781, ' ':28705, '2':28750, '3':28770, ':':28747, '0':28734, '2':28750, ':':28747, '2':28750, '8':28783, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, '':13, '<|from|>':32000, ' assistant':13892, '':13, '<|recipient|>':32001, ' all':544, '':13, '<|content|>':32002, ' The':415, ' current':1868, ' time':727, ' is':349 ]
+[1712959377] n_remain: 5926
+[1712959377] eval: [ ' is':349 ]
+[1712959377] n_past = 1086
+[1712959377] last: [ '|':28766, 'from':3211, '|':28766, '>':28767, 'system':6574, '<':28789, '|':28766, 'rec':3354, 'ip':508, 'ient':722, '|':28766, '>':28767, 'all':455, '<':28789, '|':28766, 'content':3789, '|':28766, '>':28767, 'The':1014, ' users':5443, ' current':1868, ' time':727, ' is':349, ' ':28705, '1':28740, '2':28750, '/':28748, '0':28734, '4':28781, '/':28748, '2':28750, '0':28734, '2':28750, '4':28781, ' ':28705, '2':28750, '3':28770, ':':28747, '0':28734, '2':28750, ':':28747, '2':28750, '8':28783, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, '':13, '<|from|>':32000, ' assistant':13892, '':13, '<|recipient|>':32001, ' all':544, '':13, '<|content|>':32002, ' The':415, ' current':1868, ' time':727, ' is':349, ' ':28705 ]
+[1712959377] n_remain: 5925
+[1712959377] eval: [ ' ':28705 ]
+[1712959377] n_past = 1087
+[1712959377] last: [ 'from':3211, '|':28766, '>':28767, 'system':6574, '<':28789, '|':28766, 'rec':3354, 'ip':508, 'ient':722, '|':28766, '>':28767, 'all':455, '<':28789, '|':28766, 'content':3789, '|':28766, '>':28767, 'The':1014, ' users':5443, ' current':1868, ' time':727, ' is':349, ' ':28705, '1':28740, '2':28750, '/':28748, '0':28734, '4':28781, '/':28748, '2':28750, '0':28734, '2':28750, '4':28781, ' ':28705, '2':28750, '3':28770, ':':28747, '0':28734, '2':28750, ':':28747, '2':28750, '8':28783, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, '':13, '<|from|>':32000, ' assistant':13892, '':13, '<|recipient|>':32001, ' all':544, '':13, '<|content|>':32002, ' The':415, ' current':1868, ' time':727, ' is':349, ' ':28705, '1':28740 ]
+[1712959377] n_remain: 5924
+[1712959377] eval: [ '1':28740 ]
+[1712959377] n_past = 1088
+[1712959377] last: [ '|':28766, '>':28767, 'system':6574, '<':28789, '|':28766, 'rec':3354, 'ip':508, 'ient':722, '|':28766, '>':28767, 'all':455, '<':28789, '|':28766, 'content':3789, '|':28766, '>':28767, 'The':1014, ' users':5443, ' current':1868, ' time':727, ' is':349, ' ':28705, '1':28740, '2':28750, '/':28748, '0':28734, '4':28781, '/':28748, '2':28750, '0':28734, '2':28750, '4':28781, ' ':28705, '2':28750, '3':28770, ':':28747, '0':28734, '2':28750, ':':28747, '2':28750, '8':28783, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, '':13, '<|from|>':32000, ' assistant':13892, '':13, '<|recipient|>':32001, ' all':544, '':13, '<|content|>':32002, ' The':415, ' current':1868, ' time':727, ' is':349, ' ':28705, '1':28740, '2':28750 ]
+[1712959377] n_remain: 5923
+[1712959377] eval: [ '2':28750 ]
+[1712959377] n_past = 1089
+[1712959377] last: [ '>':28767, 'system':6574, '<':28789, '|':28766, 'rec':3354, 'ip':508, 'ient':722, '|':28766, '>':28767, 'all':455, '<':28789, '|':28766, 'content':3789, '|':28766, '>':28767, 'The':1014, ' users':5443, ' current':1868, ' time':727, ' is':349, ' ':28705, '1':28740, '2':28750, '/':28748, '0':28734, '4':28781, '/':28748, '2':28750, '0':28734, '2':28750, '4':28781, ' ':28705, '2':28750, '3':28770, ':':28747, '0':28734, '2':28750, ':':28747, '2':28750, '8':28783, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, '':13, '<|from|>':32000, ' assistant':13892, '':13, '<|recipient|>':32001, ' all':544, '':13, '<|content|>':32002, ' The':415, ' current':1868, ' time':727, ' is':349, ' ':28705, '1':28740, '2':28750, '/':28748 ]
+[1712959377] n_remain: 5922
+[1712959377] eval: [ '/':28748 ]
+[1712959378] n_past = 1090
+[1712959378] last: [ 'system':6574, '<':28789, '|':28766, 'rec':3354, 'ip':508, 'ient':722, '|':28766, '>':28767, 'all':455, '<':28789, '|':28766, 'content':3789, '|':28766, '>':28767, 'The':1014, ' users':5443, ' current':1868, ' time':727, ' is':349, ' ':28705, '1':28740, '2':28750, '/':28748, '0':28734, '4':28781, '/':28748, '2':28750, '0':28734, '2':28750, '4':28781, ' ':28705, '2':28750, '3':28770, ':':28747, '0':28734, '2':28750, ':':28747, '2':28750, '8':28783, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, '':13, '<|from|>':32000, ' assistant':13892, '':13, '<|recipient|>':32001, ' all':544, '':13, '<|content|>':32002, ' The':415, ' current':1868, ' time':727, ' is':349, ' ':28705, '1':28740, '2':28750, '/':28748, '0':28734 ]
+[1712959378] n_remain: 5921
+[1712959378] eval: [ '0':28734 ]
+[1712959378] n_past = 1091
+[1712959378] last: [ '<':28789, '|':28766, 'rec':3354, 'ip':508, 'ient':722, '|':28766, '>':28767, 'all':455, '<':28789, '|':28766, 'content':3789, '|':28766, '>':28767, 'The':1014, ' users':5443, ' current':1868, ' time':727, ' is':349, ' ':28705, '1':28740, '2':28750, '/':28748, '0':28734, '4':28781, '/':28748, '2':28750, '0':28734, '2':28750, '4':28781, ' ':28705, '2':28750, '3':28770, ':':28747, '0':28734, '2':28750, ':':28747, '2':28750, '8':28783, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, '':13, '<|from|>':32000, ' assistant':13892, '':13, '<|recipient|>':32001, ' all':544, '':13, '<|content|>':32002, ' The':415, ' current':1868, ' time':727, ' is':349, ' ':28705, '1':28740, '2':28750, '/':28748, '0':28734, '4':28781 ]
+[1712959378] n_remain: 5920
+[1712959378] eval: [ '4':28781 ]
+[1712959378] n_past = 1092
+[1712959378] last: [ '|':28766, 'rec':3354, 'ip':508, 'ient':722, '|':28766, '>':28767, 'all':455, '<':28789, '|':28766, 'content':3789, '|':28766, '>':28767, 'The':1014, ' users':5443, ' current':1868, ' time':727, ' is':349, ' ':28705, '1':28740, '2':28750, '/':28748, '0':28734, '4':28781, '/':28748, '2':28750, '0':28734, '2':28750, '4':28781, ' ':28705, '2':28750, '3':28770, ':':28747, '0':28734, '2':28750, ':':28747, '2':28750, '8':28783, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, '':13, '<|from|>':32000, ' assistant':13892, '':13, '<|recipient|>':32001, ' all':544, '':13, '<|content|>':32002, ' The':415, ' current':1868, ' time':727, ' is':349, ' ':28705, '1':28740, '2':28750, '/':28748, '0':28734, '4':28781, '/':28748 ]
+[1712959378] n_remain: 5919
+[1712959378] eval: [ '/':28748 ]
+[1712959378] n_past = 1093
+[1712959378] last: [ 'rec':3354, 'ip':508, 'ient':722, '|':28766, '>':28767, 'all':455, '<':28789, '|':28766, 'content':3789, '|':28766, '>':28767, 'The':1014, ' users':5443, ' current':1868, ' time':727, ' is':349, ' ':28705, '1':28740, '2':28750, '/':28748, '0':28734, '4':28781, '/':28748, '2':28750, '0':28734, '2':28750, '4':28781, ' ':28705, '2':28750, '3':28770, ':':28747, '0':28734, '2':28750, ':':28747, '2':28750, '8':28783, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, '':13, '<|from|>':32000, ' assistant':13892, '':13, '<|recipient|>':32001, ' all':544, '':13, '<|content|>':32002, ' The':415, ' current':1868, ' time':727, ' is':349, ' ':28705, '1':28740, '2':28750, '/':28748, '0':28734, '4':28781, '/':28748, '2':28750 ]
+[1712959378] n_remain: 5918
+[1712959378] eval: [ '2':28750 ]
+[1712959378] n_past = 1094
+[1712959378] last: [ 'ip':508, 'ient':722, '|':28766, '>':28767, 'all':455, '<':28789, '|':28766, 'content':3789, '|':28766, '>':28767, 'The':1014, ' users':5443, ' current':1868, ' time':727, ' is':349, ' ':28705, '1':28740, '2':28750, '/':28748, '0':28734, '4':28781, '/':28748, '2':28750, '0':28734, '2':28750, '4':28781, ' ':28705, '2':28750, '3':28770, ':':28747, '0':28734, '2':28750, ':':28747, '2':28750, '8':28783, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, '':13, '<|from|>':32000, ' assistant':13892, '':13, '<|recipient|>':32001, ' all':544, '':13, '<|content|>':32002, ' The':415, ' current':1868, ' time':727, ' is':349, ' ':28705, '1':28740, '2':28750, '/':28748, '0':28734, '4':28781, '/':28748, '2':28750, '0':28734 ]
+[1712959378] n_remain: 5917
+[1712959378] eval: [ '0':28734 ]
+[1712959379] n_past = 1095
+[1712959379] last: [ 'ient':722, '|':28766, '>':28767, 'all':455, '<':28789, '|':28766, 'content':3789, '|':28766, '>':28767, 'The':1014, ' users':5443, ' current':1868, ' time':727, ' is':349, ' ':28705, '1':28740, '2':28750, '/':28748, '0':28734, '4':28781, '/':28748, '2':28750, '0':28734, '2':28750, '4':28781, ' ':28705, '2':28750, '3':28770, ':':28747, '0':28734, '2':28750, ':':28747, '2':28750, '8':28783, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, '':13, '<|from|>':32000, ' assistant':13892, '':13, '<|recipient|>':32001, ' all':544, '':13, '<|content|>':32002, ' The':415, ' current':1868, ' time':727, ' is':349, ' ':28705, '1':28740, '2':28750, '/':28748, '0':28734, '4':28781, '/':28748, '2':28750, '0':28734, '2':28750 ]
+[1712959379] n_remain: 5916
+[1712959379] eval: [ '2':28750 ]
+[1712959379] n_past = 1096
+[1712959379] last: [ '|':28766, '>':28767, 'all':455, '<':28789, '|':28766, 'content':3789, '|':28766, '>':28767, 'The':1014, ' users':5443, ' current':1868, ' time':727, ' is':349, ' ':28705, '1':28740, '2':28750, '/':28748, '0':28734, '4':28781, '/':28748, '2':28750, '0':28734, '2':28750, '4':28781, ' ':28705, '2':28750, '3':28770, ':':28747, '0':28734, '2':28750, ':':28747, '2':28750, '8':28783, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, '':13, '<|from|>':32000, ' assistant':13892, '':13, '<|recipient|>':32001, ' all':544, '':13, '<|content|>':32002, ' The':415, ' current':1868, ' time':727, ' is':349, ' ':28705, '1':28740, '2':28750, '/':28748, '0':28734, '4':28781, '/':28748, '2':28750, '0':28734, '2':28750, '4':28781 ]
+[1712959379] n_remain: 5915
+[1712959379] eval: [ '4':28781 ]
+[1712959379] n_past = 1097
+[1712959379] last: [ '>':28767, 'all':455, '<':28789, '|':28766, 'content':3789, '|':28766, '>':28767, 'The':1014, ' users':5443, ' current':1868, ' time':727, ' is':349, ' ':28705, '1':28740, '2':28750, '/':28748, '0':28734, '4':28781, '/':28748, '2':28750, '0':28734, '2':28750, '4':28781, ' ':28705, '2':28750, '3':28770, ':':28747, '0':28734, '2':28750, ':':28747, '2':28750, '8':28783, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, '':13, '<|from|>':32000, ' assistant':13892, '':13, '<|recipient|>':32001, ' all':544, '':13, '<|content|>':32002, ' The':415, ' current':1868, ' time':727, ' is':349, ' ':28705, '1':28740, '2':28750, '/':28748, '0':28734, '4':28781, '/':28748, '2':28750, '0':28734, '2':28750, '4':28781, ' ':28705 ]
+[1712959379] n_remain: 5914
+[1712959379] eval: [ ' ':28705 ]
+[1712959379] n_past = 1098
+[1712959379] last: [ 'all':455, '<':28789, '|':28766, 'content':3789, '|':28766, '>':28767, 'The':1014, ' users':5443, ' current':1868, ' time':727, ' is':349, ' ':28705, '1':28740, '2':28750, '/':28748, '0':28734, '4':28781, '/':28748, '2':28750, '0':28734, '2':28750, '4':28781, ' ':28705, '2':28750, '3':28770, ':':28747, '0':28734, '2':28750, ':':28747, '2':28750, '8':28783, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, '':13, '<|from|>':32000, ' assistant':13892, '':13, '<|recipient|>':32001, ' all':544, '':13, '<|content|>':32002, ' The':415, ' current':1868, ' time':727, ' is':349, ' ':28705, '1':28740, '2':28750, '/':28748, '0':28734, '4':28781, '/':28748, '2':28750, '0':28734, '2':28750, '4':28781, ' ':28705, '2':28750 ]
+[1712959379] n_remain: 5913
+[1712959379] eval: [ '2':28750 ]
+[1712959379] n_past = 1099
+[1712959379] last: [ '<':28789, '|':28766, 'content':3789, '|':28766, '>':28767, 'The':1014, ' users':5443, ' current':1868, ' time':727, ' is':349, ' ':28705, '1':28740, '2':28750, '/':28748, '0':28734, '4':28781, '/':28748, '2':28750, '0':28734, '2':28750, '4':28781, ' ':28705, '2':28750, '3':28770, ':':28747, '0':28734, '2':28750, ':':28747, '2':28750, '8':28783, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, '':13, '<|from|>':32000, ' assistant':13892, '':13, '<|recipient|>':32001, ' all':544, '':13, '<|content|>':32002, ' The':415, ' current':1868, ' time':727, ' is':349, ' ':28705, '1':28740, '2':28750, '/':28748, '0':28734, '4':28781, '/':28748, '2':28750, '0':28734, '2':28750, '4':28781, ' ':28705, '2':28750, '3':28770 ]
+[1712959379] n_remain: 5912
+[1712959379] eval: [ '3':28770 ]
+[1712959379] n_past = 1100
+[1712959379] last: [ '|':28766, 'content':3789, '|':28766, '>':28767, 'The':1014, ' users':5443, ' current':1868, ' time':727, ' is':349, ' ':28705, '1':28740, '2':28750, '/':28748, '0':28734, '4':28781, '/':28748, '2':28750, '0':28734, '2':28750, '4':28781, ' ':28705, '2':28750, '3':28770, ':':28747, '0':28734, '2':28750, ':':28747, '2':28750, '8':28783, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, '':13, '<|from|>':32000, ' assistant':13892, '':13, '<|recipient|>':32001, ' all':544, '':13, '<|content|>':32002, ' The':415, ' current':1868, ' time':727, ' is':349, ' ':28705, '1':28740, '2':28750, '/':28748, '0':28734, '4':28781, '/':28748, '2':28750, '0':28734, '2':28750, '4':28781, ' ':28705, '2':28750, '3':28770, ':':28747 ]
+[1712959379] n_remain: 5911
+[1712959379] eval: [ ':':28747 ]
+[1712959380] n_past = 1101
+[1712959380] last: [ 'content':3789, '|':28766, '>':28767, 'The':1014, ' users':5443, ' current':1868, ' time':727, ' is':349, ' ':28705, '1':28740, '2':28750, '/':28748, '0':28734, '4':28781, '/':28748, '2':28750, '0':28734, '2':28750, '4':28781, ' ':28705, '2':28750, '3':28770, ':':28747, '0':28734, '2':28750, ':':28747, '2':28750, '8':28783, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, '':13, '<|from|>':32000, ' assistant':13892, '':13, '<|recipient|>':32001, ' all':544, '':13, '<|content|>':32002, ' The':415, ' current':1868, ' time':727, ' is':349, ' ':28705, '1':28740, '2':28750, '/':28748, '0':28734, '4':28781, '/':28748, '2':28750, '0':28734, '2':28750, '4':28781, ' ':28705, '2':28750, '3':28770, ':':28747, '0':28734 ]
+[1712959380] n_remain: 5910
+[1712959380] eval: [ '0':28734 ]
+[1712959380] n_past = 1102
+[1712959380] last: [ '|':28766, '>':28767, 'The':1014, ' users':5443, ' current':1868, ' time':727, ' is':349, ' ':28705, '1':28740, '2':28750, '/':28748, '0':28734, '4':28781, '/':28748, '2':28750, '0':28734, '2':28750, '4':28781, ' ':28705, '2':28750, '3':28770, ':':28747, '0':28734, '2':28750, ':':28747, '2':28750, '8':28783, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, '':13, '<|from|>':32000, ' assistant':13892, '':13, '<|recipient|>':32001, ' all':544, '':13, '<|content|>':32002, ' The':415, ' current':1868, ' time':727, ' is':349, ' ':28705, '1':28740, '2':28750, '/':28748, '0':28734, '4':28781, '/':28748, '2':28750, '0':28734, '2':28750, '4':28781, ' ':28705, '2':28750, '3':28770, ':':28747, '0':28734, '2':28750 ]
+[1712959380] n_remain: 5909
+[1712959380] eval: [ '2':28750 ]
+[1712959380] n_past = 1103
+[1712959380] last: [ '>':28767, 'The':1014, ' users':5443, ' current':1868, ' time':727, ' is':349, ' ':28705, '1':28740, '2':28750, '/':28748, '0':28734, '4':28781, '/':28748, '2':28750, '0':28734, '2':28750, '4':28781, ' ':28705, '2':28750, '3':28770, ':':28747, '0':28734, '2':28750, ':':28747, '2':28750, '8':28783, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, '':13, '<|from|>':32000, ' assistant':13892, '':13, '<|recipient|>':32001, ' all':544, '':13, '<|content|>':32002, ' The':415, ' current':1868, ' time':727, ' is':349, ' ':28705, '1':28740, '2':28750, '/':28748, '0':28734, '4':28781, '/':28748, '2':28750, '0':28734, '2':28750, '4':28781, ' ':28705, '2':28750, '3':28770, ':':28747, '0':28734, '2':28750, ':':28747 ]
+[1712959380] n_remain: 5908
+[1712959380] eval: [ ':':28747 ]
+[1712959380] n_past = 1104
+[1712959380] last: [ 'The':1014, ' users':5443, ' current':1868, ' time':727, ' is':349, ' ':28705, '1':28740, '2':28750, '/':28748, '0':28734, '4':28781, '/':28748, '2':28750, '0':28734, '2':28750, '4':28781, ' ':28705, '2':28750, '3':28770, ':':28747, '0':28734, '2':28750, ':':28747, '2':28750, '8':28783, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, '':13, '<|from|>':32000, ' assistant':13892, '':13, '<|recipient|>':32001, ' all':544, '':13, '<|content|>':32002, ' The':415, ' current':1868, ' time':727, ' is':349, ' ':28705, '1':28740, '2':28750, '/':28748, '0':28734, '4':28781, '/':28748, '2':28750, '0':28734, '2':28750, '4':28781, ' ':28705, '2':28750, '3':28770, ':':28747, '0':28734, '2':28750, ':':28747, '2':28750 ]
+[1712959380] n_remain: 5907
+[1712959380] eval: [ '2':28750 ]
+[1712959380] n_past = 1105
+[1712959380] last: [ ' users':5443, ' current':1868, ' time':727, ' is':349, ' ':28705, '1':28740, '2':28750, '/':28748, '0':28734, '4':28781, '/':28748, '2':28750, '0':28734, '2':28750, '4':28781, ' ':28705, '2':28750, '3':28770, ':':28747, '0':28734, '2':28750, ':':28747, '2':28750, '8':28783, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, '':13, '<|from|>':32000, ' assistant':13892, '':13, '<|recipient|>':32001, ' all':544, '':13, '<|content|>':32002, ' The':415, ' current':1868, ' time':727, ' is':349, ' ':28705, '1':28740, '2':28750, '/':28748, '0':28734, '4':28781, '/':28748, '2':28750, '0':28734, '2':28750, '4':28781, ' ':28705, '2':28750, '3':28770, ':':28747, '0':28734, '2':28750, ':':28747, '2':28750, '8':28783 ]
+[1712959380] n_remain: 5906
+[1712959380] eval: [ '8':28783 ]
+[1712959380] n_past = 1106
+[1712959380] last: [ ' current':1868, ' time':727, ' is':349, ' ':28705, '1':28740, '2':28750, '/':28748, '0':28734, '4':28781, '/':28748, '2':28750, '0':28734, '2':28750, '4':28781, ' ':28705, '2':28750, '3':28770, ':':28747, '0':28734, '2':28750, ':':28747, '2':28750, '8':28783, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, '':13, '<|from|>':32000, ' assistant':13892, '':13, '<|recipient|>':32001, ' all':544, '':13, '<|content|>':32002, ' The':415, ' current':1868, ' time':727, ' is':349, ' ':28705, '1':28740, '2':28750, '/':28748, '0':28734, '4':28781, '/':28748, '2':28750, '0':28734, '2':28750, '4':28781, ' ':28705, '2':28750, '3':28770, ':':28747, '0':28734, '2':28750, ':':28747, '2':28750, '8':28783, '.':28723 ]
+[1712959380] n_remain: 5905
+[1712959380] eval: [ '.':28723 ]
+[1712959381] n_past = 1107
+[1712959381] last: [ ' time':727, ' is':349, ' ':28705, '1':28740, '2':28750, '/':28748, '0':28734, '4':28781, '/':28748, '2':28750, '0':28734, '2':28750, '4':28781, ' ':28705, '2':28750, '3':28770, ':':28747, '0':28734, '2':28750, ':':28747, '2':28750, '8':28783, '':13, ' ':28705, '':13, '':13, '###':27332, ' Response':12107, ':':28747, '':13, '':13, '<|from|>':32000, ' assistant':13892, '':13, '<|recipient|>':32001, ' all':544, '':13, '<|content|>':32002, ' The':415, ' current':1868, ' time':727, ' is':349, ' ':28705, '1':28740, '2':28750, '/':28748, '0':28734, '4':28781, '/':28748, '2':28750, '0':28734, '2':28750, '4':28781, ' ':28705, '2':28750, '3':28770, ':':28747, '0':28734, '2':28750, ':':28747, '2':28750, '8':28783, '.':28723, '<|stop|>':32003 ]
+[1712959381] n_remain: 5904
+[1712959381] found antiprompt:  assistant
+<|recipient|> all
+<|content|> The current time is 12/04/2024 23:02:28.<|stop|>
+[1712959381] waiting for user input
