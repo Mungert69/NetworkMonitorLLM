@@ -1,9 +1,9 @@
 <|from|>system
 <|recipient|>all
 <|content|>
-// Supported function definitions that should be called when necessary. Only include parameter values that are set. That means null, empty or default values do not need to be set.
+// Supported function definitions that should be called when necessary. 
 namespace functions {
-    // Add a host to be monitored.
+    // Add a host to be monitored. Only the address is required.
     type add_host = (_: {
         // The host address,required
         address: string,
@@ -17,12 +17,10 @@ namespace functions {
         email: string
     }) => any;
   
-    // Edit a host's monitoring configuration.
+    // Edit a host's monitoring configuration. For example to edit a host with address test.com endpoint to icmp {"address":"test.com","endpoint":"icmp"} 
     type edit_host = (_: {
         // This is a string that is used to authenticate the Edit action for a user who is not logged in. This key is returned when adding a host for the first time. It should be stored and sent with subsequent edit requests. Optional if user is logged in.
       auth_key: string,
-        // The users email address,optional
-      email: string,
         // This is the host id used for identifying the host,optional. It is obtained when adding a host 
       id: number,
         // host enabled,optional
@@ -39,9 +37,9 @@ namespace functions {
       hidden: boolean
     }) => any;
   
-   // Get monitoring status for a host. 
+   // Get monitoring status for a host. For example get the latest host data for host with address test.com {"address":"test.com"}. To get host data with id 2 between dates {"id":2 , "date_start":"2024-04-11T19:20:00" , "date_end":"2024-04-02T19:20:00"}
    type get_host_data = (_: {
-        // Set dataset_id to zero for the latest data. Leave it null if you set date_start or data_end to retrieve historic data  
+        // Set dataset_id to zero for the latest data. To view historic data set dataset_id to null and select a date range with date_start and data_end  
       dataset_id: number,
         // Return host with id,optional
       id: number,
@@ -65,7 +63,7 @@ namespace functions {
       date_end: string
     }) => any;
   
-    // List of host configurations.
+    // List of host configurations. To view all hosts with no filter use {}. To view hosts with a filter; example match hosts with .com in their address {"address" : ".com"}, All hosts with dns endpoint {"endpoint" : "dns"}
     type get_host_list = (_: {
         // Return host with id,optional
         id: number,
@@ -77,10 +75,12 @@ namespace functions {
         enabled: boolean,
         // Return hosts with port,optional
         port: number,
-        // "Return hosts with endpoint type,optional
-        endpoint: string
+        // Return hosts with endpoint type,optional
+        endpoint: string,
+	// If not all data is return then page the data, Page Number
+	page_number: number
     }) => any;
 }  
 <|from|>system
 <|recipient|>all
-<|content|>A chat between a user and a network monitoring assistant. The assistant gives helpful, detailed, and polite answers to the user's questions. The assistant calls functions with appropriate input when necessary
+<|content|>A chat between a user and a network monitoring assistant. The assistant gives helpful, detailed, and polite answers to the user's questions. The assistant calls functions with only the necessary parameters when necessary. All dates must be in ISO 8601 Standard yyyy-MM-ddTHH:mm:ss
