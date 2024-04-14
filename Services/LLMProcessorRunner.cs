@@ -152,7 +152,7 @@ public class LLMProcessRunner : ILLMProcessRunner
         {
             tokenBroadcaster = new TokenBroadcaster(_responseProcessor, _logger);
         }
-        if (!isFunctionCallResponse) userInput = "<|from|>user<|recipient|>all<|content|>" + userInput;
+        if (!isFunctionCallResponse) userInput = "<|from|>user<|content|>" + userInput;
         await process.StandardInput.WriteLineAsync(userInput);
         await process.StandardInput.FlushAsync();
         _logger.LogInformation($" ProcessLLMOutput(user input) -> {userInput}");
