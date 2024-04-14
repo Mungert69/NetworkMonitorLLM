@@ -1,0 +1,2 @@
+~/code/models/llama.cpp/build/bin/main -c 4000  -m ~/code/models/mixtral-8x7b-instruct-v0.1.Q3_K_M.gguf  --prompt-cache context-mix.gguf   -f initialPrompt.txt --temp 0 
+

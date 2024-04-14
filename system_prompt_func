@@ -61,6 +61,9 @@ namespace functions {
       date_start: string
       // The end time to query to,optional
       date_end: string
+      // If not all data is return then page the data, Page Number
+      page_number: number
+
     }) => any;
   
     // List of host configurations. To view all hosts with no filter use {}. To view hosts with a filter; example match hosts with .com in their address {"address" : ".com"}, All hosts with dns endpoint {"endpoint" : "dns"}

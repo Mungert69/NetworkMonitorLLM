@@ -1,0 +1,1 @@
+~/code/models/llama.cpp/build/bin/main -c 4000  -m ~/code/models/natural-functions.Q2_K.gguf  --prompt-cache context.gguf   -f initialPrompt.txt --temp 0 
