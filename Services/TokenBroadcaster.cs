@@ -41,6 +41,8 @@ public class TokenBroadcaster
             byte[] buffer = new byte[1];
             int charRead = await process.StandardOutput.ReadAsync(buffer, 0, buffer.Length);
             string textChunk = Encoding.UTF8.GetString(buffer, 0, charRead);
+            var serviceObj = new LLMServiceObj { SessionId = sessionId, LlmMessage = textChunk };
+            await _responseProcessor.ProcessLLMOutput(serviceObj);
             llmOutFull.Append(textChunk);
             tokenBuilder.Append(textChunk);
             if (IsTokenComplete(tokenBuilder))
@@ -48,8 +50,8 @@ public class TokenBroadcaster
                 string token = tokenBuilder.ToString();
                 tokenBuilder.Clear();
                 token = token.Replace("/\b", "");
-                var serviceObj = new LLMServiceObj { SessionId = sessionId, LlmMessage = token };
-                await _responseProcessor.ProcessLLMOutput(serviceObj);
+                //var serviceObj = new LLMServiceObj { SessionId = sessionId, LlmMessage = token };
+                //await _responseProcessor.ProcessLLMOutput(serviceObj);
             }
 
             //Console.WriteLine(llmOutFull.ToString());
@@ -70,8 +72,8 @@ public class TokenBroadcaster
                     //_logger.LogInformation(" Stop detected ");
 
                     // Send last part of llm output
-                    responseServiceObj.LlmMessage = tokenBuilder.ToString();
-                    await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+                    //responseServiceObj.LlmMessage = tokenBuilder.ToString();
+                    //await _responseProcessor.ProcessLLMOutput(responseServiceObj);
                     _cancellationTokenSource.Cancel();
                     isStopEncountered = true;
                     break;
