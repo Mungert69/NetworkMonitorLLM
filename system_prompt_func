@@ -4,9 +4,7 @@
 // Supported function definitions that should be called when necessary. 
 namespace functions {
     // Add a host to be monitored. Only the address is required.
-  type add_host = (_: {
-        // Return all fields in function response. The default is false for a quick to process response.
-        detail_response: boolean,      
+  type add_host = (_: {  
         // The host address,required
         address: string,
         // The endpoint type,optional.  Endpoint types are: quantum is a quantum safe encryption test, http is a website ping, https is a ssl certificate check, httphtml is a website html load, icmp is a host ping, dns is a dns lookup, smtp is an email server helo message confirmation and rawconnect is a low level raw socket connection      
@@ -20,9 +18,7 @@ namespace functions {
     }) => any;
   
     // Edit a host's monitoring configuration. For example to edit a host with address test.com endpoint to icmp {"address":"test.com","endpoint":"icmp"} 
-    type edit_host = (_: {
-      // Return all fields in function response. The default is false for a quick to process response.
-      detail_response: boolean,      
+    type edit_host = (_: { 
       // This is a string that is used to authenticate the Edit action for a user who is not logged in. This key is returned when adding a host for the first time. It should be stored and sent with subsequent edit requests. Optional if user is logged in.
       auth_key: string,
         // This is the host id used for identifying the host,optional. It is obtained when adding a host 
@@ -43,8 +39,6 @@ namespace functions {
   
    // Get monitoring status for a host. For example get the latest host data for host with address test.com {"dataset_id": 0 , "address":"test.com"}. To get host data with id 2 between dates {"address":"test.com" , "date_start":"2024-04-11T19:20:00" , "date_end":"2024-04-02T19:20:00"}
    type get_host_data = (_: {
-      // Return all fields in function response. The default is false for a quick to process response.
-      detail_response: boolean,
       // Set dataset_id to zero for the latest data. To view historic data set dataset_id to null and select a date range with date_start and data_end
       dataset_id: number,
         // Return host with id,optional
