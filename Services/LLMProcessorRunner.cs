@@ -57,7 +57,7 @@ public class LLMProcessRunner : ILLMProcessRunner
 
     public void SetStartInfo(ProcessStartInfo startInfo, MLParams mlParams)
     {
-        startInfo.FileName = $"{mlParams.LlmModelPath}llama.cpp/main";
+        startInfo.FileName = $"{mlParams.LlmModelPath}llama.cpp/bin/main";
         startInfo.Arguments = $"-c 2000 -n 6000 -b 224 -m {mlParams.LlmModelPath + mlParams.LlmModelFileName}  --prompt-cache {mlParams.LlmModelPath+mlParams.LlmContextFileName} --prompt-cache-ro  -f {mlParams.LlmModelPath+mlParams.LlmSystemPrompt}  -ins -r \"<|stop|>\" --keep -1 --temp 0";
         startInfo.UseShellExecute = false;
         startInfo.RedirectStandardInput = true;
