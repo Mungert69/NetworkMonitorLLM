@@ -14,12 +14,7 @@ using NetworkMonitor.Objects;
 using NetworkMonitor.Utils.Helpers;
 namespace NetworkMonitor.LLM.Services;
 // LLMProcessRunner.cs
-public interface ILLMRunner
-{
-    Task StartProcess(string sessionId, DateTime currentTime);
-    Task SendInputAndGetResponse(LLMServiceObj serviceObj);
-    void RemoveProcess(string sessionId);
-}
+
 public class LLMProcessRunner : ILLMRunner
 {
     //private ProcessWrapper _llamaProcess;

@@ -26,19 +26,23 @@ public interface ILLMService
 public class LLMService : ILLMService
 {
     private ILogger _logger;
-    private readonly ILLMRunner _processRunner;
+
+    private readonly ILLMProcessRunnerFactory _processRunnerFactory;
+    private readonly IOpenAIRunnerFactory _openAIRunnerFactory;
+    private IServiceProvider _serviceProvider;
     private IRabbitRepo _rabbitRepo;
 
     private readonly ConcurrentDictionary<string, Session> _sessions = new ConcurrentDictionary<string, Session>();
     // private readonly ILLMResponseProcessor _responseProcessor;
 
-    public LLMService(ILogger<LLMService> logger, ILLMRunner processRunner, IRabbitRepo rabbitRepo)
+    public LLMService(ILogger<LLMService> logger, ILLMProcessRunnerFactory processRunnerFactory, IOpenAIRunnerFactory openAIRunnerFactory, IRabbitRepo rabbitRepo, IServiceProvider serviceProvider)
     {
-        _processRunner = processRunner;
+        _processRunnerFactory = processRunnerFactory;
+        _openAIRunnerFactory = openAIRunnerFactory;
+        _serviceProvider = serviceProvider;  
         _rabbitRepo = rabbitRepo;
         _logger = logger;
     }
-
     public async Task<LLMServiceObj> StartProcess(LLMServiceObj llmServiceObj)
     {
         llmServiceObj.SessionId = Guid.NewGuid().ToString();
@@ -48,8 +52,23 @@ public class LLMService : ILLMService
                                          ? TimeZoneInfo.FindSystemTimeZoneById(llmServiceObj.TimeZone)
                                          : TimeZoneInfo.Utc;
             var usersCurrentTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, clientTimeZone);
-            await _processRunner.StartProcess(llmServiceObj.SessionId, usersCurrentTime);
-            _sessions[llmServiceObj.SessionId] = new Session();
+
+            ILLMRunner runner;
+            switch (llmServiceObj.LLMRunnerType)
+            {
+                case "OpenAI":
+                    runner = _openAIRunnerFactory.CreateRunner(_serviceProvider);
+                    break;
+                case "LLMProcess":
+                    runner = _processRunnerFactory.CreateRunner(_serviceProvider);
+                    break;
+                // Add more cases for other runner types if needed
+                default:
+                    throw new ArgumentException($"Invalid runner type: {llmServiceObj.LLMRunnerType}");
+            }
+
+            await runner.StartProcess(llmServiceObj.SessionId, usersCurrentTime);
+            _sessions[llmServiceObj.SessionId] = new Session { Runner = runner };
             llmServiceObj.ResultMessage = " Success : LLMService Started Session .";
             llmServiceObj.ResultSuccess = true;
             await _rabbitRepo.PublishAsync<LLMServiceObj>("llmServiceStarted", llmServiceObj);
@@ -72,10 +91,20 @@ public class LLMService : ILLMService
     {
         try
         {
-            _processRunner.RemoveProcess(llmServiceObj.SessionId);
-            _sessions[llmServiceObj.SessionId] = new Session();
-            llmServiceObj.ResultMessage = " Success : LLMService Removed Session .";
-            llmServiceObj.ResultSuccess = true;
+            if (_sessions.TryGetValue(llmServiceObj.SessionId, out var session))
+            {
+                session.Runner.RemoveProcess(llmServiceObj.SessionId);
+                _sessions[llmServiceObj.SessionId] = new Session();
+                llmServiceObj.ResultMessage = " Success : LLMService Removed Session .";
+                llmServiceObj.ResultSuccess = true;
+            }
+            else
+            {
+                llmServiceObj.ResultMessage = $" Error : Could not find session {llmServiceObj.SessionId} to Removed Session .";
+                llmServiceObj.ResultSuccess = false;
+            }
+
+
         }
         catch (Exception e)
         {
@@ -91,8 +120,9 @@ public class LLMService : ILLMService
     public async Task<ResultObj> SendInputAndGetResponse(LLMServiceObj llmServiceObj)
     {
         var result = new ResultObj();
+        Session? session=null;
 
-        if (llmServiceObj.SessionId == null && !_sessions.TryGetValue(llmServiceObj.SessionId, out var session))
+        if (llmServiceObj.SessionId == null || !_sessions.TryGetValue(llmServiceObj.SessionId, out session))
         {
             result.Message = "Invalid session ID";
             result.Success = false;
@@ -102,7 +132,7 @@ public class LLMService : ILLMService
         {
             try
             {
-                await _processRunner.SendInputAndGetResponse(llmServiceObj);
+                await session.Runner.SendInputAndGetResponse(llmServiceObj);
                 result.Message = " Processed UserInput :" + llmServiceObj.UserInput;
                 result.Success = true;
             }
@@ -158,7 +188,7 @@ public class LLMResponseProcessor : ILLMResponseProcessor
         //return Task.CompletedTask;
     }
 
-     public async Task ProcessEnd(LLMServiceObj serviceObj)
+    public async Task ProcessEnd(LLMServiceObj serviceObj)
     {
         //Console.WriteLine(serviceObj.LlmMessage);
         await _rabbitRepo.PublishAsync<LLMServiceObj>("llmServiceEnd", serviceObj);
@@ -206,7 +236,10 @@ public class LLMResponseProcessor : ILLMResponseProcessor
 
 public enum ResponseState { Initial, AwaitingInput, FunctionCallProcessed, Completed }
 
+
+
 public class Session
 {
     public List<string> Responses { get; } = new List<string>();
+    public ILLMRunner Runner { get; set; }
 }

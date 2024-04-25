@@ -59,8 +59,14 @@ namespace NetworkMonitor.LLM
                 ApiKey = Configuration["OpenAIApiKey"]
             });
             services.AddSingleton(
-openAiService
+                    openAiService
             );
+
+            services.AddSingleton<ILLMProcessRunnerFactory, LLMProcessRunnerFactory>();
+            services.AddSingleton<IOpenAIRunnerFactory, OpenAIRunnerFactory>();
+            services.AddSingleton<ILLMRunner, OpenAIRunner>();
+            services.AddSingleton<ILLMRunner, LLMProcessRunner>();
+
 
             services.AddSingleton<IRabbitListener, RabbitListener>();
             services.AddSingleton<IRabbitRepo, RabbitRepo>();
@@ -68,8 +74,7 @@ openAiService
             services.AddSingleton<ISystemParamsHelper, SystemParamsHelper>();
             services.AddSingleton<ILLMResponseProcessor, LLMResponseProcessor>();
             services.AddSingleton<ILLMService, LLMService>();
-            //services.AddSingleton<ILLMRunner, LLMProcessRunner>();
-            services.AddSingleton<ILLMRunner, OpenAIRunner>();
+
 
             services.AddSingleton(_cancellationTokenSource);
             services.Configure<HostOptions>(s => s.ShutdownTimeout = TimeSpan.FromMinutes(5));
