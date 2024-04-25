@@ -100,7 +100,7 @@ public class OpenAIRunner : ILLMRunner
              // Check token usage and manage history accordingly
             if (currentTokenCount >= TokenLimit)
             {
-                responseServiceObj.LlmMessage = "Free usage quota complete. You can subscribe get more tokens.";
+                responseServiceObj.LlmMessage = "OpenAI usage quota used. You can either upgrade your subscription to get more tokens or switch to FreeLLM";
                 await _responseProcessor.ProcessLLMOutput(responseServiceObj); 
                 return;
                    }

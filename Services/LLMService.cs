@@ -59,7 +59,7 @@ public class LLMService : ILLMService
                 case "OpenAI":
                     runner = _openAIRunnerFactory.CreateRunner(_serviceProvider);
                     break;
-                case "LLMProcess":
+                case "FreeLLM":
                     runner = _processRunnerFactory.CreateRunner(_serviceProvider);
                     break;
                 // Add more cases for other runner types if needed
