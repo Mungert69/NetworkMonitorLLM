@@ -26,13 +26,13 @@ public interface ILLMService
 public class LLMService : ILLMService
 {
     private ILogger _logger;
-    private readonly ILLMProcessRunner _processRunner;
+    private readonly ILLMRunner _processRunner;
     private IRabbitRepo _rabbitRepo;
 
     private readonly ConcurrentDictionary<string, Session> _sessions = new ConcurrentDictionary<string, Session>();
     // private readonly ILLMResponseProcessor _responseProcessor;
 
-    public LLMService(ILogger<LLMService> logger, ILLMProcessRunner processRunner, IRabbitRepo rabbitRepo)
+    public LLMService(ILogger<LLMService> logger, ILLMRunner processRunner, IRabbitRepo rabbitRepo)
     {
         _processRunner = processRunner;
         _rabbitRepo = rabbitRepo;
@@ -102,7 +102,7 @@ public class LLMService : ILLMService
         {
             try
             {
-                await _processRunner.SendInputAndGetResponse(llmServiceObj.SessionId, llmServiceObj.UserInput, llmServiceObj.IsFunctionCallResponse);
+                await _processRunner.SendInputAndGetResponse(llmServiceObj);
                 result.Message = " Processed UserInput :" + llmServiceObj.UserInput;
                 result.Success = true;
             }

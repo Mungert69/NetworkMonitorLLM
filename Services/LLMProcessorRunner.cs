@@ -14,13 +14,13 @@ using NetworkMonitor.Objects;
 using NetworkMonitor.Utils.Helpers;
 namespace NetworkMonitor.LLM.Services;
 // LLMProcessRunner.cs
-public interface ILLMProcessRunner
+public interface ILLMRunner
 {
-    Task StartProcess(string sessionId, DateTime currentTime, ProcessWrapper? testProcess = null);
-    Task SendInputAndGetResponse(string sessionId, string userInput, bool isFunctionCallResponse);
+    Task StartProcess(string sessionId, DateTime currentTime);
+    Task SendInputAndGetResponse(LLMServiceObj serviceObj);
     void RemoveProcess(string sessionId);
 }
-public class LLMProcessRunner : ILLMProcessRunner
+public class LLMProcessRunner : ILLMRunner
 {
     //private ProcessWrapper _llamaProcess;
     private readonly ConcurrentDictionary<string, ProcessWrapper> _processes = new ConcurrentDictionary<string, ProcessWrapper>();
@@ -64,26 +64,22 @@ public class LLMProcessRunner : ILLMProcessRunner
         startInfo.RedirectStandardOutput = true;
         startInfo.CreateNoWindow = true;
     }
-    public async Task StartProcess(string sessionId, DateTime currentTime, ProcessWrapper? testProcess = null)
+    public async Task StartProcess(string sessionId, DateTime currentTime)
     {
         if (_processes.ContainsKey(sessionId))
             throw new Exception("Process already running for this session");
         _logger.LogInformation($" LLM Service : Start Process for sessionsId {sessionId}");
         ProcessWrapper process;
-        if (testProcess == null)
-        {
+        
             process = new ProcessWrapper();
             SetStartInfo(process.StartInfo, _mlParams);
-        }
-        else
-        {
-            process = testProcess;
-        }
+       
         process.Start();
         await WaitForReadySignal(process);
         _processes[sessionId] = process;
         string userInput = $"<|from|>system<|recipient|>all<|content|>The users current time is {currentTime.ToString()}";
-        await SendInputAndGetResponse(sessionId, userInput, false);
+        var serviceObj = new LLMServiceObj() { SessionId = sessionId, UserInput = userInput, IsFunctionCallResponse = false };
+        await SendInputAndGetResponse(serviceObj);
         _logger.LogInformation($"LLM process started for session {sessionId}");
     }
     public void RemoveProcess(string sessionId)
@@ -131,11 +127,11 @@ public class LLMProcessRunner : ILLMProcessRunner
         }
         _logger.LogInformation($" LLMService Process Started ");
     }
-    public async Task SendInputAndGetResponse(string sessionId, string userInput, bool isFunctionCallResponse)
+    public async Task SendInputAndGetResponse(LLMServiceObj serviceObj)
     {
         _logger.LogInformation($"  LLMService : SendInputAndGetResponse() :");
 
-        if (!_processes.TryGetValue(sessionId, out var process))
+        if (!_processes.TryGetValue(serviceObj.SessionId, out var process))
             throw new Exception("No process found for the given session");
 
         if (process == null || process.HasExited)
@@ -144,21 +140,22 @@ public class LLMProcessRunner : ILLMProcessRunner
         }
 
         TokenBroadcaster tokenBroadcaster;
-        if (_tokenBroadcasters.TryGetValue(sessionId, out tokenBroadcaster))
+        if (_tokenBroadcasters.TryGetValue(serviceObj.SessionId, out tokenBroadcaster))
         {
-            await tokenBroadcaster.ReInit(sessionId);
+            await tokenBroadcaster.ReInit(serviceObj.SessionId);
         }
         else
         {
             tokenBroadcaster = new TokenBroadcaster(_responseProcessor, _logger);
         }
-        if (!isFunctionCallResponse) userInput = "<|from|>user<|content|>" + userInput;
+        string userInput = serviceObj.UserInput;
+        if (!serviceObj.IsFunctionCallResponse) userInput = "<|from|>user<|content|>" + userInput;
         await process.StandardInput.WriteLineAsync(userInput);
         await process.StandardInput.FlushAsync();
         _logger.LogInformation($" ProcessLLMOutput(user input) -> {userInput}");
 
 
-        await tokenBroadcaster.BroadcastAsync(process, sessionId, userInput, isFunctionCallResponse);
+        await tokenBroadcaster.BroadcastAsync(process, serviceObj.SessionId, userInput, serviceObj.IsFunctionCallResponse);
 
     }
 }

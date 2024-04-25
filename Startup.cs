@@ -19,19 +19,25 @@ using HostInitActions;
 using Microsoft.Extensions.Logging;
 using NetworkMonitor.Utils.Helpers;
 using NetworkMonitor.Objects.ServiceMessage;
+using OpenAI;
+using OpenAI.Builders;
+using OpenAI.Managers;
+using OpenAI.ObjectModels;
+using OpenAI.ObjectModels.RequestModels;
+using OpenAI.ObjectModels.SharedModels;
 namespace NetworkMonitor.LLM
 {
     public class Startup
     {
         private readonly CancellationTokenSource _cancellationTokenSource;
-        #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
         public Startup(IConfiguration configuration)
         {
             _cancellationTokenSource = new CancellationTokenSource();
             Configuration = configuration;
         }
-        #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
         public IConfiguration Configuration { get; }
         private IServiceCollection _services;
@@ -48,19 +54,27 @@ namespace NetworkMonitor.LLM
                         });
 
                           });
-            
+            var openAiService = new OpenAIService(new OpenAiOptions()
+            {
+                ApiKey = Configuration["OpenAIApiKey"]
+            });
+            services.AddSingleton(
+openAiService
+            );
+
             services.AddSingleton<IRabbitListener, RabbitListener>();
             services.AddSingleton<IRabbitRepo, RabbitRepo>();
             services.AddSingleton<IFileRepo, FileRepo>();
             services.AddSingleton<ISystemParamsHelper, SystemParamsHelper>();
-             services.AddSingleton<ILLMResponseProcessor, LLMResponseProcessor>();
-             services.AddSingleton<ILLMService, LLMService>();
-             services.AddSingleton<ILLMProcessRunner, LLMProcessRunner>();
+            services.AddSingleton<ILLMResponseProcessor, LLMResponseProcessor>();
+            services.AddSingleton<ILLMService, LLMService>();
+            //services.AddSingleton<ILLMRunner, LLMProcessRunner>();
+            services.AddSingleton<ILLMRunner, OpenAIRunner>();
 
             services.AddSingleton(_cancellationTokenSource);
             services.Configure<HostOptions>(s => s.ShutdownTimeout = TimeSpan.FromMinutes(5));
             services.AddAsyncServiceInitialization()
-                
+
                  .AddInitAction<IRabbitListener>((rabbitListener) =>
                     {
                         return Task.CompletedTask;
