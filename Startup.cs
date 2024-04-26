@@ -62,12 +62,6 @@ namespace NetworkMonitor.LLM
                     openAiService
             );
 
-            services.AddSingleton<ILLMProcessRunnerFactory, LLMProcessRunnerFactory>();
-            services.AddSingleton<IOpenAIRunnerFactory, OpenAIRunnerFactory>();
-            services.AddSingleton<ILLMRunner, OpenAIRunner>();
-            services.AddSingleton<ILLMRunner, LLMProcessRunner>();
-
-
             services.AddSingleton<IRabbitListener, RabbitListener>();
             services.AddSingleton<IRabbitRepo, RabbitRepo>();
             services.AddSingleton<IFileRepo, FileRepo>();

@@ -101,9 +101,10 @@ public class LLMProcessRunner : ILLMRunner
             throw new Exception("Process is not running for this session");
 
         _logger.LogInformation($" LLM Service : Remove Process for sessionsId {sessionId}");
+        await _processRunnerSemaphore.WaitAsync();
+
         try
         {
-            await _processRunnerSemaphore.WaitAsync();
             try
             {
                 if (process != null && !process.HasExited)
@@ -116,9 +117,12 @@ public class LLMProcessRunner : ILLMRunner
                 if (process != null)
                 {
                     process.Dispose();
-              }
+                }
             }
 
+        }
+        catch {
+            throw;
         }
         finally
         {
@@ -152,11 +156,9 @@ public class LLMProcessRunner : ILLMRunner
 
     public async Task SendInputAndGetResponse(LLMServiceObj serviceObj)
     {
-
+        await _processRunnerSemaphore.WaitAsync();
         try
         {
-            await _processRunnerSemaphore.WaitAsync();
-
             _logger.LogInformation($"  LLMService : SendInputAndGetResponse() :");
 
             if (!_processes.TryGetValue(serviceObj.SessionId, out var process))
@@ -191,7 +193,6 @@ public class LLMProcessRunner : ILLMRunner
         }
         finally
         {
-
             _processRunnerSemaphore.Release(); // Release the semaphore
 
         }
