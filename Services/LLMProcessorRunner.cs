@@ -20,7 +20,7 @@ public class LLMProcessRunner : ILLMRunner
     //private ProcessWrapper _llamaProcess;
     private readonly ConcurrentDictionary<string, ProcessWrapper> _processes = new ConcurrentDictionary<string, ProcessWrapper>();
     private readonly ConcurrentDictionary<string, TokenBroadcaster> _tokenBroadcasters = new ConcurrentDictionary<string, TokenBroadcaster>();
-
+    private bool _sendOutput = false;
     private ILogger _logger;
     private ILLMResponseProcessor _responseProcessor;
     private MLParams _mlParams;
@@ -52,8 +52,8 @@ public class LLMProcessRunner : ILLMRunner
 
     public void SetStartInfo(ProcessStartInfo startInfo, MLParams mlParams)
     {
-        startInfo.FileName = $"{mlParams.LlmModelPath}llama.cpp/bin/main";
-        startInfo.Arguments = $"-c 2000 -n 6000 -b 224 -m {mlParams.LlmModelPath + mlParams.LlmModelFileName}  --prompt-cache {mlParams.LlmModelPath+mlParams.LlmContextFileName} --prompt-cache-ro  -f {mlParams.LlmModelPath+mlParams.LlmSystemPrompt}  -ins -r \"<|stop|>\" --keep -1 --temp 0";
+        startInfo.FileName = $"{mlParams.LlmModelPath}llama.cpp/main";
+        startInfo.Arguments = $"-c 2000 -n 6000 -b 224 -m {mlParams.LlmModelPath + mlParams.LlmModelFileName}  --prompt-cache {mlParams.LlmModelPath+mlParams.LlmContextFileName} --prompt-cache-ro  -f {mlParams.LlmModelPath+mlParams.LlmSystemPrompt}  -ins -r \"<|stop|>\" --keep -1 --temp 0 -t 8";
         startInfo.UseShellExecute = false;
         startInfo.RedirectStandardInput = true;
         startInfo.RedirectStandardOutput = true;
@@ -61,6 +61,7 @@ public class LLMProcessRunner : ILLMRunner
     }
     public async Task StartProcess(string sessionId, DateTime currentTime)
     {
+      
         if (_processes.ContainsKey(sessionId))
             throw new Exception("Process already running for this session");
         _logger.LogInformation($" LLM Service : Start Process for sessionsId {sessionId}");
@@ -72,10 +73,12 @@ public class LLMProcessRunner : ILLMRunner
         process.Start();
         await WaitForReadySignal(process);
         _processes[sessionId] = process;
-        string userInput = $"<|from|>system<|recipient|>all<|content|>The users current time is {currentTime.ToString()}";
+        string userInput = $"<|from|>get_time<|recipient|>all<|content|>{currentTime.ToString()}";
         var serviceObj = new LLMServiceObj() { SessionId = sessionId, UserInput = userInput, IsFunctionCallResponse = false };
+          _sendOutput = false;
         await SendInputAndGetResponse(serviceObj);
         _logger.LogInformation($"LLM process started for session {sessionId}");
+        _sendOutput = true;
     }
     public void RemoveProcess(string sessionId)
     {
@@ -110,7 +113,7 @@ public class LLMProcessRunner : ILLMRunner
         while (!cancellationTokenSource.IsCancellationRequested)
         {
             line = await process.StandardOutput.ReadLineAsync();
-            if (line.StartsWith("<|content|>A chat between"))
+            if (line.StartsWith("<|content|>{}"))
             {
                 isReady = true;
                 break;
@@ -144,13 +147,13 @@ public class LLMProcessRunner : ILLMRunner
             tokenBroadcaster = new TokenBroadcaster(_responseProcessor, _logger);
         }
         string userInput = serviceObj.UserInput;
-        if (!serviceObj.IsFunctionCallResponse) userInput = "<|from|>user<|content|>" + userInput;
+        if (!serviceObj.IsFunctionCallResponse && _sendOutput) userInput = "<|from|>user<|content|>" + userInput;
         await process.StandardInput.WriteLineAsync(userInput);
         await process.StandardInput.FlushAsync();
         _logger.LogInformation($" ProcessLLMOutput(user input) -> {userInput}");
 
 
-        await tokenBroadcaster.BroadcastAsync(process, serviceObj.SessionId, userInput, serviceObj.IsFunctionCallResponse);
+        await tokenBroadcaster.BroadcastAsync(process, serviceObj.SessionId, userInput, serviceObj.IsFunctionCallResponse, _sendOutput);
 
     }
 }

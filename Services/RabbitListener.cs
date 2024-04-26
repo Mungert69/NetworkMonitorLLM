@@ -243,7 +243,7 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
         {
             if (serviceObj.IsFunctionCallResponse)
             {
-                serviceObj.UserInput = "<|from|>"+serviceObj.FunctionName+"<|content|>"+ serviceObj.UserInput;
+                serviceObj.UserInput = "<|from|>"+serviceObj.FunctionName+"<|recipient|>all<|content|>"+ serviceObj.UserInput;
             }
             var resultService = await _llmService.SendInputAndGetResponse(serviceObj);
             result.Message += resultService.Message;

@@ -28,9 +28,10 @@ public class TokenBroadcaster
         _logger.LogInformation(" Cancel due to ReInit called ");
         await _cancellationTokenSource.CancelAsync();
     }
-    public async Task BroadcastAsync(ProcessWrapper process, string sessionId, string userInput, bool isFunctionCallResponse)
+    public async Task BroadcastAsync(ProcessWrapper process, string sessionId, string userInput, bool isFunctionCallResponse, bool sendOutput)
     {
         _logger.LogWarning(" Start BroadcastAsync() ");
+        _responseProcessor.SendOutput = sendOutput;
         var cancellationToken = _cancellationTokenSource.Token;
         var llmOutFull = new StringBuilder();
         var tokenBuilder = new StringBuilder();
@@ -50,11 +51,7 @@ public class TokenBroadcaster
                 string token = tokenBuilder.ToString();
                 tokenBuilder.Clear();
                 token = token.Replace("/\b", "");
-                //var serviceObj = new LLMServiceObj { SessionId = sessionId, LlmMessage = token };
-                //await _responseProcessor.ProcessLLMOutput(serviceObj);
             }
-
-            //Console.WriteLine(llmOutFull.ToString());
             var (messageSegment, isWithinContent, isMessageSegmentComplete) = ParseLLMOutput(llmOutFull.ToString());
             if (messageSegment != null)
             {
@@ -67,13 +64,7 @@ public class TokenBroadcaster
                         responseServiceObj.LlmMessage = "</functioncall-complete>";
                         await _responseProcessor.ProcessLLMOutput(responseServiceObj);
                     }
-                    //_logger.LogInformation($"sessionID={sessionId} line is =>{llmOutFull.ToString()}<=");
                     await ProcessMessageSegment(messageSegment, sessionId, userInput);
-                    //_logger.LogInformation(" Stop detected ");
-
-                    // Send last part of llm output
-                    //responseServiceObj.LlmMessage = tokenBuilder.ToString();
-                    //await _responseProcessor.ProcessLLMOutput(responseServiceObj);
                     _cancellationTokenSource.Cancel();
                     isStopEncountered = true;
                     break;

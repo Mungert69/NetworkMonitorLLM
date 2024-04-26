@@ -168,12 +168,16 @@ public interface ILLMResponseProcessor
     Task ProcessFunctionCall(LLMServiceObj serviceObj);
     Task ProcessEnd(LLMServiceObj serviceObj);
     bool IsFunctionCallResponse(string input);
+    bool SendOutput{get;set;}
 }
 
 public class LLMResponseProcessor : ILLMResponseProcessor
 {
 
     private IRabbitRepo _rabbitRepo;
+    private bool _sendOutput = true;
+
+    public bool SendOutput { get => _sendOutput; set => _sendOutput = value; }
 
     public LLMResponseProcessor(IRabbitRepo rabbitRepo)
     {
@@ -184,7 +188,7 @@ public class LLMResponseProcessor : ILLMResponseProcessor
     public async Task ProcessLLMOutput(LLMServiceObj serviceObj)
     {
         //Console.WriteLine(serviceObj.LlmMessage);
-        await _rabbitRepo.PublishAsync<LLMServiceObj>("llmServiceMessage", serviceObj);
+        if (_sendOutput) await _rabbitRepo.PublishAsync<LLMServiceObj>("llmServiceMessage", serviceObj);
         //return Task.CompletedTask;
     }
 
@@ -197,7 +201,7 @@ public class LLMResponseProcessor : ILLMResponseProcessor
 
     public async Task ProcessFunctionCall(LLMServiceObj serviceObj)
     {
-        await _rabbitRepo.PublishAsync<LLMServiceObj>("llmServiceFunction", serviceObj);
+        if (_sendOutput) await _rabbitRepo.PublishAsync<LLMServiceObj>("llmServiceFunction", serviceObj);
 
     }
 
