@@ -12,6 +12,7 @@ namespace NetworkMonitor.LLM.Services;
 public class ProcessWrapper
 {
      public DateTime LastActivity { get; set; } = DateTime.UtcNow;
+    private bool _hasStarted = false;
     private Process _process;
     public ProcessWrapper()
     {
@@ -27,11 +28,13 @@ public class ProcessWrapper
     public virtual ProcessStartInfo StartInfo => _process.StartInfo;
     public virtual bool StandardOutputEndOfStream => _process.StandardOutput.EndOfStream;
     public virtual bool HasExited => _process.HasExited;
+    public bool HasStarted => _hasStarted;
     public virtual void Kill() => _process.Kill();
     public virtual void Dispose() => _process.Dispose();
     public virtual void Start()
     {
         _process.Start();
+        _hasStarted = true;
     }
     public virtual Task<string> StandardOutputReadLineAsync()
     {

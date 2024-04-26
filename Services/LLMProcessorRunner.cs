@@ -12,6 +12,7 @@ using Microsoft.Extensions.Logging;
 using NetworkMonitor.Objects.ServiceMessage;
 using NetworkMonitor.Objects;
 using NetworkMonitor.Utils.Helpers;
+using System.Security.Cryptography.X509Certificates;
 namespace NetworkMonitor.LLM.Services;
 // LLMProcessRunner.cs
 
@@ -25,12 +26,13 @@ public class LLMProcessRunner : ILLMRunner
     private ILLMResponseProcessor _responseProcessor;
     private MLParams _mlParams;
     private Timer _idleCheckTimer;
-    private readonly SemaphoreSlim _inputStreamSemaphore = new SemaphoreSlim(1, 1);
-    public LLMProcessRunner(ILogger<LLMProcessRunner> logger, ILLMResponseProcessor responseProcessor, ISystemParamsHelper systemParamsHelper)
+    private SemaphoreSlim _processRunnerSemaphore;
+    public LLMProcessRunner(ILogger<LLMProcessRunner> logger, ILLMResponseProcessor responseProcessor, ISystemParamsHelper systemParamsHelper, SemaphoreSlim processRunnerSemaphore)
     {
         _logger = logger;
         _responseProcessor = responseProcessor;
         _mlParams = systemParamsHelper.GetMLParams();
+        _processRunnerSemaphore = processRunnerSemaphore;
         _idleCheckTimer = new Timer(async _ => await CheckAndTerminateIdleProcesses(), null, TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(10));
 
     }
@@ -45,15 +47,15 @@ public class LLMProcessRunner : ILLMRunner
         {
             RemoveProcess(sessionId);
             await _responseProcessor.ProcessEnd(new LLMServiceObj() { SessionId = sessionId, LlmMessage = "Close: Session has timeout. Refresh page to start session again." });
-             _logger.LogInformation($" LLM Service : terminated session {sessionId}");
-       
+            _logger.LogInformation($" LLM Service : terminated session {sessionId}");
+
         }
     }
 
     public void SetStartInfo(ProcessStartInfo startInfo, MLParams mlParams)
     {
         startInfo.FileName = $"{mlParams.LlmModelPath}llama.cpp/main";
-        startInfo.Arguments = $"-c 2000 -n 6000 -b 224 -m {mlParams.LlmModelPath + mlParams.LlmModelFileName}  --prompt-cache {mlParams.LlmModelPath+mlParams.LlmContextFileName} --prompt-cache-ro  -f {mlParams.LlmModelPath+mlParams.LlmSystemPrompt}  -ins -r \"<|stop|>\" --keep -1 --temp 0 -t 8";
+        startInfo.Arguments = $"-c 2000 -n 6000 -b 224 -m {mlParams.LlmModelPath + mlParams.LlmModelFileName}  --prompt-cache {mlParams.LlmModelPath + mlParams.LlmContextFileName} --prompt-cache-ro  -f {mlParams.LlmModelPath + mlParams.LlmSystemPrompt}  -ins -r \"<|stop|>\" --keep -1 --temp 0 -t 8";
         startInfo.UseShellExecute = false;
         startInfo.RedirectStandardInput = true;
         startInfo.RedirectStandardOutput = true;
@@ -61,46 +63,68 @@ public class LLMProcessRunner : ILLMRunner
     }
     public async Task StartProcess(string sessionId, DateTime currentTime)
     {
-      
-        if (_processes.ContainsKey(sessionId))
-            throw new Exception("Process already running for this session");
-        _logger.LogInformation($" LLM Service : Start Process for sessionsId {sessionId}");
-        ProcessWrapper process;
-        
-            process = new ProcessWrapper();
-            SetStartInfo(process.StartInfo, _mlParams);
-       
-        process.Start();
-        await WaitForReadySignal(process);
-        _processes[sessionId] = process;
-        string userInput = $"<|from|>get_time<|recipient|>all<|content|>{currentTime.ToString()}";
-        var serviceObj = new LLMServiceObj() { SessionId = sessionId, UserInput = userInput, IsFunctionCallResponse = false };
-          _sendOutput = false;
-        await SendInputAndGetResponse(serviceObj);
-        _logger.LogInformation($"LLM process started for session {sessionId}");
-        _sendOutput = true;
-    }
-    public void RemoveProcess(string sessionId)
-    {
-        if (!_processes.TryGetValue(sessionId, out var process))
-            throw new Exception("Process is not running for this session");
-        _logger.LogInformation($" LLM Service : Remove Process for sessionsId {sessionId}");
+
+        await _processRunnerSemaphore.WaitAsync(); // Wait to enter the semaphore
         try
         {
-            if (!process.HasExited)
-            {
-                process.Kill();
-            }
+            if (_processes.ContainsKey(sessionId))
+                throw new Exception("Process already running for this session");
+            _logger.LogInformation($" LLM Service : Start Process for sessionsId {sessionId}");
+            ProcessWrapper process;
+
+            process = new ProcessWrapper();
+            SetStartInfo(process.StartInfo, _mlParams);
+
+            process.Start();
+            await WaitForReadySignal(process);
+            _processes[sessionId] = process;
+        }
+        catch
+        {
+            throw;
         }
         finally
         {
-            // Always dispose of the process object
-            process.Dispose();
+            _processRunnerSemaphore.Release(); // Release the semaphore
         }
-        // _processes.TryRemove(sessionId);
+        string userInput = $"<|from|>get_time<|recipient|>all<|content|>{currentTime.ToString()}";
+        var serviceObj = new LLMServiceObj() { SessionId = sessionId, UserInput = userInput, IsFunctionCallResponse = false };
+        _sendOutput = false;
+        await SendInputAndGetResponse(serviceObj);
+        _logger.LogInformation($"LLM process started for session {sessionId}");
+        _sendOutput = true;
 
-        _processes.TryRemove(sessionId, out _);
+    }
+    public async Task RemoveProcess(string sessionId)
+    {
+        if (!_processes.TryGetValue(sessionId, out var process))
+            throw new Exception("Process is not running for this session");
 
+        _logger.LogInformation($" LLM Service : Remove Process for sessionsId {sessionId}");
+        try
+        {
+            await _processRunnerSemaphore.WaitAsync();
+            try
+            {
+                if (process != null && !process.HasExited)
+                {
+                    process.Kill();
+                }
+            }
+            finally
+            {
+                if (process != null)
+                {
+                    process.Dispose();
+              }
+            }
+
+        }
+        finally
+        {
+            _processRunnerSemaphore.Release();
+            _processes.TryRemove(sessionId, out _);
+        }
         _logger.LogInformation($"LLM process removed for session {sessionId}");
     }
     private async Task WaitForReadySignal(ProcessWrapper process)
@@ -125,36 +149,52 @@ public class LLMProcessRunner : ILLMRunner
         }
         _logger.LogInformation($" LLMService Process Started ");
     }
+
     public async Task SendInputAndGetResponse(LLMServiceObj serviceObj)
     {
-        _logger.LogInformation($"  LLMService : SendInputAndGetResponse() :");
 
-        if (!_processes.TryGetValue(serviceObj.SessionId, out var process))
-            throw new Exception("No process found for the given session");
-
-        if (process == null || process.HasExited)
+        try
         {
-            throw new InvalidOperationException("LLM process is not running");
-        }
+            await _processRunnerSemaphore.WaitAsync();
 
-        TokenBroadcaster tokenBroadcaster;
-        if (_tokenBroadcasters.TryGetValue(serviceObj.SessionId, out tokenBroadcaster))
+            _logger.LogInformation($"  LLMService : SendInputAndGetResponse() :");
+
+            if (!_processes.TryGetValue(serviceObj.SessionId, out var process))
+                throw new Exception("No process found for the given session");
+
+            if (process == null || process.HasExited)
+            {
+                throw new InvalidOperationException("LLM process is not running");
+            }
+
+            TokenBroadcaster tokenBroadcaster;
+            if (_tokenBroadcasters.TryGetValue(serviceObj.SessionId, out tokenBroadcaster))
+            {
+                await tokenBroadcaster.ReInit(serviceObj.SessionId);
+            }
+            else
+            {
+                tokenBroadcaster = new TokenBroadcaster(_responseProcessor, _logger);
+            }
+            string userInput = serviceObj.UserInput;
+            if (!serviceObj.IsFunctionCallResponse && _sendOutput) userInput = "<|from|>user<|content|>" + userInput;
+            await process.StandardInput.WriteLineAsync(userInput);
+            await process.StandardInput.FlushAsync();
+            _logger.LogInformation($" ProcessLLMOutput(user input) -> {userInput}");
+
+
+            await tokenBroadcaster.BroadcastAsync(process, serviceObj.SessionId, userInput, serviceObj.IsFunctionCallResponse, _sendOutput);
+        }
+        catch
         {
-            await tokenBroadcaster.ReInit(serviceObj.SessionId);
+            throw;
         }
-        else
+        finally
         {
-            tokenBroadcaster = new TokenBroadcaster(_responseProcessor, _logger);
+
+            _processRunnerSemaphore.Release(); // Release the semaphore
+
         }
-        string userInput = serviceObj.UserInput;
-        if (!serviceObj.IsFunctionCallResponse && _sendOutput) userInput = "<|from|>user<|content|>" + userInput;
-        await process.StandardInput.WriteLineAsync(userInput);
-        await process.StandardInput.FlushAsync();
-        _logger.LogInformation($" ProcessLLMOutput(user input) -> {userInput}");
-
-
-        await tokenBroadcaster.BroadcastAsync(process, serviceObj.SessionId, userInput, serviceObj.IsFunctionCallResponse, _sendOutput);
-
     }
 }
 

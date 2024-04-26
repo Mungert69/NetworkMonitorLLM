@@ -31,6 +31,9 @@ public class LLMService : ILLMService
     private readonly IOpenAIRunnerFactory _openAIRunnerFactory;
     private IServiceProvider _serviceProvider;
     private IRabbitRepo _rabbitRepo;
+     private SemaphoreSlim _processRunnerSemaphore = new SemaphoreSlim(1, 1);
+     private SemaphoreSlim _openAIRunnerSemaphore = new SemaphoreSlim(10, 20);
+   
 
     private readonly ConcurrentDictionary<string, Session> _sessions = new ConcurrentDictionary<string, Session>();
     // private readonly ILLMResponseProcessor _responseProcessor;
@@ -57,10 +60,10 @@ public class LLMService : ILLMService
             switch (llmServiceObj.LLMRunnerType)
             {
                 case "OpenAI":
-                    runner = _openAIRunnerFactory.CreateRunner(_serviceProvider);
+                    runner = _openAIRunnerFactory.CreateRunner(_serviceProvider, _processRunnerSemaphore);
                     break;
                 case "FreeLLM":
-                    runner = _processRunnerFactory.CreateRunner(_serviceProvider);
+                    runner = _processRunnerFactory.CreateRunner(_serviceProvider, _openAIRunnerSemaphore);
                     break;
                 // Add more cases for other runner types if needed
                 default:
