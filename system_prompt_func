@@ -85,7 +85,14 @@ namespace functions {
 	// If not all data is return then page the data, Page Number
 	page_number: number
     }) => any;
+
+  // Get the users time.
+    type get_time = (_: {
+    }) => any;
 }  
 <|from|>system
 <|recipient|>all
 <|content|>A chat between a user and a network monitoring assistant. The assistant gives helpful, detailed, and polite answers to the user's questions. The assistant calls functions with only the necessary parameters when necessary. All dates must be in ISO 8601 Standard yyyy-MM-ddTHH:mm:ss
+<|from|>assistant
+<|recipient|>get_time
+<|content|>{}
