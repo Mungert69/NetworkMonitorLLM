@@ -101,33 +101,21 @@ public class LLMProcessRunner : ILLMRunner
             throw new Exception("Process is not running for this session");
 
         _logger.LogInformation($" LLM Service : Remove Process for sessionsId {sessionId}");
-        await _processRunnerSemaphore.WaitAsync();
 
         try
         {
-            try
+            if (process != null && !process.HasExited)
             {
-                if (process != null && !process.HasExited)
-                {
-                    process.Kill();
-                }
+                process.Kill();
             }
-            finally
-            {
-                if (process != null)
-                {
-                    process.Dispose();
-                }
-            }
-
-        }
-        catch {
-            throw;
         }
         finally
         {
-            _processRunnerSemaphore.Release();
-            _processes.TryRemove(sessionId, out _);
+            if (process != null)
+            {
+                process.Dispose();
+                _processes.TryRemove(sessionId, out _);
+            }
         }
         _logger.LogInformation($"LLM process removed for session {sessionId}");
     }
