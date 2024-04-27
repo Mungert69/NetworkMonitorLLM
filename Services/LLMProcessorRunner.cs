@@ -87,7 +87,7 @@ public class LLMProcessRunner : ILLMRunner
         {
             _processRunnerSemaphore.Release(); // Release the semaphore
         }
-        string userInput = $"<|from|>get_time<|recipient|>all<|content|>{currentTime.ToString()}";
+        string userInput = $"<|from|>get_time<|content|>{currentTime.ToString()}";
         var serviceObj = new LLMServiceObj() { SessionId = sessionId, UserInput = userInput, IsFunctionCallResponse = false };
         _sendOutput = false;
         await SendInputAndGetResponse(serviceObj);
