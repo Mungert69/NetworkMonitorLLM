@@ -125,7 +125,7 @@ public class LLMProcessRunner : ILLMRunner
         string line;
         //await Task.Delay(10000);
         var cancellationTokenSource = new CancellationTokenSource();
-        cancellationTokenSource.CancelAfter(TimeSpan.FromMinutes(1)); // Timeout after one minute
+        cancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(30)); // Timeout after one minute
         while (!cancellationTokenSource.IsCancellationRequested)
         {
             line = await process.StandardOutput.ReadLineAsync();
@@ -137,7 +137,7 @@ public class LLMProcessRunner : ILLMRunner
         }
         if (!isReady)
         {
-            throw new Exception("LLM process failed to indicate readiness");
+            throw new Exception(" Timeout waiting for FreeLLM process to start");
         }
         _logger.LogInformation($" LLMService Process Started ");
     }
