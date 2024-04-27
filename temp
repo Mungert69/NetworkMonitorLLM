@@ -1,0 +1,177 @@
+/usr/share/dotnet/sdk/8.0.203/Containers/build/Microsoft.NET.Build.Containers.targets(194,5): warning : Microsoft.NET.Build.Containers NuGet package is explicitly referenced. Consider removing the package reference to Microsoft.NET.Build.Containers as it is now part of .NET SDK. [/home/mahadeva/code/NetworkMonitorLLM/NetworkMonitorLLM.csproj]
+2024-04-27 16:20:52 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
+      Public IP address of this service is 213.199.46.193
+2024-04-27 16:20:53 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
+       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.freenetworkmonitor.click .IPAdress = 
+2024-04-27 16:20:53 info: NetworkMonitor.Objects.Repository.RabbitRepo[0]
+       RabbitRepo : ConnectAndSetUp :  Success : RabbitRepo Connected to RabbitMQ serverdevrabbitmq:5672
+2024-04-27 16:20:53 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
+      Public IP address of this service is 213.199.46.193
+2024-04-27 16:20:53 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
+       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.freenetworkmonitor.click .IPAdress = 
+2024-04-27 16:20:53 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+       Rabbit Setup :  Success : Connected to devrabbitmq:5672 . Setup RabbitListener messages were :  RabbitListener DeclareQueues :  Srv-LLMService-llmStartSession  Srv-LLMService-llmUserInput  Srv-LLMService-llmRemoveSession  : Success : Declared all queues  Success : Declared all consumers  RabbitRepo BindChannelToConsumer :  Success :  bound all consumers to queues 
+2024-04-27 16:20:53 info: Microsoft.Hosting.Lifetime[0]
+      Application started. Press Ctrl+C to shut down.
+2024-04-27 16:20:53 info: Microsoft.Hosting.Lifetime[0]
+      Hosting environment: Production
+2024-04-27 16:20:53 info: Microsoft.Hosting.Lifetime[0]
+      Content root path: /home/mahadeva/code/NetworkMonitorLLM
+2024-04-27 16:21:16 fail: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+       Error : Could not find session  to Removed Session .
+2024-04-27 16:21:18 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       LLM Service : Start Process for sessionsId 1d5bcadb-ad97-4321-ba66-d51dc915beec
+2024-04-27 16:21:22 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       LLMService Process Started 
+2024-04-27 16:21:22 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+        LLMService : SendInputAndGetResponse() :
+2024-04-27 16:21:22 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       ProcessLLMOutput(user input) -> <|from|>get_time<|content|>27/04/2024 15:21:18
+2024-04-27 16:21:22 warn: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Start BroadcastAsync() 
+2024-04-27 16:21:57 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       ProcessLLMOutput(call_func) -> {"detail_reponse": false}
+2024-04-27 16:21:57 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       --> Finished LLM Interaction 
+2024-04-27 16:21:57 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+      LLM process started for session 1d5bcadb-ad97-4321-ba66-d51dc915beec
+2024-04-27 16:21:57 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+       Success : LLMService Started Session .
+2024-04-27 16:22:05 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+       Start User Input list hosts
+2024-04-27 16:22:05 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+        LLMService : SendInputAndGetResponse() :
+2024-04-27 16:22:05 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       ProcessLLMOutput(user input) -> <|from|>user<|content|>list hosts
+2024-04-27 16:22:05 warn: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Start BroadcastAsync() 
+2024-04-27 16:22:16 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       ProcessLLMOutput(call_func) -> {"detail_reponse": false}
+2024-04-27 16:22:16 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       --> Finished LLM Interaction 
+2024-04-27 16:22:16 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+      MessageAPI : UserInput :  Processed UserInput :list hosts
+2024-04-27 16:22:17 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+       Start User Input  [{"address" : "test.com", "id" : 1619}]
+2024-04-27 16:22:17 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+        LLMService : SendInputAndGetResponse() :
+2024-04-27 16:22:17 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       ProcessLLMOutput(user input) -> <|from|>get_host_list<|recipient|>all<|content|> [{"address" : "test.com", "id" : 1619}]
+2024-04-27 16:22:17 warn: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Start BroadcastAsync() 
+2024-04-27 16:22:56 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       ProcessLLMOutput(call_func) -> {"dataset_id": 0, "address": "test.com"}
+2024-04-27 16:22:56 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       --> Finished LLM Interaction 
+2024-04-27 16:22:56 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+      MessageAPI : UserInput :  Processed UserInput :<|from|>get_host_list<|recipient|>all<|content|> [{"address" : "test.com", "id" : 1619}]
+2024-04-27 16:22:57 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+       Start User Input  [{"status" : "down", "address" : "test.com"}] 
+2024-04-27 16:22:57 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+        LLMService : SendInputAndGetResponse() :
+2024-04-27 16:22:57 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       ProcessLLMOutput(user input) -> <|from|>get_host_data<|recipient|>all<|content|> [{"status" : "down", "address" : "test.com"}] 
+2024-04-27 16:22:57 warn: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Start BroadcastAsync() 
+2024-04-27 16:23:44 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       ProcessLLMOutput(call_func) -> {"address": "test.com", "endpoint": "icmp", "port": 0, "timeout": 59000, "email": "user@example.com"}
+2024-04-27 16:23:44 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       --> Finished LLM Interaction 
+2024-04-27 16:23:44 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+      MessageAPI : UserInput :  Processed UserInput :<|from|>get_host_data<|recipient|>all<|content|> [{"status" : "down", "address" : "test.com"}] 
+2024-04-27 16:23:44 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+       Start User Input Error - The standard Network Monitor plugin has a host limit of 5 To allow free use for everyone . You can either remove or hide hosts, or login Free Network Monitor to monitor more hosts for free.
+2024-04-27 16:23:44 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+        LLMService : SendInputAndGetResponse() :
+2024-04-27 16:23:44 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       ProcessLLMOutput(user input) -> <|from|>add_host<|recipient|>all<|content|>Error - The standard Network Monitor plugin has a host limit of 5 To allow free use for everyone . You can either remove or hide hosts, or login Free Network Monitor to monitor more hosts for free.
+2024-04-27 16:23:44 warn: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Start BroadcastAsync() 
+2024-04-27 16:24:26 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       --> Finished LLM Interaction 
+2024-04-27 16:24:26 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+      MessageAPI : UserInput :  Processed UserInput :<|from|>add_host<|recipient|>all<|content|>Error - The standard Network Monitor plugin has a host limit of 5 To allow free use for everyone . You can either remove or hide hosts, or login Free Network Monitor to monitor more hosts for free.
+2024-04-27 16:24:48 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       LLM Service : Remove Process for sessionsId 1d5bcadb-ad97-4321-ba66-d51dc915beec
+2024-04-27 16:24:48 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+      LLM process removed for session 1d5bcadb-ad97-4321-ba66-d51dc915beec
+2024-04-27 16:24:48 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+       Success : LLMService Removed Session .
+2024-04-27 16:24:55 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       LLM Service : Start Process for sessionsId 40a7f704-dad1-45f1-8a4a-f7a885e09eee
+2024-04-27 16:24:56 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       LLMService Process Started 
+2024-04-27 16:24:56 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+        LLMService : SendInputAndGetResponse() :
+2024-04-27 16:24:56 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       ProcessLLMOutput(user input) -> <|from|>get_time<|content|>27/04/2024 15:24:55
+2024-04-27 16:24:56 warn: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Start BroadcastAsync() 
+2024-04-27 16:25:43 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       ProcessLLMOutput(call_func) -> {"detail_reponse": false}
+2024-04-27 16:25:43 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       --> Finished LLM Interaction 
+2024-04-27 16:25:43 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+      LLM process started for session 40a7f704-dad1-45f1-8a4a-f7a885e09eee
+2024-04-27 16:25:43 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+       Success : LLMService Started Session .
+2024-04-27 16:26:07 info: NetworkMonitor.LLM.Services.OpenAIRunner[0]
+      Started session 6a11c25f-2930-40bb-804b-36cce2da458f at 27/04/2024 15:26:07.
+2024-04-27 16:26:07 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+       Success : LLMService Started Session .
+2024-04-27 16:26:08 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       LLM Service : Remove Process for sessionsId 40a7f704-dad1-45f1-8a4a-f7a885e09eee
+2024-04-27 16:26:08 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+      LLM process removed for session 40a7f704-dad1-45f1-8a4a-f7a885e09eee
+2024-04-27 16:26:08 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+       Success : LLMService Removed Session .
+2024-04-27 16:26:15 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       LLM Service : Start Process for sessionsId f974c4b2-ec26-4a59-9443-a0d0ed9f24e8
+2024-04-27 16:26:15 warn: NetworkMonitor.LLM.Services.OpenAIRunner[0]
+      Attempted to remove non-existent session 6a11c25f-2930-40bb-804b-36cce2da458f.
+2024-04-27 16:26:15 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+       Success : LLMService Removed Session .
+2024-04-27 16:26:17 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       LLMService Process Started 
+2024-04-27 16:26:17 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+        LLMService : SendInputAndGetResponse() :
+2024-04-27 16:26:17 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       ProcessLLMOutput(user input) -> <|from|>get_time<|content|>27/04/2024 15:26:15
+2024-04-27 16:26:17 warn: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Start BroadcastAsync() 
+2024-04-27 16:26:56 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       ProcessLLMOutput(call_func) -> {"detail_reponse": false}
+2024-04-27 16:26:56 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       --> Finished LLM Interaction 
+2024-04-27 16:26:56 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+      LLM process started for session f974c4b2-ec26-4a59-9443-a0d0ed9f24e8
+2024-04-27 16:26:56 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+       Success : LLMService Started Session .
+2024-04-27 16:56:15 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       LLM Service : Remove Process for sessionsId f974c4b2-ec26-4a59-9443-a0d0ed9f24e8
+2024-04-27 16:56:15 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+      LLM process removed for session f974c4b2-ec26-4a59-9443-a0d0ed9f24e8
+2024-04-27 16:56:15 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       LLM Service : terminated session f974c4b2-ec26-4a59-9443-a0d0ed9f24e8
+2024-04-27 17:12:20 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+       Success : LLMService Removed Session .
+2024-04-27 17:12:20 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       LLM Service : Start Process for sessionsId 7ab28bbe-4f34-4bee-a79a-413233077c18
+2024-04-27 17:12:24 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       LLMService Process Started 
+2024-04-27 17:12:24 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+        LLMService : SendInputAndGetResponse() :
+2024-04-27 17:12:24 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       ProcessLLMOutput(user input) -> <|from|>get_time<|content|>27/04/2024 16:12:20
+2024-04-27 17:12:24 warn: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       Start BroadcastAsync() 
+2024-04-27 17:13:00 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       ProcessLLMOutput(call_func) -> {"detail_reponse": false}
+2024-04-27 17:13:00 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+       --> Finished LLM Interaction 
+2024-04-27 17:13:00 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
+      LLM process started for session 7ab28bbe-4f34-4bee-a79a-413233077c18
+2024-04-27 17:13:00 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
+       Success : LLMService Started Session .
+2024-04-27 17:15:35 info: Microsoft.Hosting.Lifetime[0]
+      Application is shutting down...

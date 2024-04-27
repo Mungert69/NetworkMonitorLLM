@@ -104,8 +104,8 @@ public class OpenAIRunner : ILLMRunner
                 Messages = history,
                 Tools = _tools, // Your pre-defined tools
                 ToolChoice = ToolChoice.Auto,
-                MaxTokens = 100,
-                Model = Models.Gpt_3_5_Turbo_1106
+                MaxTokens = 200,
+                Model = Models.Gpt_3_5_Turbo_0125
             });
 
             if (completionResult.Successful)
