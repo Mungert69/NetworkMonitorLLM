@@ -28,8 +28,7 @@ public class OpenAIRunner : ILLMRunner
     private OpenAIService _openAiService; // Interface to interact with OpenAI
     private List<ToolDefinition> _tools;
     private ConcurrentDictionary<string, DateTime> _activeSessions;
-    private ConcurrentDictionary<string, int> _tokenUsage = new ConcurrentDictionary<string, int>();
-    private const int TokenLimit = 100;  // Set your token limit here
+    
     private SemaphoreSlim _openAIRunnerSemaphore;
     private ConcurrentDictionary<string, List<ChatMessage>> _sessionHistories = new ConcurrentDictionary<string, List<ChatMessage>>();
 
@@ -42,6 +41,7 @@ public class OpenAIRunner : ILLMRunner
         _tools = ToolsBuilder.Tools;
         _activeSessions = new ConcurrentDictionary<string, DateTime>();
         _sessionHistories = new ConcurrentDictionary<string, List<ChatMessage>>();
+       
     }
 
     public async Task StartProcess(string sessionId, DateTime currentTime)
@@ -85,10 +85,6 @@ public class OpenAIRunner : ILLMRunner
             string responseChoiceStr = "";
             // Retrieve or initialize the conversation history
             var history = _sessionHistories.GetOrAdd(serviceObj.SessionId, new List<ChatMessage>());
-            var currentTokenCount = _tokenUsage.GetOrAdd(serviceObj.SessionId, 0);
-            // Calculate tokens for the new message
-
-
 
             var chatMessage = new ChatMessage();
             if (serviceObj.IsFunctionCallResponse)
@@ -100,13 +96,7 @@ public class OpenAIRunner : ILLMRunner
 
             }
             else chatMessage.Role = "user";
-            // Check token usage and manage history accordingly
-            if (currentTokenCount >= TokenLimit)
-            {
-                responseServiceObj.LlmMessage = "OpenAI usage quota used. You can either upgrade your subscription to get more tokens or switch to FreeLLM";
-                await _responseProcessor.ProcessLLMOutput(responseServiceObj);
-                return;
-            }
+          
             chatMessage.Content = serviceObj.UserInput;
             history.Add(chatMessage);
             var completionResult = await _openAiService.ChatCompletion.CreateCompletion(new ChatCompletionCreateRequest
@@ -148,13 +138,12 @@ public class OpenAIRunner : ILLMRunner
                 }
 
                 responseServiceObj.LlmMessage = responseChoiceStr + "\n";
-
                 // Send response back to client or system
                 await _responseProcessor.ProcessLLMOutput(responseServiceObj);
                 responseServiceObj.LlmMessage = "<end-of-line>";
+                responseServiceObj.TokensUsed = completionResult.Usage.TotalTokens;
                 await _responseProcessor.ProcessLLMOutput(responseServiceObj);
-                int messageTokens = CalculateTokens(responseChoiceStr);
-                _tokenUsage[serviceObj.SessionId] += messageTokens;
+              
             }
             else
             {
