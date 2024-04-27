@@ -18,6 +18,7 @@ using Microsoft.Extensions.Logging;
 using NetworkMonitor.Objects.ServiceMessage;
 using NetworkMonitor.Objects;
 using NetworkMonitor.Utils.Helpers;
+using Microsoft.IdentityModel.Tokens;
 
 namespace NetworkMonitor.LLM.Services;
 
@@ -50,7 +51,7 @@ public class OpenAIRunner : ILLMRunner
         {
             throw new InvalidOperationException("Session already exists.");
         }
-
+            
         _logger.LogInformation($"Started session {sessionId} at {currentTime}.");
         // Here, you might want to send an initial message or perform other setup tasks.
     }
@@ -84,18 +85,23 @@ public class OpenAIRunner : ILLMRunner
 
             string responseChoiceStr = "";
             // Retrieve or initialize the conversation history
-            var history = _sessionHistories.GetOrAdd(serviceObj.SessionId, new List<ChatMessage>());
+            var history = _sessionHistories.GetOrAdd(serviceObj.SessionId, ToolsBuilder.GetSystemPrompt(_activeSessions[serviceObj.SessionId].ToString()));
 
             var chatMessage = new ChatMessage();
             if (serviceObj.IsFunctionCallResponse)
             {
                 chatMessage.Role = "function";
                 chatMessage.Name = serviceObj.FunctionName;
+                 responseServiceObj.LlmMessage = "Function Response: "+serviceObj.UserInput+"\n\n";
+                await _responseProcessor.ProcessLLMOutput(responseServiceObj);
                 responseServiceObj.LlmMessage = "</functioncall-complete>";
                 await _responseProcessor.ProcessLLMOutput(responseServiceObj);
 
             }
-            else chatMessage.Role = "user";
+            else { chatMessage.Role = "user";
+                responseServiceObj.LlmMessage = "User: " + serviceObj.UserInput + "\n\n";
+            await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+             }
           
             chatMessage.Content = serviceObj.UserInput;
             history.Add(chatMessage);
@@ -116,7 +122,7 @@ public class OpenAIRunner : ILLMRunner
 
                 // Process any function calls
                 if (choice.Message.ToolCalls != null)
-                {
+                {  
                     responseServiceObj.UserInput = serviceObj.UserInput;
                     responseServiceObj.LlmMessage = "</functioncall>";
                     await _responseProcessor.ProcessLLMOutput(responseServiceObj);
@@ -134,12 +140,16 @@ public class OpenAIRunner : ILLMRunner
                     functionResponseServiceObj.FunctionName = fn.Name;
 
                     await _responseProcessor.ProcessFunctionCall(functionResponseServiceObj);
+                    responseServiceObj.LlmMessage = "Function Call: "+json+"\n";
+                await _responseProcessor.ProcessLLMOuputInChunks(responseServiceObj);
                     responseChoiceStr = "";
                 }
 
-                responseServiceObj.LlmMessage = responseChoiceStr + "\n";
-                // Send response back to client or system
-                await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+                if (!responseChoiceStr.IsNullOrEmpty())
+                {
+                    responseServiceObj.LlmMessage = "Assistant: " + responseChoiceStr + "\n\n";
+                    await _responseProcessor.ProcessLLMOuputInChunks(responseServiceObj);
+                }
                 responseServiceObj.LlmMessage = "<end-of-line>";
                 responseServiceObj.TokensUsed = completionResult.Usage.TotalTokens;
                 await _responseProcessor.ProcessLLMOutput(responseServiceObj);

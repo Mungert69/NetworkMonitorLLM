@@ -11,7 +11,7 @@ using Microsoft.Extensions.Logging;
 using NetworkMonitor.Objects;
 using NetworkMonitor.Objects.ServiceMessage;
 using NetworkMonitor.Objects.Repository;
-using NetworkMonitor.Utils.Helpers;
+using NetworkMonitor.Utils;
 
 
 namespace NetworkMonitor.LLM.Services;
@@ -31,18 +31,18 @@ public class LLMService : ILLMService
     private readonly IOpenAIRunnerFactory _openAIRunnerFactory;
     private IServiceProvider _serviceProvider;
     private IRabbitRepo _rabbitRepo;
-     private SemaphoreSlim _processRunnerSemaphore = new SemaphoreSlim(1);
-     private SemaphoreSlim _openAIRunnerSemaphore = new SemaphoreSlim(10);
-   
+    private SemaphoreSlim _processRunnerSemaphore = new SemaphoreSlim(1);
+    private SemaphoreSlim _openAIRunnerSemaphore = new SemaphoreSlim(10);
+
 
     private readonly ConcurrentDictionary<string, Session> _sessions = new ConcurrentDictionary<string, Session>();
     // private readonly ILLMResponseProcessor _responseProcessor;
 
-    public LLMService(ILogger<LLMService> logger,  IRabbitRepo rabbitRepo, IServiceProvider serviceProvider)
+    public LLMService(ILogger<LLMService> logger, IRabbitRepo rabbitRepo, IServiceProvider serviceProvider)
     {
         _processRunnerFactory = new LLMProcessRunnerFactory();
         _openAIRunnerFactory = new OpenAIRunnerFactory();
-        _serviceProvider = serviceProvider;  
+        _serviceProvider = serviceProvider;
         _rabbitRepo = rabbitRepo;
         _logger = logger;
     }
@@ -123,7 +123,7 @@ public class LLMService : ILLMService
     public async Task<ResultObj> SendInputAndGetResponse(LLMServiceObj llmServiceObj)
     {
         var result = new ResultObj();
-        Session? session=null;
+        Session? session = null;
 
         if (llmServiceObj.SessionId == null || !_sessions.TryGetValue(llmServiceObj.SessionId, out session))
         {
@@ -168,10 +168,11 @@ public class LLMService : ILLMService
 public interface ILLMResponseProcessor
 {
     Task ProcessLLMOutput(LLMServiceObj serviceObj);
+    Task ProcessLLMOuputInChunks(LLMServiceObj serviceObj);
     Task ProcessFunctionCall(LLMServiceObj serviceObj);
     Task ProcessEnd(LLMServiceObj serviceObj);
     bool IsFunctionCallResponse(string input);
-    bool SendOutput{get;set;}
+    bool SendOutput { get; set; }
 }
 
 public class LLMResponseProcessor : ILLMResponseProcessor
@@ -194,6 +195,23 @@ public class LLMResponseProcessor : ILLMResponseProcessor
         if (_sendOutput) await _rabbitRepo.PublishAsync<LLMServiceObj>("llmServiceMessage", serviceObj);
         //return Task.CompletedTask;
     }
+
+    public async Task ProcessLLMOuputInChunks(LLMServiceObj serviceObj)
+    {
+
+        char[] delimiters = { ' ', ',', '!', '?', '{', '}', '.', ':' };
+        List<string> splitResult = StringUtils.SplitAndPreserveDelimiters(serviceObj.LlmMessage, delimiters);
+
+        foreach (string chunk in splitResult)
+        {
+            serviceObj.LlmMessage = chunk;
+            await ProcessLLMOutput(serviceObj);
+            await Task.Delay(100); // Pause between sentences 
+        }
+
+    }
+
+    
 
     public async Task ProcessEnd(LLMServiceObj serviceObj)
     {
