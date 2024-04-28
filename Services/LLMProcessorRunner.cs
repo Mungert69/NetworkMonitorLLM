@@ -99,7 +99,13 @@ public class LLMProcessRunner : ILLMRunner
     {
         if (!_processes.TryGetValue(sessionId, out var process))
             throw new Exception("Process is not running for this session");
-
+        // Stop broadcaster if running.
+        TokenBroadcaster tokenBroadcaster;
+        if (_tokenBroadcasters.TryGetValue(sessionId, out tokenBroadcaster))
+        {
+            await tokenBroadcaster.ReInit(sessionId);
+            _tokenBroadcasters.TryRemove(sessionId, out _);
+        }
         _logger.LogInformation($" LLM Service : Remove Process for sessionsId {sessionId}");
 
         try

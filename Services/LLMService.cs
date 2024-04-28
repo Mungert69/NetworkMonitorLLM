@@ -19,7 +19,7 @@ namespace NetworkMonitor.LLM.Services;
 public interface ILLMService
 {
     Task<LLMServiceObj> StartProcess(LLMServiceObj llmServiceObj);
-    LLMServiceObj RemoveProcess(LLMServiceObj llmServiceObj);
+    Task<LLMServiceObj> RemoveProcess(LLMServiceObj llmServiceObj);
     Task<ResultObj> SendInputAndGetResponse(LLMServiceObj serviceObj);
 }
 
@@ -90,15 +90,17 @@ public class LLMService : ILLMService
         return llmServiceObj;
     }
 
-    public LLMServiceObj RemoveProcess(LLMServiceObj llmServiceObj)
+    public async Task<LLMServiceObj> RemoveProcess(LLMServiceObj llmServiceObj)
     {
         try
         {
             if (_sessions.TryGetValue(llmServiceObj.SessionId, out var session))
             {
-                session.Runner.RemoveProcess(llmServiceObj.SessionId);
-                _sessions[llmServiceObj.SessionId] = new Session();
-                llmServiceObj.ResultMessage = " Success : LLMService Removed Session .";
+                await session.Runner.RemoveProcess(llmServiceObj.SessionId);
+                _sessions.TryRemove(llmServiceObj.SessionId,out _);
+                  await _rabbitRepo.PublishAsync<LLMServiceObj>("llmSessionEnded", llmServiceObj);
+       
+                llmServiceObj.ResultMessage = " Success : LLMService Removed Session and sent LLM Session Ended message.";
                 llmServiceObj.ResultSuccess = true;
             }
             else
@@ -216,7 +218,7 @@ public class LLMResponseProcessor : ILLMResponseProcessor
     public async Task ProcessEnd(LLMServiceObj serviceObj)
     {
         //Console.WriteLine(serviceObj.LlmMessage);
-        await _rabbitRepo.PublishAsync<LLMServiceObj>("llmServiceEnd", serviceObj);
+        await _rabbitRepo.PublishAsync<LLMServiceObj>("llmServiceTimeout", serviceObj);
         //return Task.CompletedTask;
     }
 

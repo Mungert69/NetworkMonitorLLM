@@ -114,11 +114,11 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
                     break;
                 case "llmRemoveSession":
                     rabbitMQObj.ConnectChannel.BasicQos(prefetchSize: 0, prefetchCount: 1, global: false);
-                    rabbitMQObj.Consumer.Received += (model, ea) =>
+                    rabbitMQObj.Consumer.Received += async (model, ea) =>
                 {
                     try
                     {
-                        result = RemoveSession(ConvertToObject<LLMServiceObj>(model, ea));
+                        result = await RemoveSession(ConvertToObject<LLMServiceObj>(model, ea));
                         rabbitMQObj.ConnectChannel.BasicAck(ea.DeliveryTag, false);
                     }
                     catch (Exception ex)
@@ -188,7 +188,7 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
         return result;
     }
 
-    public ResultObj RemoveSession(LLMServiceObj? llmServiceObj)
+    public async Task<ResultObj> RemoveSession(LLMServiceObj? llmServiceObj)
     {
         var result = new ResultObj();
         result.Success = false;
@@ -200,7 +200,7 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
 
         try
         {
-            llmServiceObj = _llmService.RemoveProcess(llmServiceObj);
+            llmServiceObj = await _llmService.RemoveProcess(llmServiceObj);
             result.Message = llmServiceObj.ResultMessage;
             result.Success = llmServiceObj.ResultSuccess;
 
