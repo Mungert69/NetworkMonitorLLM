@@ -129,7 +129,7 @@ public class LLMProcessRunner : ILLMRunner
         while (!cancellationTokenSource.IsCancellationRequested)
         {
             line = await process.StandardOutput.ReadLineAsync();
-            if (line.StartsWith("<|content|>{}"))
+            if (line.StartsWith("<|content|>A chat"))
             {
                 isReady = true;
                 break;
