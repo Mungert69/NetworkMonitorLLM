@@ -93,7 +93,7 @@ public class LLMProcessRunner : ILLMRunner
             var user = new UserInfo();
             input = PrintPropertiesAsJson.PrintUserInfoPropertiesWithDate(user, serviceObj.IsUserLoggedIn, currentTime.ToString("yyyy-MM-ddTHH:mm:ss"), false);
         }
-        serviceObj.UserInput = userInput;
+        serviceObj.UserInput = userInput+input;
         serviceObj.IsFunctionCallResponse = false;
         _sendOutput = false;
         await SendInputAndGetResponse(serviceObj);
