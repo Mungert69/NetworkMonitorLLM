@@ -9,21 +9,25 @@ using System;
 using System.Collections.Generic;
 
 namespace NetworkMonitor.LLM.Services;
-public class ToolsBuilder {
+public class ToolsBuilder
+{
     private static FunctionDefinition fn_add_host = new FunctionDefinitionBuilder("add_host", "Add a new host to be monitored")
-        .AddParameter("address", PropertyDefinition.DefineString("The host address ,required"))
+        .AddParameter("detail_response", PropertyDefinition.DefineBoolean("Include full details in response ,optional"))
+       .AddParameter("address", PropertyDefinition.DefineString("The host address ,required"))
         .AddParameter("endpoint", PropertyDefinition.DefineEnum(
             new List<string> { "quantum", "http", "https", "httphtml", "icmp", "dns", "smtp", "rawconnect" },
             "The endpoint type to monitor ,optional"))
         .AddParameter("port", PropertyDefinition.DefineNumber("Service port to monitor ,optional"))
         .AddParameter("timeout", PropertyDefinition.DefineNumber("Timeout for connection in milliseconds ,optional"))
         .AddParameter("email", PropertyDefinition.DefineString("Email for alerts, optional if logged in, required if not"))
+        .AddParameter("agent_location", PropertyDefinition.DefineString("The location of the agent monitoring this host, optional. If this is left blank an agent_location will be assigned"))
         .Validate()
         .Build();
 
 
     private static FunctionDefinition fn_edit_host = new FunctionDefinitionBuilder("edit_host", "Edit a host's monitoring configuration")
-        .AddParameter("auth_key", PropertyDefinition.DefineString("Authentication key for unauthenticated edits ,optional"))
+         .AddParameter("detail_response", PropertyDefinition.DefineBoolean("Include full details in response ,optional"))
+       .AddParameter("auth_key", PropertyDefinition.DefineString("Authentication key for unauthenticated edits ,optional"))
         .AddParameter("id", PropertyDefinition.DefineNumber("Host ID for identification ,optional"))
         .AddParameter("enabled", PropertyDefinition.DefineBoolean("Host monitoring status ,optional"))
         .AddParameter("address", PropertyDefinition.DefineString("Host address ,optional"))
@@ -33,11 +37,13 @@ public class ToolsBuilder {
         .AddParameter("port", PropertyDefinition.DefineNumber("Service port to monitor ,optional"))
         .AddParameter("timeout", PropertyDefinition.DefineNumber("Timeout for connection in milliseconds ,optional"))
         .AddParameter("hidden", PropertyDefinition.DefineBoolean("Hide the host from monitoring view ,optional"))
+         .AddParameter("agent_location", PropertyDefinition.DefineString("The location of the agent monitoring this host, optional"))
         .Validate()
         .Build();
 
     private static FunctionDefinition fn_get_host_data = new FunctionDefinitionBuilder("get_host_data", "Retrieve monitoring data for a host")
-        .AddParameter("dataset_id", PropertyDefinition.DefineNumber("Dataset ID, 0 for latest ,optional"))
+         .AddParameter("detail_response", PropertyDefinition.DefineBoolean("Include full details in response ,optional"))
+       .AddParameter("dataset_id", PropertyDefinition.DefineNumber("Dataset ID, 0 for latest ,optional"))
         .AddParameter("id", PropertyDefinition.DefineNumber("The host ID ,optional"))
         .AddParameter("address", PropertyDefinition.DefineString("The host address ,optional"))
         .AddParameter("email", PropertyDefinition.DefineString("Email associated with hosts ,optional"))
@@ -49,6 +55,7 @@ public class ToolsBuilder {
         .AddParameter("date_start", PropertyDefinition.DefineString("Start date in ISO 8601 ,optional"))
         .AddParameter("date_end", PropertyDefinition.DefineString("End date in ISO 8601 ,optional"))
         .AddParameter("page_number", PropertyDefinition.DefineNumber("Page number for pagination (optional"))
+         .AddParameter("agent_location", PropertyDefinition.DefineString("The location of the agent monitoring this host, optional"))
         .Validate()
         .Build();
 
@@ -62,12 +69,17 @@ public class ToolsBuilder {
         .AddParameter("port", PropertyDefinition.DefineNumber("Filter by port ,optional"))
         .AddParameter("endpoint", PropertyDefinition.DefineString("Filter by endpoint type ,optional"))
         .AddParameter("page_number", PropertyDefinition.DefineNumber("Page number for pagination ,optional"))
+         .AddParameter("agent_location", PropertyDefinition.DefineString("The location of the agent monitoring this host, optional"))
         .Validate()
         .Build();
 
     private static FunctionDefinition fn_get_time = new FunctionDefinitionBuilder("get_time", "Retrieve the users time")
     .Validate()
     .Build();
+
+    private static FunctionDefinition fn_get_agents = new FunctionDefinitionBuilder("get_hosts", "Retrieve a list of monitoring agents")
+   .Validate()
+   .Build();
 
 
     public static List<ToolDefinition> Tools = new List<ToolDefinition>()
@@ -77,13 +89,15 @@ public class ToolsBuilder {
             new ToolDefinition() { Function = fn_get_host_data, Type="function"  },
             new ToolDefinition() { Function = fn_get_host_list, Type="function"  },
              new ToolDefinition() { Function = fn_get_time, Type="function"  },
+               new ToolDefinition() { Function = fn_get_agents, Type="function"  },
         };
 
-    public static List<ChatMessage> GetSystemPrompt(string currentTime)  {
+    public static List<ChatMessage> GetSystemPrompt(string currentTime)
+    {
         var chatMessage = new ChatMessage()
         {
             Role = "system",
-            Content = "You are a network monitoring assistant. Use the tools where necessary to assist the user. The users time is " + currentTime
+            Content = "You are a network monitoring assistant. Use the tools where necessary to assist the user. Your name is TurboLLM and you are faster than FreeLLM. The users time is " + currentTime
         };
         var chatMessages = new List<ChatMessage>();
         chatMessages.Add(chatMessage);
