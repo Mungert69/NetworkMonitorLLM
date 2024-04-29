@@ -45,15 +45,15 @@ public class OpenAIRunner : ILLMRunner
        
     }
 
-    public async Task StartProcess(string sessionId, DateTime currentTime, bool isUserLoggedIn)
+    public async Task StartProcess(LLMServiceObj serviceObj, DateTime currentTime)
     {
-        if (!_activeSessions.TryAdd(sessionId, currentTime))
+        if (!_activeSessions.TryAdd(serviceObj.SessionId, currentTime))
         {
             throw new InvalidOperationException("Session already exists.");
         }
-        _sessionHistories.GetOrAdd(sessionId, ToolsBuilder.GetSystemPrompt(_activeSessions[sessionId].ToString(), isUserLoggedIn));
+        _sessionHistories.GetOrAdd(serviceObj.SessionId, ToolsBuilder.GetSystemPrompt(_activeSessions[serviceObj.SessionId].ToString("yyyy-MM-ddTHH:mm:ss"), serviceObj));
 
-        _logger.LogInformation($"Started session {sessionId} at {currentTime}.");
+        _logger.LogInformation($"Started session {serviceObj.SessionId} at {currentTime}.");
         // Here, you might want to send an initial message or perform other setup tasks.
     }
 

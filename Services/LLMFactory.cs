@@ -16,7 +16,7 @@ namespace NetworkMonitor.LLM.Services;
 // LLMProcessRunner.cs
 public interface ILLMRunner
 {
-    Task StartProcess(string sessionId, DateTime currentTime, bool isUserLoggedIn);
+    Task StartProcess(LLMServiceObj serviceObj, DateTime currentTime);
     Task SendInputAndGetResponse(LLMServiceObj serviceObj);
      Task RemoveProcess(string sessionId);
 }

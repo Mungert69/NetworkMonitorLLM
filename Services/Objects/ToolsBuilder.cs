@@ -1,3 +1,4 @@
+using NetworkMonitor.Objects.ServiceMessage;
 using NetworkMonitor.Utils;
 using OpenAI;
 using OpenAI.Builders;
@@ -74,11 +75,13 @@ public class ToolsBuilder
         .Validate()
         .Build();
 
-    private static FunctionDefinition fn_get_time = new FunctionDefinitionBuilder("get_time", "Retrieve the users time")
+    private static FunctionDefinition fn_get_user_info = new FunctionDefinitionBuilder("get_user_info", "Get information about the user")
+    .AddParameter("detail_response", PropertyDefinition.DefineBoolean("Include full details in response ,optional"))     
     .Validate()
     .Build();
 
-    private static FunctionDefinition fn_get_agents = new FunctionDefinitionBuilder("get_hosts", "Retrieve a list of monitoring agents")
+    private static FunctionDefinition fn_get_agents = new FunctionDefinitionBuilder("get_agents", "Retrieve a list of monitoring agent details")
+   .AddParameter("detail_response", PropertyDefinition.DefineBoolean("Include full details in response ,optional"))
    .Validate()
    .Build();
 
@@ -89,16 +92,16 @@ public class ToolsBuilder
             new ToolDefinition() { Function = fn_edit_host, Type="function"  },
             new ToolDefinition() { Function = fn_get_host_data, Type="function"  },
             new ToolDefinition() { Function = fn_get_host_list, Type="function"  },
-             new ToolDefinition() { Function = fn_get_time, Type="function"  },
+             new ToolDefinition() { Function = fn_get_user_info, Type="function"  },
                new ToolDefinition() { Function = fn_get_agents, Type="function"  },
         };
 
-    public static List<ChatMessage> GetSystemPrompt(string currentTime, bool isUserLoggedIn)
+    public static List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj)
     {
         string content = "You are a network monitoring assistant. Use the tools where necessary to assist the user. Your name is TurboLLM and you are faster than FreeLLM. "; 
   
-         if (isUserLoggedIn) content += $"The user logged in at {currentTime}";
-        else { content += $"The user is not logged in, the time is {currentTime}";}
+         if (serviceObj.IsUserLoggedIn) content += $"The user logged in at {currentTime} with email {serviceObj.UserInfo.Email}";
+        else { content += $"The user is not logged in, the time is {currentTime}, ask the user for an email to add hosts etc.";}
        
         var chatMessage = new ChatMessage()
         {

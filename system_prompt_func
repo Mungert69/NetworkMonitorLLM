@@ -15,7 +15,7 @@ namespace functions {
     port: number,
     // The time to wait for a timeout in milliseconds,optional. Default is 59000.
     timeout: number,
-    // When the host is down alerts are sent to this email address. If the user is logged in their login email will be used. If they are not logged in then they must supply an email
+    // Do not use this field if the user IS LOGGED IN. Their login email will be used and this field will be ignored. If the user is NOT LOGGED IN then ask for an email. Alerts are sent to the users email
     email: string,
     // The location of the agent monitoring this host, optional. If this is left blank an agent_location will be assigned
     agent_location
@@ -107,8 +107,10 @@ namespace functions {
     detail_response: boolean,
   }) => any;
 
-  // Get the user time
-  type get_time = (_: {
+  // Get information about the user
+  type get_user_info = (_: {
+        // Will this function return all user details. Set to false if only basic info is required
+        detail_response: boolean,
   }) => any;
 }
 <|from|>system
