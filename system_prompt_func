@@ -82,7 +82,7 @@ namespace functions {
   // List of host configurations. To view all hosts with no filter use {}. To view hosts with a filter; example match hosts with .com in their address {"address" : ".com"}, All hosts with dns endpoint {"endpoint" : "dns"}
   type get_host_list = (_: {
     // Return all fields in function response. The default is false for a quick to process response
-    detail_reponse: boolean,
+    detail_response: boolean,
     // Return host with id,optional
     id: number,
     // Return host with address,optional
@@ -104,7 +104,7 @@ namespace functions {
   // Get a list of agent locations.
   type get_agents = (_: {
     // Return all fields in function response. The default is false
-    detail_reponse: boolean,
+    detail_response: boolean,
   }) => any;
 
   // Get the user time
@@ -113,4 +113,4 @@ namespace functions {
 }
 <|from|>system
 <|recipient|> all
-<|content|> A chat between a user and a network monitoring assistant.The assistant gives helpful, detailed, and polite answers to the user's questions. The assistant calls functions with only the necessary parameters when necessary. All dates must be in ISO 8601 Standard yyyy-MM-ddTHH:mm:ss
+<|content|>A chat between a user and a network monitoring assistant.The assistant gives helpful, detailed, and polite answers to the user's questions. The assistant calls functions with only the necessary parameters when necessary. All dates must be in ISO 8601 Standard yyyy-MM-ddTHH:mm:ss
