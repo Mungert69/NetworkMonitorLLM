@@ -105,7 +105,7 @@ public class LLMService : ILLMService
             }
             else
             {
-                llmServiceObj.ResultMessage = $" Error : Could not find session {llmServiceObj.SessionId} to Removed Session .";
+                llmServiceObj.ResultMessage = $" Error : Could not find session {llmServiceObj.SessionId} to remove the process .";
                 llmServiceObj.ResultSuccess = false;
             }
 

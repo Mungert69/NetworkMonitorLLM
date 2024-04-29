@@ -46,7 +46,7 @@ public class LLMProcessRunner : ILLMRunner
         foreach (var sessionId in sessionsToTerminate)
         {
             await RemoveProcess(sessionId);
-            await _responseProcessor.ProcessEnd(new LLMServiceObj() { SessionId = sessionId, LlmMessage = "Close: Session has timeout. Refresh page to start session again." });
+            await _responseProcessor.ProcessEnd(new LLMServiceObj() { SessionId = sessionId, LlmMessage = "Close: Session has timed out. Reload Assistant to start session again." });
             _logger.LogInformation($" LLM Service : terminated session {sessionId}");
 
         }
@@ -55,7 +55,7 @@ public class LLMProcessRunner : ILLMRunner
     public void SetStartInfo(ProcessStartInfo startInfo, MLParams mlParams)
     {
         startInfo.FileName = $"{mlParams.LlmModelPath}llama.cpp/main";
-        startInfo.Arguments = $"-c 2000 -n 6000 -b 224 -m {mlParams.LlmModelPath + mlParams.LlmModelFileName}  --prompt-cache {mlParams.LlmModelPath + mlParams.LlmContextFileName} --prompt-cache-ro  -f {mlParams.LlmModelPath + mlParams.LlmSystemPrompt}  -ins -r \"<|stop|>\" --keep -1 --temp 0 -t {mlParams.LlmThreads}";
+        startInfo.Arguments = $"-c 2500 -n 6000 -b 224 -m {mlParams.LlmModelPath + mlParams.LlmModelFileName}  --prompt-cache {mlParams.LlmModelPath + mlParams.LlmContextFileName} --prompt-cache-ro  -f {mlParams.LlmModelPath + mlParams.LlmSystemPrompt}  -ins -r \"<|stop|>\" --keep -1 --temp 0 -t {mlParams.LlmThreads}";
         startInfo.UseShellExecute = false;
         startInfo.RedirectStandardInput = true;
         startInfo.RedirectStandardOutput = true;
