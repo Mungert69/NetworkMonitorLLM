@@ -61,7 +61,7 @@ public class LLMProcessRunner : ILLMRunner
         startInfo.RedirectStandardOutput = true;
         startInfo.CreateNoWindow = true;
     }
-    public async Task StartProcess(string sessionId, DateTime currentTime)
+    public async Task StartProcess(string sessionId, DateTime currentTime, bool isUserLoggedIn)
     {
 
         await _processRunnerSemaphore.WaitAsync(); // Wait to enter the semaphore
@@ -87,7 +87,9 @@ public class LLMProcessRunner : ILLMRunner
         {
             _processRunnerSemaphore.Release(); // Release the semaphore
         }
-        string userInput = $"<|from|>get_time<|content|>{currentTime.ToString()}";
+        string userInput = $"<|from|>get_time<|content|> ";
+        if (isUserLoggedIn) userInput += $"The user logged in at {currentTime.ToString()}";
+        else { userInput += $"The user is not logged in, the time is {currentTime.ToString()}";}
         var serviceObj = new LLMServiceObj() { SessionId = sessionId, UserInput = userInput, IsFunctionCallResponse = false };
         _sendOutput = false;
         await SendInputAndGetResponse(serviceObj);

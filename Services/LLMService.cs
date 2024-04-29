@@ -70,7 +70,7 @@ public class LLMService : ILLMService
                     throw new ArgumentException($"Invalid runner type: {llmServiceObj.LLMRunnerType}");
             }
 
-            await runner.StartProcess(llmServiceObj.SessionId, usersCurrentTime);
+            await runner.StartProcess(llmServiceObj.SessionId, usersCurrentTime, llmServiceObj.IsUserLoggedIn);
             _sessions[llmServiceObj.SessionId] = new Session { Runner = runner };
             llmServiceObj.ResultMessage = " Success : LLMService Started Session .";
             llmServiceObj.ResultSuccess = true;

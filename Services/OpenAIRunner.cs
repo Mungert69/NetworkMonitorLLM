@@ -45,13 +45,14 @@ public class OpenAIRunner : ILLMRunner
        
     }
 
-    public async Task StartProcess(string sessionId, DateTime currentTime)
+    public async Task StartProcess(string sessionId, DateTime currentTime, bool isUserLoggedIn)
     {
         if (!_activeSessions.TryAdd(sessionId, currentTime))
         {
             throw new InvalidOperationException("Session already exists.");
         }
-            
+        _sessionHistories.GetOrAdd(sessionId, ToolsBuilder.GetSystemPrompt(_activeSessions[sessionId].ToString(), isUserLoggedIn));
+
         _logger.LogInformation($"Started session {sessionId} at {currentTime}.");
         // Here, you might want to send an initial message or perform other setup tasks.
     }
@@ -85,7 +86,7 @@ public class OpenAIRunner : ILLMRunner
 
             string responseChoiceStr = "";
             // Retrieve or initialize the conversation history
-            var history = _sessionHistories.GetOrAdd(serviceObj.SessionId, ToolsBuilder.GetSystemPrompt(_activeSessions[serviceObj.SessionId].ToString()));
+            var history = _sessionHistories[serviceObj.SessionId];
 
             var chatMessage = new ChatMessage();
             if (serviceObj.IsFunctionCallResponse)

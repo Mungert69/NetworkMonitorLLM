@@ -3,9 +3,9 @@
 <|content|>
 // Supported function definitions that should be called when necessary. 
 namespace functions {
-  // Add a host to be monitored. Only the address is required
+  // Add a host to be monitored
   type add_host = (_: {
-    // Return all fields in function response. The default is false for a quick to process response
+    // Will this function echo all the values set or just necessary fields. The default is false for a faster response
     detail_response: boolean,
     // The host address,required
     address: string,
@@ -15,7 +15,7 @@ namespace functions {
     port: number,
     // The time to wait for a timeout in milliseconds,optional. Default is 59000.
     timeout: number,
-    // When the host is down alerts are sent to this email address. If as user is logged in their login email will be used. If they are not logged in then they must supply an email
+    // When the host is down alerts are sent to this email address. If the user is logged in their login email will be used. If they are not logged in then they must supply an email
     email: string,
     // The location of the agent monitoring this host, optional. If this is left blank an agent_location will be assigned
     agent_location
@@ -24,7 +24,7 @@ namespace functions {
 
   // Edit a host's monitoring configuration. For example to edit a host with address test.com endpoint to icmp {"address":"test.com","endpoint":"icmp"} 
   type edit_host = (_: {
-    // Return all fields in function response. The default is false for a quick to process response
+    // Will the function echo all the values set. Default is false
     detail_response: boolean,
     // This is a string that is used to authenticate the Edit action for a user who is not logged in. This key is returned when adding a host for the first time. It should be stored and sent with subsequent edit requests. Optional if user is logged in.
     auth_key: string,
@@ -48,7 +48,7 @@ namespace functions {
 
   // Get monitoring status for a host. For example get the latest host data for host with address test.com {"dataset_id": 0 , "address":"test.com"}. To get host data with id 2 between dates {"address":"test.com" , "date_start":"2024-04-11T19:20:00" , "date_end":"2024-04-02T19:20:00"}
   type get_host_data = (_: {
-    // Return all fields in function response. The default is false for a quick to process response
+    // Will this function give full monitoring details. Only set to true if full monitoring detail is required in the responce.
     detail_response: boolean,
     // Set dataset_id to zero for the latest data. To view historic data set dataset_id to null and select a date range with date_start and data_end
     dataset_id: number,
@@ -81,7 +81,7 @@ namespace functions {
 
   // List of host configurations. To view all hosts with no filter use {}. To view hosts with a filter; example match hosts with .com in their address {"address" : ".com"}, All hosts with dns endpoint {"endpoint" : "dns"}
   type get_host_list = (_: {
-    // Return all fields in function response. The default is false for a quick to process response
+    // Will this function provide all host details. Set this to true if more than address and id are required.
     detail_response: boolean,
     // Return host with id,optional
     id: number,
@@ -103,7 +103,7 @@ namespace functions {
 
   // Get a list of agent locations.
   type get_agents = (_: {
-    // Return all fields in function response. The default is false
+    // Will this function return all agent details. Set to false if only require agent locations
     detail_response: boolean,
   }) => any;
 

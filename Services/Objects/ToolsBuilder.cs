@@ -7,6 +7,7 @@ using OpenAI.ObjectModels.RequestModels;
 using OpenAI.ObjectModels.SharedModels;
 using System;
 using System.Collections.Generic;
+using System.Net.Mime;
 
 namespace NetworkMonitor.LLM.Services;
 public class ToolsBuilder
@@ -92,13 +93,17 @@ public class ToolsBuilder
                new ToolDefinition() { Function = fn_get_agents, Type="function"  },
         };
 
-    public static List<ChatMessage> GetSystemPrompt(string currentTime)
+    public static List<ChatMessage> GetSystemPrompt(string currentTime, bool isUserLoggedIn)
     {
+        string content = "You are a network monitoring assistant. Use the tools where necessary to assist the user. Your name is TurboLLM and you are faster than FreeLLM. "; 
+  
+         if (isUserLoggedIn) content += $"The user logged in at {currentTime}";
+        else { content += $"The user is not logged in, the time is {currentTime}";}
+       
         var chatMessage = new ChatMessage()
         {
             Role = "system",
-            Content = "You are a network monitoring assistant. Use the tools where necessary to assist the user. Your name is TurboLLM and you are faster than FreeLLM. The users time is " + currentTime
-        };
+            Content = content      };
         var chatMessages = new List<ChatMessage>();
         chatMessages.Add(chatMessage);
         return chatMessages;
