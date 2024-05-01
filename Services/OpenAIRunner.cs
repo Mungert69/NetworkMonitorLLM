@@ -32,7 +32,12 @@ public class OpenAIRunner : ILLMRunner
     
     private SemaphoreSlim _openAIRunnerSemaphore;
     private ConcurrentDictionary<string, List<ChatMessage>> _sessionHistories = new ConcurrentDictionary<string, List<ChatMessage>>();
+public string Type { get => "TurboLLM"; }
+ private bool _isStateReady=false;
+    private bool _isStateStarting = false;
 
+    public bool IsStateReady { get => _isStateReady; }
+    public bool IsStateStarting { get => _isStateStarting; }
     public OpenAIRunner(ILogger<OpenAIRunner> logger, ILLMResponseProcessor responseProcessor, OpenAIService openAiService, SemaphoreSlim openAIRunnerSemaphore)
     {
         _logger = logger;
@@ -47,18 +52,23 @@ public class OpenAIRunner : ILLMRunner
 
     public async Task StartProcess(LLMServiceObj serviceObj, DateTime currentTime)
     {
+         _isStateStarting = true;
+        _isStateReady = false;
         if (!_activeSessions.TryAdd(serviceObj.SessionId, currentTime))
         {
-            throw new InvalidOperationException("Session already exists.");
+            throw new InvalidOperationException("TurboLLM Assistant already running.");
         }
         _sessionHistories.GetOrAdd(serviceObj.SessionId, ToolsBuilder.GetSystemPrompt(_activeSessions[serviceObj.SessionId].ToString("yyyy-MM-ddTHH:mm:ss"), serviceObj));
 
         _logger.LogInformation($"Started session {serviceObj.SessionId} at {currentTime}.");
         // Here, you might want to send an initial message or perform other setup tasks.
+         _isStateStarting = false;
+        _isStateReady = true;
     }
 
     public async Task RemoveProcess(string sessionId)
     {
+        _isStateReady = false;
         if (!_activeSessions.TryRemove(sessionId, out var lastActivity) || !_sessionHistories.TryRemove(sessionId, out var history))
         {
             _logger.LogWarning($"Attempted to remove non-existent session {sessionId}.");
@@ -71,6 +81,7 @@ public class OpenAIRunner : ILLMRunner
 
     public async Task SendInputAndGetResponse(LLMServiceObj serviceObj)
     {
+        _isStateReady = false;
         var responseServiceObj = new LLMServiceObj { SessionId = serviceObj.SessionId };
 
         if (!_activeSessions.ContainsKey(serviceObj.SessionId))
@@ -170,6 +181,7 @@ public class OpenAIRunner : ILLMRunner
         finally
         {
             _openAIRunnerSemaphore.Release(); // Release the semaphore
+            _isStateReady = true;
         }
     }
 

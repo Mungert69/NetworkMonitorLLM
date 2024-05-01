@@ -26,6 +26,14 @@ public class LLMProcessRunner : ILLMRunner
     private MLParams _mlParams;
     private Timer _idleCheckTimer;
     private SemaphoreSlim _processRunnerSemaphore;
+
+    public string Type { get => "FreeLLM"; }
+    private bool _isStateReady=false;
+    private bool _isStateStarting = false;
+
+    public bool IsStateReady { get => _isStateReady; }
+    public bool IsStateStarting { get => _isStateStarting; }
+
     public LLMProcessRunner(ILogger<LLMProcessRunner> logger, ILLMResponseProcessor responseProcessor, ISystemParamsHelper systemParamsHelper, SemaphoreSlim processRunnerSemaphore)
     {
         _logger = logger;
@@ -57,11 +65,13 @@ public class LLMProcessRunner : ILLMRunner
     }
     public async Task StartProcess(LLMServiceObj serviceObj, DateTime currentTime)
     {
+        _isStateStarting = true;
+        _isStateReady = false;
         await _processRunnerSemaphore.WaitAsync(); // Wait to enter the semaphore
         try
         {
             if (_processes.ContainsKey(serviceObj.SessionId))
-                throw new Exception("Process already running for this session");
+                throw new Exception("FreeLLM Assistant already running");
             _logger.LogInformation($" LLM Service : Start Process for sessionsId {serviceObj.SessionId}");
             ProcessWrapper process;
             process = new ProcessWrapper();
@@ -99,9 +109,12 @@ public class LLMProcessRunner : ILLMRunner
         await SendInputAndGetResponse(serviceObj);
         _logger.LogInformation($"LLM process started for session {serviceObj.SessionId}");
         _sendOutput = true;
+         _isStateStarting = false;
+        _isStateReady = true;
     }
     public async Task RemoveProcess(string sessionId)
     {
+        _isStateReady = false;
         if (!_processes.TryGetValue(sessionId, out var process))
             throw new Exception("Process is not running for this session");
         // Stop broadcaster if running.
@@ -153,6 +166,7 @@ public class LLMProcessRunner : ILLMRunner
     }
     public async Task SendInputAndGetResponse(LLMServiceObj serviceObj)
     {
+        _isStateReady = false;
         await _processRunnerSemaphore.WaitAsync();
         try
         {
@@ -186,6 +200,7 @@ public class LLMProcessRunner : ILLMRunner
         finally
         {
             _processRunnerSemaphore.Release(); // Release the semaphore
+            _isStateReady = true;
         }
     }
 }

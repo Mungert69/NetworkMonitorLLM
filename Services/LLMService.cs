@@ -48,7 +48,7 @@ public class LLMService : ILLMService
     }
     public async Task<LLMServiceObj> StartProcess(LLMServiceObj llmServiceObj)
     {
-        llmServiceObj.SessionId = Guid.NewGuid().ToString();
+        llmServiceObj.SessionId = llmServiceObj.RequestSessionId;
         try
         {
             var clientTimeZone = llmServiceObj.TimeZone != null
@@ -56,24 +56,30 @@ public class LLMService : ILLMService
                                          : TimeZoneInfo.Utc;
             var usersCurrentTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, clientTimeZone);
 
-            ILLMRunner runner;
-            switch (llmServiceObj.LLMRunnerType)
+            bool exists = _sessions.TryGetValue(llmServiceObj.SessionId, out var checkSession);
+
+            if (checkSession == null || (checkSession != null && checkSession.Runner != null && checkSession.Runner.Type! != llmServiceObj.LLMRunnerType))
             {
-                case "TurboLLM":
-                    runner = _openAIRunnerFactory.CreateRunner(_serviceProvider, _openAIRunnerSemaphore);
-                    break;
-                case "FreeLLM":
-                    runner = _processRunnerFactory.CreateRunner(_serviceProvider, _processRunnerSemaphore);
-                    break;
-                // Add more cases for other runner types if needed
-                default:
-                    throw new ArgumentException($"Invalid runner type: {llmServiceObj.LLMRunnerType}");
+                ILLMRunner runner;
+                switch (llmServiceObj.LLMRunnerType)
+                {
+                    case "TurboLLM":
+                        runner = _openAIRunnerFactory.CreateRunner(_serviceProvider, _openAIRunnerSemaphore);
+                        break;
+                    case "FreeLLM":
+                        runner = _processRunnerFactory.CreateRunner(_serviceProvider, _processRunnerSemaphore);
+                        break;
+                    // Add more cases for other runner types if needed
+                    default:
+                        throw new ArgumentException($"Invalid runner type: {llmServiceObj.LLMRunnerType}");
+                }
+
+                await runner.StartProcess(llmServiceObj, usersCurrentTime);
+                _sessions[llmServiceObj.SessionId] = new Session { Runner = runner };
+                llmServiceObj.ResultMessage = " Success : LLMService Started Session .";
+                llmServiceObj.ResultSuccess = true;
             }
 
-            await runner.StartProcess(llmServiceObj, usersCurrentTime);
-            _sessions[llmServiceObj.SessionId] = new Session { Runner = runner };
-            llmServiceObj.ResultMessage = " Success : LLMService Started Session .";
-            llmServiceObj.ResultSuccess = true;
             await _rabbitRepo.PublishAsync<LLMServiceObj>("llmServiceStarted", llmServiceObj);
         }
         catch (Exception e)
@@ -97,9 +103,9 @@ public class LLMService : ILLMService
             if (_sessions.TryGetValue(llmServiceObj.SessionId, out var session))
             {
                 await session.Runner.RemoveProcess(llmServiceObj.SessionId);
-                _sessions.TryRemove(llmServiceObj.SessionId,out _);
-                  await _rabbitRepo.PublishAsync<LLMServiceObj>("llmSessionEnded", llmServiceObj);
-       
+                _sessions.TryRemove(llmServiceObj.SessionId, out _);
+                await _rabbitRepo.PublishAsync<LLMServiceObj>("llmSessionEnded", llmServiceObj);
+
                 llmServiceObj.ResultMessage = " Success : LLMService Removed Session and sent LLM Session Ended message.";
                 llmServiceObj.ResultSuccess = true;
             }
@@ -137,9 +143,22 @@ public class LLMService : ILLMService
         {
             try
             {
-                await session.Runner.SendInputAndGetResponse(llmServiceObj);
-                result.Message = " Processed UserInput :" + llmServiceObj.UserInput;
                 result.Success = true;
+                if (!session.Runner.IsStateReady)
+                {
+                    result.Message = " Please wait the assistant is processing the last message..." + llmServiceObj.UserInput;
+                    result.Success = false;
+                }
+                if (session.Runner.IsStateStarting)
+                {
+                    result.Message = " Please wait the assistant is starting..." ;
+                    result.Success = false;
+                }
+                if (result.Success)
+                {
+                    await session.Runner.SendInputAndGetResponse(llmServiceObj);
+                    result.Message = " Processed UserInput :" + llmServiceObj.UserInput;
+                }
             }
             catch (Exception e)
             {
@@ -194,7 +213,7 @@ public class LLMResponseProcessor : ILLMResponseProcessor
     public async Task ProcessLLMOutput(LLMServiceObj serviceObj)
     {
         //Console.WriteLine(serviceObj.LlmMessage);
-        if (_sendOutput) await _rabbitRepo.PublishAsync<LLMServiceObj>("llmServiceMessage", serviceObj);
+        if (_sendOutput && !string.IsNullOrEmpty(serviceObj.LlmMessage)) await _rabbitRepo.PublishAsync<LLMServiceObj>("llmServiceMessage", serviceObj);
         //return Task.CompletedTask;
     }
 
@@ -213,7 +232,7 @@ public class LLMResponseProcessor : ILLMResponseProcessor
 
     }
 
-    
+
 
     public async Task ProcessEnd(LLMServiceObj serviceObj)
     {

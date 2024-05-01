@@ -48,8 +48,6 @@ namespace functions {
 
   // Get monitoring status for a host. For example get the latest host data for host with address test.com {"dataset_id": 0 , "address":"test.com"}. To get host data with id 2 between dates {"address":"test.com" , "date_start":"2024-04-11T19:20:00" , "date_end":"2024-04-02T19:20:00"}
   type get_host_data = (_: {
-    // Will this function give full monitoring details. Only set to true if full monitoring detail is required in the responce.
-    detail_response: boolean,
     // Set dataset_id to zero for the latest data. To view historic data set dataset_id to null and select a date range with date_start and data_end
     dataset_id: number,
     // Return host with id,optional
