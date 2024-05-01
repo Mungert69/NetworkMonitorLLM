@@ -30,9 +30,11 @@ public class LLMProcessRunner : ILLMRunner
     public string Type { get => "FreeLLM"; }
     private bool _isStateReady=false;
     private bool _isStateStarting = false;
+     private bool _isStateFailed = false;
 
     public bool IsStateReady { get => _isStateReady; }
     public bool IsStateStarting { get => _isStateStarting; }
+    public bool IsStateFailed { get => _isStateFailed;}
 
     public LLMProcessRunner(ILogger<LLMProcessRunner> logger, ILLMResponseProcessor responseProcessor, ISystemParamsHelper systemParamsHelper, SemaphoreSlim processRunnerSemaphore)
     {
@@ -111,12 +113,17 @@ public class LLMProcessRunner : ILLMRunner
         _sendOutput = true;
          _isStateStarting = false;
         _isStateReady = true;
+        _isStateFailed = false;
     }
     public async Task RemoveProcess(string sessionId)
     {
         _isStateReady = false;
+
         if (!_processes.TryGetValue(sessionId, out var process))
+        {
+            _isStateReady = true;
             throw new Exception("Process is not running for this session");
+        }
         // Stop broadcaster if running.
         TokenBroadcaster tokenBroadcaster;
         if (_tokenBroadcasters.TryGetValue(sessionId, out tokenBroadcaster))
@@ -140,6 +147,8 @@ public class LLMProcessRunner : ILLMRunner
                 _processes.TryRemove(sessionId, out _);
             }
         }
+        _isStateFailed = true;
+        _isStateReady = true;
         _logger.LogInformation($"LLM process removed for session {sessionId}");
     }
     private async Task WaitForReadySignal(ProcessWrapper process)
@@ -148,7 +157,7 @@ public class LLMProcessRunner : ILLMRunner
         string line;
         //await Task.Delay(10000);
         var cancellationTokenSource = new CancellationTokenSource();
-        cancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(30)); // Timeout after one minute
+        cancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(5)); // Timeout after one minute
         while (!cancellationTokenSource.IsCancellationRequested)
         {
             line = await process.StandardOutput.ReadLineAsync();
@@ -160,8 +169,8 @@ public class LLMProcessRunner : ILLMRunner
         }
         if (!isReady)
         {
-            throw new Exception(" Timeout waiting for FreeLLM process to start");
-        }
+            throw new Exception("\nFreeLLM Assistant is currently handling a high volume of requests. Please try again later or consider switching to TurboLLM Assistant for a super fast uninterrupted service.");
+  }
         _logger.LogInformation($" LLMService Process Started ");
     }
     public async Task SendInputAndGetResponse(LLMServiceObj serviceObj)
@@ -172,10 +181,21 @@ public class LLMProcessRunner : ILLMRunner
         {
             _logger.LogInformation($"  LLMService : SendInputAndGetResponse() :");
             if (!_processes.TryGetValue(serviceObj.SessionId, out var process))
-                throw new Exception("No process found for the given session");
+            {
+                _isStateFailed = true;
+                _isStateReady = true;
+                throw new Exception($"No Assistant found for session {serviceObj.SessionId}. Try reloading the Assistant or refreshing the page. If the problems persists contact support@freenetworkmontior.click");
+            }
             if (process == null || process.HasExited)
             {
-                throw new InvalidOperationException("LLM process is not running");
+                _isStateFailed = true;
+                _isStateReady = true;
+                throw new InvalidOperationException("FreeLLM Assistant is not running.  Try reloading the Assistant or refreshing the page. If the problems persists contact support@freenetworkmontior.click");
+            }
+             if (_isStateFailed)
+            {
+                _isStateReady = true;
+                throw new InvalidOperationException("FreeLLM Assistant is in a failed state.  Try reloading the Assistant or refreshing the page. If the problems persists contact support@freenetworkmontior.click");
             }
             TokenBroadcaster tokenBroadcaster;
             if (_tokenBroadcasters.TryGetValue(serviceObj.SessionId, out tokenBroadcaster))

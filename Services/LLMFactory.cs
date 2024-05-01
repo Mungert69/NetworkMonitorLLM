@@ -23,6 +23,7 @@ public interface ILLMRunner
     string Type { get; }
     bool IsStateReady { get; }
      bool IsStateStarting { get; }
+     bool IsStateFailed { get; }
 
 }
 

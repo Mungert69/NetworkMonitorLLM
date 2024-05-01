@@ -11,6 +11,7 @@ using Microsoft.Extensions.Logging;
 using NetworkMonitor.Objects;
 using NetworkMonitor.Objects.ServiceMessage;
 using NetworkMonitor.Objects.Repository;
+using NetworkMonitor.LLM.Services.Objects;
 using NetworkMonitor.Utils;
 
 
@@ -58,6 +59,18 @@ public class LLMService : ILLMService
 
             bool exists = _sessions.TryGetValue(llmServiceObj.SessionId, out var checkSession);
 
+            if (checkSession != null && checkSession.Runner != null && checkSession.Runner.Type! == llmServiceObj.LLMRunnerType && checkSession.Runner.IsStateFailed)
+            {
+                try
+                {
+                    await checkSession.Runner.RemoveProcess(llmServiceObj.SessionId);
+                    checkSession = null;
+                }
+                catch
+                {// just try to remove don't catch  }
+
+                }
+            }
             if (checkSession == null || (checkSession != null && checkSession.Runner != null && checkSession.Runner.Type! != llmServiceObj.LLMRunnerType))
             {
                 ILLMRunner runner;
@@ -90,7 +103,7 @@ public class LLMService : ILLMService
 
         if (!llmServiceObj.ResultSuccess)
         {
-            llmServiceObj.LlmMessage = llmServiceObj.ResultMessage;
+            llmServiceObj.LlmMessage = MessageHelper.ErrorMessage(llmServiceObj.ResultMessage);
             await _rabbitRepo.PublishAsync<LLMServiceObj>("llmServiceMessage", llmServiceObj);
         }
         return llmServiceObj;
@@ -135,7 +148,7 @@ public class LLMService : ILLMService
 
         if (llmServiceObj.SessionId == null || !_sessions.TryGetValue(llmServiceObj.SessionId, out session))
         {
-            result.Message = "Invalid session ID";
+            result.Message = $" No Assistant found for session {llmServiceObj.SessionId}. Try reloading the Assistant or refreshing the page. If the problems persists contact support@freenetworkmontior.click";
             result.Success = false;
 
         }
@@ -144,16 +157,22 @@ public class LLMService : ILLMService
             try
             {
                 result.Success = true;
+                if (session.Runner.IsStateStarting)
+                {
+                    result.Message = " Please wait the assistant is starting...";
+                    result.Success = false;
+                }
+                if (session.Runner.IsStateFailed)
+                {
+                    result.Message = " The Assistant is stopped try reloading or refresh the page";
+                    result.Success = false;
+                }
                 if (!session.Runner.IsStateReady)
                 {
                     result.Message = " Please wait the assistant is processing the last message..." + llmServiceObj.UserInput;
                     result.Success = false;
                 }
-                if (session.Runner.IsStateStarting)
-                {
-                    result.Message = " Please wait the assistant is starting..." ;
-                    result.Success = false;
-                }
+
                 if (result.Success)
                 {
                     await session.Runner.SendInputAndGetResponse(llmServiceObj);
@@ -162,14 +181,14 @@ public class LLMService : ILLMService
             }
             catch (Exception e)
             {
-                result.Message += $" Error : failed to send and process user input {e.Message}";
+                result.Message += $" Error : {e.Message}";
                 result.Success = false;
             }
         }
 
         if (!result.Success)
         {
-            llmServiceObj.LlmMessage = result.Message;
+            llmServiceObj.LlmMessage = MessageHelper.ErrorMessage(result.Message);
             await _rabbitRepo.PublishAsync<LLMServiceObj>("llmServiceMessage", llmServiceObj);
         }
 

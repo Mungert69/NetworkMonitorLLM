@@ -29,15 +29,17 @@ public class OpenAIRunner : ILLMRunner
     private OpenAIService _openAiService; // Interface to interact with OpenAI
     private List<ToolDefinition> _tools;
     private ConcurrentDictionary<string, DateTime> _activeSessions;
-    
+
     private SemaphoreSlim _openAIRunnerSemaphore;
     private ConcurrentDictionary<string, List<ChatMessage>> _sessionHistories = new ConcurrentDictionary<string, List<ChatMessage>>();
-public string Type { get => "TurboLLM"; }
- private bool _isStateReady=false;
+    public string Type { get => "TurboLLM"; }
+    private bool _isStateReady = false;
     private bool _isStateStarting = false;
+    private bool _isStateFailed = false;
 
     public bool IsStateReady { get => _isStateReady; }
     public bool IsStateStarting { get => _isStateStarting; }
+    public bool IsStateFailed { get => _isStateFailed; }
     public OpenAIRunner(ILogger<OpenAIRunner> logger, ILLMResponseProcessor responseProcessor, OpenAIService openAiService, SemaphoreSlim openAIRunnerSemaphore)
     {
         _logger = logger;
@@ -47,23 +49,26 @@ public string Type { get => "TurboLLM"; }
         _tools = ToolsBuilder.Tools;
         _activeSessions = new ConcurrentDictionary<string, DateTime>();
         _sessionHistories = new ConcurrentDictionary<string, List<ChatMessage>>();
-       
+
     }
 
     public async Task StartProcess(LLMServiceObj serviceObj, DateTime currentTime)
     {
-         _isStateStarting = true;
+        _isStateStarting = true;
         _isStateReady = false;
         if (!_activeSessions.TryAdd(serviceObj.SessionId, currentTime))
         {
+            _isStateStarting = false;
+            _isStateReady = true;
             throw new InvalidOperationException("TurboLLM Assistant already running.");
         }
         _sessionHistories.GetOrAdd(serviceObj.SessionId, ToolsBuilder.GetSystemPrompt(_activeSessions[serviceObj.SessionId].ToString("yyyy-MM-ddTHH:mm:ss"), serviceObj));
 
         _logger.LogInformation($"Started session {serviceObj.SessionId} at {currentTime}.");
         // Here, you might want to send an initial message or perform other setup tasks.
-         _isStateStarting = false;
+        _isStateStarting = false;
         _isStateReady = true;
+        _isStateFailed = false;
     }
 
     public async Task RemoveProcess(string sessionId)
@@ -74,7 +79,8 @@ public string Type { get => "TurboLLM"; }
             _logger.LogWarning($"Attempted to remove non-existent session {sessionId}.");
             return;
         }
-
+        _isStateReady = true;
+        _isStateFailed = true;
         _logger.LogInformation($"Removed session {sessionId}. Last active at {lastActivity}. History had {history.Count} messages.");
     }
 
@@ -86,7 +92,9 @@ public string Type { get => "TurboLLM"; }
 
         if (!_activeSessions.ContainsKey(serviceObj.SessionId))
         {
-            throw new InvalidOperationException("Session does not exist.");
+            _isStateFailed = true;
+            _isStateReady = true;
+            throw new Exception($"No Assistant found for session {serviceObj.SessionId}. Try reloading the Assistant or refreshing the page. If the problems persists contact support@freenetworkmontior.click");
         }
 
         _logger.LogInformation("Sending input and waiting for response...");
@@ -104,17 +112,19 @@ public string Type { get => "TurboLLM"; }
             {
                 chatMessage.Role = "function";
                 chatMessage.Name = serviceObj.FunctionName;
-                 responseServiceObj.LlmMessage = "Function Response: "+serviceObj.UserInput+"\n\n";
+                responseServiceObj.LlmMessage = "Function Response: " + serviceObj.UserInput + "\n\n";
                 await _responseProcessor.ProcessLLMOutput(responseServiceObj);
                 responseServiceObj.LlmMessage = "</functioncall-complete>";
                 await _responseProcessor.ProcessLLMOutput(responseServiceObj);
 
             }
-            else { chatMessage.Role = "user";
+            else
+            {
+                chatMessage.Role = "user";
                 responseServiceObj.LlmMessage = "User: " + serviceObj.UserInput + "\n\n";
-            await _responseProcessor.ProcessLLMOutput(responseServiceObj);
-             }
-          
+                await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+            }
+
             chatMessage.Content = serviceObj.UserInput;
             history.Add(chatMessage);
             var completionResult = await _openAiService.ChatCompletion.CreateCompletion(new ChatCompletionCreateRequest
@@ -129,19 +139,20 @@ public string Type { get => "TurboLLM"; }
             if (completionResult.Successful)
             {
                 var choice = completionResult.Choices.First();
-                responseChoiceStr = choice.Message.Content;
+                responseChoiceStr = choice.Message.Content ?? "";
                 _logger.LogInformation($"Received response: {responseChoiceStr}");
 
                 // Process any function calls
                 if (choice.Message.ToolCalls != null)
-                {  
+                {
                     responseServiceObj.UserInput = serviceObj.UserInput;
                     responseServiceObj.LlmMessage = "</functioncall>";
                     await _responseProcessor.ProcessLLMOutput(responseServiceObj);
-                    var fnCall = choice.Message.ToolCalls.FirstOrDefault();
+                    var fnCall = choice.Message.ToolCalls.First();
 
                     var fn = fnCall.FunctionCall;
-                    _logger.LogInformation($"Function call detected: {fn.Name}");
+                    string functionName = fn!.Name ?? "N/A";
+                    _logger.LogInformation($"Function call detected: {functionName}");
 
                     var json = JsonSerializer.Serialize(fn.ParseArguments());
                     var functionResponseServiceObj = new LLMServiceObj { SessionId = serviceObj.SessionId };
@@ -149,11 +160,11 @@ public string Type { get => "TurboLLM"; }
                     functionResponseServiceObj.IsFunctionCall = true;
                     functionResponseServiceObj.JsonFunction = json;
                     _logger.LogInformation($" Sending json: {json}");
-                    functionResponseServiceObj.FunctionName = fn.Name;
+                    functionResponseServiceObj.FunctionName = functionName;
 
                     await _responseProcessor.ProcessFunctionCall(functionResponseServiceObj);
-                    responseServiceObj.LlmMessage = "Function Call: "+json+"\n";
-                await _responseProcessor.ProcessLLMOuputInChunks(responseServiceObj);
+                    responseServiceObj.LlmMessage = "Function Call: " + json + "\n";
+                    await _responseProcessor.ProcessLLMOuputInChunks(responseServiceObj);
                     responseChoiceStr = "";
                 }
 
@@ -165,12 +176,12 @@ public string Type { get => "TurboLLM"; }
                 responseServiceObj.LlmMessage = "<end-of-line>";
                 responseServiceObj.TokensUsed = completionResult.Usage.TotalTokens;
                 await _responseProcessor.ProcessLLMOutput(responseServiceObj);
-              
+
             }
             else
             {
                 _logger.LogError($"Completion failed: {completionResult.Error}");
-                throw new Exception($"Error from OpenAI: {completionResult.Error}");
+                throw new Exception($"Error from OpenAI : {completionResult.Error}");
             }
         }
         catch (Exception ex)
