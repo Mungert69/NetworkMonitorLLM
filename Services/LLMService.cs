@@ -72,7 +72,7 @@ public class LLMService : ILLMService
 
                 }
             }
-            if (checkSession == null || isSessionRemoved || (checkSession != null && checkSession.Runner != null && checkSession.Runner.Type! != llmServiceObj.LLMRunnerType))
+            if (isSessionRemoved || checkSession == null ||  (checkSession != null && checkSession.Runner != null && checkSession.Runner.Type! != llmServiceObj.LLMRunnerType))
             {
                 ILLMRunner runner;
                 switch (llmServiceObj.LLMRunnerType)

@@ -227,9 +227,11 @@ public class LLMProcessRunner : ILLMRunner
             }
             else
             {
-
+                
                 _logger.LogWarning($"Session  {serviceObj.SessionId} timed out. Terminating process.");
                 await RemoveProcess(serviceObj.SessionId);
+                _isStateFailed = true;
+                _isStateReady = true;
                 throw new Exception("FreeLLM Assistant is currently handling a high volume of requests. Please try again later or consider switching to TurboLLM Assistant for a super fast uninterrupted service.");
 
             }
