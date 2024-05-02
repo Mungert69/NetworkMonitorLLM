@@ -28,13 +28,13 @@ public class LLMProcessRunner : ILLMRunner
     private SemaphoreSlim _processRunnerSemaphore;
 
     public string Type { get => "FreeLLM"; }
-    private bool _isStateReady=false;
+    private bool _isStateReady = false;
     private bool _isStateStarting = false;
-     private bool _isStateFailed = false;
+    private bool _isStateFailed = false;
 
     public bool IsStateReady { get => _isStateReady; }
     public bool IsStateStarting { get => _isStateStarting; }
-    public bool IsStateFailed { get => _isStateFailed;}
+    public bool IsStateFailed { get => _isStateFailed; }
 
     public LLMProcessRunner(ILogger<LLMProcessRunner> logger, ILLMResponseProcessor responseProcessor, ISystemParamsHelper systemParamsHelper, SemaphoreSlim processRunnerSemaphore)
     {
@@ -84,6 +84,9 @@ public class LLMProcessRunner : ILLMRunner
         }
         catch
         {
+            _isStateStarting = false;
+            _isStateReady = true;
+            _isStateFailed = true;
             throw;
         }
         finally
@@ -105,13 +108,13 @@ public class LLMProcessRunner : ILLMRunner
             var user = new UserInfo();
             input = PrintPropertiesAsJson.PrintUserInfoPropertiesWithDate(user, serviceObj.IsUserLoggedIn, currentTime.ToString("yyyy-MM-ddTHH:mm:ss"), false);
         }
-        serviceObj.UserInput = userInput+input;
+        serviceObj.UserInput = userInput + input;
         serviceObj.IsFunctionCallResponse = false;
         _sendOutput = false;
         await SendInputAndGetResponse(serviceObj);
         _logger.LogInformation($"LLM process started for session {serviceObj.SessionId}");
         _sendOutput = true;
-         _isStateStarting = false;
+        _isStateStarting = false;
         _isStateReady = true;
         _isStateFailed = false;
     }
@@ -141,14 +144,15 @@ public class LLMProcessRunner : ILLMRunner
         }
         finally
         {
+            _isStateFailed = true;
+            _isStateReady = true;
             if (process != null)
             {
                 process.Dispose();
                 _processes.TryRemove(sessionId, out _);
             }
         }
-        _isStateFailed = true;
-        _isStateReady = true;
+
         _logger.LogInformation($"LLM process removed for session {sessionId}");
     }
     private async Task WaitForReadySignal(ProcessWrapper process)
@@ -157,7 +161,7 @@ public class LLMProcessRunner : ILLMRunner
         string line;
         //await Task.Delay(10000);
         var cancellationTokenSource = new CancellationTokenSource();
-        cancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(5)); // Timeout after one minute
+        cancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(10)); // Timeout after one minute
         while (!cancellationTokenSource.IsCancellationRequested)
         {
             line = await process.StandardOutput.ReadLineAsync();
@@ -169,14 +173,16 @@ public class LLMProcessRunner : ILLMRunner
         }
         if (!isReady)
         {
-            throw new Exception("\nFreeLLM Assistant is currently handling a high volume of requests. Please try again later or consider switching to TurboLLM Assistant for a super fast uninterrupted service.");
-  }
+            throw new Exception("FreeLLM Assistant is currently handling a high volume of requests. Please try again later or consider switching to TurboLLM Assistant for a super fast uninterrupted service.");
+        }
         _logger.LogInformation($" LLMService Process Started ");
     }
     public async Task SendInputAndGetResponse(LLMServiceObj serviceObj)
     {
         _isStateReady = false;
         await _processRunnerSemaphore.WaitAsync();
+        CancellationTokenSource cts = new CancellationTokenSource(TimeSpan.FromSeconds(50)); // Default timeout is 30 seconds, can be adjusted
+
         try
         {
             _logger.LogInformation($"  LLMService : SendInputAndGetResponse() :");
@@ -192,7 +198,7 @@ public class LLMProcessRunner : ILLMRunner
                 _isStateReady = true;
                 throw new InvalidOperationException("FreeLLM Assistant is not running.  Try reloading the Assistant or refreshing the page. If the problems persists contact support@freenetworkmontior.click");
             }
-             if (_isStateFailed)
+            if (_isStateFailed)
             {
                 _isStateReady = true;
                 throw new InvalidOperationException("FreeLLM Assistant is in a failed state.  Try reloading the Assistant or refreshing the page. If the problems persists contact support@freenetworkmontior.click");
@@ -211,7 +217,21 @@ public class LLMProcessRunner : ILLMRunner
             await process.StandardInput.WriteLineAsync(userInput);
             await process.StandardInput.FlushAsync();
             _logger.LogInformation($" ProcessLLMOutput(user input) -> {userInput}");
-            await tokenBroadcaster.BroadcastAsync(process, serviceObj.SessionId, userInput, serviceObj.IsFunctionCallResponse, _sendOutput);
+            // Wait for a response or a timeout
+            Task broadcastTask = tokenBroadcaster.BroadcastAsync(process, serviceObj.SessionId, userInput, serviceObj.IsFunctionCallResponse, _sendOutput);
+            if (await Task.WhenAny(broadcastTask, Task.Delay(Timeout.Infinite, cts.Token)) == broadcastTask)
+            {
+                // Task completed within timeout
+                await broadcastTask;
+            }
+            else
+            {
+
+                _logger.LogWarning($"Session  {serviceObj.SessionId} timed out. Terminating process.");
+                await RemoveProcess(serviceObj.SessionId);
+                throw new Exception("FreeLLM Assistant is currently handling a high volume of requests. Please try again later or consider switching to TurboLLM Assistant for a super fast uninterrupted service.");
+
+            }
         }
         catch
         {
