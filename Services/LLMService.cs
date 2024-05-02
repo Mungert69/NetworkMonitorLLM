@@ -13,7 +13,7 @@ using NetworkMonitor.Objects.ServiceMessage;
 using NetworkMonitor.Objects.Repository;
 using NetworkMonitor.LLM.Services.Objects;
 using NetworkMonitor.Utils;
-
+using NetworkMonitor.Utils.Helpers;
 
 namespace NetworkMonitor.LLM.Services;
 // LLMService.cs
@@ -34,17 +34,18 @@ public class LLMService : ILLMService
     private IRabbitRepo _rabbitRepo;
     private SemaphoreSlim _processRunnerSemaphore = new SemaphoreSlim(1);
     private SemaphoreSlim _openAIRunnerSemaphore = new SemaphoreSlim(10);
-
+    private MLParams _mlParams;
 
     private readonly ConcurrentDictionary<string, Session> _sessions = new ConcurrentDictionary<string, Session>();
     // private readonly ILLMResponseProcessor _responseProcessor;
 
-    public LLMService(ILogger<LLMService> logger, IRabbitRepo rabbitRepo, IServiceProvider serviceProvider)
+    public LLMService(ILogger<LLMService> logger, IRabbitRepo rabbitRepo,ISystemParamsHelper systemParamsHelper, IServiceProvider serviceProvider)
     {
         _processRunnerFactory = new LLMProcessRunnerFactory();
         _openAIRunnerFactory = new OpenAIRunnerFactory();
         _serviceProvider = serviceProvider;
         _rabbitRepo = rabbitRepo;
+                _mlParams = systemParamsHelper.GetMLParams();
         _logger = logger;
     }
     public async Task<LLMServiceObj> StartProcess(LLMServiceObj llmServiceObj)
@@ -58,20 +59,20 @@ public class LLMService : ILLMService
             var usersCurrentTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, clientTimeZone);
 
             bool exists = _sessions.TryGetValue(llmServiceObj.SessionId, out var checkSession);
-
+            bool isSessionRemoved = false;
             if (checkSession != null && checkSession.Runner != null && checkSession.Runner.Type! == llmServiceObj.LLMRunnerType && checkSession.Runner.IsStateFailed)
             {
                 try
                 {
                     await checkSession.Runner.RemoveProcess(llmServiceObj.SessionId);
-                    checkSession = null;
+                    isSessionRemoved = true;
                 }
                 catch
                 {// just try to remove don't catch  }
 
                 }
             }
-            if (checkSession == null || (checkSession != null && checkSession.Runner != null && checkSession.Runner.Type! != llmServiceObj.LLMRunnerType))
+            if (checkSession == null || isSessionRemoved || (checkSession != null && checkSession.Runner != null && checkSession.Runner.Type! != llmServiceObj.LLMRunnerType))
             {
                 ILLMRunner runner;
                 switch (llmServiceObj.LLMRunnerType)
@@ -87,7 +88,7 @@ public class LLMService : ILLMService
                         throw new ArgumentException($"Invalid runner type: {llmServiceObj.LLMRunnerType}");
                 }
                 string extraMesage = "";
-                if (llmServiceObj.LLMRunnerType == "FreeLLM") extraMesage = " , this can take up to one minute. Once the assistant is started the session will last for one hour before it needs to be restarted again.";
+                if (llmServiceObj.LLMRunnerType == "FreeLLM") extraMesage = $" , this can take up to one {_mlParams.LlmSystemPromptTimeout+_mlParams.LlmUserPromptTimeout}s. If the session is not used for {_mlParams.LlmSessionIdleTimeout} minutes it will be closed";
                   llmServiceObj.LlmMessage = MessageHelper.InfoMessage($" Starting {llmServiceObj.LLMRunnerType} Assistant {extraMesage}");
                 await _rabbitRepo.PublishAsync<LLMServiceObj>("llmServiceMessage", llmServiceObj);
           
@@ -271,6 +272,7 @@ public class LLMResponseProcessor : ILLMResponseProcessor
     public async Task ProcessEnd(LLMServiceObj serviceObj)
     {
         //Console.WriteLine(serviceObj.LlmMessage);
+        serviceObj.LlmMessage = MessageHelper.ErrorMessage(serviceObj.LlmMessage);
         await _rabbitRepo.PublishAsync<LLMServiceObj>("llmServiceTimeout", serviceObj);
         //return Task.CompletedTask;
     }
