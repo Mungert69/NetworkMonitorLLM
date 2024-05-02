@@ -42,11 +42,11 @@ public class LLMProcessRunner : ILLMRunner
         _responseProcessor = responseProcessor;
         _mlParams = systemParamsHelper.GetMLParams();
         _processRunnerSemaphore = processRunnerSemaphore;
-        _idleCheckTimer = new Timer(async _ => await CheckAndTerminateIdleProcesses(), null, TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(10));
+        _idleCheckTimer = new Timer(async _ => await CheckAndTerminateIdleProcesses(), null, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
     }
     private async Task CheckAndTerminateIdleProcesses()
     {
-        var idleDuration = TimeSpan.FromMinutes(30);
+        var idleDuration = TimeSpan.FromMinutes(_mlParams.LlmSessionIdleTimeout);
         var currentDateTime = DateTime.UtcNow;
         var sessionsToTerminate = _processes.Where(p => currentDateTime - p.Value.LastActivity > idleDuration).Select(p => p.Key).ToList();
         foreach (var sessionId in sessionsToTerminate)
@@ -161,7 +161,7 @@ public class LLMProcessRunner : ILLMRunner
         string line;
         //await Task.Delay(10000);
         var cancellationTokenSource = new CancellationTokenSource();
-        cancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(10)); // Timeout after one minute
+        cancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(_mlParams.LlmSystemPromptTimeout)); // Timeout after one minute
         while (!cancellationTokenSource.IsCancellationRequested)
         {
             line = await process.StandardOutput.ReadLineAsync();
@@ -181,7 +181,7 @@ public class LLMProcessRunner : ILLMRunner
     {
         _isStateReady = false;
         await _processRunnerSemaphore.WaitAsync();
-        CancellationTokenSource cts = new CancellationTokenSource(TimeSpan.FromSeconds(50)); // Default timeout is 30 seconds, can be adjusted
+        CancellationTokenSource cts = new CancellationTokenSource(TimeSpan.FromSeconds(_mlParams.LlmUserPromptTimeout)); // Default timeout is 30 seconds, can be adjusted
 
         try
         {
@@ -203,6 +203,7 @@ public class LLMProcessRunner : ILLMRunner
                 _isStateReady = true;
                 throw new InvalidOperationException("FreeLLM Assistant is in a failed state.  Try reloading the Assistant or refreshing the page. If the problems persists contact support@freenetworkmontior.click");
             }
+            process.LastActivity = DateTime.UtcNow;
             TokenBroadcaster tokenBroadcaster;
             if (_tokenBroadcasters.TryGetValue(serviceObj.SessionId, out tokenBroadcaster))
             {
