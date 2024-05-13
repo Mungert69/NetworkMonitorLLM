@@ -46,9 +46,11 @@ namespace functions {
     agent_location,
   }) => any;
 
-  // Get monitoring status for a host. For example get the latest host data for host with address test.com {"dataset_id": 0 , "address":"test.com"}. To get host data with id 2 between dates {"address":"test.com" , "date_start":"2024-04-11T19:20:00" , "date_end":"2024-04-02T19:20:00"}
+  // Get monitoring data for hosts. For example get the latest host data for host with address test.com {"dataset_id": 0 , "address":"test.com"}. To get host data with id 2 between dates {"id":2 , "date_start":"2024-04-11T19:20:00" , "date_end":"2024-04-02T19:20:00"}. To get all hosts that have had an alert flagged {"alert_flag" : true}
   type get_host_data = (_: {
-    // Set dataset_id to zero for the latest data. To view historic data set dataset_id to null and select a date range with date_start and data_end
+    // Will this function provide all monitoring data for hosts. Only set to true if extra response statistics are required or agent location is required. Setting it to true will slow down the processing speed of the assistant, this can effect the users experience
+    detail_response: boolean,
+    // Return a set of statistical data. Data is arrange in 6 hour data sets. Set dataset_id to zero for the latest data. To view historic data set dataset_id to null and select a date range with date_start and data_end
     dataset_id: number,
     // Return host with id,optional
     id: number,
@@ -77,9 +79,9 @@ namespace functions {
 
   }) => any;
 
-  // List of host configurations. To view all hosts with no filter use {}. To view hosts with a filter; example match hosts with .com in their address {"address" : ".com"}, All hosts with dns endpoint {"endpoint" : "dns"}
+  // Get host configurations. To view all hosts with no filter use {}. To view hosts with a filter; example match hosts with .com in their address {"address" : ".com"}, All hosts with dns endpoint {"endpoint" : "dns"}
   type get_host_list = (_: {
-    // Will this function provide all host details. Set this to true if more than address and id are required.
+    // Will this function provide all host config detail. Set this to true if more than address and id are required.
     detail_response: boolean,
     // Return host with id,optional
     id: number,
