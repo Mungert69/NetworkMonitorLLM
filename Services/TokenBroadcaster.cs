@@ -52,23 +52,26 @@ public class TokenBroadcaster
                 tokenBuilder.Clear();
                 token = token.Replace("/\b", "");
             }
-            var (messageSegment, isWithinContent, isMessageSegmentComplete) = ParseLLMOutput(llmOutFull.ToString());
-            if (messageSegment != null)
+            //var (messageSegment, isWithinContent, isMessageSegmentComplete) = ParseLLMOutput(llmOutFull.ToString());
+            var (messageSegments, isMessageSegmentsComplete) = ParseLLMOutputMulti(llmOutFull.ToString());
+            if (isMessageSegmentsComplete && messageSegments != null && messageSegments.Count > 0)
             {
-
-                if (isMessageSegmentComplete)
+                foreach (var messageSegment in messageSegments)
                 {
-                    LLMServiceObj responseServiceObj = new LLMServiceObj { SessionId = sessionId };
-                    if (isFunctionCallResponse)
-                    {
-                        responseServiceObj.LlmMessage = "</functioncall-complete>";
-                        await _responseProcessor.ProcessLLMOutput(responseServiceObj);
-                    }
-                    await ProcessMessageSegment(messageSegment, sessionId, userInput);
-                    _cancellationTokenSource.Cancel();
-                    isStopEncountered = true;
-                    break;
+                  
+                        LLMServiceObj responseServiceObj = new LLMServiceObj { SessionId = sessionId };
+                        if (isFunctionCallResponse)
+                        {
+                            responseServiceObj.LlmMessage = "</functioncall-complete>";
+                            await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+                        }
+                        await ProcessMessageSegment(messageSegment, sessionId, userInput);
+
+                    
+
                 }
+                _cancellationTokenSource.Cancel();
+                isStopEncountered = true;
             }
             if (isStopEncountered)
                 break;
@@ -123,6 +126,55 @@ public class TokenBroadcaster
         };
         return (messageSegment, isWithinContent, isMessageSegmentComplete);
     }
+
+    public static (List<MessageSegment>, bool) ParseLLMOutputMulti(string output)
+    {
+        bool isMessageSegmentsComplete = false;
+        var regex = new Regex(@"<\|(?<tag>\w+)\|>(?<value>.+?(?=<\|)|.+?(?=\\n\|<\\|))");
+        string outputClean = output.Replace("\n", ""); // Remove newlines
+        var messageSegments = new List<MessageSegment>();
+        var matches = regex.Matches(outputClean);
+        if (output.Contains("<|stop|>"))
+        {
+            isMessageSegmentsComplete = true;
+            MessageSegment currentSegment = null;
+
+            foreach (Match match in matches)
+            {
+                var tag = match.Groups["tag"].Value;
+                string value = match.Groups["value"].Value;
+                switch (tag)
+                {
+                    case "from":
+                        if (currentSegment == null)
+                        {
+                            currentSegment = new MessageSegment();
+                        }
+                        currentSegment.From = value.Trim();
+                        break;
+                    case "recipient":
+                        if (currentSegment == null)
+                        {
+                            currentSegment = new MessageSegment();
+                        }
+                        currentSegment.Recipient = value.Trim();
+                        break;
+                    case "content":
+                        if (currentSegment == null)
+                        {
+                            currentSegment = new MessageSegment();
+                        }
+                        currentSegment.Content = value.Trim();
+                        messageSegments.Add(currentSegment);
+                        currentSegment = null; // Reset for the next segment
+                        break;
+                }
+            }
+        }
+
+        return (messageSegments, isMessageSegmentsComplete);
+    }
+
     private static string ReadUntil(string input, int startIndex, char stopChar)
     {
         var sb = new System.Text.StringBuilder();
