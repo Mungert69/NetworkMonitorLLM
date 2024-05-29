@@ -1,2 +1,2 @@
-~/code/models/llama.cpp/main -c 2000  -m ~/code/models/functionary-small-v2.4.Q4_0.gguf  --prompt-cache context-func.gguf  -r "<|stop|>"  -f system_prompt_func  --temp 0 
+~/code/models/llama.cpp/main -c 2500  -m ~/code/models/functionary-small-v2.4.Q4_0.gguf  --prompt-cache context-func.gguf  -r "<|stop|>"  -f system_prompt_func  --temp 0 
 
