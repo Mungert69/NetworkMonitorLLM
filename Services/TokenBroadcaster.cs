@@ -76,6 +76,7 @@ public class TokenBroadcaster
             if (isStopEncountered)
                 break;
         }
+         //_logger.LogInformation(" --> LLM Output --> "+llmOutFull.ToString());
         _logger.LogInformation(" --> Finished LLM Interaction ");
     }
 
