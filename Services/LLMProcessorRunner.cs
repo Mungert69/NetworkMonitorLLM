@@ -165,7 +165,11 @@ public class LLMProcessRunner : ILLMRunner
         while (!cancellationTokenSource.IsCancellationRequested)
         {
             line = await process.StandardOutput.ReadLineAsync();
+<<<<<<< HEAD
+            if (line.StartsWith("<|content|>"))
+=======
             if (line.Contains("ISO 8601"))
+>>>>>>> b16da139f5a8f3f437be37ba00c75e8c5710f5c4
             {
                 isReady = true;
                 break;
