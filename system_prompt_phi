@@ -1,7 +1,4 @@
-<s><|system|>
-You are a helpful assistant with access to the following functions. Use them if required -
-<function_list>
-[
+<|user|>You are a helpful assistant with access to the following functions. Use them if required -
     {
         "name": "add_host",
         "description": "Add a host to be monitored.",
@@ -33,7 +30,7 @@ You are a helpful assistant with access to the following functions. Use them if 
                 }
             }
         }
-    },
+    }
     {
         "name": "edit_host",
         "description": "Edit a host's monitoring configuration. This function is used to update a hosts configuration.",
@@ -78,7 +75,7 @@ You are a helpful assistant with access to the following functions. Use them if 
                 }
             }
         }
-    },
+    }
     {
         "name": "get_host_data",
         "description": "Get monitoring status for a host. To get the current data, set dataSetId to zero. For historic data instead set dateStart and dateEnd to get data within that range. All input and output times are UTC.",
@@ -131,7 +128,7 @@ You are a helpful assistant with access to the following functions. Use them if 
                 }
             }
         }
-    },
+    }
     {
         "name": "get_host_list",
         "description": "Get a list of host configurations.",
@@ -165,9 +162,3 @@ You are a helpful assistant with access to the following functions. Use them if 
             }
         }
     }
-]
-<function_list>
-YOU MUST call a function only once to take each action the user requests.
-When a function needs to be called, or an action performed, reply only with json in this format :
-{"name":"function_name","parameters":{"parameter_1":"value","parameter_2:"value"}}
-<|end|>
