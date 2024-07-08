@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging;
 using NetworkMonitor.Objects.ServiceMessage;
 using NetworkMonitor.LLM.Services.Objects;
 using System.Text.RegularExpressions;
+using System.Security.Cryptography;
 namespace NetworkMonitor.LLM.Services;
 public class TokenBroadcasterFunc_2_4 : ITokenBroadcaster
 {
@@ -51,6 +52,7 @@ public class TokenBroadcasterFunc_2_4 : ITokenBroadcaster
                 string token = tokenBuilder.ToString();
                 tokenBuilder.Clear();
                 token = token.Replace("/\b", "");
+                //Console.WriteLine(token);
             }
             //var (messageSegment, isWithinContent, isMessageSegmentComplete) = ParseLLMOutput(llmOutFull.ToString());
             var (messageSegments, isMessageSegmentsComplete) = ParseLLMOutputMulti(llmOutFull.ToString());
@@ -58,16 +60,16 @@ public class TokenBroadcasterFunc_2_4 : ITokenBroadcaster
             {
                 foreach (var messageSegment in messageSegments)
                 {
-                  
-                        LLMServiceObj responseServiceObj = new LLMServiceObj { SessionId = sessionId };
-                        if (isFunctionCallResponse)
-                        {
-                            responseServiceObj.LlmMessage = "</functioncall-complete>";
-                            await _responseProcessor.ProcessLLMOutput(responseServiceObj);
-                        }
-                        await ProcessMessageSegment(messageSegment, sessionId, userInput);
 
-                    
+                    LLMServiceObj responseServiceObj = new LLMServiceObj { SessionId = sessionId };
+                    if (isFunctionCallResponse)
+                    {
+                        responseServiceObj.LlmMessage = "</functioncall-complete>";
+                        await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+                    }
+                    await ProcessMessageSegment(messageSegment, sessionId, userInput);
+
+
 
                 }
                 _cancellationTokenSource.Cancel();
@@ -76,7 +78,7 @@ public class TokenBroadcasterFunc_2_4 : ITokenBroadcaster
             if (isStopEncountered)
                 break;
         }
-         //_logger.LogInformation(" --> LLM Output --> "+llmOutFull.ToString());
+        //_logger.LogInformation(" --> LLM Output --> "+llmOutFull.ToString());
         _logger.LogInformation(" --> Finished LLM Interaction ");
     }
 
@@ -91,8 +93,8 @@ public class TokenBroadcasterFunc_2_4 : ITokenBroadcaster
     {
         var regex = new Regex(@"<\|(?<tag>\w+)\|>(?<value>.+?(?=<\|))");
         string outputClean = output.Replace("\n", ""); // Remove newlines
-        string from = null;
-        string recipient = null;
+        string? from = null;
+        string? recipient = null;
         string content = "";
         bool isWithinContent = false;
         bool isMessageSegmentComplete = false;
@@ -119,6 +121,8 @@ public class TokenBroadcasterFunc_2_4 : ITokenBroadcaster
                     break;
             }
         }
+        if (from == null) from = "assistant";
+        if (recipient == null) recipient = "all";
         var messageSegment = new MessageSegment()
         {
             From = from,
@@ -166,6 +170,8 @@ public class TokenBroadcasterFunc_2_4 : ITokenBroadcaster
                             currentSegment = new MessageSegment();
                         }
                         currentSegment.Content = value.Trim();
+                        if (currentSegment.From == null) currentSegment.From = "assistant";
+                        if (currentSegment.Recipient == null) currentSegment.Recipient = "all";
                         messageSegments.Add(currentSegment);
                         currentSegment = null; // Reset for the next segment
                         break;
