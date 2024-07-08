@@ -116,7 +116,7 @@ public class LLMProcessRunner : ILLMRunner
         serviceObj.UserInput = userInput + input;
         serviceObj.IsFunctionCallResponse = false;
         _sendOutput = false;
-        //await SendInputAndGetResponse(serviceObj);
+        await SendInputAndGetResponse(serviceObj);
         _logger.LogInformation($"LLM process started for session {serviceObj.SessionId}");
         _sendOutput = true;
         _isStateStarting = false;
