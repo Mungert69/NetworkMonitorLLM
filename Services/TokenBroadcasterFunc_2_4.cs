@@ -11,13 +11,13 @@ using NetworkMonitor.Objects.ServiceMessage;
 using NetworkMonitor.LLM.Services.Objects;
 using System.Text.RegularExpressions;
 namespace NetworkMonitor.LLM.Services;
-public class TokenBroadcaster
+public class TokenBroadcasterFunc_2_4 : ITokenBroadcaster
 {
     private readonly ILLMResponseProcessor _responseProcessor;
     private readonly ILogger _logger;
     public event Func<object, string, Task> LineReceived;
     private CancellationTokenSource _cancellationTokenSource;
-    public TokenBroadcaster(ILLMResponseProcessor responseProcessor, ILogger logger)
+    public TokenBroadcasterFunc_2_4(ILLMResponseProcessor responseProcessor, ILogger logger)
     {
         _responseProcessor = responseProcessor;
         _logger = logger;

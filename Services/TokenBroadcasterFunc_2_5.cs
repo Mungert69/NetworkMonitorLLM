@@ -10,13 +10,13 @@ using Microsoft.Extensions.Logging;
 using NetworkMonitor.Objects.ServiceMessage;
 using NetworkMonitor.Objects;
 namespace NetworkMonitor.LLM.Services;
-public class TokenBroadcasterStandard : ITokenBroadcaster
+public class TokenBroadcasterFunc_2_5 : ITokenBroadcaster
 {
     private readonly ILLMResponseProcessor _responseProcessor;
     private readonly ILogger _logger;
     public event Func<object, string, Task> LineReceived;
     private CancellationTokenSource _cancellationTokenSource;
-    public TokenBroadcasterStandard(ILLMResponseProcessor responseProcessor, ILogger logger)
+    public TokenBroadcasterFunc_2_5(ILLMResponseProcessor responseProcessor, ILogger logger)
     {
         _responseProcessor = responseProcessor;
         _logger = logger;
@@ -110,7 +110,7 @@ public class TokenBroadcasterStandard : ITokenBroadcaster
         }
         else
         {
-            string jsonLine = ParseInputForJson(line);
+            (string jsonLine, string functionName) = ParseInputForJson(line);
             //string cleanLine = line;
             if (line != jsonLine)
             {
@@ -121,6 +121,9 @@ public class TokenBroadcasterStandard : ITokenBroadcaster
                 responseServiceObj.LlmMessage = "";
                 responseServiceObj.IsFunctionCall = true;
                 responseServiceObj.JsonFunction = jsonLine;
+                if (!String.IsNullOrEmpty(functionName)) {
+                    responseServiceObj.FunctionName = functionName;
+                }
                 //responseServiceObj.JsonFunction = CallFuncJson(cleanLine);
                 await _responseProcessor.ProcessFunctionCall(responseServiceObj);
             }
@@ -142,26 +145,30 @@ public class TokenBroadcasterStandard : ITokenBroadcaster
         callFuncJson = "{ \"name\" : \"" + funcName + "\" \"arguments\" : \"" + json + "\"}";
         return callFuncJson;
     }
-    private string ParseInputForJson(string input)
+    private (string json, string functionName) ParseInputForJson(string input)
     {
-        if (input.Contains("FUNCTION RESPONSE:")) return input;
+        string output = input;
+        if (input.Contains("FUNCTION RESPONSE:")) return (output,"");
         string newLine = string.Empty;
+        
         // bool foundStart = false;
         bool foundEnd = false;
         int startIndex = input.IndexOf('{');
         // If '{' is not found or is too far into the input, return the original input
         if (startIndex == -1 )
         {
-            return input;
+            return (output,"");
         }
         newLine = input.Substring(startIndex);
+        string functionName = input.Substring(0, startIndex );
+         functionName = functionName.Replace("\n", "").Trim();
         int lastClosingBraceIndex = newLine.LastIndexOf('}');
         if (lastClosingBraceIndex != -1)
         {
             newLine = newLine.Substring(0, lastClosingBraceIndex + 1);
             foundEnd = true;
         }
-        if (foundEnd) return JsonSanitizer.SanitizeJson(newLine);
-        else return input;
+        if (foundEnd) return (JsonSanitizer.SanitizeJson(newLine),functionName);
+        else return (output,"");
     }
 }

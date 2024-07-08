@@ -1,1 +1,1 @@
-~/code/models/llama.cpp/main -c 2000 -n 2000  -m ~/code/models/functionary-small-v2.4.Q4_0.gguf  --prompt-cache context-test.gguf --prompt-cache-ro  -f system_prompt_func  -ins -r "<|stop|>"    --keep -1 --temp 0 -t 8 --cache-type-k q8_0 --cache-type-v f16 
+~/code/models/llama.cpp/llama-cli -c 2000 -n 2000  -m ~/code/models/functionary-small-v2.4.Q4_0.gguf  --prompt-cache context-func.gguf --prompt-cache-ro  -f system_prompt_func  -cnv -r "<|stop|>"    --keep -1 --temp 0 -t 4 --color 

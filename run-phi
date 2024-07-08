@@ -1,1 +1,2 @@
-~/code/models/llama.cpp/main -c 2000 -n 2000  -m ~/code/models/phi-3-mini-4k-instruct.Q4_K_M.gguf  --prompt-cache context-phi.gguf --prompt-cache-ro  -f system_prompt_func  -ins -r "<|end|>"    --keep -1 --temp 0  --cache-type-k q8_0 --cache-type-v f16 
+~/code/models/llama.cpp/llama-cli -c 2500  -m ~/code/models/Phi-3-mini-4k-instruct-function-calling_Q8_0.gguf  --prompt-cache context-phi.gguf --prompt-cache-ro  -f system_prompt_phi   -r "<|end|>"  -cnv  --keep -1 --temp 0 --color   -sp --in-prefix "<|user|>"
+

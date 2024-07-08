@@ -19,7 +19,7 @@ public class LLMProcessRunner : ILLMRunner
 {
     //private ProcessWrapper _llamaProcess;
     private readonly ConcurrentDictionary<string, ProcessWrapper> _processes = new ConcurrentDictionary<string, ProcessWrapper>();
-    private readonly ConcurrentDictionary<string, TokenBroadcaster> _tokenBroadcasters = new ConcurrentDictionary<string, TokenBroadcaster>();
+    private readonly ConcurrentDictionary<string, ITokenBroadcaster> _tokenBroadcasters = new ConcurrentDictionary<string, ITokenBroadcaster>();
     private bool _sendOutput = false;
     private ILogger _logger;
     private ILLMResponseProcessor _responseProcessor;
@@ -58,8 +58,11 @@ public class LLMProcessRunner : ILLMRunner
     }
     public void SetStartInfo(ProcessStartInfo startInfo, MLParams mlParams)
     {
+        string promptPrefix = "";
+       // if (!mlParams.LlmIsFunc_2_4) promptPrefix = " --in-prefix \"<|user|>\" ";
+
         startInfo.FileName = $"{mlParams.LlmModelPath}llama.cpp/llama-cli";
-        startInfo.Arguments = $" -c 2500 -n 6000 -m {mlParams.LlmModelPath + mlParams.LlmModelFileName}  --prompt-cache {mlParams.LlmModelPath + mlParams.LlmContextFileName} --prompt-cache-ro  -f {mlParams.LlmModelPath + mlParams.LlmSystemPrompt}  -cnv -r \"<|stop|>\" --keep -1 --temp 0 -t {mlParams.LlmThreads}";
+        startInfo.Arguments = $" -c 2500 -n 6000 -m {mlParams.LlmModelPath + mlParams.LlmModelFileName}  --prompt-cache {mlParams.LlmModelPath + mlParams.LlmContextFileName} --prompt-cache-ro  -f {mlParams.LlmModelPath + mlParams.LlmSystemPrompt}  -cnv -r \"{mlParams.LlmReversePrompt}\" --keep -1 --temp 0 -t {mlParams.LlmThreads} {promptPrefix}";
         startInfo.UseShellExecute = false;
         startInfo.RedirectStandardInput = true;
         startInfo.RedirectStandardOutput = true;
@@ -94,7 +97,9 @@ public class LLMProcessRunner : ILLMRunner
             _processRunnerSemaphore.Release(); // Release the semaphore
         }
         string input = "";
-        string userInput = $"<|from|>get_login_info<|content|>User info ";
+        string userInput = "get_user_info";
+        if (_mlParams.LlmIsFunc_2_4)
+            userInput = $"<|from|>get_login_info<|content|>User info ";
         if (serviceObj.IsUserLoggedIn)
         {
             var user = new UserInfo()
@@ -111,7 +116,7 @@ public class LLMProcessRunner : ILLMRunner
         serviceObj.UserInput = userInput + input;
         serviceObj.IsFunctionCallResponse = false;
         _sendOutput = false;
-        await SendInputAndGetResponse(serviceObj);
+        //await SendInputAndGetResponse(serviceObj);
         _logger.LogInformation($"LLM process started for session {serviceObj.SessionId}");
         _sendOutput = true;
         _isStateStarting = false;
@@ -128,7 +133,7 @@ public class LLMProcessRunner : ILLMRunner
             throw new Exception("Process is not running for this session");
         }
         // Stop broadcaster if running.
-        TokenBroadcaster tokenBroadcaster;
+        ITokenBroadcaster tokenBroadcaster;
         if (_tokenBroadcasters.TryGetValue(sessionId, out tokenBroadcaster))
         {
             await tokenBroadcaster.ReInit(sessionId);
@@ -204,17 +209,34 @@ public class LLMProcessRunner : ILLMRunner
                 throw new InvalidOperationException("FreeLLM Assistant is in a failed state.  Try reloading the Assistant or refreshing the page. If the problems persists contact support@freenetworkmontior.click");
             }
             process.LastActivity = DateTime.UtcNow;
-            TokenBroadcaster tokenBroadcaster;
+            ITokenBroadcaster tokenBroadcaster;
             if (_tokenBroadcasters.TryGetValue(serviceObj.SessionId, out tokenBroadcaster))
             {
                 await tokenBroadcaster.ReInit(serviceObj.SessionId);
             }
             else
             {
-                tokenBroadcaster = new TokenBroadcaster(_responseProcessor, _logger);
+                if (_mlParams.LlmIsFunc_2_4)
+                    tokenBroadcaster = new TokenBroadcasterFunc_2_4(_responseProcessor, _logger);
+                else tokenBroadcaster = new TokenBroadcasterFunc_2_5(_responseProcessor, _logger);
             }
             string userInput = serviceObj.UserInput;
-            if (!serviceObj.IsFunctionCallResponse && _sendOutput) userInput = "<|from|>user<|content|>" + userInput;
+           
+            if (_sendOutput)
+            {
+                if (!serviceObj.IsFunctionCallResponse)
+                {
+                     if (_mlParams.LlmIsFunc_2_4) userInput = "<|from|>user<|content|>" + userInput;
+                     //else  userInput = "<|user|>" + userInput;
+                }
+                else
+                {
+                    if (_mlParams.LlmIsFunc_2_4) userInput = "<|from|>" + serviceObj.FunctionName + "<|recipient|>all<|content|>" + serviceObj.UserInput;
+                    else userInput = "<|start_header_id|>tool<|end_header_id|>name=" + serviceObj.FunctionName + " " + serviceObj.UserInput;
+
+                }
+            }
+
             await process.StandardInput.WriteLineAsync(userInput);
             await process.StandardInput.FlushAsync();
             _logger.LogInformation($" ProcessLLMOutput(user input) -> {userInput}");
@@ -227,7 +249,7 @@ public class LLMProcessRunner : ILLMRunner
             }
             else
             {
-                
+
                 _logger.LogWarning($"Session  {serviceObj.SessionId} timed out. Terminating process.");
                 await RemoveProcess(serviceObj.SessionId);
                 _isStateFailed = true;
