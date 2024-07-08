@@ -50,18 +50,19 @@ public class TokenBroadcasterFunc_2_5 : ITokenBroadcaster
             byte[] buffer = new byte[1];
             int charRead = await process.StandardOutput.ReadAsync(buffer, 0, buffer.Length);
             string textChunk = Encoding.UTF8.GetString(buffer, 0, charRead);
-            lineBuilder.Append(textChunk);
+            //lineBuilder.Append(textChunk);
             char currentChar = (char)charRead;
             tokenBuilder.Append(textChunk);
+            llmOutFull.Append(textChunk);
+             var serviceObj = new LLMServiceObj { SessionId = sessionId, LlmMessage = textChunk };
+            await _responseProcessor.ProcessLLMOutput(serviceObj);
             if (IsTokenComplete(tokenBuilder))
             {
                 string token = tokenBuilder.ToString();
-                token = token.Replace("/\b", "");
-                //Console.WriteLine(token);
                 tokenBuilder.Clear();
-                var serviceObj = new LLMServiceObj { SessionId = sessionId, LlmMessage = token };
-                await _responseProcessor.ProcessLLMOutput(serviceObj);
-                if (isNewline && token == "> ")
+                token = token.Replace("/\b", "");
+            }
+             if (llmOutFull.ToString().Contains("<|eot_id|>"))
                 {
                     _logger.LogInformation($"sessionID={sessionId} line is =>{llmOutFull.ToString()}<=");
                     await ProcessLine(llmOutFull.ToString(), sessionId, userInput, isFunctionCallResponse);
@@ -69,9 +70,7 @@ public class TokenBroadcasterFunc_2_5 : ITokenBroadcaster
                     _logger.LogInformation(" Cancel due to output end detected ");
                     _cancellationTokenSource.Cancel();
                 }
-                else isNewline = false;
-            }
-            if (IsLineComplete(lineBuilder))
+            /*if (IsLineComplete(lineBuilder))
             {
                 string line = lineBuilder.ToString();
                 if (line.Equals(userInput + "\n") || line.StartsWith(copyUserInput))
@@ -85,7 +84,7 @@ public class TokenBroadcasterFunc_2_5 : ITokenBroadcaster
                     if (line == "\n") isNewline = true;
                 }
                 lineBuilder.Clear();
-            }
+            }*/
         }
         _logger.LogInformation(" --> Finshed LLM Interaction ");
     }
@@ -145,30 +144,46 @@ public class TokenBroadcasterFunc_2_5 : ITokenBroadcaster
         callFuncJson = "{ \"name\" : \"" + funcName + "\" \"arguments\" : \"" + json + "\"}";
         return callFuncJson;
     }
-    private (string json, string functionName) ParseInputForJson(string input)
+     private static (string json, string functionName) ParseInputForJson(string input)
     {
+        string specialToken = "<|reserved_special_token_249|>";
         string output = input;
-        if (input.Contains("FUNCTION RESPONSE:")) return (output,"");
-        string newLine = string.Empty;
-        
-        // bool foundStart = false;
-        bool foundEnd = false;
-        int startIndex = input.IndexOf('{');
-        // If '{' is not found or is too far into the input, return the original input
-        if (startIndex == -1 )
+
+        // Check if the input contains the special token
+        int tokenIndex = input.IndexOf(specialToken);
+        if (tokenIndex == -1)
         {
-            return (output,"");
+            return (output, "");
         }
-        newLine = input.Substring(startIndex);
-        string functionName = input.Substring(0, startIndex );
-         functionName = functionName.Replace("\n", "").Trim();
-        int lastClosingBraceIndex = newLine.LastIndexOf('}');
-        if (lastClosingBraceIndex != -1)
+
+        // Extract the string after the special token
+        string postTokenString = input.Substring(tokenIndex + specialToken.Length);
+
+        // Find the start index of the JSON content
+        int jsonStartIndex = postTokenString.IndexOf('{');
+        if (jsonStartIndex == -1)
         {
-            newLine = newLine.Substring(0, lastClosingBraceIndex + 1);
-            foundEnd = true;
+            return (output, "");
         }
-        if (foundEnd) return (JsonSanitizer.SanitizeJson(newLine),functionName);
-        else return (output,"");
+
+        // Extract the JSON content
+        string jsonContent = postTokenString.Substring(jsonStartIndex);
+
+        // Extract the function name
+        string functionNamePart = postTokenString.Substring(0, jsonStartIndex);
+        string functionName = functionNamePart.Replace("\n", "").Trim();
+
+        // Find the end of the JSON content
+        int jsonEndIndex = jsonContent.LastIndexOf('}');
+        if (jsonEndIndex != -1)
+        {
+            jsonContent = jsonContent.Substring(0, jsonEndIndex + 1);
+        }
+        else
+        {
+            return (output, "");
+        }
+
+        return (JsonSanitizer.SanitizeJson(jsonContent), functionName);
     }
 }

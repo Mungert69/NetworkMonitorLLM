@@ -62,7 +62,7 @@ public class LLMProcessRunner : ILLMRunner
        // if (!mlParams.LlmIsFunc_2_4) promptPrefix = " --in-prefix \"<|user|>\" ";
 
         startInfo.FileName = $"{mlParams.LlmModelPath}llama.cpp/llama-cli";
-        startInfo.Arguments = $" -c 2500 -n 6000 -m {mlParams.LlmModelPath + mlParams.LlmModelFileName}  --prompt-cache {mlParams.LlmModelPath + mlParams.LlmContextFileName} --prompt-cache-ro  -f {mlParams.LlmModelPath + mlParams.LlmSystemPrompt}  -cnv -r \"{mlParams.LlmReversePrompt}\" --keep -1 --temp 0 -t {mlParams.LlmThreads} {promptPrefix}";
+        startInfo.Arguments = $" -c 2500 -n 6000 -m {mlParams.LlmModelPath + mlParams.LlmModelFileName}  --prompt-cache {mlParams.LlmModelPath + mlParams.LlmContextFileName} --prompt-cache-ro  -f {mlParams.LlmModelPath + mlParams.LlmSystemPrompt}  -cnv -r \"{mlParams.LlmReversePrompt}\" --keep -1 --temp 0 -t {mlParams.LlmThreads} {promptPrefix} -sp";
         startInfo.UseShellExecute = false;
         startInfo.RedirectStandardInput = true;
         startInfo.RedirectStandardOutput = true;
@@ -97,7 +97,7 @@ public class LLMProcessRunner : ILLMRunner
             _processRunnerSemaphore.Release(); // Release the semaphore
         }
         string input = "";
-        string userInput = "get_user_info";
+        string userInput = "<|start_header_id|>tool<|end_header_id|>get_user_info";
         if (_mlParams.LlmIsFunc_2_4)
             userInput = $"<|from|>get_login_info<|content|>User info ";
         if (serviceObj.IsUserLoggedIn)
@@ -116,7 +116,7 @@ public class LLMProcessRunner : ILLMRunner
         serviceObj.UserInput = userInput + input;
         serviceObj.IsFunctionCallResponse = false;
         _sendOutput = false;
-        //await SendInputAndGetResponse(serviceObj);
+        await SendInputAndGetResponse(serviceObj);
         _logger.LogInformation($"LLM process started for session {serviceObj.SessionId}");
         _sendOutput = true;
         _isStateStarting = false;
@@ -227,7 +227,7 @@ public class LLMProcessRunner : ILLMRunner
                 if (!serviceObj.IsFunctionCallResponse)
                 {
                      if (_mlParams.LlmIsFunc_2_4) userInput = "<|from|>user<|content|>" + userInput;
-                     //else  userInput = "<|user|>" + userInput;
+                     else  userInput = "<|start_header_id|>user<|end_header_id|>" + userInput;
                 }
                 else
                 {
