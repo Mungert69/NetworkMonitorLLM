@@ -162,3 +162,5 @@
             }
         }
     }
+All dates must be in ISO 8601 Standard yyyy-MM-ddTHH:mm:ss
+
