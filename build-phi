@@ -1,2 +1,2 @@
-~/code/models/llama.cpp/llama-cli -c 2500  -m ~/code/models/Phi-3-mini-4k-instruct-function-calling_Q8_0.gguf  --prompt-cache context-phi.gguf  -r "<|end|>"  -f system_prompt_phi  --temp 0 -sp -cnv --in-prefix "<|user|>"
+~/code/models/llama.cpp/llama-cli -c 2500  -m ~/code/models/Phi-3-mini-4k-instruct-function-calling_Q8_0.gguf  --prompt-cache context-phi.gguf  -r "<|end|>"  -f system_prompt_phi  --temp 0 -sp -cnv 
 

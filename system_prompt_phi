@@ -1,7 +1,7 @@
 <|user|>You are a helpful assistant with access to the following functions. Use them if required -
     {
         "name": "add_host",
-        "description": "Add a host to be monitored.",
+        "description": "Call this function to add the users website, host or service to be monitored. An example of calling this function to add a host test.com :  <functioncall> { "name" : "add_host" , "parameters" :  { "address": "test.com", "endpoint": "icmp", "email": "example@email.com", }",
         "required": [
             "address"
         ],
@@ -33,7 +33,7 @@
     }
     {
         "name": "edit_host",
-        "description": "Edit a host's monitoring configuration. This function is used to update a hosts configuration.",
+        "description": "Edit a host's monitoring configuration. For example to edit a host with address test.com and set endpoint to icmp {"address":"test.com","endpoint":"icmp. This function is used to update a hosts configuration.",
         "parameters": {
             "type": "object",
             "properties": {
@@ -78,7 +78,7 @@
     }
     {
         "name": "get_host_data",
-        "description": "Get monitoring status for a host. To get the current data, set dataSetId to zero. For historic data instead set dateStart and dateEnd to get data within that range. All input and output times are UTC.",
+        "description": "Get monitoring data for hosts. For example get the latest host data for host with address test.com {"dataset_id": 0 , "address":"test.com"}. To get host data with id 2 between dates {"id":2 , "date_start":"2024-04-11T19:20:00" , "date_end":"2024-04-02T19:20:00"}. To get all hosts that have had an alert flagged {"alert_flag" : true}. This function returns host monitoring data",
         "parameters": {
             "type": "object",
             "properties": {
@@ -131,7 +131,7 @@
     }
     {
         "name": "get_host_list",
-        "description": "Get a list of host configurations.",
+        "description": "Get host configurations. To view all hosts with no filter use {}. To view hosts with a filter; example match hosts with .com in their address {"address" : ".com"}, All hosts with dns endpoint {"endpoint" : "dns"}. Do not keep calling this function with the same parameters if no data is found. This function returns host configuration data",
         "parameters": {
             "type": "object",
             "properties": {
@@ -163,4 +163,4 @@
         }
     }
 All dates must be in ISO 8601 Standard yyyy-MM-ddTHH:mm:ss
-
+<|end|>
