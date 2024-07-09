@@ -98,7 +98,7 @@ public class LLMProcessRunner : ILLMRunner
             _processRunnerSemaphore.Release(); // Release the semaphore
         }
         string input = "";
-        string userInput = "<|start_header_id|>tool<|end_header_id|>get_user_info";
+        string userInput = "<|start_header_id|>tool<|end_header_id|>name=get_user_info ";
         if (_mlParams.LlmIsFunc_2_4)
             userInput = $"<|from|>get_login_info<|content|>User info ";
         if (serviceObj.IsUserLoggedIn)
