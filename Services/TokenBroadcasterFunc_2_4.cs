@@ -93,8 +93,8 @@ public class TokenBroadcasterFunc_2_4 : ITokenBroadcaster
     {
         var regex = new Regex(@"<\|(?<tag>\w+)\|>(?<value>.+?(?=<\|))");
         string outputClean = output.Replace("\n", ""); // Remove newlines
-        string? from = null;
-        string? recipient = null;
+        string from = "";
+        string recipient = "";
         string content = "";
         bool isWithinContent = false;
         bool isMessageSegmentComplete = false;
@@ -121,8 +121,6 @@ public class TokenBroadcasterFunc_2_4 : ITokenBroadcaster
                     break;
             }
         }
-        if (from == null) from = "assistant";
-        if (recipient == null) recipient = "all";
         var messageSegment = new MessageSegment()
         {
             From = from,
@@ -170,8 +168,6 @@ public class TokenBroadcasterFunc_2_4 : ITokenBroadcaster
                             currentSegment = new MessageSegment();
                         }
                         currentSegment.Content = value.Trim();
-                        if (currentSegment.From == null) currentSegment.From = "assistant";
-                        if (currentSegment.Recipient == null) currentSegment.Recipient = "all";
                         messageSegments.Add(currentSegment);
                         currentSegment = null; // Reset for the next segment
                         break;
