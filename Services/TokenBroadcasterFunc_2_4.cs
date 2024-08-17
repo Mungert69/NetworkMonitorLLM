@@ -29,7 +29,7 @@ public class TokenBroadcasterFunc_2_4 : ITokenBroadcaster
         _logger.LogInformation(" Cancel due to ReInit called ");
         await _cancellationTokenSource.CancelAsync();
     }
-    public async Task BroadcastAsync(ProcessWrapper process, string sessionId, string userInput, bool isFunctionCallResponse, bool sendOutput)
+    public async Task BroadcastAsync(ProcessWrapper process, string sessionId, string userInput, bool isFunctionCallResponse,string sourceLlm, string destionationLlm, bool sendOutput)
     {
         _logger.LogWarning(" Start BroadcastAsync() ");
         _responseProcessor.SendOutput = sendOutput;
@@ -43,7 +43,7 @@ public class TokenBroadcasterFunc_2_4 : ITokenBroadcaster
             byte[] buffer = new byte[1];
             int charRead = await process.StandardOutput.ReadAsync(buffer, 0, buffer.Length);
             string textChunk = Encoding.UTF8.GetString(buffer, 0, charRead);
-            var serviceObj = new LLMServiceObj { SessionId = sessionId, LlmMessage = textChunk };
+            var serviceObj = new LLMServiceObj { SessionId = sessionId, LlmMessage = textChunk, SourceLlm=sourceLlm, DestinationLlm= destionationLlm };
             await _responseProcessor.ProcessLLMOutput(serviceObj);
             llmOutFull.Append(textChunk);
             tokenBuilder.Append(textChunk);
@@ -61,13 +61,13 @@ public class TokenBroadcasterFunc_2_4 : ITokenBroadcaster
                 foreach (var messageSegment in messageSegments)
                 {
 
-                    LLMServiceObj responseServiceObj = new LLMServiceObj { SessionId = sessionId };
+                    LLMServiceObj responseServiceObj = new LLMServiceObj { SessionId = sessionId,SourceLlm=sourceLlm, DestinationLlm= destionationLlm  };
                     if (isFunctionCallResponse)
                     {
                         responseServiceObj.LlmMessage = "</functioncall-complete>";
                         await _responseProcessor.ProcessLLMOutput(responseServiceObj);
                     }
-                    await ProcessMessageSegment(messageSegment, sessionId, userInput);
+                    await ProcessMessageSegment(messageSegment, sessionId, userInput, sourceLlm,destionationLlm);
 
 
 
@@ -188,9 +188,9 @@ public class TokenBroadcasterFunc_2_4 : ITokenBroadcaster
         }
         return sb.ToString();
     }
-    private async Task ProcessMessageSegment(MessageSegment messageSegment, string sessionId, string userInput)
+    private async Task ProcessMessageSegment(MessageSegment messageSegment, string sessionId, string userInput,string sourceLlm, string destionationLlm )
     {
-        LLMServiceObj responseServiceObj = new LLMServiceObj() { SessionId = sessionId };
+        LLMServiceObj responseServiceObj = new LLMServiceObj() { SessionId = sessionId ,SourceLlm=sourceLlm, DestinationLlm= destionationLlm };
         string line = messageSegment.Content;
 
         if (messageSegment.From == "assistant" && messageSegment.Recipient != "all")
@@ -201,7 +201,7 @@ public class TokenBroadcasterFunc_2_4 : ITokenBroadcaster
             {
                 var jsonFunction = "{\"name\" : \"" + messageSegment.Recipient + "\" , \"parameters\" : " + jsonLine + "}";
                 _logger.LogInformation($" ProcessLLMOutput(call_func) -> {jsonLine}");
-                responseServiceObj = new LLMServiceObj() { SessionId = sessionId, UserInput = userInput };
+                responseServiceObj = new LLMServiceObj() { SessionId = sessionId, UserInput = userInput,SourceLlm=sourceLlm, DestinationLlm= destionationLlm  };
                 responseServiceObj.LlmMessage = "</functioncall>";
                 await _responseProcessor.ProcessLLMOutput(responseServiceObj);
                 responseServiceObj.LlmMessage = "";

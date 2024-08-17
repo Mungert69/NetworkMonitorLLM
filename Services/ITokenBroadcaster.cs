@@ -6,5 +6,5 @@ namespace NetworkMonitor.LLM.Services;
     {
         event Func<object, string, Task> LineReceived;
         Task ReInit(string sessionId);
-        Task BroadcastAsync(ProcessWrapper process, string sessionId, string userInput, bool isFunctionCallResponse, bool sendOutput);
+        Task BroadcastAsync(ProcessWrapper process, string sessionId, string userInput, bool isFunctionCallResponse, string sourceLlm, string destionationLlm, bool sendOutput);
     }

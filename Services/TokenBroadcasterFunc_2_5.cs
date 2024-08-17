@@ -27,7 +27,7 @@ public class TokenBroadcasterFunc_2_5 : ITokenBroadcaster
         _logger.LogInformation(" Cancel due to ReInit called ");
         await _cancellationTokenSource.CancelAsync();
     }
-    public async Task BroadcastAsync(ProcessWrapper process, string sessionId, string userInput, bool isFunctionCallResponse, bool sendOutput=true)
+    public async Task BroadcastAsync(ProcessWrapper process, string sessionId, string userInput, bool isFunctionCallResponse, string sourceLlm, string destionationLlm, bool sendOutput=true)
     {
         _logger.LogWarning(" Start BroadcastAsyc() ");
         // trim up to / otherwise it won't match 
@@ -54,7 +54,7 @@ public class TokenBroadcasterFunc_2_5 : ITokenBroadcaster
             char currentChar = (char)charRead;
             tokenBuilder.Append(textChunk);
             llmOutFull.Append(textChunk);
-             var serviceObj = new LLMServiceObj { SessionId = sessionId, LlmMessage = textChunk };
+             var serviceObj = new LLMServiceObj { SessionId = sessionId, LlmMessage = textChunk,SourceLlm=sourceLlm, DestinationLlm= destionationLlm  };
             await _responseProcessor.ProcessLLMOutput(serviceObj);
             if (IsTokenComplete(tokenBuilder))
             {
@@ -65,7 +65,7 @@ public class TokenBroadcasterFunc_2_5 : ITokenBroadcaster
              if (llmOutFull.ToString().Contains("<|eot_id|>"))
                 {
                     _logger.LogInformation($"sessionID={sessionId} line is =>{llmOutFull.ToString()}<=");
-                    await ProcessLine(llmOutFull.ToString(), sessionId, userInput, isFunctionCallResponse);
+                    await ProcessLine(llmOutFull.ToString(), sessionId, userInput, isFunctionCallResponse, sourceLlm,destionationLlm);
                     //state = ResponseState.Completed;
                     _logger.LogInformation(" Cancel due to output end detected ");
                     _cancellationTokenSource.Cancel();
@@ -99,9 +99,9 @@ public class TokenBroadcasterFunc_2_5 : ITokenBroadcaster
         // Check for whitespace characters that indicate token boundaries
         return false;
     }
-    private async Task ProcessLine(string line, string sessionId, string userInput, bool isFunctionCallResponse)
+    private async Task ProcessLine(string line, string sessionId, string userInput, bool isFunctionCallResponse,string sourceLlm, string destionationLlm)
     {
-        LLMServiceObj responseServiceObj = new LLMServiceObj() { SessionId = sessionId };
+        LLMServiceObj responseServiceObj = new LLMServiceObj() { SessionId = sessionId,SourceLlm=sourceLlm, DestinationLlm= destionationLlm  };
         if (isFunctionCallResponse)
         {
             responseServiceObj.LlmMessage = "</functioncall-complete>";
@@ -114,7 +114,7 @@ public class TokenBroadcasterFunc_2_5 : ITokenBroadcaster
             if (line != jsonLine)
             {
                 _logger.LogInformation($" ProcessLLMOutput(call_func) -> {jsonLine}");
-                responseServiceObj = new LLMServiceObj() { SessionId = sessionId, UserInput = userInput };
+                responseServiceObj = new LLMServiceObj() { SessionId = sessionId, UserInput = userInput,SourceLlm=sourceLlm, DestinationLlm= destionationLlm };
                 responseServiceObj.LlmMessage = "</functioncall>";
                 await _responseProcessor.ProcessLLMOutput(responseServiceObj);
                 responseServiceObj.LlmMessage = "";
