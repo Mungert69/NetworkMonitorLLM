@@ -31,11 +31,13 @@ public interface IRabbitListener
 public class RabbitListener : RabbitListenerBase, IRabbitListener
 {
     protected ILLMService _llmService;
+    private string _serviceID="Monitor";
 
     public RabbitListener(ILLMService llmService, ILogger<RabbitListenerBase> logger, ISystemParamsHelper systemParamsHelper) : base(logger, DeriveSystemUrl(systemParamsHelper))
     {
 
         _llmService = llmService;
+        _serviceID=systemParamsHelper.GetSystemParams().ServiceID ?? "Monitor";
         Setup();
     }
 
@@ -51,19 +53,19 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
       
         _rabbitMQObjs.Add(new RabbitMQObj()
         {
-            ExchangeName = "llmStartSession",
+            ExchangeName = "llmStartSession"+_serviceID,
             FuncName = "llmStartSession",
             MessageTimeout = 60000
         });
         _rabbitMQObjs.Add(new RabbitMQObj()
         {
-            ExchangeName = "llmUserInput",
+            ExchangeName = "llmUserInput"+_serviceID,
             FuncName = "llmUserInput",
             MessageTimeout = 60000
         });
         _rabbitMQObjs.Add(new RabbitMQObj()
         {
-            ExchangeName = "llmRemoveSession",
+            ExchangeName = "llmRemoveSession"+_serviceID,
             FuncName = "llmRemoveSession",
             MessageTimeout = 60000
         });
