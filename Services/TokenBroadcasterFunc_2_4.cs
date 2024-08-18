@@ -88,6 +88,7 @@ public class TokenBroadcasterFunc_2_4 : ITokenBroadcaster
             string llmOutput = llmOutFull.ToString().Replace("\n", " ");
             var finalServiceObj = new LLMServiceObj(serviceObj);
             finalServiceObj.LlmMessage = llmOutput;
+            finalServiceObj.IsFunctionCall = false;
             finalServiceObj.IsFunctionCallResponse=true;
             await _responseProcessor.ProcessLLMOutput(finalServiceObj);
             _logger.LogInformation($" --> Sent redirected LLM Output {finalServiceObj.LlmMessage}");
