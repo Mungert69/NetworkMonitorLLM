@@ -86,7 +86,7 @@ public class TokenBroadcasterFunc_2_4 : ITokenBroadcaster
         if (!_isPrimaryLlm && !_isFuncCalled)
         {
             string llmOutput = llmOutFull.ToString().Replace("\n", " ");
-            var finalServiceObj = new LLMServiceObj { SessionId = sessionId, SourceLlm = sourceLlm, DestinationLlm = destinationLlm, LlmMessage = llmOutput };
+            var finalServiceObj = new LLMServiceObj { SessionId = sessionId, SourceLlm = sourceLlm, DestinationLlm = destinationLlm, LlmMessage = llmOutput, IsFunctionCallResponse=true };
             await _responseProcessor.ProcessLLMOutput(finalServiceObj);
             _logger.LogInformation($" --> Sent redirected LLM Output {finalServiceObj.LlmMessage}");
         }
