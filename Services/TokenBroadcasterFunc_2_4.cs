@@ -85,6 +85,7 @@ public class TokenBroadcasterFunc_2_4 : ITokenBroadcaster
         {
             var finalServiceObj = new LLMServiceObj { SessionId = sessionId, SourceLlm = sourceLlm, DestinationLlm = destionationLlm, LlmMessage = llmOutFull.ToString() };
             await _responseProcessor.ProcessLLMOutput(finalServiceObj);
+            _logger.LogInformation($" --> Sent redirected LLM Output {finalServiceObj.LlmMessage}");
         }
 
         //_logger.LogInformation(" --> LLM Output --> "+llmOutFull.ToString());
