@@ -66,7 +66,7 @@ public class TokenBroadcasterFunc_2_5 : ITokenBroadcaster
             if (llmOutFull.ToString().Contains("<|eot_id|>"))
             {
                 _logger.LogInformation($"sessionID={serviceObj.SessionId} line is =>{llmOutFull.ToString()}<=");
-                await ProcessLine(llmOutFull.ToString(), serviceObj.essionId, userInput, serviceObj.IsFunctionCallResponse, serviceObj.SourceLlm, serviceObj.DestinationLlm);
+                await ProcessLine(llmOutFull.ToString(), serviceObj.SessionId, userInput, serviceObj.IsFunctionCallResponse, serviceObj.SourceLlm, serviceObj.DestinationLlm);
                 //state = ResponseState.Completed;
                 _logger.LogInformation(" Cancel due to output end detected ");
                 _cancellationTokenSource.Cancel();
