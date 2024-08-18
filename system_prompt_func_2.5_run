@@ -43,7 +43,7 @@ namespace functions {
     agent_location,
   }) => any;
 
-  // Get monitoring data for hosts. For example get the latest host data for host with address test.com {"dataset_id": 0 , "address":"test.com"}. To get host data with id 2 between dates {"id":2 , "date_start":"2024-04-11T19:20:00" , "date_end":"2024-04-02T19:20:00"}. To get all hosts that have had an alert flagged {"alert_flag" : true}
+  // Get monitoring data for hosts. For example get the latest host data for host with address test.com {"dataset_id": 0 , "address":"test.com"}. To get host data with id 2 between dates {"id":2 , "date_start":"2024-04-11T19:20:00" , "date_end":"2024-04-02T19:20:00"}. To get all hosts that have had an alert flagged {"alert_flag" : true}. When using pagination do not keep increasing the page number when no more hosts are found. Do not keep calling this function with the same parameters if no data is found.
   type get_host_data = (_: {
     // Will this function provide all monitoring data for hosts. Only set to true if extra response statistics are required or agent location is required. Setting it to true will slow down the processing speed of the assistant, this can effect the users experience
     detail_response: boolean,
@@ -75,7 +75,7 @@ namespace functions {
     agent_location,
   }) => any;
 
-  // Get host configurations. To view all hosts with no filter use {}. To view hosts with a filter; example match hosts with .com in their address {"address" : ".com"}, All hosts with dns endpoint {"endpoint" : "dns"}
+  // Get host configurations. To view all hosts with no filter use {}. To view hosts with a filter; example match hosts with .com in their address {"address" : ".com"}, All hosts with dns endpoint {"endpoint" : "dns"}. Do not keep calling this function with the same parameters if no data is found.
   type get_host_list = (_: {
     // Will this function provide all host config detail. Set this to true if more than address and id are required.
     detail_response: boolean,
@@ -103,6 +103,13 @@ namespace functions {
     detail_response: boolean,
   }) => any;
 
+  // Get information about a host using a network scanning assistant. You will pass a message to the assistant in natural language decribing what the user whats. 
+  type call_nmap = (_: {
+    // The message to be sent to the network scanning assistant.
+    message: string,
+  }) => any;
+
+
   // Get information about the user
   type get_user_info = (_: {
         // Will this function return all user details. Set to false if only basic info is required
@@ -111,5 +118,5 @@ namespace functions {
 
 }// namespace functions<|eot_id|><|start_header_id|>system<|end_header_id|>
 
-A chat between a user and a network monitoring assistant.The assistant gives helpful, detailed, and polite answers to the user's questions. The assistant calls functions with only the necessary parameters when necessary. All dates must be in ISO 8601 Standard yyyy-MM-ddTHH:mm:ss
+You are a network monitoring assistant.You give helpful, detailed, and polite answers to the user's questions. You call functions with only the necessary parameters. All dates must be in ISO 8601 Standard yyyy-MM-ddTHH:mm:ss
 
