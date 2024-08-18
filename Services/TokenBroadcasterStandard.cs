@@ -43,7 +43,7 @@ public class TokenBroadcasterStandard : ITokenBroadcaster
         var lineBuilder = new StringBuilder();
         var llmOutFull = new StringBuilder();
         var tokenBuilder = new StringBuilder();
-         _isPrimaryLlm = serviceObj.IsPrimaryLlm;
+        _isPrimaryLlm = serviceObj.IsPrimaryLlm;
         _isFuncCalled = false;
         var cancellationToken = _cancellationTokenSource.Token;
         int newlineCounter = 0;
@@ -65,7 +65,7 @@ public class TokenBroadcasterStandard : ITokenBroadcaster
                 tokenBuilder.Clear();
                 var chunkServiceObj = new LLMServiceObj(serviceObj);
                 chunkServiceObj.LlmMessage = token;
-                await _responseProcessor.ProcessLLMOutput(chunkServiceObj);
+                if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(chunkServiceObj);
                 if (isNewline && token == "> ")
                 {
                     _logger.LogInformation($"sessionID={serviceObj.SessionId} line is =>{llmOutFull.ToString()}<=");
@@ -83,7 +83,7 @@ public class TokenBroadcasterStandard : ITokenBroadcaster
                 {
                     var lineServiceObj = new LLMServiceObj(serviceObj);
                     lineServiceObj.LlmMessage = "\nAssistant: ";
-                    await _responseProcessor.ProcessLLMOutput(lineServiceObj);
+                    if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(lineServiceObj);
                 }
                 else
                 {
@@ -92,6 +92,15 @@ public class TokenBroadcasterStandard : ITokenBroadcaster
                 }
                 lineBuilder.Clear();
             }
+        }
+        if (!_isPrimaryLlm && !_isFuncCalled)
+        {
+            string llmOutput = llmOutFull.ToString().Replace("\n", " ");
+            var finalServiceObj = new LLMServiceObj(serviceObj);
+            finalServiceObj.LlmMessage = llmOutput;
+            finalServiceObj.IsFunctionCallResponse = true;
+            await _responseProcessor.ProcessLLMOutput(finalServiceObj);
+            _logger.LogInformation($" --> Sent redirected LLM Output {finalServiceObj.LlmMessage}");
         }
         _logger.LogInformation(" --> Finshed LLM Interaction ");
     }
@@ -112,7 +121,7 @@ public class TokenBroadcasterStandard : ITokenBroadcaster
         if (isFunctionCallResponse)
         {
             responseServiceObj.LlmMessage = "</functioncall-complete>";
-            await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+            if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
         }
         else
         {
@@ -123,16 +132,17 @@ public class TokenBroadcasterStandard : ITokenBroadcaster
                 _logger.LogInformation($" ProcessLLMOutput(call_func) -> {jsonLine}");
                 responseServiceObj = new LLMServiceObj() { SessionId = sessionId, UserInput = userInput, SourceLlm = sourceLlm, DestinationLlm = destionationLlm };
                 responseServiceObj.LlmMessage = "</functioncall>";
-                await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+                if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
                 responseServiceObj.LlmMessage = "";
                 responseServiceObj.IsFunctionCall = true;
                 responseServiceObj.JsonFunction = jsonLine;
                 //responseServiceObj.JsonFunction = CallFuncJson(cleanLine);
                 await _responseProcessor.ProcessFunctionCall(responseServiceObj);
+                _isFuncCalled = true;
             }
         }
         responseServiceObj.LlmMessage = "<end-of-line>";
-        await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+        if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
     }
     public string CallFuncJson(string input)
     {
