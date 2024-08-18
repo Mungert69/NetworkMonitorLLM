@@ -81,7 +81,7 @@ public class TokenBroadcasterFunc_2_4 : ITokenBroadcaster
             if (isStopEncountered)
                 break;
         }
-        if (_isPrimaryLlm)
+        if (!_isPrimaryLlm)
         {
             var finalServiceObj = new LLMServiceObj { SessionId = sessionId, SourceLlm = sourceLlm, DestinationLlm = destinationLlm, LlmMessage = llmOutFull.ToString() };
             await _responseProcessor.ProcessLLMOutput(finalServiceObj);
