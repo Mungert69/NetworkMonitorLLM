@@ -64,7 +64,7 @@ public class LLMProcessRunner : ILLMRunner
        // if (!mlParams.LlmIsFunc_2_4) promptPrefix = " --in-prefix \"<|user|>\" ";
 
         startInfo.FileName = $"{mlParams.LlmModelPath}llama.cpp/llama-cli";
-        startInfo.Arguments = $" -c 2500 -n 6000 -m {mlParams.LlmModelPath + mlParams.LlmModelFileName}  --prompt-cache {mlParams.LlmModelPath + mlParams.LlmContextFileName} --prompt-cache-ro  -f {mlParams.LlmModelPath + mlParams.LlmSystemPrompt} {mlParams.LlmPromptMode} -r \"{mlParams.LlmReversePrompt}\" --keep -1 --temp 0 -t {mlParams.LlmThreads} {promptPrefix}";
+        startInfo.Arguments = $" -c {mlParams.LlmCtxSize} -n {mlParams.LlmPromptTokens} -m {mlParams.LlmModelPath + mlParams.LlmModelFileName}  --prompt-cache {mlParams.LlmModelPath + mlParams.LlmContextFileName} --prompt-cache-ro  -f {mlParams.LlmModelPath + mlParams.LlmSystemPrompt} {mlParams.LlmPromptMode} -r \"{mlParams.LlmReversePrompt}\" --keep -1 --temp 0 -t {mlParams.LlmThreads} {promptPrefix}";
         _logger.LogInformation($"Running command : {startInfo.FileName}{startInfo.Arguments}");
         startInfo.UseShellExecute = false;
         startInfo.RedirectStandardInput = true;
