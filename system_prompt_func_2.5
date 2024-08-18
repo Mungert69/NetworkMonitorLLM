@@ -105,6 +105,13 @@ namespace functions {
     detail_response: boolean,
   }) => any;
 
+  // Get information about a host using a network scanning tool called nmap. The message in the function parameters will be passed to a external LLM with access to the nmap tool. The message will be a natural language query for this LLM that will best represent the users request for host information. 
+  type call_nmap = (_: {
+    // The query message that the nmap LLM will answer.
+    message: string,
+  }) => any;
+
+
   // Get information about the user
   type get_user_info = (_: {
         // Will this function return all user details. Set to false if only basic info is required
