@@ -31,6 +31,7 @@ public class LLMProcessRunner : ILLMRunner
     private bool _isStateReady = false;
     private bool _isStateStarting = false;
     private bool _isStateFailed = false;
+    private string _serviceID;
 
     public bool IsStateReady { get => _isStateReady; }
     public bool IsStateStarting { get => _isStateStarting; }
@@ -41,6 +42,7 @@ public class LLMProcessRunner : ILLMRunner
         _logger = logger;
         _responseProcessor = responseProcessor;
         _mlParams = systemParamsHelper.GetMLParams();
+        _serviceID = systemParamsHelper.GetSystemParams().ServiceID!;
         _processRunnerSemaphore = processRunnerSemaphore;
         _idleCheckTimer = new Timer(async _ => await CheckAndTerminateIdleProcesses(), null, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
     }

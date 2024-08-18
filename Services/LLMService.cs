@@ -35,17 +35,18 @@ public class LLMService : ILLMService
     private SemaphoreSlim _processRunnerSemaphore = new SemaphoreSlim(1);
     private SemaphoreSlim _openAIRunnerSemaphore = new SemaphoreSlim(10);
     private MLParams _mlParams;
-
+    private string _serviceID;
     private readonly ConcurrentDictionary<string, Session> _sessions = new ConcurrentDictionary<string, Session>();
     // private readonly ILLMResponseProcessor _responseProcessor;
 
-    public LLMService(ILogger<LLMService> logger, IRabbitRepo rabbitRepo,ISystemParamsHelper systemParamsHelper, IServiceProvider serviceProvider)
+    public LLMService(ILogger<LLMService> logger, IRabbitRepo rabbitRepo, ISystemParamsHelper systemParamsHelper, IServiceProvider serviceProvider)
     {
         _processRunnerFactory = new LLMProcessRunnerFactory();
         _openAIRunnerFactory = new OpenAIRunnerFactory();
         _serviceProvider = serviceProvider;
         _rabbitRepo = rabbitRepo;
-                _mlParams = systemParamsHelper.GetMLParams();
+        _mlParams = systemParamsHelper.GetMLParams();
+        _serviceID = systemParamsHelper.GetSystemParams().ServiceID!;
         _logger = logger;
     }
     public async Task<LLMServiceObj> StartProcess(LLMServiceObj llmServiceObj)
@@ -53,9 +54,9 @@ public class LLMService : ILLMService
         llmServiceObj.SessionId = llmServiceObj.RequestSessionId;
         try
         {
-             var clientTimeZone = llmServiceObj.TimeZone != null
-                                         ? TimeZoneInfo.FindSystemTimeZoneById(llmServiceObj.TimeZone)
-                                         : TimeZoneInfo.Utc;
+            var clientTimeZone = llmServiceObj.TimeZone != null
+                                        ? TimeZoneInfo.FindSystemTimeZoneById(llmServiceObj.TimeZone)
+                                        : TimeZoneInfo.Utc;
             var usersCurrentTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, clientTimeZone);
 
             bool exists = _sessions.TryGetValue(llmServiceObj.SessionId, out var checkSession);
@@ -72,7 +73,7 @@ public class LLMService : ILLMService
 
                 }
             }
-            if (isSessionRemoved || checkSession == null ||  (checkSession != null && checkSession.Runner != null && checkSession.Runner.Type! != llmServiceObj.LLMRunnerType))
+            if (isSessionRemoved || checkSession == null || (checkSession != null && checkSession.Runner != null && checkSession.Runner.Type! != llmServiceObj.LLMRunnerType))
             {
                 ILLMRunner runner;
                 switch (llmServiceObj.LLMRunnerType)
@@ -88,10 +89,10 @@ public class LLMService : ILLMService
                         throw new ArgumentException($"Invalid runner type: {llmServiceObj.LLMRunnerType}");
                 }
                 string extraMesage = "";
-                if (llmServiceObj.LLMRunnerType == "FreeLLM") extraMesage = $" , this can take up to {_mlParams.LlmSystemPromptTimeout+_mlParams.LlmUserPromptTimeout} seconds. If the session is not used for {_mlParams.LlmSessionIdleTimeout} minutes it will be closed";
-                  llmServiceObj.LlmMessage = MessageHelper.InfoMessage($" Starting {llmServiceObj.LLMRunnerType} Assistant {extraMesage}");
+                if (llmServiceObj.LLMRunnerType == "FreeLLM") extraMesage = $" , this can take up to {_mlParams.LlmSystemPromptTimeout + _mlParams.LlmUserPromptTimeout} seconds. If the session is not used for {_mlParams.LlmSessionIdleTimeout} minutes it will be closed";
+                llmServiceObj.LlmMessage = MessageHelper.InfoMessage($" Starting {_serviceID} {llmServiceObj.LLMRunnerType} Assistant {extraMesage}");
                 await _rabbitRepo.PublishAsync<LLMServiceObj>("llmServiceMessage", llmServiceObj);
-          
+
 
                 await runner.StartProcess(llmServiceObj, usersCurrentTime);
                 _sessions[llmServiceObj.SessionId] = new Session { Runner = runner };
