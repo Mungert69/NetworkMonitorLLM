@@ -90,7 +90,7 @@ public class LLMService : ILLMService
                 }
                 string extraMesage = "";
                 if (llmServiceObj.LLMRunnerType == "FreeLLM") extraMesage = $" , this can take up to {_mlParams.LlmSystemPromptTimeout + _mlParams.LlmUserPromptTimeout} seconds. If the session is not used for {_mlParams.LlmSessionIdleTimeout} minutes it will be closed";
-                llmServiceObj.LlmMessage = MessageHelper.InfoMessage($" Starting {_serviceID} {llmServiceObj.LLMRunnerType} Assistant {extraMesage}");
+                llmServiceObj.LlmMessage = MessageHelper.InfoMessage($" Starting {llmServiceObj.LLMRunnerType} {_serviceID} Assistant {extraMesage}");
                 await _rabbitRepo.PublishAsync<LLMServiceObj>("llmServiceMessage", llmServiceObj);
 
 
