@@ -17,6 +17,7 @@ public class TokenBroadcasterFunc_2_4 : ITokenBroadcaster
     private readonly ILLMResponseProcessor _responseProcessor;
     private readonly ILogger _logger;
     private bool _isPrimaryLlm;
+    private bool _isFuncCalled;
     public event Func<object, string, Task> LineReceived;
     private CancellationTokenSource _cancellationTokenSource;
     public TokenBroadcasterFunc_2_4(ILLMResponseProcessor responseProcessor, ILogger logger)
@@ -38,6 +39,7 @@ public class TokenBroadcasterFunc_2_4 : ITokenBroadcaster
         var llmOutFull = new StringBuilder();
         var tokenBuilder = new StringBuilder();
         _isPrimaryLlm = true;
+        _isFuncCalled = false;
         if (destinationLlm != sourceLlm) _isPrimaryLlm = false;
 
         bool isStopEncountered = false;
@@ -81,7 +83,7 @@ public class TokenBroadcasterFunc_2_4 : ITokenBroadcaster
             if (isStopEncountered)
                 break;
         }
-        if (!_isPrimaryLlm)
+        if (!_isPrimaryLlm && !_isFuncCalled)
         {
             var finalServiceObj = new LLMServiceObj { SessionId = sessionId, SourceLlm = sourceLlm, DestinationLlm = destinationLlm, LlmMessage = llmOutFull.ToString() };
             await _responseProcessor.ProcessLLMOutput(finalServiceObj);
@@ -202,7 +204,7 @@ public class TokenBroadcasterFunc_2_4 : ITokenBroadcaster
     {
         LLMServiceObj responseServiceObj = new LLMServiceObj() { SessionId = sessionId, SourceLlm = sourceLlm, DestinationLlm = destinationLlm };
         string line = messageSegment.Content;
-
+       
         if (messageSegment.From == "assistant" && messageSegment.Recipient != "all")
         {
             var (isJson, jsonLine) = ParseInputForJson(line);
@@ -220,6 +222,7 @@ public class TokenBroadcasterFunc_2_4 : ITokenBroadcaster
                 responseServiceObj.FunctionName = messageSegment.Recipient;
                 //responseServiceObj.JsonFunction = CallFuncJson(cleanLine);
                 await _responseProcessor.ProcessFunctionCall(responseServiceObj);
+                _isFuncCalled = true;
             }
         }
         responseServiceObj.LlmMessage = "<end-of-line>";
