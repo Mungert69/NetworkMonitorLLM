@@ -67,12 +67,12 @@ public class TokenBroadcasterFunc_2_4 : ITokenBroadcaster
                 {
 
                     LLMServiceObj responseServiceObj = new LLMServiceObj(serviceObj);
-                    if (isFunctionCallResponse)
+                    if (serviceObj.IsFunctionCallResponse)
                     {
                         responseServiceObj.LlmMessage = "</functioncall-complete>";
                         if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
                     }
-                    await ProcessMessageSegment(messageSegment, serviceObj.SessionId, userInput, serviceObj.SourceLlm, serviceobj.DestinationLlm);
+                    await ProcessMessageSegment(messageSegment, serviceObj.SessionId, userInput, serviceObj.SourceLlm, serviceObj.DestinationLlm);
 
 
 
