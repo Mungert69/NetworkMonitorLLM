@@ -6,12 +6,12 @@ namespace functions {
   // Run nmap command
   type run_nmap = (_: {
     // Arguments to pass to nmap
-    agruments: string,
+    arguments: string,
   }) => any;
   // Get information about the user including the users time.
   type get_user_info = (_: {
-        // Will this function return all user details. Set to false if only basic info is required
-        detail_response: boolean,
+    // Will this function return all user details. Set to false if only basic info is required
+    detail_response: boolean,
   }) => any;
 }
 <|from|>system
