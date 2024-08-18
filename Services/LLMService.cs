@@ -96,7 +96,7 @@ public class LLMService : ILLMService
 
                 await runner.StartProcess(llmServiceObj, usersCurrentTime);
                 _sessions[llmServiceObj.SessionId] = new Session { Runner = runner };
-                llmServiceObj.ResultMessage = $" Success {runner.Type} Assistant Started";
+                llmServiceObj.ResultMessage = $" Success {runner.Type} {_serviceID} Assistant Started";
                 llmServiceObj.ResultSuccess = true;
                 llmServiceObj.LlmMessage = MessageHelper.SuccessMessage(llmServiceObj.ResultMessage);
                 await _rabbitRepo.PublishAsync<LLMServiceObj>("llmServiceMessage", llmServiceObj);
