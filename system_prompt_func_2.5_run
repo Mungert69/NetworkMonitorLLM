@@ -103,7 +103,7 @@ namespace functions {
     detail_response: boolean,
   }) => any;
 
-  // Get information about a host using a network scanning assistant. You will pass a message to the assistant in natural language decribing what the user whats. 
+  // Get information about a host using a network scanning assistant. You will pass a message to the assistant in natural language describing what the user wants. 
   type call_nmap = (_: {
     // The message to be sent to the network scanning assistant.
     message: string,
