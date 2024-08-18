@@ -16,6 +16,8 @@ public class TokenBroadcasterStandard : ITokenBroadcaster
     private readonly ILogger _logger;
     public event Func<object, string, Task> LineReceived;
     private CancellationTokenSource _cancellationTokenSource;
+    private bool _isPrimaryLlm;
+    private bool _isFuncCalled;
     public TokenBroadcasterStandard(ILLMResponseProcessor responseProcessor, ILogger logger)
     {
         _responseProcessor = responseProcessor;
@@ -41,6 +43,8 @@ public class TokenBroadcasterStandard : ITokenBroadcaster
         var lineBuilder = new StringBuilder();
         var llmOutFull = new StringBuilder();
         var tokenBuilder = new StringBuilder();
+         _isPrimaryLlm = serviceObj.IsPrimaryLlm;
+        _isFuncCalled = false;
         var cancellationToken = _cancellationTokenSource.Token;
         int newlineCounter = 0;
         bool isNewline = false;
