@@ -88,7 +88,7 @@ public class OpenAIRunner : ILLMRunner
     public async Task SendInputAndGetResponse(LLMServiceObj serviceObj)
     {
         _isStateReady = false;
-        var responseServiceObj = new LLMServiceObj { SessionId = serviceObj.SessionId };
+        var responseServiceObj = new LLMServiceObj(serviceObj);
 
         if (!_activeSessions.ContainsKey(serviceObj.SessionId))
         {
@@ -155,7 +155,7 @@ public class OpenAIRunner : ILLMRunner
                     _logger.LogInformation($"Function call detected: {functionName}");
 
                     var json = JsonSerializer.Serialize(fn.ParseArguments());
-                    var functionResponseServiceObj = new LLMServiceObj { SessionId = serviceObj.SessionId };
+                    var functionResponseServiceObj = new LLMServiceObj(serviceObj);
 
                     functionResponseServiceObj.IsFunctionCall = true;
                     functionResponseServiceObj.JsonFunction = json;
