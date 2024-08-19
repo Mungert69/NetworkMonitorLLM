@@ -61,7 +61,7 @@ public class LLMProcessRunner : ILLMRunner
     public void SetStartInfo(ProcessStartInfo startInfo, MLParams mlParams)
     {
         string promptPrefix = "";
-       // if (!mlParams.LlmIsFunc_2_4) promptPrefix = " --in-prefix \"<|user|>\" ";
+        // if (!mlParams.LlmIsFunc_2_4) promptPrefix = " --in-prefix \"<|user|>\" ";
 
         startInfo.FileName = $"{mlParams.LlmModelPath}llama.cpp/llama-cli";
         startInfo.Arguments = $" -c {mlParams.LlmCtxSize} -n {mlParams.LlmPromptTokens} -m {mlParams.LlmModelPath + mlParams.LlmModelFileName}  --prompt-cache {mlParams.LlmModelPath + mlParams.LlmContextFileName} --prompt-cache-ro  -f {mlParams.LlmModelPath + mlParams.LlmSystemPrompt} {mlParams.LlmPromptMode} -r \"{mlParams.LlmReversePrompt}\" --keep -1 --temp 0 -t {mlParams.LlmThreads} {promptPrefix}";
@@ -148,6 +148,12 @@ public class LLMProcessRunner : ILLMRunner
             if (process != null && !process.HasExited)
             {
                 process.Kill();
+                await Task.Delay(5000);
+                // Send second kill as it needs two ctrl-c to exit llama-cli
+                if (process != null && !process.HasExited)
+                {
+                    process.Kill();
+                }
             }
         }
         finally
@@ -162,6 +168,32 @@ public class LLMProcessRunner : ILLMRunner
         }
 
         _logger.LogInformation($"LLM process removed for session {sessionId}");
+    }
+
+    public async Task SendCtrlC(string sessionId)
+    {
+        _isStateReady = false;
+
+        if (!_processes.TryGetValue(sessionId, out var process))
+        {
+            _isStateReady = true;
+            throw new Exception("Process is not running for this session");
+        }
+
+        _logger.LogInformation($" LLM Service : Send CtrlC to sessionsId {sessionId}");
+        try
+        {
+            if (process != null && !process.HasExited)
+            {
+                process.Kill();
+            }
+        }
+        catch (Exception e)
+        {
+            _logger.LogInformation($"Failed to send CtrlC to session {sessionId}. Error was : {e.Message}");
+        }
+
+
     }
     private async Task WaitForReadySignal(ProcessWrapper process)
     {
@@ -224,13 +256,13 @@ public class LLMProcessRunner : ILLMRunner
                 else tokenBroadcaster = new TokenBroadcasterFunc_2_5(_responseProcessor, _logger);
             }
             string userInput = serviceObj.UserInput;
-           
+
             if (_sendOutput)
             {
                 if (!serviceObj.IsFunctionCallResponse)
                 {
-                     if (_mlParams.LlmIsFunc_2_4) userInput = "<|from|>user<|content|>" + userInput;
-                     else  userInput = "<|start_header_id|>user<|end_header_id|>" + userInput;
+                    if (_mlParams.LlmIsFunc_2_4) userInput = "<|from|>user<|content|>" + userInput;
+                    else userInput = "<|start_header_id|>user<|end_header_id|>" + userInput;
                 }
                 else
                 {
