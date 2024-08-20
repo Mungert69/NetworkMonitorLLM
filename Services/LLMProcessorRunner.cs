@@ -205,7 +205,7 @@ public class LLMProcessRunner : ILLMRunner
         while (!cancellationTokenSource.IsCancellationRequested)
         {
             line = await process.StandardOutput.ReadLineAsync();
-            if (line.StartsWith("<|content|>You are a"))
+            if (line.Contains("#READY#"))
             {
                 isReady = true;
                 break;
