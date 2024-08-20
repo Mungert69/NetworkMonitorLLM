@@ -11,6 +11,7 @@ using NetworkMonitor.Objects.ServiceMessage;
 using NetworkMonitor.LLM.Services.Objects;
 using System.Text.RegularExpressions;
 using System.Security.Cryptography;
+using System.Linq;
 namespace NetworkMonitor.LLM.Services;
 public class TokenBroadcasterFunc_2_4 : ITokenBroadcaster
 {
@@ -88,10 +89,10 @@ public class TokenBroadcasterFunc_2_4 : ITokenBroadcaster
         if (!_isPrimaryLlm && !_isFuncCalled)
         {
             string llmOutput = "Message from llm function call can not be be read.";
-            if (forwardSegments.Count > 1)
+            if (forwardSegments.Count > 0)
             {
-                string content = forwardSegments[1].Content.Replace("\n", "").Replace("<|stop|>", "");
-                llmOutput = forwardSegments[0].From + forwardSegments[0].Recipient + content;
+                var assistantSegment = forwardSegments.Where(a => a.From.Contains("assistant")).FirstOrDefault();
+                if (assistantSegment!=null) llmOutput = assistantSegment.Content.Replace("\n", "").Replace("<|stop|>", "");
             }
             var finalServiceObj = new LLMServiceObj(serviceObj);
             finalServiceObj.LlmMessage = llmOutput;
