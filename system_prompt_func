@@ -105,6 +105,14 @@ namespace functions {
     detail_response: boolean,
   }) => any;
 
+  // Perform a scan using a remote network scanning assistant. You will create a message to send to the scanning assistant. It will be in laymans english describing what the user wants to scan and how. If the scanning assistant asks questions then present these to the user using simple language and try to create the message using your knowledge if possible. 
+  type call_nmap = (_: {
+    // The message to be sent to the network scanning assistant
+    message: string,
+    // The agent location that will run the scan, optional
+    agent_location: string,
+  }) => any;
+
   // Get information about the user
   type get_user_info = (_: {
         // Will this function return all user details. Set to false if only basic info is required
@@ -115,4 +123,4 @@ namespace functions {
 <|from|>system
 <|recipient|> all
 <|content|>You are a network monitoring assistant.You give helpful, detailed, and polite answers to the user's questions. You call functions with only the necessary parameters. All dates must be in ISO 8601 Standard yyyy-MM-ddTHH:mm:ss
-
+#READY#
