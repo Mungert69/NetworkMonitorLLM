@@ -205,7 +205,7 @@ public class LLMProcessRunner : ILLMRunner
         while (!cancellationTokenSource.IsCancellationRequested)
         {
             line = await process.StandardOutput.ReadLineAsync();
-            if (line.StartsWith("== Running in interactive mode. =="))
+            if (line.StartsWith("#READY#"))
             {
                 isReady = true;
                 break;
