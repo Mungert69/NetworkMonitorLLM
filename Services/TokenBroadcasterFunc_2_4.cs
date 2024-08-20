@@ -40,7 +40,8 @@ public class TokenBroadcasterFunc_2_4 : ITokenBroadcaster
         var tokenBuilder = new StringBuilder();
         _isPrimaryLlm = serviceObj.IsPrimaryLlm;
         _isFuncCalled = false;
-       
+        var forwardSegments = new List<MessageSegment>();
+
         bool isStopEncountered = false;
         while (!cancellationToken.IsCancellationRequested)
         {
@@ -77,6 +78,7 @@ public class TokenBroadcasterFunc_2_4 : ITokenBroadcaster
 
 
                 }
+                if (!_isPrimaryLlm) forwardSegments = messageSegments;
                 _cancellationTokenSource.Cancel();
                 isStopEncountered = true;
             }
@@ -85,16 +87,21 @@ public class TokenBroadcasterFunc_2_4 : ITokenBroadcaster
         }
         if (!_isPrimaryLlm && !_isFuncCalled)
         {
-            string llmOutput = llmOutFull.ToString().Replace("\n", " ");
+            string llmOutput = "Message from llm function call can not be be read.";
+            if (forwardSegments.Count > 1)
+            {
+                string content = forwardSegments[1].Content.Replace("\n", "").Replace("<|stop|>", "");
+                llmOutput = forwardSegments[0].From + forwardSegments[0].Recipient + content;
+            }
             var finalServiceObj = new LLMServiceObj(serviceObj);
             finalServiceObj.LlmMessage = llmOutput;
             finalServiceObj.IsFunctionCall = false;
-            finalServiceObj.IsFunctionCallResponse=true;
+            finalServiceObj.IsFunctionCallResponse = true;
             await _responseProcessor.ProcessLLMOutput(finalServiceObj);
             _logger.LogInformation($" --> Sent redirected LLM Output {finalServiceObj.LlmMessage}");
         }
 
-        //_logger.LogInformation(" --> LLM Output --> "+llmOutFull.ToString());
+        _logger.LogInformation(" --> LLM Output --> " + llmOutFull.ToString());
         _logger.LogInformation(" --> Finished LLM Interaction ");
     }
 
@@ -208,7 +215,7 @@ public class TokenBroadcasterFunc_2_4 : ITokenBroadcaster
     {
         LLMServiceObj responseServiceObj = new LLMServiceObj() { SessionId = sessionId, SourceLlm = sourceLlm, DestinationLlm = destinationLlm };
         string line = messageSegment.Content;
-       
+
         if (messageSegment.From == "assistant" && messageSegment.Recipient != "all")
         {
             var (isJson, jsonLine) = ParseInputForJson(line);

@@ -261,7 +261,7 @@ public class LLMProcessRunner : ILLMRunner
             {
                 if (!serviceObj.IsFunctionCallResponse)
                 {
-                    if (_mlParams.LlmIsFunc_2_4) userInput = "<|from|>user<|content|>" + userInput;
+                    if (_mlParams.LlmIsFunc_2_4) userInput = "<|from|>user<|recipient|>all<|content|>" + userInput;
                     else userInput = "<|start_header_id|>user<|end_header_id|>" + userInput;
                 }
                 else

@@ -93,6 +93,7 @@ public class TokenBroadcasterFunc_2_5 : ITokenBroadcaster
         }
         if (!_isPrimaryLlm && !_isFuncCalled)
         {
+            // TODO sort this so it only sends the part produced by the llm not the input
             string llmOutput = llmOutFull.ToString().Replace("\n", " ");
             var finalServiceObj = new LLMServiceObj(serviceObj);
             finalServiceObj.LlmMessage = llmOutput;
