@@ -92,7 +92,7 @@ public class TokenBroadcasterFunc_2_4 : ITokenBroadcaster
             if (forwardSegments.Count > 0)
             {
                 var assistantSegment = forwardSegments.Where(a => a.From.Contains("assistant")).FirstOrDefault();
-                if (assistantSegment!=null) llmOutput = assistantSegment.Content.Replace("\n", "").Replace("<|stop|>", "");
+                if (assistantSegment != null) llmOutput = assistantSegment.Content.Replace("\n", "").Replace("<|stop|>", "");
             }
             var finalServiceObj = new LLMServiceObj(serviceObj);
             finalServiceObj.LlmMessage = llmOutput;
@@ -228,6 +228,17 @@ public class TokenBroadcasterFunc_2_4 : ITokenBroadcaster
                 responseServiceObj = new LLMServiceObj() { SessionId = sessionId, UserInput = userInput, SourceLlm = sourceLlm, DestinationLlm = destinationLlm };
                 responseServiceObj.LlmMessage = "</functioncall>";
                 if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+                else
+                {
+                    var forwardFuncServiceObj = new LLMServiceObj(responseServiceObj);
+                    forwardFuncServiceObj.LlmMessage = $"Please wait calling function with parameters {jsonLine}. Be patient this may take some time";
+                    forwardFuncServiceObj.IsFunctionCall = false;
+                    forwardFuncServiceObj.IsFunctionCallResponse = true;
+                    forwardFuncServiceObj.FunctionName = messageSegment.Recipient;
+                    await _responseProcessor.ProcessLLMOutput(forwardFuncServiceObj);
+                    _logger.LogInformation($" --> Sent redirected LLM Output {forwardFuncServiceObj.LlmMessage}");
+
+                }
                 responseServiceObj.LlmMessage = "";
                 responseServiceObj.IsFunctionCall = true;
                 responseServiceObj.JsonFunction = jsonFunction;
