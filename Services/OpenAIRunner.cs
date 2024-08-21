@@ -174,15 +174,18 @@ public class OpenAIRunner : ILLMRunner
             {
                 var choice = completionResult.Choices.First();
                 responseChoiceStr = choice.Message.Content ?? "";
+                
                 _logger.LogInformation($"Received response: {responseChoiceStr}");
 
                 // Process any function calls
-                if (choice.Message.ToolCalls != null)
+                if ( choice.Message.ToolCalls != null)
                 {
                     var fnCall = choice.Message.ToolCalls.First();
 
                     var fn = fnCall.FunctionCall;
                     string functionName = fn!.Name ?? "N/A";
+                    chatMessage.ToolCallId = fnCall.Id;
+                    chatMessage.Name = functionName;
                     _logger.LogInformation($"Function call detected: {functionName}");
 
                     var json = JsonSerializer.Serialize(fn.ParseArguments());
@@ -218,6 +221,7 @@ public class OpenAIRunner : ILLMRunner
 
                     if (_isPrimaryLlm)
                     {
+                        responseServiceObj.IsFunctionCallResponse = false;
                         responseServiceObj.LlmMessage = "Assistant: " + responseChoiceStr + "\n\n";
                         await _responseProcessor.ProcessLLMOuputInChunks(responseServiceObj);
                     }
