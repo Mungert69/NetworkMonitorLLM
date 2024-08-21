@@ -199,8 +199,8 @@ public class OpenAIRunner : ILLMRunner
                         forwardFuncServiceObj.IsFunctionCall = false;
                         forwardFuncServiceObj.IsFunctionCallResponse = true;
                         forwardFuncServiceObj.FunctionName = functionName;
-                        await _responseProcessor.ProcessLLMOutput(forwardFuncServiceObj);
-                        _logger.LogInformation($" --> Sent redirected LLM Function Output {forwardFuncServiceObj.LlmMessage}");
+                       // await _responseProcessor.ProcessLLMOutput(forwardFuncServiceObj);
+                        //_logger.LogInformation($" --> Sent redirected LLM Function Output {forwardFuncServiceObj.LlmMessage}");
 
                     }
 
