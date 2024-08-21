@@ -236,7 +236,7 @@ public class TokenBroadcasterFunc_2_4 : ITokenBroadcaster
                     forwardFuncServiceObj.IsFunctionCallResponse = true;
                     forwardFuncServiceObj.FunctionName = messageSegment.Recipient;
                     await _responseProcessor.ProcessLLMOutput(forwardFuncServiceObj);
-                    _logger.LogInformation($" --> Sent redirected LLM Output {forwardFuncServiceObj.LlmMessage}");
+                    _logger.LogInformation($" --> Sent redirected LLM Function Output {forwardFuncServiceObj.LlmMessage}");
 
                 }
                 responseServiceObj.LlmMessage = "";

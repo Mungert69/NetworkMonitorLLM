@@ -36,6 +36,8 @@ public class OpenAIRunner : ILLMRunner
     private bool _isStateReady = false;
     private bool _isStateStarting = false;
     private bool _isStateFailed = false;
+    private bool _isPrimaryLlm;
+    private bool _isFuncCalled;
 
     public bool IsStateReady { get => _isStateReady; }
     public bool IsStateStarting { get => _isStateStarting; }
