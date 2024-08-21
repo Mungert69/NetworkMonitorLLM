@@ -122,6 +122,7 @@ public class OpenAIRunner : ILLMRunner
             {
                 chatMessage.Role = "function";
                 chatMessage.Name = serviceObj.FunctionName;
+                chatMessage.ToolCallId = serviceObj.FunctionCallId;
                 responseServiceObj.LlmMessage = "Function Response: " + serviceObj.UserInput + "\n\n";
                 if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
                 responseServiceObj.LlmMessage = "</functioncall-complete>";
@@ -184,8 +185,8 @@ public class OpenAIRunner : ILLMRunner
 
                     var fn = fnCall.FunctionCall;
                     string functionName = fn!.Name ?? "N/A";
-                    chatMessage.ToolCallId = fnCall.Id;
-                    chatMessage.Name = functionName;
+                    serviceObj.FunctionCallId = fnCall.Id;
+                    //chatMessage.Name = functionName;
                     _logger.LogInformation($"Function call detected: {functionName}");
 
                     var json = JsonSerializer.Serialize(fn.ParseArguments());
