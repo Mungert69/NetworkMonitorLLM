@@ -115,16 +115,16 @@ public class OpenAIRunner : ILLMRunner
                 chatMessage.Role = "function";
                 chatMessage.Name = serviceObj.FunctionName;
                 responseServiceObj.LlmMessage = "Function Response: " + serviceObj.UserInput + "\n\n";
-                await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+                if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
                 responseServiceObj.LlmMessage = "</functioncall-complete>";
-                await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+                if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
 
             }
             else
             {
                 chatMessage.Role = "user";
                 responseServiceObj.LlmMessage = "User: " + serviceObj.UserInput + "\n\n";
-                await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+                if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
             }
 
             chatMessage.Content = serviceObj.UserInput;
@@ -147,9 +147,6 @@ public class OpenAIRunner : ILLMRunner
                 // Process any function calls
                 if (choice.Message.ToolCalls != null)
                 {
-                    responseServiceObj.UserInput = serviceObj.UserInput;
-                    responseServiceObj.LlmMessage = "</functioncall>";
-                    await _responseProcessor.ProcessLLMOutput(responseServiceObj);
                     var fnCall = choice.Message.ToolCalls.First();
 
                     var fn = fnCall.FunctionCall;
@@ -157,8 +154,22 @@ public class OpenAIRunner : ILLMRunner
                     _logger.LogInformation($"Function call detected: {functionName}");
 
                     var json = JsonSerializer.Serialize(fn.ParseArguments());
-                    var functionResponseServiceObj = new LLMServiceObj(serviceObj);
+                    responseServiceObj.UserInput = serviceObj.UserInput;
+                    responseServiceObj.LlmMessage = "</functioncall>";
+                    if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+                    else
+                    {
+                        var forwardFuncServiceObj = new LLMServiceObj(responseServiceObj);
+                        forwardFuncServiceObj.LlmMessage = $"Please wait calling function with parameters {json}. Be patient this may take some time";
+                        forwardFuncServiceObj.IsFunctionCall = false;
+                        forwardFuncServiceObj.IsFunctionCallResponse = true;
+                        forwardFuncServiceObj.FunctionName = functionName;
+                        await _responseProcessor.ProcessLLMOutput(forwardFuncServiceObj);
+                        _logger.LogInformation($" --> Sent redirected LLM Function Output {forwardFuncServiceObj.LlmMessage}");
 
+                    }
+
+                    var functionResponseServiceObj = new LLMServiceObj(serviceObj);
                     functionResponseServiceObj.IsFunctionCall = true;
                     functionResponseServiceObj.JsonFunction = json;
                     _logger.LogInformation($" Sending json: {json}");
@@ -166,18 +177,28 @@ public class OpenAIRunner : ILLMRunner
 
                     await _responseProcessor.ProcessFunctionCall(functionResponseServiceObj);
                     responseServiceObj.LlmMessage = "Function Call: " + json + "\n";
-                    await _responseProcessor.ProcessLLMOuputInChunks(responseServiceObj);
+                    if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOuputInChunks(responseServiceObj);
                     responseChoiceStr = "";
                 }
 
                 if (!responseChoiceStr.IsNullOrEmpty())
                 {
-                    responseServiceObj.LlmMessage = "Assistant: " + responseChoiceStr + "\n\n";
-                    await _responseProcessor.ProcessLLMOuputInChunks(responseServiceObj);
+
+                    if (_isPrimaryLlm)
+                    {
+                        responseServiceObj.LlmMessage = "Assistant: " + responseChoiceStr + "\n\n";
+                        await _responseProcessor.ProcessLLMOuputInChunks(responseServiceObj);
+                    }
+                    else
+                    {
+                        responseServiceObj.LlmMessage = responseChoiceStr;
+                        await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+                    }
+                   ;
                 }
                 responseServiceObj.LlmMessage = "<end-of-line>";
                 responseServiceObj.TokensUsed = completionResult.Usage.TotalTokens;
-                await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+                if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
 
             }
             else
