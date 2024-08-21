@@ -175,18 +175,26 @@ public class OpenAIRunner : ILLMRunner
             {
                 var choice = completionResult.Choices.First();
                 responseChoiceStr = choice.Message.Content ?? "";
-                
+
                 _logger.LogInformation($"Received response: {responseChoiceStr}");
 
                 // Process any function calls
-                if ( choice.Message.ToolCalls != null)
+                if (choice.Message.ToolCalls != null)
                 {
                     var fnCall = choice.Message.ToolCalls.First();
 
                     var fn = fnCall.FunctionCall;
                     string functionName = fn!.Name ?? "N/A";
                     serviceObj.FunctionCallId = fnCall.Id;
+                    var funcChatMessage = new ChatMessage()
+                    {
+                        Content="",
+                        Role = "assistant",
+                        Name = functionName,
+                        ToolCallId = fnCall.Id
+                    };
                     //chatMessage.Name = functionName;
+                    history.Add(funcChatMessage);
                     _logger.LogInformation($"Function call detected: {functionName}");
 
                     var json = JsonSerializer.Serialize(fn.ParseArguments());
@@ -200,7 +208,7 @@ public class OpenAIRunner : ILLMRunner
                         forwardFuncServiceObj.IsFunctionCall = false;
                         forwardFuncServiceObj.IsFunctionCallResponse = true;
                         forwardFuncServiceObj.FunctionName = functionName;
-                       // await _responseProcessor.ProcessLLMOutput(forwardFuncServiceObj);
+                        // await _responseProcessor.ProcessLLMOutput(forwardFuncServiceObj);
                         //_logger.LogInformation($" --> Sent redirected LLM Function Output {forwardFuncServiceObj.LlmMessage}");
 
                     }
@@ -219,7 +227,12 @@ public class OpenAIRunner : ILLMRunner
 
                 if (!responseChoiceStr.IsNullOrEmpty())
                 {
-
+                    var assistantChatMessage = new ChatMessage()
+                    {
+                        Role = "assistant",
+                        Content = responseChoiceStr
+                    };
+                    history.Add(choice.Message);
                     if (_isPrimaryLlm)
                     {
                         responseServiceObj.IsFunctionCallResponse = false;
