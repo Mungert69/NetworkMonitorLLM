@@ -138,7 +138,7 @@ public class OpenAIRunner : ILLMRunner
                 Tools = _tools, // Your pre-defined tools
                 ToolChoice = ToolChoice.Auto,
                 MaxTokens = 1000,
-                Model = Models.Gpt_3_5_Turbo_0125
+                Model = "gpt-4o-mini"
             });
 
             if (completionResult.Successful)
