@@ -90,6 +90,7 @@ public class OpenAIRunner : ILLMRunner
     public async Task SendInputAndGetResponse(LLMServiceObj serviceObj)
     {
         _isStateReady = false;
+        
         var responseServiceObj = new LLMServiceObj(serviceObj);
 
         if (!_activeSessions.ContainsKey(serviceObj.SessionId))
@@ -100,6 +101,8 @@ public class OpenAIRunner : ILLMRunner
         }
 
         _logger.LogInformation("Sending input and waiting for response...");
+         _isPrimaryLlm = serviceObj.IsPrimaryLlm;
+        _isFuncCalled = false;
 
         try
         {
