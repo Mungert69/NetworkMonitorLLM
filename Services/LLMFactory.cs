@@ -52,6 +52,6 @@ public class OpenAIRunnerFactory : IOpenAIRunnerFactory
    
     public ILLMRunner CreateRunner(IServiceProvider serviceProvider,SemaphoreSlim? _runnerSemaphore)
     {
-        return new OpenAIRunner(serviceProvider.GetRequiredService<ILogger<OpenAIRunner>>(),serviceProvider.GetRequiredService<ILLMResponseProcessor >(),serviceProvider.GetRequiredService<OpenAIService>(),_runnerSemaphore);
+         return new OpenAIRunner(serviceProvider.GetRequiredService<ILogger<OpenAIRunner>>(),serviceProvider.GetRequiredService<ILLMResponseProcessor >(),serviceProvider.GetRequiredService<OpenAIService>(),serviceProvider.GetRequiredService<ISystemParamsHelper >(),_runnerSemaphore);
     }
 }

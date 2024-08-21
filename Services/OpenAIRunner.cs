@@ -3,6 +3,7 @@ using OpenAI.Builders;
 using OpenAI.Managers;
 using OpenAI.ObjectModels;
 using OpenAI.ObjectModels.RequestModels;
+using OpenAI.Tokenizer.GPT3;
 using OpenAI.ObjectModels.SharedModels;
 using System;
 using System.IO;
@@ -27,7 +28,7 @@ public class OpenAIRunner : ILLMRunner
     private ILogger _logger;
     private ILLMResponseProcessor _responseProcessor;
     private OpenAIService _openAiService; // Interface to interact with OpenAI
-    private List<ToolDefinition> _tools;
+    private IToolsBuilder _toolsBuilder;
     private ConcurrentDictionary<string, DateTime> _activeSessions;
 
     private SemaphoreSlim _openAIRunnerSemaphore;
@@ -38,17 +39,21 @@ public class OpenAIRunner : ILLMRunner
     private bool _isStateFailed = false;
     private bool _isPrimaryLlm;
     private bool _isFuncCalled;
+    private string _serviceID;
+    private int _maxTokens = 2000;
 
     public bool IsStateReady { get => _isStateReady; }
     public bool IsStateStarting { get => _isStateStarting; }
     public bool IsStateFailed { get => _isStateFailed; }
-    public OpenAIRunner(ILogger<OpenAIRunner> logger, ILLMResponseProcessor responseProcessor, OpenAIService openAiService, SemaphoreSlim openAIRunnerSemaphore)
+    public OpenAIRunner(ILogger<OpenAIRunner> logger, ILLMResponseProcessor responseProcessor, OpenAIService openAiService, ISystemParamsHelper systemParamsHelper, SemaphoreSlim openAIRunnerSemaphore)
     {
         _logger = logger;
         _responseProcessor = responseProcessor;
         _openAiService = openAiService;
         _openAIRunnerSemaphore = openAIRunnerSemaphore;
-        _tools = ToolsBuilder.Tools;
+        _serviceID = systemParamsHelper.GetSystemParams().ServiceID!;
+        if (_serviceID == "Monitor") _toolsBuilder = new MonitorToolsBuilder();
+        if (_serviceID == "Nmap") _toolsBuilder = new NmapToolsBuilder();
         _activeSessions = new ConcurrentDictionary<string, DateTime>();
         _sessionHistories = new ConcurrentDictionary<string, List<ChatMessage>>();
 
@@ -62,11 +67,11 @@ public class OpenAIRunner : ILLMRunner
         {
             _isStateStarting = false;
             _isStateReady = true;
-            throw new InvalidOperationException("TurboLLM Assistant already running.");
+            throw new InvalidOperationException($"TurboLLM {_serviceID} Assistant already running.");
         }
-        _sessionHistories.GetOrAdd(serviceObj.SessionId, ToolsBuilder.GetSystemPrompt(_activeSessions[serviceObj.SessionId].ToString("yyyy-MM-ddTHH:mm:ss"), serviceObj));
+        _sessionHistories.GetOrAdd(serviceObj.SessionId, _toolsBuilder.GetSystemPrompt(_activeSessions[serviceObj.SessionId].ToString("yyyy-MM-ddTHH:mm:ss"), serviceObj));
 
-        _logger.LogInformation($"Started session {serviceObj.SessionId} at {currentTime}.");
+        _logger.LogInformation($"Started TurboLLM {_serviceID} Assistant with session id {serviceObj.SessionId} at {currentTime}.");
         // Here, you might want to send an initial message or perform other setup tasks.
         _isStateStarting = false;
         _isStateReady = true;
@@ -78,30 +83,30 @@ public class OpenAIRunner : ILLMRunner
         _isStateReady = false;
         if (!_activeSessions.TryRemove(sessionId, out var lastActivity) || !_sessionHistories.TryRemove(sessionId, out var history))
         {
-            _logger.LogWarning($"Attempted to remove non-existent session {sessionId}.");
+            _logger.LogWarning($"Attempted to stop TurboLLM {_serviceID} Assistant with non-existent session {sessionId}.");
             return;
         }
         _isStateReady = true;
         _isStateFailed = true;
-        _logger.LogInformation($"Removed session {sessionId}. Last active at {lastActivity}. History had {history.Count} messages.");
+        _logger.LogInformation($" Stopped TurboLLM {_serviceID} Assistant with session {sessionId}. Last active at {lastActivity}. History had {history.Count} messages.");
     }
 
 
     public async Task SendInputAndGetResponse(LLMServiceObj serviceObj)
     {
         _isStateReady = false;
-        
+
         var responseServiceObj = new LLMServiceObj(serviceObj);
 
         if (!_activeSessions.ContainsKey(serviceObj.SessionId))
         {
             _isStateFailed = true;
             _isStateReady = true;
-            throw new Exception($"No Assistant found for session {serviceObj.SessionId}. Try reloading the Assistant or refreshing the page. If the problems persists contact support@freenetworkmontior.click");
+            throw new Exception($"No TurboLLM {_serviceID} Assistants found for session {serviceObj.SessionId}. Try reloading the Assistant or refreshing the page. If the problems persists contact support@freenetworkmontior.click");
         }
 
         _logger.LogInformation("Sending input and waiting for response...");
-         _isPrimaryLlm = serviceObj.IsPrimaryLlm;
+        _isPrimaryLlm = serviceObj.IsPrimaryLlm;
         _isFuncCalled = false;
 
         try
@@ -132,10 +137,34 @@ public class OpenAIRunner : ILLMRunner
 
             chatMessage.Content = serviceObj.UserInput;
             history.Add(chatMessage);
+            int tokenCount = CalculateTokens(history);
+            if (tokenCount > _maxTokens)
+            {
+                _logger.LogInformation($"Token count ({tokenCount}) exceeded the limit, truncating history.");
+
+                // Keep the first system message intact
+                var systemMessage = history.First();
+                history = history.Skip(1).ToList();
+
+                // Remove messages until the token count is under the limit
+                while (tokenCount > _maxTokens && history.Count > 1)
+                {
+                    history.RemoveAt(0); // Remove the oldest message
+                    tokenCount = CalculateTokens(history);
+                }
+
+                // Restore the system message at the start
+                history.Insert(0, systemMessage);
+                _sessionHistories[serviceObj.SessionId] = history;
+                _logger.LogInformation($"History truncated to {tokenCount} tokens.");
+            }
+
+            _logger.LogInformation($"History Token count: {tokenCount}");
+
             var completionResult = await _openAiService.ChatCompletion.CreateCompletion(new ChatCompletionCreateRequest
             {
                 Messages = history,
-                Tools = _tools, // Your pre-defined tools
+                Tools = _toolsBuilder.Tools, // Your pre-defined tools
                 ToolChoice = ToolChoice.Auto,
                 MaxTokens = 1000,
                 Model = "gpt-4o-mini"
@@ -179,7 +208,7 @@ public class OpenAIRunner : ILLMRunner
                     functionResponseServiceObj.FunctionName = functionName;
 
                     await _responseProcessor.ProcessFunctionCall(functionResponseServiceObj);
-                    responseServiceObj.LlmMessage = "Function Call: " + json + "\n";
+                    responseServiceObj.LlmMessage = "Function Call: " + functionName + "\n" + json + "\n";
                     if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOuputInChunks(responseServiceObj);
                     responseChoiceStr = "";
                 }
@@ -222,11 +251,18 @@ public class OpenAIRunner : ILLMRunner
         }
     }
 
-    private int CalculateTokens(string text)
+
+    private int CalculateTokens(IEnumerable<ChatMessage> messages)
     {
-        // Basic token counting logic, could be improved with actual tokenization logic
-        return text.Split(new char[] { ' ', '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).Length;
+        int tokenCount = 0;
+
+        foreach (var message in messages)
+        {
+            //_logger.LogInformation($"History: {message.Content}");
+            if (!String.IsNullOrEmpty(message.Content)) tokenCount += TokenizerGpt3.TokenCount(message.Content);
+        }
+
+        return tokenCount;
     }
 
-    // Implement other methods as needed...
 }
