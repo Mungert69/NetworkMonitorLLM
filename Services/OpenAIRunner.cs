@@ -234,14 +234,16 @@ public class OpenAIRunner : ILLMRunner
                         Content = responseChoiceStr
                     };
                     history.Add(choice.Message);
+
                     if (_isPrimaryLlm)
                     {
-                        responseServiceObj.IsFunctionCallResponse = false;
-                        responseServiceObj.LlmMessage = "Assistant: " + responseChoiceStr + "\n\n";
+                       responseServiceObj.IsFunctionCallResponse = false;
+                       responseServiceObj.LlmMessage = "Assistant: " + responseChoiceStr + "\n\n";
                         await _responseProcessor.ProcessLLMOuputInChunks(responseServiceObj);
                     }
                     else
                     {
+                        responseServiceObj.IsFunctionCallResponse = true;
                         responseServiceObj.LlmMessage = responseChoiceStr;
                         await _responseProcessor.ProcessLLMOutput(responseServiceObj);
                     }
