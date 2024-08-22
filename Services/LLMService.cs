@@ -54,10 +54,16 @@ public class LLMService : ILLMService
         llmServiceObj.SessionId = llmServiceObj.RequestSessionId;
         try
         {
-            var clientTimeZone = llmServiceObj.TimeZone != null
-                                        ? TimeZoneInfo.FindSystemTimeZoneById(llmServiceObj.TimeZone)
-                                        : TimeZoneInfo.Utc;
-            var usersCurrentTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, clientTimeZone);
+            DateTime usersCurrentTime=DateTime.UtcNow;
+            try
+            {
+                var clientTimeZone = llmServiceObj.TimeZone != null
+                                            ? TimeZoneInfo.FindSystemTimeZoneById(llmServiceObj.TimeZone)
+                                            : TimeZoneInfo.Utc;
+                usersCurrentTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, clientTimeZone);
+            }
+            catch { // Just continue and use Utc time zone
+            }
 
             bool exists = _sessions.TryGetValue(llmServiceObj.SessionId, out var checkSession);
             bool isSessionRemoved = false;
