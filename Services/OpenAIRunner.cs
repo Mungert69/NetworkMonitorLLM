@@ -120,8 +120,8 @@ public class OpenAIRunner : ILLMRunner
             var chatMessage = new ChatMessage();
             if (serviceObj.IsFunctionCallResponse)
             {
-                chatMessage.Role = "function";
-                //chatMessage.Name = serviceObj.FunctionName;
+                chatMessage.Role = "tool";
+                chatMessage.Name = serviceObj.FunctionName;
                 chatMessage.ToolCallId = serviceObj.FunctionCallId;
                 responseServiceObj.LlmMessage = "Function Response: " + serviceObj.UserInput + "\n\n";
                 if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
@@ -186,6 +186,7 @@ public class OpenAIRunner : ILLMRunner
                     var fn = fnCall.FunctionCall;
                     string functionName = fn!.Name ?? "N/A";
                     serviceObj.FunctionCallId = fnCall.Id;
+                    serviceObj.FunctionName = functionName;
                     var funcChatMessage = new ChatMessage()
                     {
                         Content="",
