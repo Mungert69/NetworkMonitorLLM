@@ -121,7 +121,7 @@ public class OpenAIRunner : ILLMRunner
             if (serviceObj.IsFunctionCallResponse)
             {
                 chatMessage.Role = "function";
-                chatMessage.Name = serviceObj.FunctionName;
+                //chatMessage.Name = serviceObj.FunctionName;
                 chatMessage.ToolCallId = serviceObj.FunctionCallId;
                 responseServiceObj.LlmMessage = "Function Response: " + serviceObj.UserInput + "\n\n";
                 if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
@@ -194,7 +194,7 @@ public class OpenAIRunner : ILLMRunner
                         ToolCallId = fnCall.Id
                     };
                     //chatMessage.Name = functionName;
-                    history.Add(funcChatMessage);
+                    history.Add(choice.Message);
                     _logger.LogInformation($"Function call detected: {functionName}");
 
                     var json = JsonSerializer.Serialize(fn.ParseArguments());
@@ -255,8 +255,8 @@ public class OpenAIRunner : ILLMRunner
             {
                 if (completionResult.Error != null)
                 {
-                    _logger.LogError($"Completion failed: {completionResult.Error.Message}");
-                    throw new Exception($"Error from OpenAI : {completionResult.Error.Message}");
+                    _logger.LogError($" {_serviceID } Assistant OpenAI Error : {completionResult.Error.Message}");
+                    throw new Exception($" {_serviceID } Assistant OpenAI Error : {completionResult.Error.Message}");
                 }
             }
         }
