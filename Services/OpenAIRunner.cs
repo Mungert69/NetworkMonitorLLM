@@ -253,8 +253,11 @@ public class OpenAIRunner : ILLMRunner
             }
             else
             {
-                _logger.LogError($"Completion failed: {completionResult.Error}");
-                throw new Exception($"Error from OpenAI : {completionResult.Error}");
+                if (completionResult.Error != null)
+                {
+                    _logger.LogError($"Completion failed: {completionResult.Error.Message}");
+                    throw new Exception($"Error from OpenAI : {completionResult.Error.Message}");
+                }
             }
         }
         catch (Exception ex)
