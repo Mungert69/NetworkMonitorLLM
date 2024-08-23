@@ -208,8 +208,8 @@ public class OpenAIRunner : ILLMRunner
                         forwardFuncServiceObj.LlmMessage = $"Please wait calling function with parameters {json}. Be patient this may take some time";
                         forwardFuncServiceObj.IsFunctionCall = false;
                         forwardFuncServiceObj.IsFunctionCallResponse = true;
-                        await _responseProcessor.ProcessLLMOutput(forwardFuncServiceObj);
-                        _logger.LogInformation($" --> Sent redirected LLM Function Output {forwardFuncServiceObj.LlmMessage}");
+                        //await _responseProcessor.ProcessLLMOutput(forwardFuncServiceObj);
+                        //_logger.LogInformation($" --> Sent redirected LLM Function Output {forwardFuncServiceObj.LlmMessage}");
 
                     }
 
