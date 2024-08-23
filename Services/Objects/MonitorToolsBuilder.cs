@@ -112,6 +112,7 @@ public class MonitorToolsBuilder : IToolsBuilder
             new ToolDefinition() { Function = fn_get_host_list, Type="function"  },
             new ToolDefinition() { Function = fn_get_user_info, Type="function"  },
             new ToolDefinition() { Function = fn_call_nmap, Type="function"  },
+             new ToolDefinition() { Function = fn_call_metasploit, Type="function"  },
             new ToolDefinition() { Function = fn_get_agents, Type="function"  },
         };
     }
