@@ -27,8 +27,14 @@ namespace NetworkMonitor.LLM.Services
             // Define the run_metasploit function
             fn_run_metasploit = new FunctionDefinitionBuilder("run_metasploit", "This function calls Metasploit to execute a module. Create the parameters based upon the user's request.")
                 .AddParameter("module_name", PropertyDefinition.DefineString("The name of the Metasploit module to run, required. For example, 'exploit/windows/smb/ms17_010_eternalblue'."))
-                .AddParameter("module_options", PropertyDefinition.DefineObject("The options for the module, optional. These options should be passed as key-value pairs to configure the Metasploit module. Examples include 'RHOSTS', 'RPORT', 'PAYLOAD', etc."))
-                .AddParameter("target", PropertyDefinition.DefineString("The target, required. This is typically the IP address, range, or domain you wish to target."))
+                .AddParameter("module_options", PropertyDefinition.DefineObject(
+                    new Dictionary<string, PropertyDefinition>(),
+                    null,
+                    false,
+                    "The options for the module, optional. These options should be passed as key-value pairs to configure the Metasploit module. Examples include 'RHOSTS', 'RPORT', 'PAYLOAD', etc.",
+                    null
+                ))
+                 .AddParameter("target", PropertyDefinition.DefineString("The target, required. This is typically the IP address, range, or domain you wish to target."))
                 .AddParameter("agent_location", PropertyDefinition.DefineString("The agent location that will run the module, optional. Specify this if the Metasploit execution is to be performed by a specific remote agent."))
                 .Validate()
                 .Build();
@@ -48,7 +54,7 @@ namespace NetworkMonitor.LLM.Services
         public List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj)
         {
            string content = "You are a penetration testing assistant specializing in the Metasploit framework. Your primary task is to translate user requests into the appropriate Metasploit module and options, and call the Metasploit functions. "
-                           + "When setting up a Metasploit module, ensure that the `module_options` parameter is an object containing key-value pairs. Each key represents an option name like `RHOSTS`, `RPORT`, `PAYLOAD`, and each value represents the corresponding configuration.";
+                           + "When setting up a Metasploit module, ensure that the `module_options` parameter is an object containing key-value pairs. Each key represents an option name like `RHOSTS`, `RPORT`, `PAYLOAD`, and each value represents the corresponding configuration."
                            + "Always confirm the correct module and options to be used based on the user's intent.";
 
             if (serviceObj.IsUserLoggedIn)
