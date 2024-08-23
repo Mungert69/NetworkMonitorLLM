@@ -19,6 +19,7 @@ public class MonitorToolsBuilder : IToolsBuilder
     private readonly FunctionDefinition fn_get_host_list;
     private readonly FunctionDefinition fn_get_user_info;
     private readonly FunctionDefinition fn_call_nmap;
+    private readonly FunctionDefinition fn_call_metasploit;
     private readonly FunctionDefinition fn_get_agents;
 
     public MonitorToolsBuilder()
@@ -92,7 +93,7 @@ public class MonitorToolsBuilder : IToolsBuilder
                 .AddParameter("agent_location", PropertyDefinition.DefineString("The agent location that will run the scan, optional"))
                 .Validate()
                 .Build();
-       var fn_call_metasploit = new FunctionDefinitionBuilder("call_metasploit", "Relay a user's request to a remote penetration testing assistant. The remote penetration testing assistant uses metasploit. You will create a message that explains the user's objective in layman's terms. The penetration testing assistant will handle the technical details. If the assistant needs more information, present the questions to the user clearly and help provide answers where possible.")
+       fn_call_metasploit = new FunctionDefinitionBuilder("call_metasploit", "Relay a user's request to a remote penetration testing assistant. The remote penetration testing assistant uses metasploit. You will create a message that explains the user's objective in layman's terms. The penetration testing assistant will handle the technical details. If the assistant needs more information, present the questions to the user clearly and help provide answers where possible.")
     .AddParameter("message", PropertyDefinition.DefineString("The message to be sent to the penetration testing assistant, explaining the user's goal in simple language."))
     .AddParameter("agent_location", PropertyDefinition.DefineString("The agent location that will run the task, optional."))
     .Validate()
