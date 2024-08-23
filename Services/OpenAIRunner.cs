@@ -33,6 +33,8 @@ public class OpenAIRunner : ILLMRunner
 
     private SemaphoreSlim _openAIRunnerSemaphore;
     private ConcurrentDictionary<string, List<ChatMessage>> _sessionHistories = new ConcurrentDictionary<string, List<ChatMessage>>();
+    private ConcurrentDictionary<string, ChatMessage> _pendingFunctionResponses = new ConcurrentDictionary<string, ChatMessage>();
+
     public string Type { get => "TurboLLM"; }
     private bool _isStateReady = false;
     private bool _isStateStarting = false;
@@ -118,15 +120,34 @@ public class OpenAIRunner : ILLMRunner
             var history = _sessionHistories[serviceObj.SessionId];
 
             var chatMessage = new ChatMessage();
+            chatMessage.Content = serviceObj.UserInput;
             if (serviceObj.IsFunctionCallResponse)
             {
-                chatMessage.Role = "tool";
-                chatMessage.Name = serviceObj.FunctionName;
-                chatMessage.ToolCallId = serviceObj.FunctionCallId;
-                responseServiceObj.LlmMessage = "Function Response: " + serviceObj.UserInput + "\n\n";
-                if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
-                responseServiceObj.LlmMessage = "</functioncall-complete>";
-                if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+                _pendingFunctionResponses.TryGetValue(serviceObj.FunctionCallId, out var funcChatMessage);
+
+
+
+                if (funcChatMessage != null)
+                {
+                    chatMessage.Role = "tool";
+                    chatMessage.Name = serviceObj.FunctionName;
+                    chatMessage.ToolCallId = serviceObj.FunctionCallId;
+                    history.Add(funcChatMessage);
+                    history.Add(chatMessage);
+                    _pendingFunctionResponses.TryRemove(serviceObj.FunctionCallId, out _);
+                    responseServiceObj.LlmMessage = "Function Response: " + serviceObj.UserInput + "\n\n";
+                    if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+                    responseServiceObj.LlmMessage = "</functioncall-complete>";
+                    if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+                }
+                else
+                {
+                    responseServiceObj.LlmMessage = "Function Response: Failed to match function call to its response\n\n";
+                    if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+                    responseServiceObj.LlmMessage = "</functioncall-complete>";
+                    if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+
+                }
 
             }
             else
@@ -134,10 +155,11 @@ public class OpenAIRunner : ILLMRunner
                 chatMessage.Role = "user";
                 responseServiceObj.LlmMessage = "User: " + serviceObj.UserInput + "\n\n";
                 if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+                history.Add(chatMessage);
             }
 
-            chatMessage.Content = serviceObj.UserInput;
-            history.Add(chatMessage);
+
+
             int tokenCount = CalculateTokens(history);
             if (tokenCount > _maxTokens)
             {
@@ -187,15 +209,9 @@ public class OpenAIRunner : ILLMRunner
                     string functionName = fn!.Name ?? "N/A";
                     serviceObj.FunctionCallId = fnCall.Id;
                     serviceObj.FunctionName = functionName;
-                    var funcChatMessage = new ChatMessage()
-                    {
-                        Content="",
-                        Role = "assistant",
-                        Name = functionName,
-                        ToolCallId = fnCall.Id
-                    };
+
                     //chatMessage.Name = functionName;
-                    history.Add(choice.Message);
+                    _pendingFunctionResponses.TryAdd(fnCall.Id, choice.Message);
                     _logger.LogInformation($"Function call detected: {functionName}");
 
                     var json = JsonSerializer.Serialize(fn.ParseArguments());
@@ -236,8 +252,8 @@ public class OpenAIRunner : ILLMRunner
 
                     if (_isPrimaryLlm)
                     {
-                       responseServiceObj.IsFunctionCallResponse = false;
-                       responseServiceObj.LlmMessage = "Assistant: " + responseChoiceStr + "\n\n";
+                        responseServiceObj.IsFunctionCallResponse = false;
+                        responseServiceObj.LlmMessage = "Assistant: " + responseChoiceStr + "\n\n";
                         await _responseProcessor.ProcessLLMOuputInChunks(responseServiceObj);
                     }
                     else
@@ -257,8 +273,8 @@ public class OpenAIRunner : ILLMRunner
             {
                 if (completionResult.Error != null)
                 {
-                    _logger.LogError($" {_serviceID } Assistant OpenAI Error : {completionResult.Error.Message}");
-                    throw new Exception($" {_serviceID } Assistant OpenAI Error : {completionResult.Error.Message}");
+                    _logger.LogError($" {_serviceID} Assistant OpenAI Error : {completionResult.Error.Message}");
+                    throw new Exception($" {_serviceID} Assistant OpenAI Error : {completionResult.Error.Message}");
                 }
             }
         }
