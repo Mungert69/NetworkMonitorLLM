@@ -58,6 +58,7 @@ public class OpenAIRunner : ILLMRunner
         _serviceID = systemParamsHelper.GetSystemParams().ServiceID!;
         if (_serviceID == "Monitor") _toolsBuilder = new MonitorToolsBuilder();
         if (_serviceID == "Nmap") _toolsBuilder = new NmapToolsBuilder();
+         if (_serviceID == "Meta") _toolsBuilder = new NmapToolsBuilder();
         _activeSessions = new ConcurrentDictionary<string, DateTime>();
         _sessionHistories = new ConcurrentDictionary<string, List<ChatMessage>>();
 

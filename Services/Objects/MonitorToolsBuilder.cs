@@ -86,11 +86,19 @@ public class MonitorToolsBuilder : IToolsBuilder
                 .AddParameter("detail_response", PropertyDefinition.DefineBoolean("Will this function return all user details. Set to false if only basic info is required"))
                 .Validate()
                 .Build();
+                
         fn_call_nmap = new FunctionDefinitionBuilder("call_nmap", "Perform a scan using a remote network scanning assistant. You will create a message to send to the scanning assistant. It will be in laymans english describing what the user wants to scan and how. If the scanning assistant asks questions then present these to the user using simple language and try to create the message using your knowledge if possible")
                 .AddParameter("message", PropertyDefinition.DefineString("The message to be sent to the network scanning assistant"))
                 .AddParameter("agent_location", PropertyDefinition.DefineString("The agent location that will run the scan, optional"))
                 .Validate()
                 .Build();
+       var fn_call_metasploit = new FunctionDefinitionBuilder("call_metasploit", "Relay a user's request to a remote penetration testing assistant. The remote penetration testing assistant uses metasploit. You will create a message that explains the user's objective in layman's terms. The penetration testing assistant will handle the technical details. If the assistant needs more information, present the questions to the user clearly and help provide answers where possible.")
+    .AddParameter("message", PropertyDefinition.DefineString("The message to be sent to the penetration testing assistant, explaining the user's goal in simple language."))
+    .AddParameter("agent_location", PropertyDefinition.DefineString("The agent location that will run the task, optional."))
+    .Validate()
+    .Build();
+
+
         fn_get_agents = new FunctionDefinitionBuilder("get_agents", "Retrieve a list of monitoring agent details")
                 .AddParameter("detail_response", PropertyDefinition.DefineBoolean("Will this function return all agent details. Set to false if only require agent locations"))
                 .Validate()
