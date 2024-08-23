@@ -11,12 +11,12 @@ using System.Collections.Generic;
 
 namespace NetworkMonitor.LLM.Services
 {
-    public class MetasploitToolsBuilder : IToolsBuilder
+    public class MetaToolsBuilder : IToolsBuilder
     {
         private readonly FunctionDefinition fn_get_user_info;
         private readonly FunctionDefinition fn_run_metasploit;
 
-        public MetasploitToolsBuilder()
+        public MetaToolsBuilder()
         {
             // Define the get_user_info function
             fn_get_user_info = new FunctionDefinitionBuilder("get_user_info", "Get information about the user")
