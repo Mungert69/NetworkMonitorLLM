@@ -33,6 +33,8 @@ public class OpenAIRunner : ILLMRunner
 
     private SemaphoreSlim _openAIRunnerSemaphore;
     private ConcurrentDictionary<string, List<ChatMessage>> _sessionHistories = new ConcurrentDictionary<string, List<ChatMessage>>();
+    private ConcurrentDictionary<string, List<ChatMessage>> _messageHistories = new ConcurrentDictionary<string, List<ChatMessage>>();
+
     private ConcurrentDictionary<string, ChatMessage> _pendingFunctionResponses = new ConcurrentDictionary<string, ChatMessage>();
 
     public string Type { get => "TurboLLM"; }
@@ -118,7 +120,7 @@ public class OpenAIRunner : ILLMRunner
             string responseChoiceStr = "";
             // Retrieve or initialize the conversation history
             var history = _sessionHistories[serviceObj.SessionId];
-
+            var messageHistory = _messageHistories.GetOrAdd(serviceObj.MessageID, new List<ChatMessage>());
             var chatMessage = new ChatMessage();
             chatMessage.Content = serviceObj.UserInput;
             if (serviceObj.IsFunctionCallResponse)
@@ -132,8 +134,8 @@ public class OpenAIRunner : ILLMRunner
                     chatMessage.Role = "tool";
                     chatMessage.Name = serviceObj.FunctionName;
                     chatMessage.ToolCallId = serviceObj.FunctionCallId;
-                    history.Add(funcChatMessage);
-                    history.Add(chatMessage);
+                    messageHistory.Add(funcChatMessage);
+                    messageHistory.Add(chatMessage);
                     _pendingFunctionResponses.TryRemove(serviceObj.FunctionCallId, out _);
                     responseServiceObj.LlmMessage = "Function Response: " + serviceObj.UserInput + "\n\n";
                     if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
@@ -155,38 +157,24 @@ public class OpenAIRunner : ILLMRunner
                 chatMessage.Role = "user";
                 responseServiceObj.LlmMessage = "User: " + serviceObj.UserInput + "\n\n";
                 if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
-                history.Add(chatMessage);
+                messageHistory.Add(chatMessage);
             }
 
-
-
-            int tokenCount = CalculateTokens(history);
-            if (tokenCount > _maxTokens)
+            
+            var currentHistory = new List<ChatMessage>();
+            foreach (var message in history)
             {
-                _logger.LogInformation($"Token count ({tokenCount}) exceeded the limit, truncating history.");
-
-                // Keep the first system message intact
-                var systemMessage = history.First();
-                history = history.Skip(1).ToList();
-
-                // Remove messages until the token count is under the limit
-                while (tokenCount > _maxTokens && history.Count > 1)
-                {
-                    history.RemoveAt(0); // Remove the oldest message
-                    tokenCount = CalculateTokens(history);
-                }
-
-                // Restore the system message at the start
-                history.Insert(0, systemMessage);
-                _sessionHistories[serviceObj.SessionId] = history;
-                _logger.LogInformation($"History truncated to {tokenCount} tokens.");
+                currentHistory.Add(message);
             }
-
-            _logger.LogInformation($"History Token count: {tokenCount}");
+            foreach (var message in messageHistory)
+            {
+                currentHistory.Add(message);
+            }
+            
 
             var completionResult = await _openAiService.ChatCompletion.CreateCompletion(new ChatCompletionCreateRequest
             {
-                Messages = history,
+                Messages = currentHistory,
                 Tools = _toolsBuilder.Tools, // Your pre-defined tools
                 ToolChoice = ToolChoice.Auto,
                 MaxTokens = 1000,
@@ -248,7 +236,37 @@ public class OpenAIRunner : ILLMRunner
                         Role = "assistant",
                         Content = responseChoiceStr
                     };
-                    history.Add(choice.Message);
+                    // TODO Add messageHistory 
+                    foreach (var message in messageHistory)
+                    {
+                        history.Add(message);
+                    }
+                    history.Add(assistantChatMessage);
+
+                    int tokenCount = CalculateTokens(history);
+                        _logger.LogInformation($"History Token count: {tokenCount}");
+
+                    if (tokenCount > _maxTokens)
+                    {
+                        _logger.LogInformation($"Token count ({tokenCount}) exceeded the limit, truncating history.");
+
+                        // Keep the first system message intact
+                        var systemMessage = history.First();
+                        history = history.Skip(1).ToList();
+
+                        // Remove messages until the token count is under the limit
+                        while (tokenCount > _maxTokens && history.Count > 1)
+                        {
+                            history.RemoveAt(0); // Remove the oldest message
+                            tokenCount = CalculateTokens(history);
+                        }
+
+                        // Restore the system message at the start
+                        history.Insert(0, systemMessage);
+                        _sessionHistories[serviceObj.SessionId] = history;
+                        _logger.LogInformation($"History truncated to {tokenCount} tokens.");
+                    }
+
 
                     if (_isPrimaryLlm)
                     {
