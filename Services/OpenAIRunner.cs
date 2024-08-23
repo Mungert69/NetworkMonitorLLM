@@ -204,13 +204,12 @@ public class OpenAIRunner : ILLMRunner
                     if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
                     else
                     {
-                        var forwardFuncServiceObj = new LLMServiceObj(responseServiceObj);
+                        var forwardFuncServiceObj = new LLMServiceObj(serviceObj);
                         forwardFuncServiceObj.LlmMessage = $"Please wait calling function with parameters {json}. Be patient this may take some time";
                         forwardFuncServiceObj.IsFunctionCall = false;
                         forwardFuncServiceObj.IsFunctionCallResponse = true;
-                        forwardFuncServiceObj.FunctionName = functionName;
-                        // await _responseProcessor.ProcessLLMOutput(forwardFuncServiceObj);
-                        //_logger.LogInformation($" --> Sent redirected LLM Function Output {forwardFuncServiceObj.LlmMessage}");
+                        await _responseProcessor.ProcessLLMOutput(forwardFuncServiceObj);
+                        _logger.LogInformation($" --> Sent redirected LLM Function Output {forwardFuncServiceObj.LlmMessage}");
 
                     }
 
