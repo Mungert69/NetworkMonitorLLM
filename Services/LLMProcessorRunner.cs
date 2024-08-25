@@ -209,7 +209,7 @@ public class LLMProcessRunner : ILLMRunner
         while (!cancellationTokenSource.IsCancellationRequested)
         {
             line = await process.StandardOutput.ReadLineAsync();
-            if (line.StartsWith("#READY#"))
+            if (line.Contains("LLM_STARTED"))
             {
                 isReady = true;
                 break;
