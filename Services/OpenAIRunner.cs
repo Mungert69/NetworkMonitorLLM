@@ -56,9 +56,9 @@ public class OpenAIRunner : ILLMRunner
         _openAiService = openAiService;
         _openAIRunnerSemaphore = openAIRunnerSemaphore;
         _serviceID = systemParamsHelper.GetSystemParams().ServiceID!;
-        if (_serviceID == "Monitor") _toolsBuilder = new MonitorToolsBuilder();
-        if (_serviceID == "Nmap") _toolsBuilder = new NmapToolsBuilder();
-         if (_serviceID == "Meta") _toolsBuilder = new MetaToolsBuilder();
+        if (_serviceID == "monitor") _toolsBuilder = new MonitorToolsBuilder();
+        if (_serviceID == "nmap") _toolsBuilder = new NmapToolsBuilder();
+         if (_serviceID == "meta") _toolsBuilder = new MetaToolsBuilder();
         _activeSessions = new ConcurrentDictionary<string, DateTime>();
         _sessionHistories = new ConcurrentDictionary<string, List<ChatMessage>>();
 

@@ -122,6 +122,7 @@ public class LLMService : ILLMService
             llmServiceObj.ResultSuccess = false;
             llmServiceObj.LlmMessage = MessageHelper.ErrorMessage(llmServiceObj.ResultMessage);
             await _rabbitRepo.PublishAsync<LLMServiceObj>("llmServiceMessage", llmServiceObj);
+            _logger.LogError($" Error : Could not start process. Error was :{e.Message}");
         }
 
 
