@@ -225,10 +225,16 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
         var result = new ResultObj();
         result.Success = false;
         result.Message = "MessageAPI : UserInput : ";
-        _logger.LogInformation($" Start User Input {serviceObj!.UserInput}");
-        if (serviceObj == null )
+       if (serviceObj == null )
         {
             result.Message += " Error : serviceObj is null.";
+            _logger.LogError(result.Message);
+            result.Success = false;
+            return result;
+        }
+         if (serviceObj.UserInput == null )
+        {
+            result.Message += " Error : serviceObj.UserInput is null";
             _logger.LogError(result.Message);
             result.Success = false;
             return result;
@@ -240,6 +246,8 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
             result.Success = false;
             return result;
         }
+         _logger.LogInformation($" Start User Input {serviceObj.UserInput}");
+        
 
         try
         {
