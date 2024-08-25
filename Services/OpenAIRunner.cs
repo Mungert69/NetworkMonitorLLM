@@ -102,6 +102,11 @@ public class OpenAIRunner : ILLMRunner
         _isStateReady = false;
 
         var responseServiceObj = new LLMServiceObj(serviceObj);
+         var assistantChatMessage = new ChatMessage()
+                    {
+                        Role = "assistant",
+                    };
+        bool addSuccessMessage = false;
 
         if (!_activeSessions.ContainsKey(serviceObj.SessionId))
         {
@@ -232,18 +237,8 @@ public class OpenAIRunner : ILLMRunner
 
                 if (!responseChoiceStr.IsNullOrEmpty())
                 {
-                    var assistantChatMessage = new ChatMessage()
-                    {
-                        Role = "assistant",
-                        Content = responseChoiceStr
-                    };
-                    // TODO Add messageHistory 
-                    foreach (var message in messageHistory)
-                    {
-                        history.Add(message);
-                    }
-                    history.Add(assistantChatMessage);
-
+                    assistantChatMessage.Content = responseChoiceStr;
+                    addSuccessMessage = true;
                     int tokenCount = CalculateTokens(history);
                         _logger.LogInformation($"History Token count: {tokenCount}");
 
@@ -281,12 +276,18 @@ public class OpenAIRunner : ILLMRunner
                         responseServiceObj.LlmMessage = responseChoiceStr;
                         await _responseProcessor.ProcessLLMOutput(responseServiceObj);
                     }
-                   ;
+
                 }
                 responseServiceObj.LlmMessage = "<end-of-line>";
                 responseServiceObj.TokensUsed = completionResult.Usage.TotalTokens;
                 if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
-
+                if (addSuccessMessage) { 
+                    foreach (var message in messageHistory)
+                    {
+                        history.Add(message);
+                    }
+                    history.Add(assistantChatMessage);
+                }
             }
             else
             {
