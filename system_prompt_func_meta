@@ -14,6 +14,18 @@ namespace functions {
     agent_location?: string,
   }) => any;
 
+// Search information and Metasploit modules. Use this to get information about modules and which modules are available. Use this if you get an error when using a module.
+type search_metasploit_modules = (_: {
+  // Number of lines to return. Increase this if you need more data returned by the search. Be careful with using larger numbers as a lot of data can be returned. Consider using a more targeted search term instead.
+  number_lines?: number, // optional
+
+  // Search type to use. Valid values are 'search', 'show', and 'info'.
+  search_type: 'search' | 'show' | 'info', // required
+
+  // Search expression. The format depends on the search_type: - For 'search': Provide keywords or filters such as 'type:exploit platform:windows cve:2021'. Filters you can use include: 'name' (search by the module's name), 'description' (search within the module's description), 'author' (search by the author's name), 'type' (filter by module type, such as 'exploit', 'auxiliary', 'post', 'payload', etc.), 'platform' (filter by the target platform like 'windows', 'linux', etc.), 'rank' (search based on the module's rank, e.g., 'excellent', 'good', 'normal', etc.), and 'cve' (search by a specific CVE identifier). - For 'show': Provide the module type, such as 'exploits' to list all exploit modules. - For 'info': Provide the module name, such as 'exploit/windows/smb/ms17_010_eternalblue' to get detailed information about that module.
+  search_expression: string, // required
+}) => any;
+
 // Get information about the user
   type get_user_info = (_: {
         // Will this function return all user details. Set to false if only basic info is required
