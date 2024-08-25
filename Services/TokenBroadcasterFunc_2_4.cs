@@ -46,7 +46,7 @@ public class TokenBroadcasterFunc_2_4 : ITokenBroadcaster
         bool isStopEncountered = false;
         while (!cancellationToken.IsCancellationRequested)
         {
-            byte[] buffer = new byte[1];
+            byte[] buffer = new byte[50];
             int charRead = await process.StandardOutput.ReadAsync(buffer, 0, buffer.Length);
             string textChunk = Encoding.UTF8.GetString(buffer, 0, charRead);
             var chunkServiceObj = new LLMServiceObj(serviceObj);
@@ -54,6 +54,7 @@ public class TokenBroadcasterFunc_2_4 : ITokenBroadcaster
             if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(chunkServiceObj);
             llmOutFull.Append(textChunk);
             tokenBuilder.Append(textChunk);
+            //Console.WriteLine(textChunk);
             if (IsTokenComplete(tokenBuilder))
             {
                 string token = tokenBuilder.ToString();
@@ -75,9 +76,6 @@ public class TokenBroadcasterFunc_2_4 : ITokenBroadcaster
                         if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
                     }
                     await ProcessMessageSegment(messageSegment, serviceObj.SessionId, userInput, serviceObj.SourceLlm, serviceObj.DestinationLlm);
-
-
-
                 }
                 if (!_isPrimaryLlm) forwardSegments = messageSegments;
                 _cancellationTokenSource.Cancel();
@@ -88,12 +86,18 @@ public class TokenBroadcasterFunc_2_4 : ITokenBroadcaster
         }
         if (!_isPrimaryLlm && !_isFuncCalled)
         {
-            string llmOutput = "Message from llm function call can not be be read.";
-            if (forwardSegments.Count > 0)
+            string llmOutput = "Message to sent from Remote LLM format corrupt.";
+            //string test = llmOutFull.ToString();
+            try
             {
-                var assistantSegment = forwardSegments.Where(a => a.From.Contains("assistant")).FirstOrDefault();
-                if (assistantSegment != null) llmOutput = assistantSegment.Content.Replace("\n", "").Replace("<|stop|>", "");
+                if (forwardSegments.Count > 0)
+                {
+                    var assistantSegment = forwardSegments.Where(a => a.From.Contains("assistant")).FirstOrDefault();
+                    if (assistantSegment != null) llmOutput = assistantSegment.Content.Replace("\n", "").Replace("<|stop|>", "");
+                }
             }
+            catch { }
+
             var finalServiceObj = new LLMServiceObj(serviceObj);
             finalServiceObj.LlmMessage = llmOutput;
             finalServiceObj.IsFunctionCall = false;
