@@ -113,6 +113,13 @@ namespace functions {
     agent_location: string,
   }) => any;
 
+  type call_metasploit = (_: {
+    // The message to be sent to the penetration testing assistant, explaining the user's goal in simple language.
+    message: string,
+    // The agent location that will run the task, optional.
+    agent_location?: string,
+  }) => any;
+
   // Get information about the user
   type get_user_info = (_: {
         // Will this function return all user details. Set to false if only basic info is required
