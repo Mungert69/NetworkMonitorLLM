@@ -31,13 +31,13 @@ public interface IRabbitListener
 public class RabbitListener : RabbitListenerBase, IRabbitListener
 {
     protected ILLMService _llmService;
-    private string _serviceID="Monitor";
+    private string _serviceID="monitor";
 
     public RabbitListener(ILLMService llmService, ILogger<RabbitListenerBase> logger, ISystemParamsHelper systemParamsHelper) : base(logger, DeriveSystemUrl(systemParamsHelper))
     {
 
         _llmService = llmService;
-        _serviceID=systemParamsHelper.GetSystemParams().ServiceID ?? "Monitor";
+        _serviceID=systemParamsHelper.GetSystemParams().ServiceID ?? "monitor";
         Setup();
     }
 
