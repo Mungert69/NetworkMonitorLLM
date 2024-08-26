@@ -109,7 +109,7 @@ public class LLMService : ILLMService
             }
             else
             {
-                llmServiceObj.ResultMessage = $" Info Assistant already running so it was not reloaded";
+                llmServiceObj.ResultMessage = $"{llmServiceObj.LlmChainStartName} Info Assistant already running so it was not reloaded";
                 llmServiceObj.ResultSuccess = true;
                 llmServiceObj.LlmMessage = MessageHelper.InfoMessage(llmServiceObj.ResultMessage);
                 await _rabbitRepo.PublishAsync<LLMServiceObj>("llmServiceMessage", llmServiceObj);
@@ -118,11 +118,11 @@ public class LLMService : ILLMService
         }
         catch (Exception e)
         {
-            llmServiceObj.ResultMessage = e.Message;
+            llmServiceObj.ResultMessage = $" Error : Could not start {llmServiceObj.LlmChainStartName} Info Assistant. Error was : {e.Message}";
             llmServiceObj.ResultSuccess = false;
             llmServiceObj.LlmMessage = MessageHelper.ErrorMessage(llmServiceObj.ResultMessage);
             await _rabbitRepo.PublishAsync<LLMServiceObj>("llmServiceMessage", llmServiceObj);
-            _logger.LogError($" Error : Could not start process. Error was :{e.Message}");
+            _logger.LogError(llmServiceObj.ResultMessage);
         }
 
 
