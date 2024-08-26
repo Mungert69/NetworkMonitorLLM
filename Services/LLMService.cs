@@ -169,7 +169,7 @@ public class LLMService : ILLMService
 
         if (llmServiceObj.SessionId == null || !_sessions.TryGetValue(llmServiceObj.SessionId, out session))
         {
-            result.Message = $" No Assistant found for session {llmServiceObj.SessionId}. Try reloading the Assistant or refreshing the page. If the problems persists contact support@freenetworkmontior.click";
+            result.Message = $" No Assistant found for sessionId={llmServiceObj.SessionId}. Try reloading the Assistant or refreshing the page. If the problems persists contact support@freenetworkmontior.click";
             result.Success = false;
 
         }

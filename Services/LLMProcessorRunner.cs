@@ -234,7 +234,7 @@ public class LLMProcessRunner : ILLMRunner
             {
                 _isStateFailed = true;
                 _isStateReady = true;
-                throw new Exception($"No Assistant found for session {serviceObj.SessionId}. Try reloading the Assistant or refreshing the page. If the problems persists contact support@freenetworkmontior.click");
+                throw new Exception($"No Assistant found for sessionId= {serviceObj.SessionId}. Try reloading the Assistant or refreshing the page. If the problems persists contact support@freenetworkmontior.click");
             }
             if (process == null || process.HasExited)
             {
