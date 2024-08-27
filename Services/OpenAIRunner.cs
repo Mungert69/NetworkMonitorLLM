@@ -58,7 +58,7 @@ public class OpenAIRunner : ILLMRunner
         _serviceID = systemParamsHelper.GetSystemParams().ServiceID!;
         if (_serviceID == "monitor") _toolsBuilder = new MonitorToolsBuilder();
         if (_serviceID == "nmap") _toolsBuilder = new NmapToolsBuilder();
-         if (_serviceID == "meta") _toolsBuilder = new MetaToolsBuilder();
+        if (_serviceID == "meta") _toolsBuilder = new MetaToolsBuilder();
         _activeSessions = new ConcurrentDictionary<string, DateTime>();
         _sessionHistories = new ConcurrentDictionary<string, List<ChatMessage>>();
 
@@ -102,10 +102,10 @@ public class OpenAIRunner : ILLMRunner
         _isStateReady = false;
 
         var responseServiceObj = new LLMServiceObj(serviceObj);
-         var assistantChatMessage = new ChatMessage()
-                    {
-                        Role = "assistant",
-                    };
+        var assistantChatMessage = new ChatMessage()
+        {
+            Role = "assistant",
+        };
         bool addSuccessMessage = false;
 
         if (!_activeSessions.ContainsKey(serviceObj.SessionId))
@@ -133,20 +133,31 @@ public class OpenAIRunner : ILLMRunner
             {
                 _pendingFunctionResponses.TryGetValue(serviceObj.FunctionCallId, out var funcChatMessage);
 
-
-
                 if (funcChatMessage != null)
                 {
-                    chatMessage.Role = "tool";
-                    chatMessage.Name = serviceObj.FunctionName;
-                    chatMessage.ToolCallId = serviceObj.FunctionCallId;
-                    messageHistory.Add(funcChatMessage);
-                    messageHistory.Add(chatMessage);
-                    _pendingFunctionResponses.TryRemove(serviceObj.FunctionCallId, out _);
+                    if (serviceObj.IsFuncAck)
+                    {
+                        chatMessage.Role = "tool";
+                        chatMessage.Name = serviceObj.FunctionName;
+                        chatMessage.ToolCallId = serviceObj.FunctionCallId;
+                        messageHistory.Add(funcChatMessage);
+                        messageHistory.Add(chatMessage);
+                    }
+                    else
+                    {
+                        chatMessage.Role = "tool";
+                        chatMessage.Name = serviceObj.FunctionName;
+                        chatMessage.ToolCallId = serviceObj.FunctionCallId;
+                        // messageHistory.Add(funcChatMessage);
+                        history.Add(chatMessage);
+                        _pendingFunctionResponses.TryRemove(serviceObj.FunctionCallId, out _);
+                    }
+                    if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+
                     responseServiceObj.LlmMessage = "Function Response: " + serviceObj.UserInput + "\n\n";
                     if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
                     responseServiceObj.LlmMessage = "</functioncall-complete>";
-                    if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+
                 }
                 else
                 {
@@ -166,7 +177,7 @@ public class OpenAIRunner : ILLMRunner
                 messageHistory.Add(chatMessage);
             }
 
-            
+
             var currentHistory = new List<ChatMessage>();
             foreach (var message in history)
             {
@@ -176,7 +187,7 @@ public class OpenAIRunner : ILLMRunner
             {
                 currentHistory.Add(message);
             }
-            
+
 
             var completionResult = await _openAiService.ChatCompletion.CreateCompletion(new ChatCompletionCreateRequest
             {
@@ -218,6 +229,7 @@ public class OpenAIRunner : ILLMRunner
                         forwardFuncServiceObj.LlmMessage = $"Please wait calling function. Be patient this may take some time";
                         forwardFuncServiceObj.IsFunctionCall = false;
                         forwardFuncServiceObj.IsFunctionCallResponse = true;
+                        forwardFuncServiceObj.IsFuncAck = true;
                         await _responseProcessor.ProcessLLMOutput(forwardFuncServiceObj);
                         _logger.LogInformation($" --> Sent redirected LLM Function Output {forwardFuncServiceObj.LlmMessage}");
 
@@ -240,7 +252,7 @@ public class OpenAIRunner : ILLMRunner
                     assistantChatMessage.Content = responseChoiceStr;
                     addSuccessMessage = true;
                     int tokenCount = CalculateTokens(history);
-                        _logger.LogInformation($"History Token count: {tokenCount}");
+                    _logger.LogInformation($"History Token count: {tokenCount}");
 
                     if (tokenCount > _maxTokens)
                     {
@@ -281,7 +293,8 @@ public class OpenAIRunner : ILLMRunner
                 responseServiceObj.LlmMessage = "<end-of-line>";
                 responseServiceObj.TokensUsed = completionResult.Usage.TotalTokens;
                 if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
-                if (addSuccessMessage) { 
+                if (addSuccessMessage)
+                {
                     foreach (var message in messageHistory)
                     {
                         history.Add(message);

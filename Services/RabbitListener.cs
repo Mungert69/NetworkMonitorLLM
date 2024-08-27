@@ -55,19 +55,19 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
         {
             ExchangeName = "llmStartSession"+_serviceID,
             FuncName = "llmStartSession",
-            MessageTimeout = 60000
+            MessageTimeout = 600000
         });
         _rabbitMQObjs.Add(new RabbitMQObj()
         {
             ExchangeName = "llmUserInput"+_serviceID,
             FuncName = "llmUserInput",
-            MessageTimeout = 60000
+            MessageTimeout = 600000
         });
         _rabbitMQObjs.Add(new RabbitMQObj()
         {
             ExchangeName = "llmRemoveSession"+_serviceID,
             FuncName = "llmRemoveSession",
-            MessageTimeout = 60000
+            MessageTimeout = 600000
         });
 
 
