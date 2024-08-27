@@ -149,7 +149,16 @@ public class OpenAIRunner : ILLMRunner
                         chatMessage.Name = serviceObj.FunctionName;
                         chatMessage.ToolCallId = serviceObj.FunctionCallId;
                         // messageHistory.Add(funcChatMessage);
-                        history.Add(chatMessage);
+                        if (history.Any(a => a.ToolCallId == serviceObj.FunctionCallId))
+                        {
+                              history.Add(chatMessage);
+                        }
+                        else
+                        {
+                          
+                            messageHistory.Add(funcChatMessage);
+                            messageHistory.Add(chatMessage);
+                        }
                         _pendingFunctionResponses.TryRemove(serviceObj.FunctionCallId, out _);
                     }
                     if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
