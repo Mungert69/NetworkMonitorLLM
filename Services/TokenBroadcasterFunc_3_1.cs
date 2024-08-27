@@ -61,7 +61,7 @@ namespace NetworkMonitor.LLM.Services
                     outputBuilder.Clear();
                 }
             }
-
+            // TODO send completed conversation to calling llm if its a function call to this llm from a llm
             _logger.LogInformation("Finished LLM Interaction");
         }
 
@@ -73,6 +73,8 @@ namespace NetworkMonitor.LLM.Services
             var functionCalls = ExtractFunctionCalls(output);
             foreach (var functionCall in functionCalls)
             {
+                 // TODO send the function call achknowledgement back to calling llm :   forwardFuncServiceObj.LlmMessage = $"Please wait calling {functionName} function. Be patient this may take some time";
+                
                 await ProcessFunctionCall(functionCall, serviceObj);
             }
 

@@ -131,6 +131,8 @@ public class TokenBroadcasterStandard : ITokenBroadcaster
             if (line != jsonLine)
             {
                 _logger.LogInformation($" ProcessLLMOutput(call_func) -> {jsonLine}");
+                 // TODO send the function call achknowledgement back to calling llm :   forwardFuncServiceObj.LlmMessage = $"Please wait calling {functionName} function. Be patient this may take some time";
+                
                 responseServiceObj = new LLMServiceObj() { SessionId = sessionId, UserInput = userInput, SourceLlm = sourceLlm, DestinationLlm = destionationLlm };
                 responseServiceObj.LlmMessage = "</functioncall>";
                 if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
