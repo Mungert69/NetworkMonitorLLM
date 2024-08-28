@@ -85,10 +85,10 @@ public class LLMService : ILLMService
                 switch (llmServiceObj.LLMRunnerType)
                 {
                     case "TurboLLM":
-                        runner = _openAIRunnerFactory.CreateRunner(_serviceProvider, _openAIRunnerSemaphore);
+                        runner = _openAIRunnerFactory.CreateRunner(_serviceProvider, llmServiceObj.UserInfo ,_openAIRunnerSemaphore);
                         break;
                     case "FreeLLM":
-                        runner = _processRunnerFactory.CreateRunner(_serviceProvider, _processRunnerSemaphore);
+                        runner = _processRunnerFactory.CreateRunner(_serviceProvider, llmServiceObj.UserInfo ,_processRunnerSemaphore);
                         break;
                     // Add more cases for other runner types if needed
                     default:

@@ -31,27 +31,27 @@ public interface ILLMRunner
 
 public interface ILLMProcessRunnerFactory
 {
-    ILLMRunner CreateRunner(IServiceProvider serviceProvider, SemaphoreSlim? _runnerSemaphore=null);
+    ILLMRunner CreateRunner(IServiceProvider serviceProvider, UserInfo userInfo, SemaphoreSlim? _runnerSemaphore=null);
 }
 
 public interface IOpenAIRunnerFactory
 {
-    ILLMRunner CreateRunner(IServiceProvider serviceProvider,SemaphoreSlim? _runnerSemaphore=null);
+    ILLMRunner CreateRunner(IServiceProvider serviceProvider,UserInfo userInfo, SemaphoreSlim? _runnerSemaphore=null);
 }
 public class LLMProcessRunnerFactory : ILLMProcessRunnerFactory
 {
     
-    public ILLMRunner CreateRunner(IServiceProvider serviceProvider,SemaphoreSlim? _runnerSemaphore)
+    public ILLMRunner CreateRunner(IServiceProvider serviceProvider,UserInfo userInfo, SemaphoreSlim? _runnerSemaphore)
     {
-        return new LLMProcessRunner(serviceProvider.GetRequiredService<ILogger<LLMProcessRunner>>(),serviceProvider.GetRequiredService<ILLMResponseProcessor>(),serviceProvider.GetRequiredService<ISystemParamsHelper >(),_runnerSemaphore);
+        return new LLMProcessRunner(serviceProvider.GetRequiredService<ILogger<LLMProcessRunner>>(),serviceProvider.GetRequiredService<ILLMResponseProcessor>(),serviceProvider.GetRequiredService<ISystemParamsHelper >(),userInfo,_runnerSemaphore);
     }
 }
 
 public class OpenAIRunnerFactory : IOpenAIRunnerFactory
 {
    
-    public ILLMRunner CreateRunner(IServiceProvider serviceProvider,SemaphoreSlim? _runnerSemaphore)
+    public ILLMRunner CreateRunner(IServiceProvider serviceProvider,UserInfo userInfo, SemaphoreSlim? _runnerSemaphore)
     {
-         return new OpenAIRunner(serviceProvider.GetRequiredService<ILogger<OpenAIRunner>>(),serviceProvider.GetRequiredService<ILLMResponseProcessor >(),serviceProvider.GetRequiredService<OpenAIService>(),serviceProvider.GetRequiredService<ISystemParamsHelper >(),_runnerSemaphore);
+         return new OpenAIRunner(serviceProvider.GetRequiredService<ILogger<OpenAIRunner>>(),serviceProvider.GetRequiredService<ILLMResponseProcessor >(),serviceProvider.GetRequiredService<OpenAIService>(),serviceProvider.GetRequiredService<ISystemParamsHelper >(),userInfo,_runnerSemaphore);
     }
 }

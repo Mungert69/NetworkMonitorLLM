@@ -37,7 +37,7 @@ public class LLMProcessRunner : ILLMRunner
     public bool IsStateStarting { get => _isStateStarting; }
     public bool IsStateFailed { get => _isStateFailed; }
 
-    public LLMProcessRunner(ILogger<LLMProcessRunner> logger, ILLMResponseProcessor responseProcessor, ISystemParamsHelper systemParamsHelper, SemaphoreSlim processRunnerSemaphore)
+    public LLMProcessRunner(ILogger<LLMProcessRunner> logger, ILLMResponseProcessor responseProcessor, ISystemParamsHelper systemParamsHelper, UserInfo userInfo,SemaphoreSlim processRunnerSemaphore)
     {
         _logger = logger;
         _responseProcessor = responseProcessor;
