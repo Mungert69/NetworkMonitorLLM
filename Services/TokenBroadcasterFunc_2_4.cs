@@ -75,7 +75,7 @@ public class TokenBroadcasterFunc_2_4 : ITokenBroadcaster
                         responseServiceObj.LlmMessage = "</functioncall-complete>";
                         if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
                     }
-                    await ProcessMessageSegment(messageSegment, serviceObj.SessionId, userInput, serviceObj.SourceLlm, serviceObj.DestinationLlm);
+                    await ProcessMessageSegment(messageSegment, serviceObj);
                 }
                 if (!_isPrimaryLlm) forwardSegments = messageSegments;
                 _cancellationTokenSource.Cancel();
@@ -216,9 +216,10 @@ public class TokenBroadcasterFunc_2_4 : ITokenBroadcaster
         }
         return sb.ToString();
     }
-    private async Task ProcessMessageSegment(MessageSegment messageSegment, string sessionId, string userInput, string sourceLlm, string destinationLlm)
+    private async Task ProcessMessageSegment(MessageSegment messageSegment, LLMServiceObj serviceObj)
     {
-        LLMServiceObj responseServiceObj = new LLMServiceObj() { SessionId = sessionId, SourceLlm = sourceLlm, DestinationLlm = destinationLlm };
+        //LLMServiceObj responseServiceObj = new LLMServiceObj() { SessionId = sessionId, SourceLlm = sourceLlm, DestinationLlm = destinationLlm };
+        var responseServiceObj = new LLMServiceObj(serviceObj);
         string line = messageSegment.Content;
 
         if (messageSegment.From == "assistant" && messageSegment.Recipient != "all")
@@ -229,7 +230,7 @@ public class TokenBroadcasterFunc_2_4 : ITokenBroadcaster
             {
                 var jsonFunction = "{\"name\" : \"" + messageSegment.Recipient + "\" , \"parameters\" : " + jsonLine + "}";
                 _logger.LogInformation($" ProcessLLMOutput(call_func) -> {jsonLine}");
-                responseServiceObj = new LLMServiceObj() { SessionId = sessionId, UserInput = userInput, SourceLlm = sourceLlm, DestinationLlm = destinationLlm };
+                //responseServiceObj = new LLMServiceObj() { SessionId = sessionId, UserInput = userInput, SourceLlm = sourceLlm, DestinationLlm = destinationLlm };
                 responseServiceObj.LlmMessage = "</functioncall>";
                 if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
                 else

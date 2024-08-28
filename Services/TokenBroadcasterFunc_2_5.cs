@@ -70,7 +70,7 @@ public class TokenBroadcasterFunc_2_5 : ITokenBroadcaster
             if (llmOutFull.ToString().Contains("<|eot_id|>"))
             {
                 _logger.LogInformation($"sessionID={serviceObj.SessionId} line is =>{llmOutFull.ToString()}<=");
-                await ProcessLine(llmOutFull.ToString(), serviceObj.SessionId, userInput, serviceObj.IsFunctionCallResponse, serviceObj.SourceLlm, serviceObj.DestinationLlm);
+                await ProcessLine(llmOutFull.ToString(), serviceObj);
                 //state = ResponseState.Completed;
                 _logger.LogInformation(" Cancel due to output end detected ");
                 _cancellationTokenSource.Cancel();
@@ -114,10 +114,11 @@ public class TokenBroadcasterFunc_2_5 : ITokenBroadcaster
         // Check for whitespace characters that indicate token boundaries
         return false;
     }
-    private async Task ProcessLine(string line, string sessionId, string userInput, bool isFunctionCallResponse, string sourceLlm, string destinationLlm)
+    private async Task ProcessLine(string line, LLMServiceObj serviceObj)
     {
-        LLMServiceObj responseServiceObj = new LLMServiceObj() { SessionId = sessionId, SourceLlm = sourceLlm, DestinationLlm = destinationLlm };
-        if (isFunctionCallResponse)
+        //LLMServiceObj responseServiceObj = new LLMServiceObj() { SessionId = sessionId, SourceLlm = sourceLlm, DestinationLlm = destinationLlm };
+        var responseServiceObj = new LLMServiceObj(serviceObj);
+        if (serviceObj.IsFunctionCallResponse)
         {
             responseServiceObj.LlmMessage = "</functioncall-complete>";
             if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
@@ -131,7 +132,7 @@ public class TokenBroadcasterFunc_2_5 : ITokenBroadcaster
                 _logger.LogInformation($" ProcessLLMOutput(call_func) -> {jsonLine}");
 
                 // TODO send the function call achknowledgement back to calling llm :   forwardFuncServiceObj.LlmMessage = $"Please wait calling {functionName} function. Be patient this may take some time";
-                responseServiceObj = new LLMServiceObj() { SessionId = sessionId, UserInput = userInput, SourceLlm = sourceLlm, DestinationLlm = destinationLlm };
+                //responseServiceObj = new LLMServiceObj() { SessionId = sessionId, UserInput = userInput, SourceLlm = sourceLlm, DestinationLlm = destinationLlm };
                 responseServiceObj.LlmMessage = "</functioncall>";
                 if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
                 responseServiceObj.LlmMessage = "";
