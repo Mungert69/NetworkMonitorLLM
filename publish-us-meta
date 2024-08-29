@@ -1,0 +1,4 @@
+systemctl stop NetworkMonitor-USLLM.service
+cp appsettings-us-meta.json appsettings.json
+dotnet publish NetworkMonitorLLM.csproj --os linux --arch x64  --output ../services/llm-us -c Release --self-contained true 
+systemctl start NetworkMonitorLLM-US.service
