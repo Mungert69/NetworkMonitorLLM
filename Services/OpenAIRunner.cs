@@ -49,14 +49,14 @@ public class OpenAIRunner : ILLMRunner
     public bool IsStateReady { get => _isStateReady; }
     public bool IsStateStarting { get => _isStateStarting; }
     public bool IsStateFailed { get => _isStateFailed; }
-    public OpenAIRunner(ILogger<OpenAIRunner> logger, ILLMResponseProcessor responseProcessor, OpenAIService openAiService, ISystemParamsHelper systemParamsHelper, UserInfo userInfo,SemaphoreSlim openAIRunnerSemaphore)
+    public OpenAIRunner(ILogger<OpenAIRunner> logger, ILLMResponseProcessor responseProcessor, OpenAIService openAiService, ISystemParamsHelper systemParamsHelper, LLMServiceObj serviceObj,SemaphoreSlim openAIRunnerSemaphore)
     {
         _logger = logger;
         _responseProcessor = responseProcessor;
         _openAiService = openAiService;
         _openAIRunnerSemaphore = openAIRunnerSemaphore;
         _serviceID = systemParamsHelper.GetSystemParams().ServiceID!;
-        if (_serviceID == "monitor") _toolsBuilder = new MonitorToolsBuilder(userInfo);
+        if (_serviceID == "monitor") _toolsBuilder = new MonitorToolsBuilder(serviceObj.UserInfo);
         if (_serviceID == "nmap") _toolsBuilder = new NmapToolsBuilder();
          if (_serviceID == "meta") _toolsBuilder = new MetaToolsBuilder();
         _activeSessions = new ConcurrentDictionary<string, DateTime>();

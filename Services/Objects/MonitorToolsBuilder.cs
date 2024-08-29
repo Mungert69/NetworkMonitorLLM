@@ -35,81 +35,25 @@ public class MonitorToolsBuilder : IToolsBuilder
         fn_call_metasploit = BuildCallMetasploitFunction();
         fn_get_agents = BuildGetAgentsFunction();
 
-        // Map account types to available functions
-        var accountTypeFunctionMap = new Dictionary<string, List<FunctionDefinition>>()
-{
-    { "Free", new List<FunctionDefinition>
-        {
-            fn_add_host,
-            fn_edit_host,
-            fn_get_host_data,
-            fn_get_host_list,
-            fn_get_user_info,
-            fn_get_agents
-        }
-    },
-    { "Standard", new List<FunctionDefinition>
-        {
-            fn_add_host,
-            fn_edit_host,
-            fn_get_host_data,
-            fn_get_host_list,
-            fn_get_user_info,
-            fn_get_agents,
-            fn_call_nmap
-        }
-    },
-    { "Professional", new List<FunctionDefinition>
-        {
-            fn_add_host,
-            fn_edit_host,
-            fn_get_host_data,
-            fn_get_host_list,
-            fn_get_user_info,
-            fn_get_agents,
-            fn_call_nmap,
-            fn_call_metasploit
-        }
-    },
-    { "Enterprise", new List<FunctionDefinition>
-        {
-            fn_add_host,
-            fn_edit_host,
-            fn_get_host_data,
-            fn_get_host_list,
-            fn_get_user_info,
-            fn_get_agents,
-            fn_call_nmap,
-            fn_call_metasploit
-        }
-    },
-    { "God", new List<FunctionDefinition>
-        {
-            fn_add_host,
-            fn_edit_host,
-            fn_get_host_data,
-            fn_get_host_list,
-            fn_get_user_info,
-            fn_get_agents,
-            fn_call_nmap,
-            fn_call_metasploit
-        }
-    }
-};
 
+        // Assuming these function references are defined in the current context
+        var accountTypeFunctions = AccountTypeFactory.GetFunctionsForAccountType(
+            userInfo.AccountType,
+            fn_add_host,
+            fn_edit_host,
+            fn_get_host_data,
+            fn_get_host_list,
+            fn_get_user_info,
+            fn_get_agents,
+            fn_call_nmap,
+            fn_call_metasploit
+        );
 
         // Build the tools list based on user account type
         _tools = new List<ToolDefinition>();
-        if (userInfo.AccountType != null && accountTypeFunctionMap.ContainsKey(userInfo.AccountType))
+        foreach (var function in accountTypeFunctions)
         {
-            foreach (var function in accountTypeFunctionMap[userInfo.AccountType])
-            {
-                _tools.Add(new ToolDefinition() { Function = function, Type = "function" });
-            }
-        }
-        else
-        {
-            throw new ArgumentException("Invalid or unsupported account type.");
+            _tools.Add(new ToolDefinition() { Function = function, Type = "function" });
         }
 
     }

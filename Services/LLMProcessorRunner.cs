@@ -32,15 +32,17 @@ public class LLMProcessRunner : ILLMRunner
     private bool _isStateStarting = false;
     private bool _isStateFailed = false;
     private string _serviceID;
+    private LLMServiceObj _startServiceoObj;
 
     public bool IsStateReady { get => _isStateReady; }
     public bool IsStateStarting { get => _isStateStarting; }
     public bool IsStateFailed { get => _isStateFailed; }
 
-    public LLMProcessRunner(ILogger<LLMProcessRunner> logger, ILLMResponseProcessor responseProcessor, ISystemParamsHelper systemParamsHelper, UserInfo userInfo,SemaphoreSlim processRunnerSemaphore)
+    public LLMProcessRunner(ILogger<LLMProcessRunner> logger, ILLMResponseProcessor responseProcessor, ISystemParamsHelper systemParamsHelper, LLMServiceObj startServiceObj, SemaphoreSlim processRunnerSemaphore)
     {
         _logger = logger;
         _responseProcessor = responseProcessor;
+        _startServiceoObj = startServiceObj;
         _mlParams = systemParamsHelper.GetMLParams();
         _serviceID = systemParamsHelper.GetSystemParams().ServiceID!;
         _processRunnerSemaphore = processRunnerSemaphore;
@@ -61,10 +63,20 @@ public class LLMProcessRunner : ILLMRunner
     public void SetStartInfo(ProcessStartInfo startInfo, MLParams mlParams)
     {
         string promptPrefix = "";
+        string extraReversePrompt = "";
         // if (!mlParams.LlmIsfunc_2.4) promptPrefix = " --in-prefix \"<|user|>\" ";
+        if (mlParams.LlmVersion == "func_3.1" || mlParams.LlmVersion == "func_3.2") extraReversePrompt = " -r \"<|eom_id|>\" ";
+
+
+
+        string permissionSuffix = AccountTypeFactory.GetPermissionSuffix(
+           _startServiceoObj.UserInfo.AccountType,
+           _startServiceoObj.LlmSessionStartName,
+           _startServiceoObj.LlmChainStartName
+       );
 
         startInfo.FileName = $"{mlParams.LlmModelPath}llama.cpp/llama-cli";
-        startInfo.Arguments = $" -c {mlParams.LlmCtxSize} -n {mlParams.LlmPromptTokens} -m {mlParams.LlmModelPath + mlParams.LlmModelFileName}  --prompt-cache {mlParams.LlmModelPath + mlParams.LlmContextFileName} --prompt-cache-ro  -f {mlParams.LlmModelPath + mlParams.LlmSystemPrompt} {mlParams.LlmPromptMode} -r \"{mlParams.LlmReversePrompt}\" -r \"<|eom_id|>\"  --keep -1 --temp 0 -t {mlParams.LlmThreads} {promptPrefix}";
+        startInfo.Arguments = $" -c {mlParams.LlmCtxSize} -n {mlParams.LlmPromptTokens} -m {mlParams.LlmModelPath + mlParams.LlmModelFileName}  --prompt-cache {mlParams.LlmModelPath + mlParams.LlmContextFileName + permissionSuffix} --prompt-cache-ro  -f {mlParams.LlmModelPath + mlParams.LlmSystemPrompt + permissionSuffix} {mlParams.LlmPromptMode} -r \"{mlParams.LlmReversePrompt}\" {extraReversePrompt}  --keep -1 --temp 0 -t {mlParams.LlmThreads} {promptPrefix}";
         _logger.LogInformation($"Running command : {startInfo.FileName}{startInfo.Arguments}");
         startInfo.UseShellExecute = false;
         startInfo.RedirectStandardInput = true;
@@ -105,7 +117,7 @@ public class LLMProcessRunner : ILLMRunner
         else if (_mlParams.LlmVersion == "func_2.5") userInput = $"<|start_header_id|>tool<|end_header_id|>name=get_user_info ";
         else if (_mlParams.LlmVersion == "func_3.1") userInput = "<|start_header_id|>ipython<|end_header_id|>";
         else if (_mlParams.LlmVersion == "standard") userInput = "Function Call : ";
-           
+
         if (serviceObj.IsUserLoggedIn)
         {
             var user = new UserInfo()
@@ -120,10 +132,10 @@ public class LLMProcessRunner : ILLMRunner
             input = PrintPropertiesAsJson.PrintUserInfoPropertiesWithDate(user, serviceObj.IsUserLoggedIn, currentTime.ToString("yyyy-MM-ddTHH:mm:ss"), false);
         }
         serviceObj.UserInput = userInput + input;
-      
+
         serviceObj.IsFunctionCallResponse = false;
         _sendOutput = false;
-         await SendInputAndGetResponse(serviceObj);
+        await SendInputAndGetResponse(serviceObj);
         _logger.LogInformation($"LLM process started for session {serviceObj.SessionId}");
         _sendOutput = true;
         _isStateStarting = false;
@@ -255,13 +267,13 @@ public class LLMProcessRunner : ILLMRunner
             }
             else
             {
-                if (_mlParams.LlmVersion=="func_2.4") tokenBroadcaster = new TokenBroadcasterFunc_2_4(_responseProcessor, _logger);
-                else if (_mlParams.LlmVersion=="func_2.5") tokenBroadcaster = new TokenBroadcasterFunc_2_5(_responseProcessor, _logger);
-                else if (_mlParams.LlmVersion=="func_3.1") tokenBroadcaster = new TokenBroadcasterFunc_3_1(_responseProcessor, _logger);
-                else if (_mlParams.LlmVersion=="standard") tokenBroadcaster = new TokenBroadcasterStandard(_responseProcessor, _logger);
-                
-                else  throw new InvalidOperationException($" Error there is no Token Broadcaster for LLM Version {_mlParams.LlmVersion}");
-            
+                if (_mlParams.LlmVersion == "func_2.4") tokenBroadcaster = new TokenBroadcasterFunc_2_4(_responseProcessor, _logger);
+                else if (_mlParams.LlmVersion == "func_2.5") tokenBroadcaster = new TokenBroadcasterFunc_2_5(_responseProcessor, _logger);
+                else if (_mlParams.LlmVersion == "func_3.1") tokenBroadcaster = new TokenBroadcasterFunc_3_1(_responseProcessor, _logger);
+                else if (_mlParams.LlmVersion == "standard") tokenBroadcaster = new TokenBroadcasterStandard(_responseProcessor, _logger);
+
+                else throw new InvalidOperationException($" Error there is no Token Broadcaster for LLM Version {_mlParams.LlmVersion}");
+
             }
             string userInput = serviceObj.UserInput;
 
@@ -269,17 +281,17 @@ public class LLMProcessRunner : ILLMRunner
             {
                 if (!serviceObj.IsFunctionCallResponse)
                 {
-                    if (_mlParams.LlmVersion=="func_2.4") userInput = "<|from|>user<|recipient|>all<|content|>" + userInput;
-                    else if (_mlParams.LlmVersion=="func_2.5") userInput = "<|start_header_id|>user<|end_header_id|>" + userInput;
-                    else if (_mlParams.LlmVersion=="func_3.1") userInput = "<|start_header_id|>user<|end_header_id|>" + userInput;
+                    if (_mlParams.LlmVersion == "func_2.4") userInput = "<|from|>user<|recipient|>all<|content|>" + userInput;
+                    else if (_mlParams.LlmVersion == "func_2.5") userInput = "<|start_header_id|>user<|end_header_id|>" + userInput;
+                    else if (_mlParams.LlmVersion == "func_3.1") userInput = "<|start_header_id|>user<|end_header_id|>" + userInput;
                     //else if (_mlParams.LlmVersion="standard") userInput = userInput;
-                
+
                 }
                 else
                 {
-                     if (_mlParams.LlmVersion=="func_2.4") userInput = "<|from|>" + serviceObj.FunctionName + "<|recipient|>all<|content|>" + serviceObj.UserInput;
-                    else if (_mlParams.LlmVersion=="func_2.5") userInput = "<|start_header_id|>tool<|end_header_id|>name=" + serviceObj.FunctionName + " " + serviceObj.UserInput;
-                    else if (_mlParams.LlmVersion=="func_3.1") userInput = "<|start_header_id|>ipython<|end_header_id|>"+serviceObj.UserInput;
+                    if (_mlParams.LlmVersion == "func_2.4") userInput = "<|from|>" + serviceObj.FunctionName + "<|recipient|>all<|content|>" + serviceObj.UserInput;
+                    else if (_mlParams.LlmVersion == "func_2.5") userInput = "<|start_header_id|>tool<|end_header_id|>name=" + serviceObj.FunctionName + " " + serviceObj.UserInput;
+                    else if (_mlParams.LlmVersion == "func_3.1") userInput = "<|start_header_id|>ipython<|end_header_id|>" + serviceObj.UserInput;
 
                 }
             }
