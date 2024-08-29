@@ -1,0 +1,1 @@
+~/code/models/llama.cpp/llama-cli -c 6000  -m ~/code/models/functionary-small-v2.4.Q4_0.gguf  --prompt-cache context-func_standard.gguf  -r "<|stop|>"  -f system_prompt_func_standard  --temp 0  
