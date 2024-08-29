@@ -75,9 +75,21 @@ public class LLMProcessRunner : ILLMRunner
            _startServiceoObj.LlmSessionStartName,
            _startServiceoObj.LlmChainStartName
        );
+        var promptName = mlParams.LlmSystemPrompt + permissionSuffix;
+        string contextFileName;
 
+        string[] splitFileName = mlParams.LlmContextFileName.Split(new string[] { ".gguf" }, StringSplitOptions.None);
+
+        if (splitFileName.Length > 1)
+        {
+           contextFileName = splitFileName[0] + permissionSuffix + ".gguf";
+        }
+        else
+        {
+            contextFileName = mlParams.LlmContextFileName + permissionSuffix;
+        }
         startInfo.FileName = $"{mlParams.LlmModelPath}llama.cpp/llama-cli";
-        startInfo.Arguments = $" -c {mlParams.LlmCtxSize} -n {mlParams.LlmPromptTokens} -m {mlParams.LlmModelPath + mlParams.LlmModelFileName}  --prompt-cache {mlParams.LlmModelPath + mlParams.LlmContextFileName + permissionSuffix} --prompt-cache-ro  -f {mlParams.LlmModelPath + mlParams.LlmSystemPrompt + permissionSuffix} {mlParams.LlmPromptMode} -r \"{mlParams.LlmReversePrompt}\" {extraReversePrompt}  --keep -1 --temp 0 -t {mlParams.LlmThreads} {promptPrefix}";
+        startInfo.Arguments = $" -c {mlParams.LlmCtxSize} -n {mlParams.LlmPromptTokens} -m {mlParams.LlmModelPath + mlParams.LlmModelFileName}  --prompt-cache {mlParams.LlmModelPath + contextFileName} --prompt-cache-ro  -f {mlParams.LlmModelPath + promptName} {mlParams.LlmPromptMode} -r \"{mlParams.LlmReversePrompt}\" {extraReversePrompt}  --keep -1 --temp 0 -t {mlParams.LlmThreads} {promptPrefix}";
         _logger.LogInformation($"Running command : {startInfo.FileName}{startInfo.Arguments}");
         startInfo.UseShellExecute = false;
         startInfo.RedirectStandardInput = true;
