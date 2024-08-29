@@ -1,6 +1,7 @@
 using NetworkMonitor.Objects.ServiceMessage;
 using NetworkMonitor.Utils;
 using NetworkMonitor.Objects;
+using NetworkMonitor.Objects.Factory;
 using OpenAI;
 using OpenAI.Builders;
 using OpenAI.Managers;
