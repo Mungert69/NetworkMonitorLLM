@@ -15,7 +15,7 @@ namespace NetworkMonitor.LLM.Services
     {
         private readonly ILLMResponseProcessor _responseProcessor;
         private readonly ILogger _logger;
-        public event Func<object, string, Task> LineReceived;
+        //public event Func<object, string, Task> LineReceived;
         private CancellationTokenSource _cancellationTokenSource;
         private bool _isPrimaryLlm;
         private bool _isFuncCalled;

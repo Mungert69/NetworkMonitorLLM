@@ -19,7 +19,7 @@ public class TokenBroadcasterFunc_2_4 : ITokenBroadcaster
     private readonly ILogger _logger;
     private bool _isPrimaryLlm;
     private bool _isFuncCalled;
-    public event Func<object, string, Task> LineReceived;
+    //public event Func<object, string, Task> LineReceived;
     private CancellationTokenSource _cancellationTokenSource;
     public TokenBroadcasterFunc_2_4(ILLMResponseProcessor responseProcessor, ILogger logger)
     {
@@ -168,7 +168,7 @@ public class TokenBroadcasterFunc_2_4 : ITokenBroadcaster
         if (output.Contains("<|stop|>"))
         {
             isMessageSegmentsComplete = true;
-            MessageSegment currentSegment = null;
+            MessageSegment? currentSegment = null;
 
             foreach (Match match in matches)
             {

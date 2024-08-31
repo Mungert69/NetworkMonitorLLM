@@ -42,7 +42,7 @@ public class OpenAIRunner : ILLMRunner
     private bool _isStateStarting = false;
     private bool _isStateFailed = false;
     private bool _isPrimaryLlm;
-    private bool _isFuncCalled;
+    //private bool _isFuncCalled;
     private string _serviceID;
     private int _maxTokens = 2000;
 
@@ -64,7 +64,7 @@ public class OpenAIRunner : ILLMRunner
 
     }
 
-    public async Task StartProcess(LLMServiceObj serviceObj, DateTime currentTime)
+    public Task StartProcess(LLMServiceObj serviceObj, DateTime currentTime)
     {
         _isStateStarting = true;
         _isStateReady = false;
@@ -81,19 +81,23 @@ public class OpenAIRunner : ILLMRunner
         _isStateStarting = false;
         _isStateReady = true;
         _isStateFailed = false;
+        return Task.CompletedTask;
     }
 
-    public async Task RemoveProcess(string sessionId)
+    public  Task RemoveProcess(string sessionId)
     {
         _isStateReady = false;
         if (!_activeSessions.TryRemove(sessionId, out var lastActivity) || !_sessionHistories.TryRemove(sessionId, out var history))
         {
             _logger.LogWarning($"Attempted to stop TurboLLM {_serviceID} Assistant with non-existent session {sessionId}.");
-            return;
+             _isStateReady = true;
+            _isStateFailed = true;
+             return Task.CompletedTask;
         }
         _isStateReady = true;
         _isStateFailed = true;
         _logger.LogInformation($" Stopped TurboLLM {_serviceID} Assistant with session {sessionId}. Last active at {lastActivity}. History had {history.Count} messages.");
+        return Task.CompletedTask;
     }
 
 
@@ -117,7 +121,7 @@ public class OpenAIRunner : ILLMRunner
 
         _logger.LogInformation("Sending input and waiting for response...");
         _isPrimaryLlm = serviceObj.IsPrimaryLlm;
-        _isFuncCalled = false;
+        //_isFuncCalled = false;
 
         try
         {
@@ -195,12 +199,15 @@ public class OpenAIRunner : ILLMRunner
                 _logger.LogInformation($"Received response: {responseChoiceStr}");
 
                 // Process any function calls
-                if (choice.Message.ToolCalls != null)
+                if (choice.Message.ToolCalls != null && choice.Message.ToolCalls.Any())
                 {
                     var fnCall = choice.Message.ToolCalls.First();
 
                     var fn = fnCall.FunctionCall;
                     string functionName = fn!.Name ?? "N/A";
+                    if (fnCall.Id == null) { 
+                          throw new Exception($" {_serviceID} Assistant OpenAI Error : Api call returned a Function with no Id");
+                    }
                     serviceObj.FunctionCallId = fnCall.Id;
                     serviceObj.FunctionName = functionName;
 
