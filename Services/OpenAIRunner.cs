@@ -46,7 +46,7 @@ public class OpenAIRunner : ILLMRunner
     private bool _isPrimaryLlm;
     //private bool _isFuncCalled;
     private string _serviceID;
-    private int _maxTokens = 128000;
+    private int _maxTokens = 2000;
 
     public bool IsStateReady { get => _isStateReady; }
     public bool IsStateStarting { get => _isStateStarting; }
