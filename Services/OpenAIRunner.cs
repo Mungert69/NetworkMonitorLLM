@@ -196,8 +196,6 @@ public class OpenAIRunner : ILLMRunner
                 var choice = completionResult.Choices.First();
                 responseChoiceStr = choice.Message.Content ?? "";
 
-                _logger.LogInformation($"Received response: {responseChoiceStr}");
-
                 // Process any function calls
                 if (choice.Message.ToolCalls != null && choice.Message.ToolCalls.Any())
                 {
@@ -247,10 +245,9 @@ public class OpenAIRunner : ILLMRunner
 
                 if (choice.FinishReason == "stop")
                 {
+                    _logger.LogInformation($"Assistant output : {responseChoiceStr}");
                     assistantChatMessage.Content = responseChoiceStr;
                     addSuccessMessage = true;
-
-
 
                     if (_isPrimaryLlm)
                     {
@@ -298,7 +295,6 @@ public class OpenAIRunner : ILLMRunner
         }
         catch (Exception ex)
         {
-            _logger.LogError($"Failed to process user input: {ex.Message}");
             throw;
         }
         finally
@@ -308,35 +304,46 @@ public class OpenAIRunner : ILLMRunner
         }
     }
 
-    private void TruncateTokens(List<ChatMessage> history, LLMServiceObj serviceObj) { 
-             int tokenCount = CalculateTokens(history);
-                        _logger.LogInformation($"History Token count: {tokenCount}");
+    private void TruncateTokens(List<ChatMessage> history, LLMServiceObj serviceObj)
+    {
+        int tokenCount = CalculateTokens(history);
+        _logger.LogInformation($"History Token count: {tokenCount}");
 
-                    if (tokenCount > _maxTokens)
+        if (tokenCount > _maxTokens)
+        {
+            _logger.LogInformation($"Token count ({tokenCount}) exceeded the limit, truncating history.");
+
+            // Keep the first system message intact
+            var systemMessage = history.First();
+            history = history.Skip(1).ToList();
+
+            // Remove messages until the token count is under the limit
+            while (tokenCount > _maxTokens && history.Count > 1)
+            {
+                var removeMessage = history[0];
+                var tooldCallId = removeMessage.ToolCallId;
+                if (string.IsNullOrEmpty(tooldCallId))
+                {
+                    history.RemoveAt(0);
+                }
+                else
+                {
+                    for (int i = history.Count - 1; i >= 0; i--)
                     {
-                        _logger.LogInformation($"Token count ({tokenCount}) exceeded the limit, truncating history.");
-
-                        // Keep the first system message intact
-                        var systemMessage = history.First();
-                        history = history.Skip(1).ToList();
-
-                        // Remove messages until the token count is under the limit
-                        while (tokenCount > _maxTokens && history.Count > 1)
+                        if (history[i].ToolCallId == removeMessage.ToolCallId)
                         {
-                            var removeMessage=history[0]; // Remove the oldest message
-                            history.Remove(removeMessage);
-                            var removeFuncCalls = history.Where(w => w.ToolCallId == removeMessage.ToolCallId).ToList();
-                            foreach (var removeCall in removeFuncCalls) { 
-                                history.Remove(removeCall);
-                            }
-                            tokenCount = CalculateTokens(history);
+                            history.RemoveAt(i);
                         }
-
-                        // Restore the system message at the start
-                        history.Insert(0, systemMessage);
-                        _sessionHistories[serviceObj.SessionId] = history;
-                        _logger.LogInformation($"History truncated to {tokenCount} tokens.");
                     }
+
+                }
+                tokenCount = CalculateTokens(history);
+                // Restore the system message at the start
+                history.Insert(0, systemMessage);
+                _sessionHistories[serviceObj.SessionId] = history;
+                _logger.LogInformation($"History truncated to {tokenCount} tokens.");
+            }
+        }
     }
     private int CalculateTokens(IEnumerable<ChatMessage> messages)
     {
