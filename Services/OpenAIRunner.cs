@@ -51,7 +51,7 @@ public class OpenAIRunner : ILLMRunner
     public bool IsStateReady { get => _isStateReady; }
     public bool IsStateStarting { get => _isStateStarting; }
     public bool IsStateFailed { get => _isStateFailed; }
-    public OpenAIRunner(ILogger<OpenAIRunner> logger, ILLMResponseProcessor responseProcessor, OpenAIService openAiService, ISystemParamsHelper systemParamsHelper, LLMServiceObj serviceObj,SemaphoreSlim openAIRunnerSemaphore)
+    public OpenAIRunner(ILogger<OpenAIRunner> logger, ILLMResponseProcessor responseProcessor, OpenAIService openAiService, ISystemParamsHelper systemParamsHelper, LLMServiceObj serviceObj, SemaphoreSlim openAIRunnerSemaphore)
     {
         _logger = logger;
         _responseProcessor = responseProcessor;
@@ -60,7 +60,7 @@ public class OpenAIRunner : ILLMRunner
         _serviceID = systemParamsHelper.GetSystemParams().ServiceID!;
         if (_serviceID == "monitor") _toolsBuilder = new MonitorToolsBuilder(serviceObj.UserInfo);
         if (_serviceID == "nmap") _toolsBuilder = new NmapToolsBuilder();
-         if (_serviceID == "meta") _toolsBuilder = new MetaToolsBuilder();
+        if (_serviceID == "meta") _toolsBuilder = new MetaToolsBuilder();
         _activeSessions = new ConcurrentDictionary<string, DateTime>();
         _sessionHistories = new ConcurrentDictionary<string, List<ChatMessage>>();
 
@@ -86,15 +86,15 @@ public class OpenAIRunner : ILLMRunner
         return Task.CompletedTask;
     }
 
-    public  Task RemoveProcess(string sessionId)
+    public Task RemoveProcess(string sessionId)
     {
         _isStateReady = false;
         if (!_activeSessions.TryRemove(sessionId, out var lastActivity) || !_sessionHistories.TryRemove(sessionId, out var history))
         {
             _logger.LogWarning($"Attempted to stop TurboLLM {_serviceID} Assistant with non-existent session {sessionId}.");
-             _isStateReady = true;
+            _isStateReady = true;
             _isStateFailed = true;
-             return Task.CompletedTask;
+            return Task.CompletedTask;
         }
         _isStateReady = true;
         _isStateFailed = true;
@@ -140,10 +140,10 @@ public class OpenAIRunner : ILLMRunner
 
                 if (funcChatMessage != null)
                 {
-                   chatMessage = ChatMessage.FromTool(serviceObj.UserInput, serviceObj.FunctionCallId);
-                   // chatMessage.Role = "tool";
+                    chatMessage = ChatMessage.FromTool(serviceObj.UserInput, serviceObj.FunctionCallId);
+                    // chatMessage.Role = "tool";
                     //chatMessage.Name = serviceObj.FunctionName;
-                   // chatMessage.ToolCallId = serviceObj.FunctionCallId;
+                    // chatMessage.ToolCallId = serviceObj.FunctionCallId;
                     messageHistory.Add(funcChatMessage);
                     messageHistory.Add(chatMessage);
                     _pendingFunctionResponses.TryRemove(serviceObj.FunctionCallId, out _);
@@ -170,7 +170,7 @@ public class OpenAIRunner : ILLMRunner
                 messageHistory.Add(chatMessage);
             }
 
-            
+
             var currentHistory = new List<ChatMessage>();
             foreach (var message in history)
             {
@@ -180,7 +180,7 @@ public class OpenAIRunner : ILLMRunner
             {
                 currentHistory.Add(message);
             }
-            
+
 
             var completionResult = await _openAiService.ChatCompletion.CreateCompletion(new ChatCompletionCreateRequest
             {
@@ -194,8 +194,6 @@ public class OpenAIRunner : ILLMRunner
             if (completionResult.Successful)
             {
                 var choice = completionResult.Choices.First();
-                string finishReason=choice.FinishReason;
-                _logger.LogInformation($" Info : FinishReason {finishReason}");
                 responseChoiceStr = choice.Message.Content ?? "";
 
                 _logger.LogInformation($"Received response: {responseChoiceStr}");
@@ -207,8 +205,9 @@ public class OpenAIRunner : ILLMRunner
 
                     var fn = fnCall.FunctionCall;
                     string functionName = fn!.Name ?? "N/A";
-                    if (fnCall.Id == null) { 
-                          throw new Exception($" {_serviceID} Assistant OpenAI Error : Api call returned a Function with no Id");
+                    if (fnCall.Id == null)
+                    {
+                        throw new Exception($" {_serviceID} Assistant OpenAI Error : Api call returned a Function with no Id");
                     }
                     serviceObj.FunctionCallId = fnCall.Id;
                     serviceObj.FunctionName = functionName;
@@ -243,8 +242,10 @@ public class OpenAIRunner : ILLMRunner
                     if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOuputInChunks(responseServiceObj);
                     responseChoiceStr = "";
                 }
+                string finishReason = choice.FinishReason;
+                _logger.LogInformation($" Info : FinishReason {finishReason}");
 
-                if (!responseChoiceStr.IsNullOrEmpty())
+                if (choice.FinishReason == "stop")
                 {
                     assistantChatMessage.Content = responseChoiceStr;
                     addSuccessMessage = true;
@@ -295,18 +296,21 @@ public class OpenAIRunner : ILLMRunner
                 responseServiceObj.LlmMessage = "<end-of-line>";
                 responseServiceObj.TokensUsed = completionResult.Usage.TotalTokens;
                 if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
-                if (addSuccessMessage) { 
+                if (addSuccessMessage)
+                {
                     foreach (var message in messageHistory)
                     {
                         history.Add(message);
                     }
                     history.Add(assistantChatMessage);
-                    if (_messageHistories.TryRemove(serviceObj.MessageID, out _)) {
+                    if (_messageHistories.TryRemove(serviceObj.MessageID, out _))
+                    {
                         _logger.LogWarning($" Warning : Removed MessageID {serviceObj.MessageID} from messageHistories");
                     }
-                    else {
+                    else
+                    {
                         _logger.LogError($" Warning : Removed MessageID {serviceObj.MessageID} from messageHistories ");
-                    
+
                     }
                 }
             }
