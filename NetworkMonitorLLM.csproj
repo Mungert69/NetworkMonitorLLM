@@ -11,8 +11,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+	      <PackageReference Include="Betalgo.OpenAI" Version="8.6.2" />
+	      <PackageReference Include="Betalgo.OpenAI.Utilities" Version="8.1.0" />
 	      <PackageReference Include="Microsoft.NET.Build.Containers" Version="8.0.200" />
-    <PackageReference Include="Betalgo.OpenAI.Utilities" Version="8.0.1" />
     <PackageReference Include="Microsoft.ML" Version="2.0.1" />
     <PackageReference Include="Microsoft.ML.TimeSeries" Version="2.0.1" />
     <PackageReference Include="MKL.NET.linux-x64" Version="2022.0.1.117" />

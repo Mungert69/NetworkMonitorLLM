@@ -78,11 +78,7 @@ namespace NetworkMonitor.LLM.Services
                 content += $" The user is not logged in, the time is {currentTime}, ask the user for an email to add hosts etc.";
             }
 
-            var chatMessage = new ChatMessage()
-            {
-                Role = "system",
-                Content = content
-            };
+            var chatMessage = ChatMessage.FromSystem(content);
             var chatMessages = new List<ChatMessage>();
             chatMessages.Add(chatMessage);
             return chatMessages;

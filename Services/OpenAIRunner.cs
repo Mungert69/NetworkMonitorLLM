@@ -20,6 +20,8 @@ using NetworkMonitor.Objects.ServiceMessage;
 using NetworkMonitor.Objects;
 using NetworkMonitor.Utils.Helpers;
 using Microsoft.IdentityModel.Tokens;
+using NetworkMonitor.Service.Services.OpenAI;
+using OpenAI.ObjectModels.ResponseModels;
 
 namespace NetworkMonitor.LLM.Services;
 
@@ -106,10 +108,7 @@ public class OpenAIRunner : ILLMRunner
         _isStateReady = false;
 
         var responseServiceObj = new LLMServiceObj(serviceObj);
-         var assistantChatMessage = new ChatMessage()
-                    {
-                        Role = "assistant",
-                    };
+        var assistantChatMessage = ChatMessage.FromAssistant("");
         bool addSuccessMessage = false;
 
         if (!_activeSessions.ContainsKey(serviceObj.SessionId))
@@ -131,8 +130,8 @@ public class OpenAIRunner : ILLMRunner
             // Retrieve or initialize the conversation history
             var history = _sessionHistories[serviceObj.SessionId];
             var messageHistory = _messageHistories.GetOrAdd(serviceObj.MessageID, new List<ChatMessage>());
-            var chatMessage = new ChatMessage();
-            chatMessage.Content = serviceObj.UserInput;
+            ChatMessage chatMessage;
+            //chatMessage.Content = serviceObj.UserInput;
             if (serviceObj.IsFunctionCallResponse)
             {
                 _pendingFunctionResponses.TryGetValue(serviceObj.FunctionCallId, out var funcChatMessage);
@@ -141,9 +140,10 @@ public class OpenAIRunner : ILLMRunner
 
                 if (funcChatMessage != null)
                 {
-                    chatMessage.Role = "tool";
-                    chatMessage.Name = serviceObj.FunctionName;
-                    chatMessage.ToolCallId = serviceObj.FunctionCallId;
+                   chatMessage = ChatMessage.FromTool(serviceObj.UserInput, serviceObj.FunctionCallId);
+                   // chatMessage.Role = "tool";
+                    //chatMessage.Name = serviceObj.FunctionName;
+                   // chatMessage.ToolCallId = serviceObj.FunctionCallId;
                     messageHistory.Add(funcChatMessage);
                     messageHistory.Add(chatMessage);
                     _pendingFunctionResponses.TryRemove(serviceObj.FunctionCallId, out _);
@@ -164,7 +164,7 @@ public class OpenAIRunner : ILLMRunner
             }
             else
             {
-                chatMessage.Role = "user";
+                chatMessage = ChatMessage.FromUser(serviceObj.UserInput);
                 responseServiceObj.LlmMessage = "User: " + serviceObj.UserInput + "\n\n";
                 if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
                 messageHistory.Add(chatMessage);
@@ -194,6 +194,8 @@ public class OpenAIRunner : ILLMRunner
             if (completionResult.Successful)
             {
                 var choice = completionResult.Choices.First();
+                string finishReason=choice.FinishReason;
+                _logger.LogInformation($" Info : FinishReason {finishReason}");
                 responseChoiceStr = choice.Message.Content ?? "";
 
                 _logger.LogInformation($"Received response: {responseChoiceStr}");
@@ -246,7 +248,7 @@ public class OpenAIRunner : ILLMRunner
                 {
                     assistantChatMessage.Content = responseChoiceStr;
                     addSuccessMessage = true;
-                    int tokenCount = CalculateTokens(history);
+                    /*int tokenCount = CalculateTokens(history);
                         _logger.LogInformation($"History Token count: {tokenCount}");
 
                     if (tokenCount > _maxTokens)
@@ -273,7 +275,7 @@ public class OpenAIRunner : ILLMRunner
                         history.Insert(0, systemMessage);
                         _sessionHistories[serviceObj.SessionId] = history;
                         _logger.LogInformation($"History truncated to {tokenCount} tokens.");
-                    }
+                    }*/
 
 
                     if (_isPrimaryLlm)
@@ -299,6 +301,13 @@ public class OpenAIRunner : ILLMRunner
                         history.Add(message);
                     }
                     history.Add(assistantChatMessage);
+                    if (_messageHistories.TryRemove(serviceObj.MessageID, out _)) {
+                        _logger.LogWarning($" Warning : Removed MessageID {serviceObj.MessageID} from messageHistories");
+                    }
+                    else {
+                        _logger.LogError($" Warning : Removed MessageID {serviceObj.MessageID} from messageHistories ");
+                    
+                    }
                 }
             }
             else
