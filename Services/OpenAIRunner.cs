@@ -299,39 +299,60 @@ public class OpenAIRunner : ILLMRunner
         }
     }
 
-    public void TruncateHistory(List<ChatMessage> history, LLMServiceObj serviceObj)
+   public void TruncateHistory(List<ChatMessage> history, LLMServiceObj serviceObj)
+{
+    int tokenCount = CalculateTokens(history);
+    _logger.LogInformation($"History Token count: {tokenCount}");
+
+    if (tokenCount < _maxTokens) return;
+
+    _logger.LogInformation($"Token count ({tokenCount}) exceeded the limit, truncating history.");
+
+    // Keep the first system message intact
+    var systemMessage = history.First();
+    history = history.Skip(1).ToList();
+
+    // Maintain a dictionary to track related tool calls and responses
+    var toolCallGroups = new Dictionary<string, List<ChatMessage>>();
+    foreach (var msg in history)
     {
-        int tokenCount = CalculateTokens(history);
-        _logger.LogInformation($"History Token count: {tokenCount}");
-
-        if (tokenCount < _maxTokens) return;
-
-        _logger.LogInformation($"Token count ({tokenCount}) exceeded the limit, truncating history.");
-
-        // Keep the first system message intact
-        var systemMessage = history.First();
-        history = history.Skip(1).ToList();
-
-        // Remove messages until the token count is under the limit
-        while (tokenCount > _maxTokens && history.Count > 1)
+        if (!string.IsNullOrEmpty(msg.ToolCallId))
         {
-            var removeMessage = history[0]; // Remove the oldest message
-            history.Remove(removeMessage);
-            var removeFuncCalls = history.Where(w => w.ToolCallId == removeMessage.ToolCallId).ToList();
-            foreach (var removeCall in removeFuncCalls)
+            if (!toolCallGroups.ContainsKey(msg.ToolCallId))
             {
-                history.Remove(removeCall);
+                toolCallGroups[msg.ToolCallId] = new List<ChatMessage>();
             }
-            tokenCount = CalculateTokens(history);
+            toolCallGroups[msg.ToolCallId].Add(msg);
+        }
+    }
+
+    // Remove messages until the token count is under the limit
+    while (tokenCount > _maxTokens && history.Count > 1)
+    {
+        var removeMessage = history[0]; // Remove the oldest message
+        history.Remove(removeMessage);
+
+        // Also remove any related tool call messages
+        if (!string.IsNullOrEmpty(removeMessage.ToolCallId) && toolCallGroups.ContainsKey(removeMessage.ToolCallId))
+        {
+            foreach (var relatedMessage in toolCallGroups[removeMessage.ToolCallId])
+            {
+                history.Remove(relatedMessage);
+            }
+            toolCallGroups.Remove(removeMessage.ToolCallId);
         }
 
-        // Restore the system message at the start
-        history.Insert(0, systemMessage);
-        _sessionHistories[serviceObj.SessionId] = history;
-        _logger.LogInformation($"History truncated to {tokenCount} tokens.");
-
+        tokenCount = CalculateTokens(history);
+         _logger.LogInformation($"New Token count ({tokenCount}).");
 
     }
+
+    // Restore the system message at the start
+    history.Insert(0, systemMessage);
+    _sessionHistories[serviceObj.SessionId] = history;
+    _logger.LogInformation($"History truncated to {tokenCount} tokens.");
+}
+
     private int CalculateTokens(IEnumerable<ChatMessage> messages)
     {
         int tokenCount = 0;
