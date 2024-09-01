@@ -192,7 +192,7 @@ public class OpenAIRunner : ILLMRunner
             });
             if (!ValidateMessageHistory(currentHistory))
             {
-                throw new Exception("Message history validation failed. Missing tool responses.");
+                _logger.LogError("Message history validation failed. Missing tool responses.");
             }
 
             if (completionResult.Successful)
@@ -278,7 +278,7 @@ public class OpenAIRunner : ILLMRunner
                         history.Add(message);
                     }
                     history.Add(assistantChatMessage);
-                    TruncateHistory(history, serviceObj);
+                    //TruncateHistory(history, serviceObj);
                 }
 
             }
