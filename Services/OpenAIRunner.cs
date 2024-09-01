@@ -142,7 +142,7 @@ public class OpenAIRunner : ILLMRunner
                 {
                     chatMessage = ChatMessage.FromTool(serviceObj.UserInput, serviceObj.FunctionCallId);
                     // chatMessage.Role = "tool";
-                    //chatMessage.Name = serviceObj.FunctionName;
+                    chatMessage.Name = serviceObj.FunctionName;
                     // chatMessage.ToolCallId = serviceObj.FunctionCallId;
                     messageHistory.Add(funcChatMessage);
                     messageHistory.Add(chatMessage);
@@ -303,7 +303,7 @@ public class OpenAIRunner : ILLMRunner
                         history.Add(message);
                     }
                     history.Add(assistantChatMessage);
-                    if (_messageHistories.TryRemove(serviceObj.MessageID, out _))
+                    /*if (_messageHistories.TryRemove(serviceObj.MessageID, out _))
                     {
                         _logger.LogWarning($" Warning : Removed MessageID {serviceObj.MessageID} from messageHistories");
                     }
@@ -311,7 +311,7 @@ public class OpenAIRunner : ILLMRunner
                     {
                         _logger.LogError($" Warning : Removed MessageID {serviceObj.MessageID} from messageHistories ");
 
-                    }
+                    }*/
                 }
             }
             else
