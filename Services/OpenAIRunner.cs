@@ -268,14 +268,15 @@ public class OpenAIRunner : ILLMRunner
                 if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
                 if (addSuccessMessage)
                 {
-                    TruncateHistory(history, serviceObj);
+
                     foreach (var message in messageHistory)
                     {
                         history.Add(message);
                     }
                     history.Add(assistantChatMessage);
+                    TruncateHistory(history, serviceObj);
                 }
-               
+
             }
             else
             {
