@@ -181,7 +181,7 @@ public class OpenAIRunner : ILLMRunner
                 currentHistory.Add(message);
             }
 
-
+            TruncateTokens(history, serviceObj);
             var completionResult = await _openAiService.ChatCompletion.CreateCompletion(new ChatCompletionCreateRequest
             {
                 Messages = currentHistory,
@@ -249,34 +249,7 @@ public class OpenAIRunner : ILLMRunner
                 {
                     assistantChatMessage.Content = responseChoiceStr;
                     addSuccessMessage = true;
-                    /*int tokenCount = CalculateTokens(history);
-                        _logger.LogInformation($"History Token count: {tokenCount}");
 
-                    if (tokenCount > _maxTokens)
-                    {
-                        _logger.LogInformation($"Token count ({tokenCount}) exceeded the limit, truncating history.");
-
-                        // Keep the first system message intact
-                        var systemMessage = history.First();
-                        history = history.Skip(1).ToList();
-
-                        // Remove messages until the token count is under the limit
-                        while (tokenCount > _maxTokens && history.Count > 1)
-                        {
-                            var removeMessage=history[0]; // Remove the oldest message
-                            history.Remove(removeMessage);
-                            var removeFuncCalls = history.Where(w => w.ToolCallId == removeMessage.ToolCallId).ToList();
-                            foreach (var removeCall in removeFuncCalls) { 
-                                history.Remove(removeCall);
-                            }
-                            tokenCount = CalculateTokens(history);
-                        }
-
-                        // Restore the system message at the start
-                        history.Insert(0, systemMessage);
-                        _sessionHistories[serviceObj.SessionId] = history;
-                        _logger.LogInformation($"History truncated to {tokenCount} tokens.");
-                    }*/
 
 
                     if (_isPrimaryLlm)
@@ -335,7 +308,36 @@ public class OpenAIRunner : ILLMRunner
         }
     }
 
+    private void TruncateTokens(List<ChatMessage> history, LLMServiceObj serviceObj) { 
+             int tokenCount = CalculateTokens(history);
+                        _logger.LogInformation($"History Token count: {tokenCount}");
 
+                    if (tokenCount > _maxTokens)
+                    {
+                        _logger.LogInformation($"Token count ({tokenCount}) exceeded the limit, truncating history.");
+
+                        // Keep the first system message intact
+                        var systemMessage = history.First();
+                        history = history.Skip(1).ToList();
+
+                        // Remove messages until the token count is under the limit
+                        while (tokenCount > _maxTokens && history.Count > 1)
+                        {
+                            var removeMessage=history[0]; // Remove the oldest message
+                            history.Remove(removeMessage);
+                            var removeFuncCalls = history.Where(w => w.ToolCallId == removeMessage.ToolCallId).ToList();
+                            foreach (var removeCall in removeFuncCalls) { 
+                                history.Remove(removeCall);
+                            }
+                            tokenCount = CalculateTokens(history);
+                        }
+
+                        // Restore the system message at the start
+                        history.Insert(0, systemMessage);
+                        _sessionHistories[serviceObj.SessionId] = history;
+                        _logger.LogInformation($"History truncated to {tokenCount} tokens.");
+                    }
+    }
     private int CalculateTokens(IEnumerable<ChatMessage> messages)
     {
         int tokenCount = 0;
