@@ -190,6 +190,10 @@ public class OpenAIRunner : ILLMRunner
                 MaxTokens = 1000,
                 Model = "gpt-4o-mini"
             });
+            if (!ValidateMessageHistory(currentHistory))
+            {
+                throw new Exception("Message history validation failed. Missing tool responses.");
+            }
 
             if (completionResult.Successful)
             {
@@ -299,59 +303,102 @@ public class OpenAIRunner : ILLMRunner
         }
     }
 
-   public void TruncateHistory(List<ChatMessage> history, LLMServiceObj serviceObj)
-{
-    int tokenCount = CalculateTokens(history);
-    _logger.LogInformation($"History Token count: {tokenCount}");
-
-    if (tokenCount < _maxTokens) return;
-
-    _logger.LogInformation($"Token count ({tokenCount}) exceeded the limit, truncating history.");
-
-    // Keep the first system message intact
-    var systemMessage = history.First();
-    history = history.Skip(1).ToList();
-
-    // Maintain a dictionary to track related tool calls and responses
-    var toolCallGroups = new Dictionary<string, List<ChatMessage>>();
-    foreach (var msg in history)
+    public void TruncateHistory(List<ChatMessage> history, LLMServiceObj serviceObj)
     {
-        if (!string.IsNullOrEmpty(msg.ToolCallId))
-        {
-            if (!toolCallGroups.ContainsKey(msg.ToolCallId))
-            {
-                toolCallGroups[msg.ToolCallId] = new List<ChatMessage>();
-            }
-            toolCallGroups[msg.ToolCallId].Add(msg);
-        }
-    }
+        int tokenCount = CalculateTokens(history);
+        _logger.LogInformation($"History Token count: {tokenCount}");
 
-    // Remove messages until the token count is under the limit
-    while (tokenCount > _maxTokens && history.Count > 1)
-    {
-        var removeMessage = history[0]; // Remove the oldest message
-        history.Remove(removeMessage);
+        if (tokenCount < _maxTokens) return;
 
-        // Also remove any related tool call messages
-        if (!string.IsNullOrEmpty(removeMessage.ToolCallId) && toolCallGroups.ContainsKey(removeMessage.ToolCallId))
+        _logger.LogInformation($"Token count ({tokenCount}) exceeded the limit, truncating history.");
+
+        // Keep the first system message intact
+        var systemMessage = history.First();
+        history = history.Skip(1).ToList();
+
+        // Track which tool calls have been responded to
+        var toolCallResponseMap = new Dictionary<string, bool>();
+
+        foreach (var msg in history)
         {
-            foreach (var relatedMessage in toolCallGroups[removeMessage.ToolCallId])
+            if (!string.IsNullOrEmpty(msg.ToolCallId))
             {
-                history.Remove(relatedMessage);
+                if (msg.Role == "tool")
+                {
+                    toolCallResponseMap[msg.ToolCallId] = true;
+                }
+                else
+                {
+                    if (!toolCallResponseMap.ContainsKey(msg.ToolCallId))
+                    {
+                        toolCallResponseMap[msg.ToolCallId] = false;
+                    }
+                }
             }
-            toolCallGroups.Remove(removeMessage.ToolCallId);
         }
 
-        tokenCount = CalculateTokens(history);
-         _logger.LogInformation($"New Token count ({tokenCount}).");
+        // Remove messages until the token count is under the limit
+        while (tokenCount > _maxTokens && history.Count > 1)
+        {
+            var removeMessage = history[0]; // Remove the oldest message
+            history.Remove(removeMessage);
 
+            if (!string.IsNullOrEmpty(removeMessage.ToolCallId))
+            {
+                if (toolCallResponseMap.ContainsKey(removeMessage.ToolCallId))
+                {
+                    // If removing the tool call, remove all associated messages
+                    if (!toolCallResponseMap[removeMessage.ToolCallId])
+                    {
+                        var relatedMessages = history.Where(m => m.ToolCallId == removeMessage.ToolCallId).ToList();
+                        foreach (var relatedMessage in relatedMessages)
+                        {
+                            history.Remove(relatedMessage);
+                        }
+                    }
+                    toolCallResponseMap.Remove(removeMessage.ToolCallId);
+                }
+            }
+
+            tokenCount = CalculateTokens(history);
+        }
+
+        // Restore the system message at the start
+        history.Insert(0, systemMessage);
+        _sessionHistories[serviceObj.SessionId] = history;
+        _logger.LogInformation($"History truncated to {tokenCount} tokens.");
     }
 
-    // Restore the system message at the start
-    history.Insert(0, systemMessage);
-    _sessionHistories[serviceObj.SessionId] = history;
-    _logger.LogInformation($"History truncated to {tokenCount} tokens.");
-}
+    public bool ValidateMessageHistory(List<ChatMessage> history)
+    {
+        var toolCallIds = new HashSet<string>();
+
+        foreach (var message in history)
+        {
+            if (message.Role == "assistant" && message.ToolCalls != null)
+            {
+                foreach (var toolCall in message.ToolCalls)
+                {
+                    toolCallIds.Add(toolCall.Id);
+                }
+            }
+            else if (message.Role == "tool" && !string.IsNullOrEmpty(message.ToolCallId))
+            {
+                if (toolCallIds.Contains(message.ToolCallId))
+                {
+                    toolCallIds.Remove(message.ToolCallId); // Mark as responded
+                }
+            }
+        }
+
+        if (toolCallIds.Count > 0)
+        {
+            _logger.LogError($"Missing tool responses for the following tool_call_ids: {string.Join(", ", toolCallIds)}");
+            return false;
+        }
+
+        return true;
+    }
 
     private int CalculateTokens(IEnumerable<ChatMessage> messages)
     {
