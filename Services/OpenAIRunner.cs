@@ -260,7 +260,12 @@ public class OpenAIRunner : ILLMRunner
                         // Remove messages until the token count is under the limit
                         while (tokenCount > _maxTokens && history.Count > 1)
                         {
-                            history.RemoveAt(0); // Remove the oldest message
+                            var removeMessage=history[0]; // Remove the oldest message
+                            history.Remove(removeMessage);
+                            var removeFuncCalls = history.Where(w => w.ToolCallId == removeMessage.ToolCallId).ToList();
+                            foreach (var removeCall in removeFuncCalls) { 
+                                history.Remove(removeCall);
+                            }
                             tokenCount = CalculateTokens(history);
                         }
 
