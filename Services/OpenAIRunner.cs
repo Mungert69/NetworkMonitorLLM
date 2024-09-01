@@ -44,12 +44,12 @@ public class OpenAIRunner : ILLMRunner
     private bool _isPrimaryLlm;
     //private bool _isFuncCalled;
     private string _serviceID;
-    private int _maxTokens = 2000;
+    private int _maxTokens = 128000;
 
     public bool IsStateReady { get => _isStateReady; }
     public bool IsStateStarting { get => _isStateStarting; }
     public bool IsStateFailed { get => _isStateFailed; }
-    public OpenAIRunner(ILogger<OpenAIRunner> logger, ILLMResponseProcessor responseProcessor, OpenAIService openAiService, ISystemParamsHelper systemParamsHelper, LLMServiceObj serviceObj, SemaphoreSlim openAIRunnerSemaphore)
+    public OpenAIRunner(ILogger<OpenAIRunner> logger, ILLMResponseProcessor responseProcessor, OpenAIService openAiService, ISystemParamsHelper systemParamsHelper, LLMServiceObj serviceObj,SemaphoreSlim openAIRunnerSemaphore)
     {
         _logger = logger;
         _responseProcessor = responseProcessor;
@@ -58,7 +58,7 @@ public class OpenAIRunner : ILLMRunner
         _serviceID = systemParamsHelper.GetSystemParams().ServiceID!;
         if (_serviceID == "monitor") _toolsBuilder = new MonitorToolsBuilder(serviceObj.UserInfo);
         if (_serviceID == "nmap") _toolsBuilder = new NmapToolsBuilder();
-        if (_serviceID == "meta") _toolsBuilder = new MetaToolsBuilder();
+         if (_serviceID == "meta") _toolsBuilder = new MetaToolsBuilder();
         _activeSessions = new ConcurrentDictionary<string, DateTime>();
         _sessionHistories = new ConcurrentDictionary<string, List<ChatMessage>>();
 
@@ -84,15 +84,15 @@ public class OpenAIRunner : ILLMRunner
         return Task.CompletedTask;
     }
 
-    public Task RemoveProcess(string sessionId)
+    public  Task RemoveProcess(string sessionId)
     {
         _isStateReady = false;
         if (!_activeSessions.TryRemove(sessionId, out var lastActivity) || !_sessionHistories.TryRemove(sessionId, out var history))
         {
             _logger.LogWarning($"Attempted to stop TurboLLM {_serviceID} Assistant with non-existent session {sessionId}.");
-            _isStateReady = true;
+             _isStateReady = true;
             _isStateFailed = true;
-            return Task.CompletedTask;
+             return Task.CompletedTask;
         }
         _isStateReady = true;
         _isStateFailed = true;
@@ -106,10 +106,10 @@ public class OpenAIRunner : ILLMRunner
         _isStateReady = false;
 
         var responseServiceObj = new LLMServiceObj(serviceObj);
-        var assistantChatMessage = new ChatMessage()
-        {
-            Role = "assistant",
-        };
+         var assistantChatMessage = new ChatMessage()
+                    {
+                        Role = "assistant",
+                    };
         bool addSuccessMessage = false;
 
         if (!_activeSessions.ContainsKey(serviceObj.SessionId))
@@ -170,7 +170,7 @@ public class OpenAIRunner : ILLMRunner
                 messageHistory.Add(chatMessage);
             }
 
-
+            
             var currentHistory = new List<ChatMessage>();
             foreach (var message in history)
             {
@@ -180,7 +180,7 @@ public class OpenAIRunner : ILLMRunner
             {
                 currentHistory.Add(message);
             }
-
+            
 
             var completionResult = await _openAiService.ChatCompletion.CreateCompletion(new ChatCompletionCreateRequest
             {
@@ -190,10 +190,6 @@ public class OpenAIRunner : ILLMRunner
                 MaxTokens = 1000,
                 Model = "gpt-4o-mini"
             });
-            if (!ValidateMessageHistory(currentHistory))
-            {
-                _logger.LogError("Message history validation failed. Missing tool responses.");
-            }
 
             if (completionResult.Successful)
             {
@@ -209,9 +205,8 @@ public class OpenAIRunner : ILLMRunner
 
                     var fn = fnCall.FunctionCall;
                     string functionName = fn!.Name ?? "N/A";
-                    if (fnCall.Id == null)
-                    {
-                        throw new Exception($" {_serviceID} Assistant OpenAI Error : Api call returned a Function with no Id");
+                    if (fnCall.Id == null) { 
+                          throw new Exception($" {_serviceID} Assistant OpenAI Error : Api call returned a Function with no Id");
                     }
                     serviceObj.FunctionCallId = fnCall.Id;
                     serviceObj.FunctionName = functionName;
@@ -251,6 +246,34 @@ public class OpenAIRunner : ILLMRunner
                 {
                     assistantChatMessage.Content = responseChoiceStr;
                     addSuccessMessage = true;
+                    int tokenCount = CalculateTokens(history);
+                        _logger.LogInformation($"History Token count: {tokenCount}");
+
+                    if (tokenCount > _maxTokens)
+                    {
+                        _logger.LogInformation($"Token count ({tokenCount}) exceeded the limit, truncating history.");
+
+                        // Keep the first system message intact
+                        var systemMessage = history.First();
+                        history = history.Skip(1).ToList();
+
+                        // Remove messages until the token count is under the limit
+                        while (tokenCount > _maxTokens && history.Count > 1)
+                        {
+                            var removeMessage=history[0]; // Remove the oldest message
+                            history.Remove(removeMessage);
+                            var removeFuncCalls = history.Where(w => w.ToolCallId == removeMessage.ToolCallId).ToList();
+                            foreach (var removeCall in removeFuncCalls) { 
+                                history.Remove(removeCall);
+                            }
+                            tokenCount = CalculateTokens(history);
+                        }
+
+                        // Restore the system message at the start
+                        history.Insert(0, systemMessage);
+                        _sessionHistories[serviceObj.SessionId] = history;
+                        _logger.LogInformation($"History truncated to {tokenCount} tokens.");
+                    }
 
 
                     if (_isPrimaryLlm)
@@ -270,17 +293,13 @@ public class OpenAIRunner : ILLMRunner
                 responseServiceObj.LlmMessage = "<end-of-line>";
                 responseServiceObj.TokensUsed = completionResult.Usage.TotalTokens;
                 if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
-                if (addSuccessMessage)
-                {
-
+                if (addSuccessMessage) { 
                     foreach (var message in messageHistory)
                     {
                         history.Add(message);
                     }
                     history.Add(assistantChatMessage);
-                    //TruncateHistory(history, serviceObj);
                 }
-
             }
             else
             {
@@ -303,102 +322,6 @@ public class OpenAIRunner : ILLMRunner
         }
     }
 
-    public void TruncateHistory(List<ChatMessage> history, LLMServiceObj serviceObj)
-    {
-        int tokenCount = CalculateTokens(history);
-        _logger.LogInformation($"History Token count: {tokenCount}");
-
-        if (tokenCount < _maxTokens) return;
-
-        _logger.LogInformation($"Token count ({tokenCount}) exceeded the limit, truncating history.");
-
-        // Keep the first system message intact
-        var systemMessage = history.First();
-        history = history.Skip(1).ToList();
-
-        // Track which tool calls have been responded to
-        var toolCallResponseMap = new Dictionary<string, bool>();
-
-        foreach (var msg in history)
-        {
-            if (!string.IsNullOrEmpty(msg.ToolCallId))
-            {
-                if (msg.Role == "tool")
-                {
-                    toolCallResponseMap[msg.ToolCallId] = true;
-                }
-                else
-                {
-                    if (!toolCallResponseMap.ContainsKey(msg.ToolCallId))
-                    {
-                        toolCallResponseMap[msg.ToolCallId] = false;
-                    }
-                }
-            }
-        }
-
-        // Remove messages until the token count is under the limit
-        while (tokenCount > _maxTokens && history.Count > 1)
-        {
-            var removeMessage = history[0]; // Remove the oldest message
-            history.Remove(removeMessage);
-
-            if (!string.IsNullOrEmpty(removeMessage.ToolCallId))
-            {
-                if (toolCallResponseMap.ContainsKey(removeMessage.ToolCallId))
-                {
-                    // If removing the tool call, remove all associated messages
-                    if (!toolCallResponseMap[removeMessage.ToolCallId])
-                    {
-                        var relatedMessages = history.Where(m => m.ToolCallId == removeMessage.ToolCallId).ToList();
-                        foreach (var relatedMessage in relatedMessages)
-                        {
-                            history.Remove(relatedMessage);
-                        }
-                    }
-                    toolCallResponseMap.Remove(removeMessage.ToolCallId);
-                }
-            }
-
-            tokenCount = CalculateTokens(history);
-        }
-
-        // Restore the system message at the start
-        history.Insert(0, systemMessage);
-        _sessionHistories[serviceObj.SessionId] = history;
-        _logger.LogInformation($"History truncated to {tokenCount} tokens.");
-    }
-
-    public bool ValidateMessageHistory(List<ChatMessage> history)
-    {
-        var toolCallIds = new HashSet<string>();
-
-        foreach (var message in history)
-        {
-            if (message.Role == "assistant" && message.ToolCalls != null)
-            {
-                foreach (var toolCall in message.ToolCalls)
-                {
-                    toolCallIds.Add(toolCall.Id);
-                }
-            }
-            else if (message.Role == "tool" && !string.IsNullOrEmpty(message.ToolCallId))
-            {
-                if (toolCallIds.Contains(message.ToolCallId))
-                {
-                    toolCallIds.Remove(message.ToolCallId); // Mark as responded
-                }
-            }
-        }
-
-        if (toolCallIds.Count > 0)
-        {
-            _logger.LogError($"Missing tool responses for the following tool_call_ids: {string.Join(", ", toolCallIds)}");
-            return false;
-        }
-
-        return true;
-    }
 
     private int CalculateTokens(IEnumerable<ChatMessage> messages)
     {
