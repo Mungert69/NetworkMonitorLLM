@@ -304,5 +304,11 @@ Function Call Json:
   "search_expression": "description:sql_injection",
   "number_lines": 20
 }
-Use your knowledge of Metasploit to expand upon these guidelines. If you're aware of more appropriate modules or options for a given scenario, incorporate them into your response. <|LLM_STARTED|> 
+Use your knowledge of Metasploit to expand upon these guidelines. If you're aware of more appropriate modules or options for a given scenario, incorporate them into your response. 
+<|from|> user
+<|recipient|> all
+<|content|> What is my user info
+<|from|> assistant
+<|recipient|> get_user_info
+<|content|> {"detail_response" : true}  <|LLM_STARTED|> 
 
