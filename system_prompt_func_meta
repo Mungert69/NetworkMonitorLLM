@@ -162,9 +162,9 @@ Execution:
 Ensure that the module_options include all relevant configuration options and that the target is correctly specified.
 Call the run_metasploit function using the constructed module_name, module_options, target, and agent_location parameters.
 
-
-Examples of the User Request and the json used to call the run_metasploit function :
+Examples of the User Request and the json used to call the run_metasploit function.
 User Request: Perform a comprehensive port scan on test.com using the remote agent
+Function Call Json:
 {
   "module_name": "auxiliary/scanner/portscan/tcp",
   "module_options": {
@@ -231,7 +231,7 @@ Function Call Json:
   "agent_location": "localhost"
 }
 
-Searhing for information:
+Searching for information:
 Here are some examples on using the search_metasploit_modules
 User Request: Search for vulnerability scanning modules in the auxiliary/scanner/vulnerability/ category
 Function Call Json:
