@@ -233,7 +233,10 @@ public class OpenAIRunner : ILLMRunner
             {
                 // Check if all function calls associated with the message have received responses
                 bool allResponsesReceived = funcCallChatMessage.ToolCalls
-                    .All(tc => _pendingFunctionResponses.ContainsKey(tc.Id));
+                .All(tc =>
+                    _pendingFunctionResponses.TryGetValue(tc.Id, out var response) &&
+                    !string.IsNullOrEmpty(response.Content) // Ensure the response has some content
+                );
 
                 if (allResponsesReceived)
                 {
@@ -257,7 +260,7 @@ public class OpenAIRunner : ILLMRunner
         else
         {
             // Log a failure to match function call to its response
-            responseServiceObj.LlmMessage = "Function Response: Failed to match function call to its response\n\n";
+            responseServiceObj.LlmMessage = $"Function Response: Failed to match function call {responseServiceObj.FunctionName} to its response\n\n";
             if (_isPrimaryLlm) _responseProcessor.ProcessLLMOutput(responseServiceObj);
 
             // Mark the function call as complete
