@@ -210,63 +210,74 @@ public class OpenAIRunner : ILLMRunner
 
     private bool HandleFunctionCallResponse(LLMServiceObj serviceObj, List<ChatMessage> messageHistory, LLMServiceObj responseServiceObj)
     {
-        // Retrieve the function response based on the function call ID
-        _pendingFunctionResponses.TryGetValue(serviceObj.FunctionCallId, out var funcResponseChatMessage);
+        // Declare funcResponseChatMessage outside the if-else block
+        ChatMessage funcResponseChatMessage;
 
-        if (funcResponseChatMessage != null)
+        // Check if a response for the given FunctionCallId already exists in the dictionary
+        if (_pendingFunctionResponses.TryGetValue(serviceObj.FunctionCallId, out var existingFuncResponseChatMessage))
         {
-            // Add the response content to the corresponding chat message
+            // Update the existing response with the new content
+            funcResponseChatMessage = existingFuncResponseChatMessage;
             funcResponseChatMessage.Content = serviceObj.UserInput;
-            responseServiceObj.LlmMessage = "Function Response: " + serviceObj.UserInput + "\n\n";
+        }
+        else
+        {
+            // Create a new ChatMessage for the function response if it doesn't exist
+            funcResponseChatMessage = ChatMessage.FromTool("", serviceObj.FunctionCallId);
+            funcResponseChatMessage.Name = serviceObj.FunctionName;
+            funcResponseChatMessage.Content = serviceObj.UserInput;
 
-            // Process the LLM output if it's the primary LLM
-            if (_isPrimaryLlm) _responseProcessor.ProcessLLMOutput(responseServiceObj);
+            // Add the new response to the dictionary
+            _pendingFunctionResponses.TryAdd(serviceObj.FunctionCallId, funcResponseChatMessage);
+        }
 
-            // Indicate the function call has been completed
-            responseServiceObj.LlmMessage = "</functioncall-complete>";
-            if (_isPrimaryLlm) _responseProcessor.ProcessLLMOutput(responseServiceObj);
+        // Add the response content to the corresponding chat message
+        funcResponseChatMessage.Content = serviceObj.UserInput;
+        responseServiceObj.LlmMessage = "Function Response: " + serviceObj.UserInput + "\n\n";
 
-            // Check if there are any pending function calls associated with the current message
-            _pendingFunctionCalls.TryGetValue(serviceObj.MessageID, out var funcCallChatMessage);
+        // Process the LLM output if it's the primary LLM
+        if (_isPrimaryLlm) _responseProcessor.ProcessLLMOutput(responseServiceObj);
 
-            if (funcCallChatMessage != null)
+        // Check if there are any pending function calls associated with the current message
+        _pendingFunctionCalls.TryGetValue(serviceObj.MessageID, out var funcCallChatMessage);
+
+        if (funcCallChatMessage != null)
+        {
+            bool allResponsesReceived = funcCallChatMessage.ToolCalls
+                .All(tc => _pendingFunctionResponses.ContainsKey(tc.Id));
+
+
+            if (allResponsesReceived)
             {
-                // Check if all function calls associated with the message have received responses
-                bool allResponsesReceived = funcCallChatMessage.ToolCalls
-                .All(tc =>
-                    _pendingFunctionResponses.TryGetValue(tc.Id, out var response) &&
-                    !string.IsNullOrEmpty(response.Content) // Ensure the response has some content
-                );
-
-                if (allResponsesReceived)
+                // Add the function call and responses to the message history
+                messageHistory.Add(funcCallChatMessage);
+                foreach (var toolCall in funcCallChatMessage.ToolCalls)
                 {
-                    // Add the function call and responses to the message history
-                    messageHistory.Add(funcCallChatMessage);
-                    foreach (var toolCall in funcCallChatMessage.ToolCalls)
+                    if (_pendingFunctionResponses.TryGetValue(toolCall.Id, out var response))
                     {
-                        if (_pendingFunctionResponses.TryGetValue(toolCall.Id, out var response))
-                        {
-                            messageHistory.Add(response);
-                            _pendingFunctionResponses.TryRemove(toolCall.Id, out _);
-                        }
+                        messageHistory.Add(response);
+                        _pendingFunctionResponses.TryRemove(toolCall.Id, out _);
                     }
-
-                    // Clean up the pending function call
-                    _pendingFunctionCalls.TryRemove(serviceObj.MessageID, out _);
-                    return true; // Indicates that the function call response was handled successfully
                 }
+
+                // Clean up the pending function call
+                _pendingFunctionCalls.TryRemove(serviceObj.MessageID, out _);
+                // Mark the function call as complete
+                responseServiceObj.LlmMessage = "</functioncall-complete>";
+                if (_isPrimaryLlm) _responseProcessor.ProcessLLMOutput(responseServiceObj);
+                return true; // Indicates that the function call response was handled successfully
             }
         }
         else
         {
-            // Log a failure to match function call to its response
-            responseServiceObj.LlmMessage = $"Function Response: Failed to match function call {responseServiceObj.FunctionName} to its response\n\n";
+            responseServiceObj.LlmMessage = $"Function Error: No pending function call found for Message ID: {serviceObj.MessageID}\n\n";
+
+            // Process the LLM output if it's the primary LLM
             if (_isPrimaryLlm) _responseProcessor.ProcessLLMOutput(responseServiceObj);
 
-            // Mark the function call as complete
-            responseServiceObj.LlmMessage = "</functioncall-complete>";
-            if (_isPrimaryLlm) _responseProcessor.ProcessLLMOutput(responseServiceObj);
+            _logger.LogWarning($"No pending function call found for Message ID: {serviceObj.MessageID}");
         }
+
 
         return false; // Indicates that the function call response could not be fully handled
     }
@@ -283,9 +294,7 @@ public class OpenAIRunner : ILLMRunner
 
         serviceObj.FunctionCallId = fnCall.Id;
         serviceObj.FunctionName = functionName;
-        var chatMessage = ChatMessage.FromTool("", fnCall.Id);
-        chatMessage.Name = functionName;
-        _pendingFunctionResponses.TryAdd(fnCall.Id, chatMessage);
+
 
         _logger.LogInformation($"Function call detected: {functionName}");
 
@@ -308,7 +317,7 @@ public class OpenAIRunner : ILLMRunner
         if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOuputInChunks(responseServiceObj);
     }
 
-    private async Task ProcessAssistantMessageAsync(ChatChoiceResponse choice, int tokensUsed ,LLMServiceObj responseServiceObj, ChatMessage assistantChatMessage, List<ChatMessage> messageHistory, List<ChatMessage> history, LLMServiceObj serviceObj)
+    private async Task ProcessAssistantMessageAsync(ChatChoiceResponse choice, int tokensUsed, LLMServiceObj responseServiceObj, ChatMessage assistantChatMessage, List<ChatMessage> messageHistory, List<ChatMessage> history, LLMServiceObj serviceObj)
     {
         var responseChoiceStr = choice.Message.Content ?? "";
         _logger.LogInformation($"Assistant output : {responseChoiceStr}");
@@ -327,7 +336,7 @@ public class OpenAIRunner : ILLMRunner
             }
 
             messageHistory.Add(assistantChatMessage);
-   
+
         }
 
         responseServiceObj.LlmMessage = "<end-of-line>";
