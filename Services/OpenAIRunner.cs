@@ -209,7 +209,7 @@ public class OpenAIRunner : ILLMRunner
                     }
                     serviceObj.FunctionCallId = fnCall.Id;
                     serviceObj.FunctionName = functionName;
-
+                    choice.Message.ToolCallId = fnCall.Id;
                     //chatMessage.Name = functionName;
                     _pendingFunctionResponses.TryAdd(fnCall.Id, choice.Message);
                     _logger.LogInformation($"Function call detected: {functionName}");
