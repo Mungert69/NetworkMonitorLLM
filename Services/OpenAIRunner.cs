@@ -113,7 +113,6 @@ public class OpenAIRunner : ILLMRunner
         var responseServiceObj = new LLMServiceObj(serviceObj);
         var assistantChatMessage = ChatMessage.FromAssistant("");
         bool canAddFuncMessage = false;
-        bool isFuncMessage = false;
 
         if (!_activeSessions.ContainsKey(serviceObj.SessionId))
         {
@@ -136,7 +135,6 @@ public class OpenAIRunner : ILLMRunner
 
             if (serviceObj.IsFunctionCallResponse)
             {
-                isFuncMessage = true;
                 canAddFuncMessage = HandleFunctionCallResponse(serviceObj, messageHistory, responseServiceObj);
             }
             else
@@ -147,52 +145,53 @@ public class OpenAIRunner : ILLMRunner
                 messageHistory.Add(chatMessage);
             }
 
-            var currentHistory = new List<ChatMessage>(history.Concat(messageHistory));
-
-            var completionResult = await _openAiService.ChatCompletion.CreateCompletion(new ChatCompletionCreateRequest
+            if (!serviceObj.IsFunctionCallResponse || (serviceObj.IsFunctionCallResponse && canAddFuncMessage))
             {
-                Messages = currentHistory,
-                Tools = _toolsBuilder.Tools, // Your pre-defined tools
-                ToolChoice = ToolChoice.Auto,
-                MaxTokens = 1000,
-                Model = "gpt-4o-mini"
-            });
+                var currentHistory = new List<ChatMessage>(history.Concat(messageHistory));
 
-
-            if (completionResult.Successful)
-            {
-                var tokensUsed = completionResult.Usage.TotalTokens;
-                ChatChoiceResponse choice = completionResult.Choices.First();
-                var responseChoiceStr = choice.Message.Content ?? "";
-
-                if (choice.Message.ToolCalls != null && choice.Message.ToolCalls.Any())
+                var completionResult = await _openAiService.ChatCompletion.CreateCompletion(new ChatCompletionCreateRequest
                 {
-                    isFuncMessage = true;
-                    _pendingFunctionCalls.TryAdd(serviceObj.MessageID, choice.Message);
-                    foreach (var fnCall in choice.Message.ToolCalls)
+                    Messages = currentHistory,
+                    Tools = _toolsBuilder.Tools, // Your pre-defined tools
+                    ToolChoice = ToolChoice.Auto,
+                    MaxTokens = 1000,
+                    Model = "gpt-4o-mini"
+                });
+
+
+                if (completionResult.Successful)
+                {
+                    var tokensUsed = completionResult.Usage.TotalTokens;
+                    ChatChoiceResponse choice = completionResult.Choices.First();
+                    var responseChoiceStr = choice.Message.Content ?? "";
+
+                    if (choice.Message.ToolCalls != null && choice.Message.ToolCalls.Any())
                     {
+                        _pendingFunctionCalls.TryAdd(serviceObj.MessageID, choice.Message);
+                        foreach (var fnCall in choice.Message.ToolCalls)
+                        {
 
-                        await HandleFunctionCallAsync(serviceObj, fnCall, responseServiceObj, messageHistory);
+                            await HandleFunctionCallAsync(serviceObj, fnCall, responseServiceObj, messageHistory);
+                        }
                     }
-                }
-                else
-                {
-                    await ProcessAssistantMessageAsync(choice, tokensUsed, responseServiceObj, assistantChatMessage, messageHistory, history, serviceObj);
-                }
-                if (!isFuncMessage || (isFuncMessage && canAddFuncMessage))
-                {
+                    else
+                    {
+                        await ProcessAssistantMessageAsync(choice, tokensUsed, responseServiceObj, assistantChatMessage, messageHistory, history, serviceObj);
+                    }
+
 
                     history.Concat(messageHistory);
                     history.Add(assistantChatMessage);
                     TruncateTokens(history, serviceObj);
+
                 }
-            }
-            else
-            {
-                if (completionResult.Error != null)
+                else
                 {
-                    _logger.LogError($" {_serviceID} Assistant OpenAI Error : {completionResult.Error.Message}");
-                    throw new Exception($" {_serviceID} Assistant OpenAI Error : {completionResult.Error.Message}");
+                    if (completionResult.Error != null)
+                    {
+                        _logger.LogError($" {_serviceID} Assistant OpenAI Error : {completionResult.Error.Message}");
+                        throw new Exception($" {_serviceID} Assistant OpenAI Error : {completionResult.Error.Message}");
+                    }
                 }
             }
 
