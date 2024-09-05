@@ -1,0 +1,1 @@
+~/code/models/llama.cpp/build/bin/main -c 6000 -n 6000  -m ~/code/models/speechless-zephyr-code-functionary-7b-Q3_K_L.gguf  --prompt-cache context.gguf --prompt-cache-ro  -f initialPrompt.txt    -ins --keep -1 --temp 0

@@ -1,0 +1,2 @@
+~/code/models/llama.cpp/llama-server -c 2500  -m ~/code/models/functionary-small-v2.5.Q4_0.gguf    --temp 0 -spf system_prompt_func --metrics
+
