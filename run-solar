@@ -1,1 +1,0 @@
-~/code/models/llama.cpp/build/bin/main -c 2000 -n 2000  -m ~/code/models/solar-10.7b-instruct-v1.0-uncensored.Q4_K_M.gguf     -ins --keep -1 --temp 0

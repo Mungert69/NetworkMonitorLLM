@@ -1,1 +1,0 @@
-~/code/llama.cpp/build/bin/main -c 6000  -m ~/code/models/codellama-function-calling-6320-7b-instruct.gguf  --prompt-cache context.gguf --prompt-cache-ro  -f initialPrompt.txt    -ins --keep -1 --temp 0

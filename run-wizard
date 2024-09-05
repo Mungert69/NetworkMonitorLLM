@@ -1,1 +1,0 @@
-~/code/models/llama.cpp/build/bin/main -c 2000 -n 2000  -m ~/code/models/wizardlm-1.0-uncensored-codellama-34b.Q3_K_S.gguf     -ins --keep -1 --temp 0
