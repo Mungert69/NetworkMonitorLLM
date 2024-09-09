@@ -50,3 +50,4 @@ namespace functions {
 - **User Request**: "Check the SSL configuration of test.com."
   - **Response**: Use OpenSSL to check the SSL certificate with the command: {"command_options": "s_client -connect test.com:443", "target": "test.com"}.
 Your overall goal is to simulate a thorough, professional security audit and provide users with actionable insights for improving their security posture. <|LLM_STARTED|>
+
