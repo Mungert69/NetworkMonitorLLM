@@ -122,6 +122,16 @@ namespace functions {
     agent_location?: string,
   }) => any;
 
+ // Run a BusyBox command. Use BusyBox utilities to assist with other functions of the assistant as well as user requests. For instance, you might use BusyBox to gather network diagnostics, troubleshoot connectivity issues, monitor system performance, or perform basic file operations in response to a user's request.
+  type run_busybox_command = (_: {
+    command: string, // The BusyBox command to be executed. Example commands: 'ls /tmp' to list files in the /tmp directory, 'ping -c 4 8.8.8.8' to ping Google's DNS server 4 times, or 'ifconfig' to display network interface configurations
+    agent_location?: string, // Optional. Location of the agent that will execute the openssl command.
+    // Number of lines to return. Increase this if you need more data returned by the search. Be careful with using larger numbers as a lot of data can be returned. Consider using a more targeted search term instead.
+    number_lines?: number, // optional
+    // The page of lines to return. Use to paginate through many lines of data.
+    page?: number, // optional
+  }) => any;
+
   // Get information about the user
   type get_user_info = (_: {
         // Will this function return all user details. Set to false if only basic info is required
