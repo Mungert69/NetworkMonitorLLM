@@ -12,13 +12,13 @@ using System.Net.Mime;
 
 namespace NetworkMonitor.LLM.Services
 {
-    public class SecurityToolsBuilder : IToolsBuilder
+    public class NmapToolsBuilder : IToolsBuilder
     {
         private readonly FunctionDefinition fn_get_user_info;
         private readonly FunctionDefinition fn_run_nmap;
         private readonly FunctionDefinition fn_run_openssl;
 
-        public SecurityToolsBuilder()
+        public NmapToolsBuilder()
         {
             fn_get_user_info = new FunctionDefinitionBuilder("get_user_info", "Get information about the user")
                 .AddParameter("detail_response", PropertyDefinition.DefineBoolean("If true, retrieve all available user details. If false, provide only basic user information."))
