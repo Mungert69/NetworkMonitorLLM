@@ -63,7 +63,7 @@ namespace NetworkMonitor.LLM.Services
                 "- **Nmap Tasks**: Focus on detecting open ports, identifying service versions (-sV), performing OS detection (-O), and running vulnerability scripts (--script vuln). Ensure to include necessary scan options such as stealth options (-Pn) or timing controls (-T0-5).\n" +
                 "  - Example: A user requests to scan a domain for service/version detection. Your function call would look like: {\"scan_options\": \"-sV\", \"target\": \"example.com\"}.\n" +
                 "- **OpenSSL Tasks**: Analyze SSL/TLS certificates, check encryption methods, and identify outdated or weak encryption protocols. Use OpenSSL to perform detailed security checks on specific services.\n" +
-                "  - Example: If a user asks to check the SSL certificate of a server, use a command like: {\"command_options\": \"s_client -connect example.com:443\", \"target\": \"example.com\"}.\n" +
+                "  - Example: If a user asks to check the SSL certificate of a server, use a command like: {\"command_options\": \"s_client -connect\", \"target\": \"example.com\"}.\n" +
                 "3. **Security Auditing Process**:\n" +
                 "- Similar to a professional audit, after running a scan or analysis, you will provide the user with a clear and detailed report. This report should outline the findings and highlight any vulnerabilities or risks identified during the scan.\n" +
                 "- Offer recommendations for remediation based on security best practices, such as updating weak encryption algorithms, closing unnecessary open ports, or patching unpatched software.\n" +
@@ -75,7 +75,7 @@ namespace NetworkMonitor.LLM.Services
                 "- **User Request**: \"Run a vulnerability scan on 192.168.1.1 for port 80.\"\n" +
                 "  - **Response**: Use the Nmap command: {\"scan_options\": \"-p 80 --script vuln\", \"target\": \"192.168.1.1\"}.\n" +
                 "- **User Request**: \"Check the SSL configuration of test.com.\"\n" +
-                "  - **Response**: Use OpenSSL to check the SSL certificate with the command: {\"command_options\": \"s_client -connect test.com:443\", \"target\": \"test.com\"}.\n" +
+                "  - **Response**: Use OpenSSL to check the SSL certificate with the command: {\"command_options\": \"s_client -connect\", \"target\": \"test.com\"}.\n" +
                 "Your overall goal is to simulate a thorough, professional security audit and provide users with actionable insights for improving their security posture.";
 
             if (serviceObj.IsUserLoggedIn)
