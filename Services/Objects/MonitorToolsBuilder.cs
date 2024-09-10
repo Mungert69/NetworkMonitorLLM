@@ -21,6 +21,7 @@ public class MonitorToolsBuilder : IToolsBuilder
     private readonly FunctionDefinition fn_get_host_list;
     private readonly FunctionDefinition fn_get_user_info;
     private readonly FunctionDefinition fn_call_nmap;
+     private readonly FunctionDefinition fn_call_busybox;
     private readonly FunctionDefinition fn_call_metasploit;
     private readonly FunctionDefinition fn_get_agents;
 
@@ -33,6 +34,7 @@ public class MonitorToolsBuilder : IToolsBuilder
         fn_get_host_list = BuildGetHostListFunction();
         fn_get_user_info = BuildGetUserInfoFunction();
         fn_call_nmap = BuildCallNmapFunction();
+        fn_call_busybox = BuildCallBusyboxFunction();
         fn_call_metasploit = BuildCallMetasploitFunction();
         fn_get_agents = BuildGetAgentsFunction();
 
@@ -47,6 +49,7 @@ public class MonitorToolsBuilder : IToolsBuilder
             fn_get_user_info,
             fn_get_agents,
             fn_call_nmap,
+            fn_call_busybox,
             fn_call_metasploit
         );
 
@@ -156,6 +159,18 @@ private FunctionDefinition BuildCallMetasploitFunction()
         .Validate()
         .Build();
 }
+
+private FunctionDefinition BuildCallBusyboxFunction()
+{
+    return new FunctionDefinitionBuilder("run_busybox_command", "Run a BusyBox command. Use BusyBox utilities to assist with other functions of the assistant as well as user requests. For instance, you might use BusyBox to gather network diagnostics, troubleshoot connectivity issues, monitor system performance, or perform basic file operations in response to a user's request.")
+        .AddParameter("command", PropertyDefinition.DefineString("The BusyBox command to be executed. Example commands: 'ls /tmp' to list files in the /tmp directory, 'ping -c 4 8.8.8.8' to ping Google's DNS server 4 times, or 'ifconfig' to display network interface configurations."))
+        .AddParameter("agent_location", PropertyDefinition.DefineString("The agent location that will execute the command, optional. Specify which agent will perform the operation if relevant."))
+        .AddParameter("number_lines", PropertyDefinition.DefineInteger("Number of lines to return from the command output. Use this parameter to limit the output. Larger values may return extensive data, so use higher limits cautiously."))
+        .AddParameter("page", PropertyDefinition.DefineInteger("The page of lines to return. Use this to paginate through multiple lines of output if the command returns more data than the specified number of lines."))
+        .Validate()
+        .Build();
+}
+
 
 
     private FunctionDefinition BuildGetAgentsFunction()
