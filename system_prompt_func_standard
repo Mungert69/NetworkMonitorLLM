@@ -105,12 +105,12 @@ namespace functions {
     detail_response: boolean,
   }) => any;
 
-  // Perform a scan using a remote network scanning assistant. You will create a message to send to the scanning assistant. It will be in laymans english describing what the user wants to scan and how. If the scanning assistant asks questions then present these to the user using simple language and try to create the message using your knowledge if possible. 
-  type call_nmap = (_: {
-    // The message to be sent to the network scanning assistant
+  // Communicate a security assessment request to a remote security expert LLM. You will craft a detailed message describing the user's request for a security assessment, which may involve either network scans using Nmap or security checks using OpenSSL. The message should specify the type of assessment (e.g., vulnerability scan, SSL/TLS configuration check), the target (e.g., IP address, domain, or service), and any relevant parameters or instructions. Ensure the message clearly outlines the user's security goals. If the security expert LLM requires additional information, present these queries to the user in simple terms and assist in formulating the appropriate responses based on your understanding.
+  type call_security_expert = (_: {
+    // The message to be sent to the security expert LLM, detailing the assessment request and parameters, including scan type (Nmap or OpenSSL), target, and any special instructions.
     message: string,
-    // The agent location that will run the scan, optional
-    agent_location: string,
+    // The agent location that will execute the assessment, optional. If provided, specify which agent will perform the scan or check.
+    agent_location?: string,
   }) => any;
 
   // Get information about the user
