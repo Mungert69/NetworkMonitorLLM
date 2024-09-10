@@ -139,22 +139,23 @@ public class MonitorToolsBuilder : IToolsBuilder
             .Build();
     }
 
-    private FunctionDefinition BuildCallNmapFunction()
-    {
-        return new FunctionDefinitionBuilder("call_nmap", "Perform a scan using a remote network scanning assistant. You will create a message to send to the scanning assistant. It will be in laymans english describing what the user wants to scan and how. If the scanning assistant asks questions then present these to the user using simple language and try to create the message using your knowledge if possible")
-            .AddParameter("message", PropertyDefinition.DefineString("The message to be sent to the network scanning assistant"))
-            .AddParameter("agent_location", PropertyDefinition.DefineString("The agent location that will run the scan, optional"))
-            .Validate()
-            .Build();
-    }
-    private FunctionDefinition BuildCallMetasploitFunction()
-    {
-        return new FunctionDefinitionBuilder("call_metasploit", "Relay a user's request to a remote penetration testing assistant. The remote penetration testing assistant uses metasploit. You will create a message that explains the user's objective in layman's terms. The penetration testing assistant will handle the technical details. If the assistant needs more information, present the questions to the user clearly and help provide answers where possible.")
- .AddParameter("message", PropertyDefinition.DefineString("The message to be sent to the penetration testing assistant, explaining the user's goal in simple language."))
- .AddParameter("agent_location", PropertyDefinition.DefineString("The agent location that will run the task, optional."))
- .Validate()
- .Build();
-    }
+   private FunctionDefinition BuildCallNmapFunction()
+{
+    return new FunctionDefinitionBuilder("call_security_expert", "Communicate a security assessment request to a remote security expert LLM. You will craft a detailed message describing the user's request for a security assessment, which may involve either network scans using Nmap or security checks using OpenSSL. The message should specify the type of assessment (e.g., vulnerability scan, SSL/TLS configuration check), the target (e.g., IP address, domain, or service), and any relevant parameters or instructions. Ensure the message clearly outlines the user's security goals. If the security expert LLM requires additional information, present these queries to the user in simple terms and assist in formulating the appropriate responses based on your understanding.")
+        .AddParameter("message", PropertyDefinition.DefineString("The message to be sent to the security expert LLM, detailing the assessment request and parameters, including scan type (Nmap or OpenSSL), target, and any special instructions."))
+        .AddParameter("agent_location", PropertyDefinition.DefineString("The agent location that will execute the assessment, optional. If provided, specify which agent will perform the scan or check."))
+        .Validate()
+        .Build();
+}
+
+private FunctionDefinition BuildCallMetasploitFunction()
+{
+    return new FunctionDefinitionBuilder("call_penetration_expert", "Communicate a penetration testing request to a remote Metasploit expert LLM. You will craft a detailed message describing the user's request for penetration testing, which may involve running Metasploit modules for exploitation, scanning, or information gathering. The message should specify the module name, module options, target, and any additional instructions or parameters. If the Metasploit expert requires further details, present these questions to the user in simple terms and assist in formulating appropriate responses based on your understanding.")
+        .AddParameter("message", PropertyDefinition.DefineString("The message to be sent to the Metasploit expert LLM, detailing the penetration testing request including the module name, module options, target, and any special instructions."))
+        .AddParameter("agent_location", PropertyDefinition.DefineString("The agent location that will execute the module, optional. If provided, specify which agent will perform the task."))
+        .Validate()
+        .Build();
+}
 
 
     private FunctionDefinition BuildGetAgentsFunction()

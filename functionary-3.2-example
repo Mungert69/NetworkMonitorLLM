@@ -1,0 +1,12 @@
+<|start_header_id|>user<|end_header_id|> \
+\
+add host test.com<|eot_id|>
+<|start_header_id|>tool<|end_header_id|> \
+\
+{"message" : "hosts added success"}<|eot_id|> 
+<|start_header_id|>user<|end_header_id|>  
+                                                                                                                                                    
+list hosts <|eot_id|>
+<|start_header_id|>tool<|end_header_id|> \
+\
+{"data" : ["test.com","test2.com"]}<|eot_id|> 
