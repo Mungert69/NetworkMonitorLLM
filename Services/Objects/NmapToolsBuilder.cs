@@ -17,6 +17,7 @@ namespace NetworkMonitor.LLM.Services
         private readonly FunctionDefinition fn_get_user_info;
         private readonly FunctionDefinition fn_run_nmap;
         private readonly FunctionDefinition fn_run_openssl;
+        private readonly FunctionDefinition fn_run_busybox;
 
         public NmapToolsBuilder()
         {
@@ -29,6 +30,8 @@ namespace NetworkMonitor.LLM.Services
                 .AddParameter("scan_options", PropertyDefinition.DefineString("The nmap scan options. Must reflect the user's desired scan goal, e.g., ping scan, vulnerability scan, etc."))
                 .AddParameter("target", PropertyDefinition.DefineString("Target to scan, like an IP, domain, or subnet."))
                 .AddParameter("agent_location", PropertyDefinition.DefineString("Optional. If available, specify which agent will run the scan."))
+                .AddParameter("number_lines", PropertyDefinition.DefineInteger("Number of lines to return. Increase this if you need more data returned by the search. Be careful with using larger numbers as a lot of data can be returned. Consider using a more targeted search term instead."))
+                .AddParameter("page", PropertyDefinition.DefineInteger("The page of lines to return. Use to paginate through many lines of data."))
                 .Validate()
                 .Build();
 
@@ -36,14 +39,25 @@ namespace NetworkMonitor.LLM.Services
                 .AddParameter("command_options", PropertyDefinition.DefineString("Construct the relevant openssl command options based on the user’s request, e.g., certificate analysis, protocol vulnerabilities."))
                 .AddParameter("target", PropertyDefinition.DefineString("The server or service you are scanning for security issues."))
                 .AddParameter("agent_location", PropertyDefinition.DefineString("Optional. Location of the agent that will execute the openssl command."))
+                 .AddParameter("number_lines", PropertyDefinition.DefineInteger("Number of lines to return. Increase this if you need more data returned by the search. Be careful with using larger numbers as a lot of data can be returned. Consider using a more targeted search term instead."))
+                .AddParameter("page", PropertyDefinition.DefineInteger("The page of lines to return. Use to paginate through many lines of data."))
                 .Validate()
                 .Build();
+
+                fn_run_busybox= new FunctionDefinitionBuilder("run_busybox_command", "Run a BusyBox command. Use BusyBox utilities to assist with other functions of the assistant as well as user requests. For instance, you might use BusyBox to gather network diagnostics, troubleshoot connectivity issues, monitor system performance, or perform basic file operations in response to a user's request.")
+        .AddParameter("command", PropertyDefinition.DefineString("The BusyBox command to be executed. Example commands: 'ls /tmp' to list files in the /tmp directory, 'ping -c 4 8.8.8.8' to ping Google's DNS server 4 times, or 'ifconfig' to display network interface configurations."))
+        .AddParameter("agent_location", PropertyDefinition.DefineString("The agent location that will execute the command, optional. Specify which agent will perform the operation if relevant."))
+        .AddParameter("number_lines", PropertyDefinition.DefineInteger("Number of lines to return from the command output. Use this parameter to limit the output. Larger values may return extensive data, so use higher limits cautiously."))
+        .AddParameter("page", PropertyDefinition.DefineInteger("The page of lines to return. Use this to paginate through multiple lines of output if the command returns more data than the specified number of lines."))
+        .Validate()
+        .Build();
 
             _tools = new List<ToolDefinition>()
             {
                 new ToolDefinition() { Function = fn_get_user_info, Type = "function" },
                 new ToolDefinition() { Function = fn_run_nmap, Type = "function" },
-                new ToolDefinition() { Function = fn_run_openssl, Type = "function" }
+                new ToolDefinition() { Function = fn_run_openssl, Type = "function" },
+                 new ToolDefinition() { Function = fn_run_busybox, Type = "function" }
             };
         }
 

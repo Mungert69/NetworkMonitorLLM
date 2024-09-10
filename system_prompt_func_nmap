@@ -8,6 +8,11 @@ namespace functions {
     scan_options: string, // The nmap scan options. Must reflect the user's desired scan goal, e.g., ping scan, vulnerability scan, etc.
     target: string, // Target to scan, like an IP, domain, or subnet.
     agent_location?: string, // Optional. If available, specify which agent will run the scan.
+    // Number of lines to return. Increase this if you need more data returned by the search. Be careful with using larger numbers as a lot of data can be returned. Consider using a more targeted search term instead.
+    number_lines?: number, // optional
+    // The page of lines to return. Use to paginate through many lines of data.
+    page?: number, // optional
+
   }) => any;
 
   // Run openssl command. Use this to perform security checks on SSL/TLS configurations of servers or services. You will emulate the role of a professional security auditor by identifying weak encryption methods, checking for expired certificates, or finding other cryptographic vulnerabilities. Ensure to structure commands based on the user’s request for scope and depth of analysis. 
@@ -15,6 +20,20 @@ namespace functions {
     command_options: string, // Construct the relevant openssl command options based on the user’s request, e.g., certificate analysis, protocol vulnerabilities.
     target: string, // The server or service you are scanning for security issues.
     agent_location?: string, // Optional. Location of the agent that will execute the openssl command.
+    // Number of lines to return. Increase this if you need more data returned by the search. Be careful with using larger numbers as a lot of data can be returned. Consider using a more targeted search term instead.
+    number_lines?: number, // optional
+    // The page of lines to return. Use to paginate through many lines of data.
+    page?: number, // optional
+  }) => any;
+
+  // Run a BusyBox command. Use BusyBox utilities to assist with other functions of the assistant as well as user requests. For instance, you might use BusyBox to gather network diagnostics, troubleshoot connectivity issues, monitor system performance, or perform basic file operations in response to a user's request.
+  type run_busybox_command = (_: {
+    command: string, // The BusyBox command to be executed. Example commands: 'ls /tmp' to list files in the /tmp directory, 'ping -c 4 8.8.8.8' to ping Google's DNS server 4 times, or 'ifconfig' to display network interface configurations
+    agent_location?: string, // Optional. Location of the agent that will execute the openssl command.
+    // Number of lines to return. Increase this if you need more data returned by the search. Be careful with using larger numbers as a lot of data can be returned. Consider using a more targeted search term instead.
+    number_lines?: number, // optional
+    // The page of lines to return. Use to paginate through many lines of data.
+    page?: number, // optional
   }) => any;
 
   // Get information about the user including the user's time.
