@@ -26,14 +26,12 @@ namespace functions {
     page?: number, // optional
   }) => any;
 
-  // Run a BusyBox command. Use BusyBox utilities to assist with other functions of the assistant as well as user requests. For instance, you might use BusyBox to gather network diagnostics, troubleshoot connectivity issues, monitor system performance, or perform basic file operations in response to a user's request.
-  type run_busybox_command = (_: {
-    command: string, // The BusyBox command to be executed. Example commands: 'ls /tmp' to list files in the /tmp directory, 'ping -c 4 8.8.8.8' to ping Google's DNS server 4 times, or 'ifconfig' to display network interface configurations
-    agent_location?: string, // Optional. Location of the agent that will execute the openssl command.
-    // Number of lines to return. Increase this if you need more data returned by the search. Be careful with using larger numbers as a lot of data can be returned. Consider using a more targeted search term instead.
-    number_lines?: number, // optional
-    // The page of lines to return. Use to paginate through many lines of data.
-    page?: number, // optional
+  // Communicate a web search request to a remote search expert LLM. You will craft a detailed message describing the user's search query, which may involve general information retrieval, fact-checking, or finding specific data. The message should specify the search terms, any filters or constraints, and the type of information needed. If the search expert LLM requires additional information, present these queries to the user in simple terms and assist in formulating the appropriate responses based on your understanding.
+  type call_search_expert = (_: {
+    // The message to be sent to the search expert LLM, detailing the search request including the query, any specific requirements, and context for the search.
+    message: string,
+    // The agent location that will execute the search, optional. If provided, specify which agent will perform the search task.
+    agent_location?: string,
   }) => any;
 
   // Get information about the user including the user's time.
