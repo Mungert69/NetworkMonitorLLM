@@ -113,6 +113,13 @@ namespace functions {
     agent_location?: string,
   }) => any;
 
+  // Communicate a web search request to a remote search expert LLM. You will craft a detailed message describing the user's search query, which may involve general information retrieval, fact-checking, or finding specific data. The message should specify the search terms, any filters or constraints, and the type of information needed. If the search expert LLM requires additional information, present these queries to the user in simple terms and assist in formulating the appropriate responses based on your understanding.
+  type call_search_expert = (_: {
+    // The message to be sent to the search expert LLM, detailing the search request including the query, any specific requirements, and context for the search.
+    message: string,
+    // The agent location that will execute the search, optional. If provided, specify which agent will perform the search task.
+    agent_location?: string,
+  }) => any;
 
   // Get information about the user
   type get_user_info = (_: {
