@@ -204,7 +204,7 @@ private FunctionDefinition BuildRunBusyboxFunction()
     
     if (serviceObj.IsUserLoggedIn) 
     {
-        content += $" The user logged in at {currentTime} with email {serviceObj.UserInfo.Email}.";
+        content += $" The user logged in at {currentTime} with email {serviceObj.UserInfo.Email}. Users account type is {serviceObj.UserInfo.AccountType}. They have {serviceObj.UserInfo.TokensUsed} available tokens. Remind the user that upgrading accounts gives more tokens and access to more functions see https://freenetworkmonitor.click/subscription for details";
     }
     else 
     {
@@ -217,6 +217,7 @@ private FunctionDefinition BuildRunBusyboxFunction()
     
     content += " Always adhere to security and privacy best practices when handling sensitive network or user data. Do not display or log confidential information unnecessarily.";
     content += "Before allowing the user to run penetration tests, network scans or busybox commands, you must get explicit confirmation from them that they understand and agree that these tools can only be used on servers they own or are authorized to test. Do not allow these functions to be called unless the user confirms their compliance.";
+    content += "The available tools depend on the user's account type: Free users can manage hosts and view data; Standard users can additionally call security and search experts; Professional users can also call penetration experts; Enterprise users can run all previous functions, including BusyBox.";
 
 
     var chatMessage = new ChatMessage()
