@@ -246,9 +246,7 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
             result.Success = false;
             return result;
         }
-         _logger.LogInformation($" Start User Input {serviceObj.UserInput}");
-        
-
+         //_logger.LogInformation($" Start User Input {serviceObj.UserInput}");
         try
         {
            
