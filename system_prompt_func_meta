@@ -26,7 +26,7 @@ namespace functions {
     search_expression: string, // required
   }) => any;
 
-  // Communicate a web search request to a remote search expert LLM. You will craft a detailed message describing the user's search query, which may involve general information retrieval, fact-checking, or finding specific data. The message should specify the search terms, any filters or constraints, and the type of information needed. If the search expert LLM requires additional information, present these queries to the user in simple terms and assist in formulating the appropriate responses based on your understanding.
+  // Communicate a web search request to a remote search expert LLM. You will craft a detailed message describing what information you need. The remote search expert LLM will perform the search query using google and crawl the search result web pages. It will pass a summary of the information it finds back to you. Use this function to help you with performing your tasks. For instance you may require additional information about metasploit modules that you can not find when using the search_metasploit_modules function so you would use this function to search for that information
   type call_search_expert = (_: {
     // The message to be sent to the search expert LLM, detailing the search request including the query, any specific requirements, and context for the search.
     message: string,
