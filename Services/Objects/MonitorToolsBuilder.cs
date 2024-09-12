@@ -179,24 +179,28 @@ private FunctionDefinition BuildRunBusyboxFunction()
 
 private FunctionDefinition BuildSearchWebFunction()
 {
-    return new FunctionDefinitionBuilder("run_search_web", "Search function to assist in information gathering. You can use this function to get a list of websites that have been returned from a google search of the search term. The function will return a list of urls. You can then call run_crawl_page for each url to get informatoin about the search term.")
-        .AddParameter("search_term", PropertyDefinition.DefineString("The search term to be used with the google search"))
+    return new FunctionDefinitionBuilder("run_search_web", 
+        "Search function to gather information from web sources. Use this function to perform a Google search and retrieve a list of websites related to the search term. After retrieving the URLs, you must call the 'run_crawl_page' function to visit and gather details from each site. The search results are intended to guide the selection of relevant links for deeper exploration.")
+        .AddParameter("search_term", PropertyDefinition.DefineString("The search term to be used for the Google search."))
         .AddParameter("agent_location", PropertyDefinition.DefineString("The agent location that will execute the command, optional. Specify which agent will perform the operation if relevant."))
-        .AddParameter("number_lines", PropertyDefinition.DefineInteger("Number of lines to return from the command output. Use this parameter to limit the output. Larger values may return extensive data, so use higher limits cautiously."))
-        .AddParameter("page", PropertyDefinition.DefineInteger("The page of lines to return. Use this to paginate through multiple lines of output if the command returns more data than the specified number of lines."))
+        .AddParameter("number_lines", PropertyDefinition.DefineInteger("Number of lines to return from the command output. Limit this to manage the amount of search results returned. Larger values may retrieve more links, but use higher limits cautiously."))
+        .AddParameter("page", PropertyDefinition.DefineInteger("The page of search results to return, allowing pagination through multiple search results pages."))
         .Validate()
         .Build();
 }
+
 private FunctionDefinition BuildCrawlPageFunction()
 {
-    return new FunctionDefinitionBuilder("run_crawl_page", "Website page reader to assist in information gathering. You can use this function to get the text and links on a website. The function the text and hyper links on the page. You can follow the links if necessary to gather more informatoin.")
-        .AddParameter("url", PropertyDefinition.DefineString("The url of the page to crawl"))
+    return new FunctionDefinitionBuilder("run_crawl_page", 
+        "Website crawler to extract information from a webpage. Use this function to read the text and hyperlinks on a given webpage. When URLs are returned from 'run_search_web', call this function on relevant URLs to gather content. If necessary, you can follow additional links on the page to perform further research.")
+        .AddParameter("url", PropertyDefinition.DefineString("The URL of the page to crawl."))
         .AddParameter("agent_location", PropertyDefinition.DefineString("The agent location that will execute the command, optional. Specify which agent will perform the operation if relevant."))
-        .AddParameter("number_lines", PropertyDefinition.DefineInteger("Number of lines to return from the command output. Use this parameter to limit the output. Larger values may return extensive data, so use higher limits cautiously."))
-        .AddParameter("page", PropertyDefinition.DefineInteger("The page of lines to return. Use this to paginate through multiple lines of output if the command returns more data than the specified number of lines."))
+        .AddParameter("number_lines", PropertyDefinition.DefineInteger("Number of lines to return from the command output. Limit this to manage the amount of content returned."))
+        .AddParameter("page", PropertyDefinition.DefineInteger("The page of content to return, allowing pagination through large pages of data."))
         .Validate()
         .Build();
 }
+
 
 
 
