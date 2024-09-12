@@ -235,6 +235,7 @@ public interface ILLMResponseProcessor
     Task ProcessLLMOuputInChunks(LLMServiceObj serviceObj);
     Task ProcessFunctionCall(LLMServiceObj serviceObj);
     Task ProcessEnd(LLMServiceObj serviceObj);
+     Task UpdateTokensUsed(LLMServiceObj serviceObj);
     bool IsFunctionCallResponse(string input);
     bool SendOutput { get; set; }
 }
@@ -282,6 +283,12 @@ public class LLMResponseProcessor : ILLMResponseProcessor
         //Console.WriteLine(serviceObj.LlmMessage);
         serviceObj.LlmMessage = MessageHelper.ErrorMessage(serviceObj.LlmMessage);
         await _rabbitRepo.PublishAsync<LLMServiceObj>("llmServiceTimeout", serviceObj);
+        //return Task.CompletedTask;
+    }
+
+     public async Task UpdateTokensUsed(LLMServiceObj serviceObj)
+    {
+        await _rabbitRepo.PublishAsync<LLMServiceObj>("llmUpdateTokensUsed", serviceObj);
         //return Task.CompletedTask;
     }
 

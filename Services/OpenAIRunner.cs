@@ -63,7 +63,7 @@ public class OpenAIRunner : ILLMRunner
         if (_serviceID == "monitor") _toolsBuilder = new MonitorToolsBuilder(serviceObj.UserInfo);
         if (_serviceID == "nmap") _toolsBuilder = new NmapToolsBuilder();
         if (_serviceID == "meta") _toolsBuilder = new MetaToolsBuilder();
-         if (_serviceID == "search") _toolsBuilder = new SearchToolsBuilder();
+        if (_serviceID == "search") _toolsBuilder = new SearchToolsBuilder();
         _activeSessions = new ConcurrentDictionary<string, DateTime>();
         _sessionHistories = new ConcurrentDictionary<string, List<ChatMessage>>();
 
@@ -112,6 +112,7 @@ public class OpenAIRunner : ILLMRunner
         _isStateReady = false;
 
         var responseServiceObj = new LLMServiceObj(serviceObj);
+        responseServiceObj.TokensUsed = 0;
         var assistantChatMessage = ChatMessage.FromAssistant("");
         bool canAddFuncMessage = false;
 
@@ -162,7 +163,8 @@ public class OpenAIRunner : ILLMRunner
 
                 if (completionResult.Successful)
                 {
-                    var tokensUsed = completionResult.Usage.TotalTokens;
+
+                    responseServiceObj.TokensUsed = completionResult.Usage.TotalTokens;
                     ChatChoiceResponse choice = completionResult.Choices.First();
                     var responseChoiceStr = choice.Message.Content ?? "";
 
@@ -177,7 +179,7 @@ public class OpenAIRunner : ILLMRunner
                     }
                     else
                     {
-                        await ProcessAssistantMessageAsync(choice, tokensUsed, responseServiceObj, assistantChatMessage, messageHistory, history, serviceObj);
+                        await ProcessAssistantMessageAsync(choice, responseServiceObj, assistantChatMessage, messageHistory, history, serviceObj);
                     }
 
 
@@ -194,6 +196,7 @@ public class OpenAIRunner : ILLMRunner
                         throw new Exception($" {_serviceID} Assistant OpenAI Error : {completionResult.Error.Message}");
                     }
                 }
+                await _responseProcessor.UpdateTokensUsed(responseServiceObj);
             }
 
         }
@@ -317,7 +320,7 @@ public class OpenAIRunner : ILLMRunner
         if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOuputInChunks(responseServiceObj);
     }
 
-    private async Task ProcessAssistantMessageAsync(ChatChoiceResponse choice, int tokensUsed, LLMServiceObj responseServiceObj, ChatMessage assistantChatMessage, List<ChatMessage> messageHistory, List<ChatMessage> history, LLMServiceObj serviceObj)
+    private async Task ProcessAssistantMessageAsync(ChatChoiceResponse choice, LLMServiceObj responseServiceObj, ChatMessage assistantChatMessage, List<ChatMessage> messageHistory, List<ChatMessage> history, LLMServiceObj serviceObj)
     {
         var responseChoiceStr = choice.Message.Content ?? "";
         _logger.LogInformation($"Assistant output : {responseChoiceStr}");
@@ -340,7 +343,6 @@ public class OpenAIRunner : ILLMRunner
         }
 
         responseServiceObj.LlmMessage = "<end-of-line>";
-        responseServiceObj.TokensUsed = tokensUsed;
         if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
     }
 
