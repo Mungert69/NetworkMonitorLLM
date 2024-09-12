@@ -295,8 +295,8 @@ public class LLMProcessRunner : ILLMRunner
 
             if (_sendOutput)
             {
-                userInput = userInput.Replace("\n", "\\\n");
-                if (!serviceObj.IsFunctionCallResponse)
+              userInput = userInput.Replace("\r\n", "\\\n").Replace("\n", "\\\n");
+              if (!serviceObj.IsFunctionCallResponse)
                 {
                     if (_mlParams.LlmVersion == "func_2.4") userInput = "<|from|> user\\\n<|recipient|> all\\\n<|content|>" + userInput;
                     else if (_mlParams.LlmVersion == "func_2.5") userInput = "<|start_header_id|>user<|end_header_id|>" + userInput;
