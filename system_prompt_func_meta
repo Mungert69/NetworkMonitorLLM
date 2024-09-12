@@ -14,7 +14,7 @@ namespace functions {
     agent_location?: string,
   }) => any;
 
-// Search information and Metasploit modules. Use this to get information about modules and which modules are available. Use this if you get an error when using a module.
+  // Search information and Metasploit modules. Use this to get information about modules and which modules are available. Use this if you get an error when using a module.
   type search_metasploit_modules = (_: {
     // Number of lines to return. Increase this if you need more data returned by the search. Be careful with using larger numbers as a lot of data can be returned. Consider using a more targeted search term instead.
     number_lines?: number, // optional
@@ -24,14 +24,6 @@ namespace functions {
     search_type: 'search' | 'show' | 'info', // required
     // Search expression. The format depends on the search_type: - For 'search': Provide keywords or filters such as 'type:exploit platform:windows cve:2021'. Filters you can use include: 'name' (search by the module's name), 'description' (search within the module's description), 'author' (search by the author's name), 'type' (filter by module type, such as 'exploit', 'auxiliary', 'post', 'payload', etc.), 'platform' (filter by the target platform like 'windows', 'linux', etc.), 'rank' (search based on the module's rank, e.g., 'excellent', 'good', 'normal', etc.), and 'cve' (search by a specific CVE identifier). - For 'show': Provide the module type, such as 'exploits' to list all exploit modules. - For 'info': Provide the module name, such as auxiliary/scanner/portscan/tcp to get detailed information about that module.
     search_expression: string, // required
-  }) => any;
-
-  // Communicate a web search request to a remote search expert LLM. You will craft a detailed message describing what information you need. The remote search expert LLM will perform the search query using google and crawl the search result web pages. It will pass a summary of the information it finds back to you. Use this function to help you with performing your tasks. For instance you may require additional information about metasploit modules that you can not find when using the search_metasploit_modules function so you would use this function to search for that information
-  type call_search_expert = (_: {
-    // The message to be sent to the search expert LLM, detailing the search request including the query, any specific requirements, and context for the search.
-    message: string,
-    // The agent location that will execute the search, optional. If provided, specify which agent will perform the search task.
-    agent_location?: string,
   }) => any;
 
 // Get information about the user
