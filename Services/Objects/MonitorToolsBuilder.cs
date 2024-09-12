@@ -20,12 +20,11 @@ public class MonitorToolsBuilder : IToolsBuilder
     private readonly FunctionDefinition fn_get_host_data;
     private readonly FunctionDefinition fn_get_host_list;
     private readonly FunctionDefinition fn_get_user_info;
-    private readonly FunctionDefinition fn_call_nmap;
+    private readonly FunctionDefinition fn_call_security_expert;
      private readonly FunctionDefinition fn_run_busybox;
-    private readonly FunctionDefinition fn_call_metasploit;
+    private readonly FunctionDefinition fn_call_penetration_expert;
     private readonly FunctionDefinition fn_get_agents;
-    private readonly FunctionDefinition fn_run_search_web;
-    private readonly FunctionDefinition fn_run_crawl_page;
+    private readonly FunctionDefinition fn_call_search_expert;
 
     public MonitorToolsBuilder(UserInfo userInfo)
     {
@@ -35,12 +34,11 @@ public class MonitorToolsBuilder : IToolsBuilder
         fn_get_host_data = BuildGetHostDataFunction();
         fn_get_host_list = BuildGetHostListFunction();
         fn_get_user_info = BuildGetUserInfoFunction();
-        fn_call_nmap = BuildCallNmapFunction();
+        fn_call_security_expert = BuildCallNmapFunction();
         fn_run_busybox = BuildRunBusyboxFunction();
-        fn_call_metasploit = BuildCallMetasploitFunction();
+        fn_call_penetration_expert = BuildCallMetasploitFunction();
         fn_get_agents = BuildGetAgentsFunction();
-        fn_run_search_web=BuildSearchWebFunction();
-        fn_run_crawl_page=BuildCrawlPageFunction();
+        fn_call_search_expert=BuildCallSearchWebFunction();
 
 
         // Assuming these function references are defined in the current context
@@ -52,11 +50,10 @@ public class MonitorToolsBuilder : IToolsBuilder
             fn_get_host_list,
             fn_get_user_info,
             fn_get_agents,
-            fn_call_nmap,
-            fn_run_busybox,
-            fn_call_metasploit,
-            fn_run_crawl_page,
-            fn_run_search_web
+            fn_call_security_expert,
+            fn_call_penetration_expert,
+            fn_call_search_expert,
+            fn_run_busybox
         );
 
         // Build the tools list based on user account type
@@ -166,6 +163,15 @@ private FunctionDefinition BuildCallMetasploitFunction()
         .Build();
 }
 
+private FunctionDefinition BuildCallSearchWebFunction()
+{
+    return new FunctionDefinitionBuilder("call_search_expert", "Communicate a web search request to a remote search expert LLM. You will craft a detailed message describing the user's search query, which may involve general information retrieval, fact-checking, or finding specific data. The message should specify the search terms, any filters or constraints, and the type of information needed. If the search expert LLM requires additional information, present these queries to the user in simple terms and assist in formulating the appropriate responses based on your understanding.")
+        .AddParameter("message", PropertyDefinition.DefineString("The message to be sent to the search expert LLM, detailing the search request including the query, any specific requirements, and context for the search."))
+        .AddParameter("agent_location", PropertyDefinition.DefineString("The agent location that will execute the search, optional. If provided, specify which agent will perform the search task."))
+        .Validate()
+        .Build();
+}
+
 private FunctionDefinition BuildRunBusyboxFunction()
 {
     return new FunctionDefinitionBuilder("run_busybox_command", "Run a BusyBox command. Use BusyBox utilities to assist with other functions of the assistant as well as user requests. For instance, you might use BusyBox to gather network diagnostics, troubleshoot connectivity issues, monitor system performance, or perform basic file operations in response to a user's request.")
@@ -176,32 +182,6 @@ private FunctionDefinition BuildRunBusyboxFunction()
         .Validate()
         .Build();
 }
-
-private FunctionDefinition BuildSearchWebFunction()
-{
-    return new FunctionDefinitionBuilder("run_search_web", 
-        "Search function to gather information from web sources. Use this function to perform a Google search and retrieve a list of websites related to the search term. After retrieving the URLs, you must call the 'run_crawl_page' function to visit and gather details from each site. The search results are intended to guide the selection of relevant links for deeper exploration.")
-        .AddParameter("search_term", PropertyDefinition.DefineString("The search term to be used for the Google search."))
-        .AddParameter("agent_location", PropertyDefinition.DefineString("The agent location that will execute the command, optional. Specify which agent will perform the operation if relevant."))
-        .AddParameter("number_lines", PropertyDefinition.DefineInteger("Number of lines to return from the command output. Limit this to manage the amount of search results returned. Larger values may retrieve more links, but use higher limits cautiously."))
-        .AddParameter("page", PropertyDefinition.DefineInteger("The page of search results to return, allowing pagination through multiple search results pages."))
-        .Validate()
-        .Build();
-}
-
-private FunctionDefinition BuildCrawlPageFunction()
-{
-    return new FunctionDefinitionBuilder("run_crawl_page", 
-        "Website crawler to extract information from a webpage. Use this function to read the text and hyperlinks on a given webpage. When URLs are returned from 'run_search_web', call this function on relevant URLs to gather content. If necessary, you can follow additional links on the page to perform further research.")
-        .AddParameter("url", PropertyDefinition.DefineString("The URL of the page to crawl."))
-        .AddParameter("agent_location", PropertyDefinition.DefineString("The agent location that will execute the command, optional. Specify which agent will perform the operation if relevant."))
-        .AddParameter("number_lines", PropertyDefinition.DefineInteger("Number of lines to return from the command output. Limit this to manage the amount of content returned."))
-        .AddParameter("page", PropertyDefinition.DefineInteger("The page of content to return, allowing pagination through large pages of data."))
-        .Validate()
-        .Build();
-}
-
-
 
 
     private FunctionDefinition BuildGetAgentsFunction()
@@ -217,20 +197,36 @@ private FunctionDefinition BuildCrawlPageFunction()
     public List<ToolDefinition> Tools => _tools;
 
     public List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj)
+{
+    string content = "You are a network monitoring and security assistant. Use the tools where necessary to assist the user. Your name is TurboLLM, and you are faster than FreeLLM.";
+
+    content += "When calling functions, **only include parameters that are strictly necessary for the operation**. Do not include optional parameters unless they are specifically provided by the user or required to fulfill the request. Leave out fields with null or default values. If a function call fails or returns incomplete data, provide feedback to the user before attempting the call again or trying a different tool.";
+    
+    if (serviceObj.IsUserLoggedIn) 
     {
-        string content = "You are a network monitoring assistant. Use the tools where necessary to assist the user. Your name is TurboLLM and you are faster than FreeLLM. ";
-
-        content += "When calling functions, **only include parameters that are strictly necessary for the operation**. Do not include optional parameters unless they are specifically provided by the user or required to fulfill the request. Leave out fields with null or default values. If a Function call fails or returns no data give feedback to the user before calling the function again.";
-        if (serviceObj.IsUserLoggedIn) content += $" The user logged in at {currentTime} with email {serviceObj.UserInfo.Email}.";
-        else { content += $" The user is not logged in, the time is {currentTime}, ask the user for an email to add hosts etc."; }
-
-        var chatMessage = new ChatMessage()
-        {
-            Role = "system",
-            Content = content
-        };
-        var chatMessages = new List<ChatMessage>();
-        chatMessages.Add(chatMessage);
-        return chatMessages;
+        content += $" The user logged in at {currentTime} with email {serviceObj.UserInfo.Email}.";
     }
+    else 
+    {
+        content += $" The user is not logged in, the time is {currentTime}, ask the user for an email to add hosts or access specific tools.";
+    }
+
+    content += " Ensure that any function calls or tools you use align with the user's request. Use only the tools necessary for the task. For failed function calls, provide feedback about the issue before retrying or switching tools.";
+    
+    content += " If large datasets are returned, summarize the data and ask if the user would like more details. Avoid displaying sensitive information unless explicitly requested by the user.";
+    
+    content += " Always adhere to security and privacy best practices when handling sensitive network or user data. Do not display or log confidential information unnecessarily.";
+    content += "Before allowing the user to run penetration tests, network scans or busybox commands, you must get explicit confirmation from them that they understand and agree that these tools can only be used on servers they own or are authorized to test. Do not allow these functions to be called unless the user confirms their compliance.";
+
+
+    var chatMessage = new ChatMessage()
+    {
+        Role = "system",
+        Content = content
+    };
+    var chatMessages = new List<ChatMessage>();
+    chatMessages.Add(chatMessage);
+    return chatMessages;
+}
+
 }
