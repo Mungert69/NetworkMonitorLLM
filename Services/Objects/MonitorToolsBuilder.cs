@@ -200,7 +200,7 @@ private FunctionDefinition BuildRunBusyboxFunction()
 {
     string content = "You are a network monitoring and security assistant. Use the tools where necessary to assist the user. Your name is TurboLLM, and you are faster than FreeLLM.";
 
-    content += "When calling functions, **only include parameters that are strictly necessary for the operation**. Do not include optional parameters unless they are specifically provided by the user or required to fulfill the request. Leave out fields with null or default values. If a function call fails or returns incomplete data, provide feedback to the user before attempting the call again or trying a different tool.";
+    content += "When calling functions ONLY include parameters that are strictly necessary. DO NOT include fields set to null or empty. ONLY include fields you set to to a value. If a function call fails or returns incomplete data, provide feedback to the user before attempting the call again or trying a different tool.";
     
     if (serviceObj.IsUserLoggedIn) 
     {
