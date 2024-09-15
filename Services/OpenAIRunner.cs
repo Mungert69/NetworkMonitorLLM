@@ -52,7 +52,7 @@ public class OpenAIRunner : ILLMRunner
     public bool IsStateReady { get => _isStateReady; }
     public bool IsStateStarting { get => _isStateStarting; }
     public bool IsStateFailed { get => _isStateFailed; }
-    #pragma warning disable CS8618 
+#pragma warning disable CS8618
     public OpenAIRunner(ILogger<OpenAIRunner> logger, ILLMResponseProcessor responseProcessor, OpenAIService openAiService, ISystemParamsHelper systemParamsHelper, LLMServiceObj serviceObj, SemaphoreSlim openAIRunnerSemaphore)
     {
         _logger = logger;
@@ -175,7 +175,7 @@ public class OpenAIRunner : ILLMRunner
                         foreach (var fnCall in choice.Message.ToolCalls)
                         {
 
-                            await HandleFunctionCallAsync(serviceObj, fnCall, responseServiceObj,assistantChatMessage);
+                            await HandleFunctionCallAsync(serviceObj, fnCall, responseServiceObj, assistantChatMessage);
                         }
                     }
                     else
@@ -184,8 +184,12 @@ public class OpenAIRunner : ILLMRunner
                     }
 
 
-                    history.AddRange(messageHistory);
-                    if (!string.IsNullOrEmpty(assistantChatMessage.Content)) history.Add(assistantChatMessage);
+
+                    if (!string.IsNullOrEmpty(assistantChatMessage.Content))
+                    {
+                        history.AddRange(messageHistory);
+                        history.Add(assistantChatMessage);
+                    }
                     TruncateTokens(history, serviceObj);
 
                 }
@@ -319,7 +323,8 @@ public class OpenAIRunner : ILLMRunner
 
         responseServiceObj.LlmMessage = "Function Call: " + functionName + " " + json + "\n";
         if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOuputInChunks(responseServiceObj);
-        assistantChatMessage.Content = $"Please wait I am calling the function {functionName}. Some functions take a long time to complete so please be patient...";
+        // This is disabled until I find out how to set this without confusing chatgpt
+        //assistantChatMessage.Content = $"Please wait I am calling the function {functionName}. Some functions take a long time to complete so please be patient...";
     }
 
     private async Task ProcessAssistantMessageAsync(ChatChoiceResponse choice, LLMServiceObj responseServiceObj, ChatMessage assistantChatMessage, List<ChatMessage> messageHistory, List<ChatMessage> history, LLMServiceObj serviceObj)
