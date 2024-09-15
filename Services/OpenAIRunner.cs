@@ -143,7 +143,7 @@ public class OpenAIRunner : ILLMRunner
             else
             {
                 chatMessage = ChatMessage.FromUser(serviceObj.UserInput);
-                responseServiceObj.LlmMessage = "User: " + serviceObj.UserInput + "\n\n";
+                responseServiceObj.LlmMessage = "<User:> " + serviceObj.UserInput + "\n\n";
                 if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
                 messageHistory.Add(chatMessage);
             }
@@ -205,7 +205,7 @@ public class OpenAIRunner : ILLMRunner
             }
 
         }
-        catch (Exception ex)
+        catch 
         {
             throw;
         }
@@ -241,7 +241,7 @@ public class OpenAIRunner : ILLMRunner
 
         // Add the response content to the corresponding chat message
         funcResponseChatMessage.Content = serviceObj.UserInput;
-        responseServiceObj.LlmMessage = "Function Response: " + serviceObj.UserInput + "\n\n";
+        responseServiceObj.LlmMessage = "<Function Response:> " + serviceObj.UserInput + "\n\n";
 
         // Process the LLM output if it's the primary LLM
         if (_isPrimaryLlm) _responseProcessor.ProcessLLMOutput(responseServiceObj);
@@ -249,10 +249,10 @@ public class OpenAIRunner : ILLMRunner
         // Check if there are any pending function calls associated with the current message
         _pendingFunctionCalls.TryGetValue(serviceObj.MessageID, out var funcCallChatMessage);
 
-        if (funcCallChatMessage != null)
+        if (funcCallChatMessage != null && funcCallChatMessage.ToolCalls!=null)
         {
             bool allResponsesReceived = funcCallChatMessage.ToolCalls
-                .All(tc => _pendingFunctionResponses.ContainsKey(tc.Id));
+                .All(tc => _pendingFunctionResponses.ContainsKey(tc.Id!));
 
 
             if (allResponsesReceived)
@@ -261,10 +261,10 @@ public class OpenAIRunner : ILLMRunner
                 messageHistory.Add(funcCallChatMessage);
                 foreach (var toolCall in funcCallChatMessage.ToolCalls)
                 {
-                    if (_pendingFunctionResponses.TryGetValue(toolCall.Id, out var response))
+                    if (_pendingFunctionResponses.TryGetValue(toolCall.Id!, out var response))
                     {
                         messageHistory.Add(response);
-                        _pendingFunctionResponses.TryRemove(toolCall.Id, out _);
+                        _pendingFunctionResponses.TryRemove(toolCall.Id!, out _);
                     }
                 }
 
@@ -293,12 +293,13 @@ public class OpenAIRunner : ILLMRunner
     private async Task HandleFunctionCallAsync(LLMServiceObj serviceObj, ToolCall fnCall, LLMServiceObj responseServiceObj, ChatMessage assistantChatMessage)
     {
         var fn = fnCall.FunctionCall;
-        string functionName = fn?.Name ?? "N/A";
-
-        if (fnCall.Id == null)
+       
+        if (fn==null || fnCall.Id == null)
         {
             throw new Exception($" {_serviceID} Assistant OpenAI Error : Api call returned a Function with no Id");
         }
+         string functionName = fn?.Name ?? "N/A";
+
 
         serviceObj.FunctionCallId = fnCall.Id;
         serviceObj.FunctionName = functionName;
@@ -306,7 +307,7 @@ public class OpenAIRunner : ILLMRunner
 
         _logger.LogInformation($"Function call detected: {functionName}");
 
-        var json = JsonSerializer.Serialize(fn.ParseArguments());
+        var json = JsonSerializer.Serialize(fn!.ParseArguments());
         responseServiceObj.UserInput = serviceObj.UserInput;
         responseServiceObj.LlmMessage = "</functioncall>";
         if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
@@ -321,7 +322,7 @@ public class OpenAIRunner : ILLMRunner
 
         await _responseProcessor.ProcessFunctionCall(functionResponseServiceObj);
 
-        responseServiceObj.LlmMessage = "Function Call: " + functionName + " " + json + "\n";
+        responseServiceObj.LlmMessage = "<Function Call:> " + functionName + " " + json + "\n";
         if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOuputInChunks(responseServiceObj);
         // This is disabled until I find out how to set this without confusing chatgpt
         //assistantChatMessage.Content = $"Please wait I am calling the function {functionName}. Some functions take a long time to complete so please be patient...";
@@ -336,7 +337,7 @@ public class OpenAIRunner : ILLMRunner
         {
             assistantChatMessage.Content = responseChoiceStr;
             responseServiceObj.IsFunctionCallResponse = false;
-            responseServiceObj.LlmMessage = "Assistant: " + responseChoiceStr + "\n\n";
+            responseServiceObj.LlmMessage = "<Assistant:> " + responseChoiceStr + "\n\n";
             if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOuputInChunks(responseServiceObj);
             else
             {

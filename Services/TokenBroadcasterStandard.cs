@@ -82,7 +82,7 @@ public class TokenBroadcasterStandard : ITokenBroadcaster
                 if (line.Equals(userInput + "\n") || line.StartsWith(copyUserInput))
                 {
                     var lineServiceObj = new LLMServiceObj(serviceObj);
-                    lineServiceObj.LlmMessage = "\nAssistant: ";
+                    lineServiceObj.LlmMessage = "\n<Assistant:> ";
                     if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(lineServiceObj);
                 }
                 else
