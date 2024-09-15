@@ -69,15 +69,19 @@ public class LLMProcessRunner : ILLMRunner
         if (mlParams.LlmVersion == "func_3.1" || mlParams.LlmVersion == "func_3.2") extraReversePrompt = " -r \"<|eom_id|>\" ";
 
 
-        if (_startServiceoObj.UserInfo.AccountType == null) { 
-            _startServiceoObj.UserInfo.AccountType="Free";
+        if (_startServiceoObj.UserInfo.AccountType == null)
+        {
+            _startServiceoObj.UserInfo.AccountType = "Free";
             _logger.LogError($" Error : User {_startServiceoObj.UserInfo.UserID} account type is null setting to Free as default");
         }
-        string permissionSuffix = AccountTypeFactory.GetPermissionSuffix(
-           _startServiceoObj.UserInfo.AccountType ,
-           _startServiceoObj.LlmSessionStartName,
-           _startServiceoObj.LlmChainStartName
-       );
+
+        string permissionSuffix = "";
+        if (!_mlParams.StartOnlyOneFreeLLM) permissionSuffix = AccountTypeFactory.GetPermissionSuffix(
+            _startServiceoObj.UserInfo.AccountType,
+            _startServiceoObj.LlmSessionStartName,
+            _startServiceoObj.LlmChainStartName
+        );
+
         var promptName = mlParams.LlmSystemPrompt + permissionSuffix;
         string contextFileName;
 
@@ -85,7 +89,7 @@ public class LLMProcessRunner : ILLMRunner
 
         if (splitFileName.Length > 1)
         {
-           contextFileName = splitFileName[0] + permissionSuffix + ".gguf";
+            contextFileName = splitFileName[0] + permissionSuffix + ".gguf";
         }
         else
         {
@@ -103,9 +107,11 @@ public class LLMProcessRunner : ILLMRunner
     {
         _isStateStarting = true;
         _isStateReady = false;
+        if (_mlParams.StartOnlyOneFreeLLM && serviceObj.LlmChainStartName != "monitor") throw new Exception($"The advanced {serviceObj.LlmChainStartName} assistant is only available with TurboLLM. However the basic monitor assistant is still available");
         await _processRunnerSemaphore.WaitAsync(); // Wait to enter the semaphore
         try
         {
+
             if (_processes.ContainsKey(serviceObj.SessionId))
                 throw new Exception("FreeLLM Assistant already running");
             _logger.LogInformation($" LLM Service : Start Process for sessionsId {serviceObj.SessionId}");
@@ -140,7 +146,13 @@ public class LLMProcessRunner : ILLMRunner
             {
                 Email = serviceObj.UserInfo.Email,
             };
-            input = PrintPropertiesAsJson.PrintUserInfoPropertiesWithDate(user, serviceObj.IsUserLoggedIn, currentTime.ToString("yyyy-MM-ddTHH:mm:ss"), false);
+            if (_mlParams.StartOnlyOneFreeLLM)
+            {
+
+                input = $" Your account type is {serviceObj.UserInfo.AccountType} however be aware that this is FreeLLM and advanced assistant features are not available. If you have tokens available use TurboLLM : ";
+            }
+            input += PrintPropertiesAsJson.PrintUserInfoPropertiesWithDate(user, serviceObj.IsUserLoggedIn, currentTime.ToString("yyyy-MM-ddTHH:mm:ss"), false);
+
         }
         else
         {
@@ -152,6 +164,7 @@ public class LLMProcessRunner : ILLMRunner
         serviceObj.IsFunctionCallResponse = false;
         _sendOutput = false;
         await SendInputAndGetResponse(serviceObj);
+
         _logger.LogInformation($"LLM process started for session {serviceObj.SessionId}");
         _sendOutput = true;
         _isStateStarting = false;
@@ -295,8 +308,8 @@ public class LLMProcessRunner : ILLMRunner
 
             if (_sendOutput)
             {
-              userInput = userInput.Replace("\r\n", "\\\n").Replace("\n", "\\\n");
-              if (!serviceObj.IsFunctionCallResponse)
+                userInput = userInput.Replace("\r\n", "\\\n").Replace("\n", "\\\n");
+                if (!serviceObj.IsFunctionCallResponse)
                 {
                     if (_mlParams.LlmVersion == "func_2.4") userInput = "<|from|> user\\\n<|recipient|> all\\\n<|content|>" + userInput;
                     else if (_mlParams.LlmVersion == "func_2.5") userInput = "<|start_header_id|>user<|end_header_id|>" + userInput;
