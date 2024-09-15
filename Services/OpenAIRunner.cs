@@ -52,6 +52,7 @@ public class OpenAIRunner : ILLMRunner
     public bool IsStateReady { get => _isStateReady; }
     public bool IsStateStarting { get => _isStateStarting; }
     public bool IsStateFailed { get => _isStateFailed; }
+    #pragma warning disable CS8618 
     public OpenAIRunner(ILogger<OpenAIRunner> logger, ILLMResponseProcessor responseProcessor, OpenAIService openAiService, ISystemParamsHelper systemParamsHelper, LLMServiceObj serviceObj, SemaphoreSlim openAIRunnerSemaphore)
     {
         _logger = logger;
@@ -68,7 +69,7 @@ public class OpenAIRunner : ILLMRunner
         _sessionHistories = new ConcurrentDictionary<string, List<ChatMessage>>();
 
     }
-
+#pragma warning restore CS8618
     public Task StartProcess(LLMServiceObj serviceObj, DateTime currentTime)
     {
         _isStateStarting = true;
@@ -174,7 +175,7 @@ public class OpenAIRunner : ILLMRunner
                         foreach (var fnCall in choice.Message.ToolCalls)
                         {
 
-                            await HandleFunctionCallAsync(serviceObj, fnCall, responseServiceObj, assistantChatMessage);
+                            await HandleFunctionCallAsync(serviceObj, fnCall, responseServiceObj);
                         }
                     }
                     else
@@ -184,7 +185,7 @@ public class OpenAIRunner : ILLMRunner
 
 
                     history.Concat(messageHistory);
-                    history.Add(assistantChatMessage);
+                    if (!string.IsNullOrEmpty(assistantChatMessage.Content)) history.Add(assistantChatMessage);
                     TruncateTokens(history, serviceObj);
 
                 }
@@ -285,7 +286,7 @@ public class OpenAIRunner : ILLMRunner
         return false; // Indicates that the function call response could not be fully handled
     }
 
-    private async Task HandleFunctionCallAsync(LLMServiceObj serviceObj, ToolCall fnCall, LLMServiceObj responseServiceObj, ChatMessage assistantChatMessage)
+    private async Task HandleFunctionCallAsync(LLMServiceObj serviceObj, ToolCall fnCall, LLMServiceObj responseServiceObj)
     {
         var fn = fnCall.FunctionCall;
         string functionName = fn?.Name ?? "N/A";
@@ -318,7 +319,7 @@ public class OpenAIRunner : ILLMRunner
 
         responseServiceObj.LlmMessage = "Function Call: " + functionName + " " + json + "\n";
         if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOuputInChunks(responseServiceObj);
-        assistantChatMessage.Content = $"Please wait I am calling the function {functionName}. Some functions take a long time to complete so please be patient...";
+        //assistantChatMessage.Content = $"Please wait I am calling the function {functionName}. Some functions take a long time to complete so please be patient...";
     }
 
     private async Task ProcessAssistantMessageAsync(ChatChoiceResponse choice, LLMServiceObj responseServiceObj, ChatMessage assistantChatMessage, List<ChatMessage> messageHistory, List<ChatMessage> history, LLMServiceObj serviceObj)

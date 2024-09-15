@@ -56,7 +56,7 @@ namespace NetworkMonitor.LLM
                           });
             var openAiService = new OpenAIService(new OpenAiOptions()
             {
-                ApiKey = Configuration["OpenAIApiKey"]
+                ApiKey = Configuration["OpenAIApiKey"] ?? "Api Key Missing"
             });
             services.AddSingleton(
                     openAiService
