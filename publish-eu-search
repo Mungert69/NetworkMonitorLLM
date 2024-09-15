@@ -1,4 +1,4 @@
-systemctl stop NetworkMonitorLLM.service
+systemctl stop NM-LLM-EU-Search.service
 cp appsettings-eu-search.json appsettings.json
 dotnet publish NetworkMonitorLLM.csproj --os linux --arch x64  --output ../services/llm-eu-search -c Release --self-contained true 
-systemctl start NetworkMonitorLLM.service
+systemctl start NM-LLM-EU-Search.service

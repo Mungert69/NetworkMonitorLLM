@@ -1,4 +1,4 @@
-systemctl stop NetworkMonitorLLM-US.service
+systemctl stop NM-LLM-US-Nmap.service
 cp appsettings-us-nmap.json appsettings.json
 dotnet publish NetworkMonitorLLM.csproj --os linux --arch x64  --output ../services/llm-us-nmap -c Release --self-contained true 
-systemctl start NetworkMonitorLLM-US.service
+systemctl start NM-LLM-US-Nmap.service

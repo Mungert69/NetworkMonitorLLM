@@ -1,14 +1,14 @@
 [Unit]
-Description=Network Monitor Processor Service
+Description=Network Monitor LLM US Meta
 
 [Service]
 # will set the Current Working Directory (CWD)
-WorkingDirectory=/home/mahadeva/code/services/llm
+WorkingDirectory=/home/mahadeva/code/services/llm-us-meta
 # systemd will run this executable to start the service
 # if /usr/bin/dotnet doesn't work, use `which dotnet` to find correct dotnet executable path
-ExecStart=/usr/bin/dotnet /home/mahadeva/code/services/llm/NetworkMonitorLLM.dll
+ExecStart=/usr/bin/dotnet /home/mahadeva/code/services/llm-us-meta/NetworkMonitorLLM.dll
 # to query logs using journalctl, set a logical name here  
-SyslogIdentifier=NetworkMonitorLLM
+SyslogIdentifier=NM-LLM-US-Meta
 
 # Use your username to keep things simple, for production scenario's I recommend a dedicated user/group.
 # If you pick a different user, make sure dotnet and all permissions are set correctly to run the app.
