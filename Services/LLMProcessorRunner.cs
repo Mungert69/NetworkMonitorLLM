@@ -75,7 +75,7 @@ public class LLMProcessRunner : ILLMRunner
             _logger.LogError($" Error : User {_startServiceoObj.UserInfo.UserID} account type is null setting to Free as default");
         }
 
-        string permissionSuffix = "";
+        string permissionSuffix = "_free";
         if (!_mlParams.StartOnlyOneFreeLLM) permissionSuffix = AccountTypeFactory.GetPermissionSuffix(
             _startServiceoObj.UserInfo.AccountType,
             _startServiceoObj.LlmSessionStartName,
@@ -146,11 +146,7 @@ public class LLMProcessRunner : ILLMRunner
             {
                 Email = serviceObj.UserInfo.Email,
             };
-            if (_mlParams.StartOnlyOneFreeLLM)
-            {
-
-                input = $" Your account type is {serviceObj.UserInfo.AccountType} however be aware that this is FreeLLM and advanced assistant features are not available. If you have tokens available use TurboLLM : ";
-            }
+           
             input += PrintPropertiesAsJson.PrintUserInfoPropertiesWithDate(user, serviceObj.IsUserLoggedIn, currentTime.ToString("yyyy-MM-ddTHH:mm:ss"), false);
 
         }
