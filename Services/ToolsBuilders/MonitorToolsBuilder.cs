@@ -43,7 +43,7 @@ public class MonitorToolsBuilder : IToolsBuilder
 
         // Assuming these function references are defined in the current context
         var accountTypeFunctions = AccountTypeFactory.GetFunctionsForAccountType<FunctionDefinition>(
-            userInfo.AccountType,
+            userInfo.AccountType!,
             fn_add_host,
             fn_edit_host,
             fn_get_host_data,

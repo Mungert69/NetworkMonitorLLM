@@ -19,9 +19,7 @@ using Microsoft.Extensions.Logging;
 using NetworkMonitor.Objects.ServiceMessage;
 using NetworkMonitor.Objects;
 using NetworkMonitor.Utils.Helpers;
-using Microsoft.IdentityModel.Tokens;
-using NetworkMonitor.Service.Services.OpenAI;
-using OpenAI.ObjectModels.ResponseModels;
+using NetworkMonitor.Objects.Factory;
 
 namespace NetworkMonitor.LLM.Services;
 
@@ -47,7 +45,7 @@ public class OpenAIRunner : ILLMRunner
     private bool _isPrimaryLlm;
     //private bool _isFuncCalled;
     private string _serviceID;
-    private int _maxTokens = 32000;
+    private int _maxTokens = 2000;
 
     public bool IsStateReady { get => _isStateReady; }
     public bool IsStateStarting { get => _isStateStarting; }
@@ -65,6 +63,7 @@ public class OpenAIRunner : ILLMRunner
         if (_serviceID == "nmap") _toolsBuilder = new NmapToolsBuilder();
         if (_serviceID == "meta") _toolsBuilder = new MetaToolsBuilder();
         if (_serviceID == "search") _toolsBuilder = new SearchToolsBuilder();
+        _maxTokens=AccountTypeFactory.GetAccountTypeByName(serviceObj.UserInfo.AccountType!).ContextSize;
         _activeSessions = new ConcurrentDictionary<string, DateTime>();
         _sessionHistories = new ConcurrentDictionary<string, List<ChatMessage>>();
 

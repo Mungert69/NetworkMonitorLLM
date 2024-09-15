@@ -38,7 +38,7 @@ public class ProcessWrapper
     }
     public virtual Task<string> StandardOutputReadLineAsync()
     {
-        return _process.StandardOutput.ReadLineAsync();
+        return _process.StandardOutput.ReadLineAsync()!;
     }
     public virtual Task StandardInputWriteLineAsync(string input)
     {
@@ -75,7 +75,7 @@ public class StreamReaderWrapper : IStreamReader
     }
     public Task<string> ReadLineAsync()
     {
-        return _innerStreamReader.ReadLineAsync();
+        return _innerStreamReader.ReadLineAsync()!;
     }
     public async Task<int> ReadAsync(byte[] buffer, int offset, int count)
     {

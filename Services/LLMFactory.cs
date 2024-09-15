@@ -43,7 +43,7 @@ public class LLMProcessRunnerFactory : ILLMProcessRunnerFactory
     
     public ILLMRunner CreateRunner(IServiceProvider serviceProvider,LLMServiceObj serviceObj, SemaphoreSlim? _runnerSemaphore)
     {
-        return new LLMProcessRunner(serviceProvider.GetRequiredService<ILogger<LLMProcessRunner>>(),serviceProvider.GetRequiredService<ILLMResponseProcessor>(),serviceProvider.GetRequiredService<ISystemParamsHelper >(),serviceObj,_runnerSemaphore);
+        return new LLMProcessRunner(serviceProvider.GetRequiredService<ILogger<LLMProcessRunner>>(),serviceProvider.GetRequiredService<ILLMResponseProcessor>(),serviceProvider.GetRequiredService<ISystemParamsHelper >(),serviceObj,_runnerSemaphore!);
     }
 }
 
@@ -52,6 +52,6 @@ public class OpenAIRunnerFactory : IOpenAIRunnerFactory
    
     public ILLMRunner CreateRunner(IServiceProvider serviceProvider,LLMServiceObj serviceObj, SemaphoreSlim? _runnerSemaphore)
     {
-         return new OpenAIRunner(serviceProvider.GetRequiredService<ILogger<OpenAIRunner>>(),serviceProvider.GetRequiredService<ILLMResponseProcessor >(),serviceProvider.GetRequiredService<OpenAIService>(),serviceProvider.GetRequiredService<ISystemParamsHelper >(),serviceObj,_runnerSemaphore);
+         return new OpenAIRunner(serviceProvider.GetRequiredService<ILogger<OpenAIRunner>>(),serviceProvider.GetRequiredService<ILLMResponseProcessor >(),serviceProvider.GetRequiredService<OpenAIService>(),serviceProvider.GetRequiredService<ISystemParamsHelper >(),serviceObj,_runnerSemaphore!);
     }
 }

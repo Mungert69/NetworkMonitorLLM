@@ -18,7 +18,7 @@ namespace NetworkMonitor.LLM.Services
         //public event Func<object, string, Task> LineReceived;
         private CancellationTokenSource _cancellationTokenSource;
         private bool _isPrimaryLlm;
-        private bool _isFuncCalled;
+        private bool _isFuncCalled=false;
 
         public TokenBroadcasterFunc_3_1(ILLMResponseProcessor responseProcessor, ILogger logger)
         {
