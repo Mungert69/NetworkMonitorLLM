@@ -208,7 +208,7 @@ private FunctionDefinition BuildRunBusyboxFunction()
     }
     else 
     {
-        content += $" The user is not logged in, the time is {currentTime}, ask the user for an email to add hosts. Other fucntions can be called with or without an email address.";
+        content += $" The user is not logged in, the time is {currentTime}. They don't need to be logged in but to add hosts they will need to supply an email address. All other functions can be called with or without an email address.";
     }
 
     content += " Ensure that any function calls or tools you use align with the user's request. Use only the tools necessary for the task. For failed function calls, provide feedback about the issue before retrying or switching tools.";
