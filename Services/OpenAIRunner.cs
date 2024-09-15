@@ -175,7 +175,7 @@ public class OpenAIRunner : ILLMRunner
                         foreach (var fnCall in choice.Message.ToolCalls)
                         {
 
-                            await HandleFunctionCallAsync(serviceObj, fnCall, responseServiceObj);
+                            await HandleFunctionCallAsync(serviceObj, fnCall, responseServiceObj,assistantChatMessage);
                         }
                     }
                     else
@@ -184,7 +184,7 @@ public class OpenAIRunner : ILLMRunner
                     }
 
 
-                    history.Concat(messageHistory);
+                    history.AddRange(messageHistory);
                     if (!string.IsNullOrEmpty(assistantChatMessage.Content)) history.Add(assistantChatMessage);
                     TruncateTokens(history, serviceObj);
 
@@ -286,7 +286,7 @@ public class OpenAIRunner : ILLMRunner
         return false; // Indicates that the function call response could not be fully handled
     }
 
-    private async Task HandleFunctionCallAsync(LLMServiceObj serviceObj, ToolCall fnCall, LLMServiceObj responseServiceObj)
+    private async Task HandleFunctionCallAsync(LLMServiceObj serviceObj, ToolCall fnCall, LLMServiceObj responseServiceObj, ChatMessage assistantChatMessage)
     {
         var fn = fnCall.FunctionCall;
         string functionName = fn?.Name ?? "N/A";
@@ -319,7 +319,7 @@ public class OpenAIRunner : ILLMRunner
 
         responseServiceObj.LlmMessage = "Function Call: " + functionName + " " + json + "\n";
         if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOuputInChunks(responseServiceObj);
-        //assistantChatMessage.Content = $"Please wait I am calling the function {functionName}. Some functions take a long time to complete so please be patient...";
+        assistantChatMessage.Content = $"Please wait I am calling the function {functionName}. Some functions take a long time to complete so please be patient...";
     }
 
     private async Task ProcessAssistantMessageAsync(ChatChoiceResponse choice, LLMServiceObj responseServiceObj, ChatMessage assistantChatMessage, List<ChatMessage> messageHistory, List<ChatMessage> history, LLMServiceObj serviceObj)
