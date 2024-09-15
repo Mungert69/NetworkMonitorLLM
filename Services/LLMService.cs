@@ -54,7 +54,7 @@ public class LLMService : ILLMService
         llmServiceObj.SessionId = llmServiceObj.RequestSessionId;
         try
         {
-            DateTime usersCurrentTime=DateTime.UtcNow;
+            DateTime usersCurrentTime = DateTime.UtcNow;
             try
             {
                 var clientTimeZone = llmServiceObj.TimeZone != null
@@ -62,7 +62,8 @@ public class LLMService : ILLMService
                                             : TimeZoneInfo.Utc;
                 usersCurrentTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, clientTimeZone);
             }
-            catch { // Just continue and use Utc time zone
+            catch
+            { // Just continue and use Utc time zone
             }
 
             bool exists = _sessions.TryGetValue(llmServiceObj.SessionId, out var checkSession);
@@ -85,17 +86,17 @@ public class LLMService : ILLMService
                 switch (llmServiceObj.LLMRunnerType)
                 {
                     case "TurboLLM":
-                        runner = _openAIRunnerFactory.CreateRunner(_serviceProvider, llmServiceObj ,_openAIRunnerSemaphore);
+                        runner = _openAIRunnerFactory.CreateRunner(_serviceProvider, llmServiceObj, _openAIRunnerSemaphore);
                         break;
                     case "FreeLLM":
-                        runner = _processRunnerFactory.CreateRunner(_serviceProvider, llmServiceObj ,_processRunnerSemaphore);
+                        runner = _processRunnerFactory.CreateRunner(_serviceProvider, llmServiceObj, _processRunnerSemaphore);
                         break;
                     // Add more cases for other runner types if needed
                     default:
                         throw new ArgumentException($"Invalid runner type: {llmServiceObj.LLMRunnerType}");
                 }
                 string extraMesage = "";
-                if (llmServiceObj.LLMRunnerType == "FreeLLM") extraMesage = $" , this can take up to {_mlParams.LlmSystemPromptTimeout } seconds. If the session is not used for {_mlParams.LlmSessionIdleTimeout} minutes it will be closed";
+                if (llmServiceObj.LLMRunnerType == "FreeLLM") extraMesage = $" , this can take up to {_mlParams.LlmSystemPromptTimeout} seconds. If the session is not used for {_mlParams.LlmSessionIdleTimeout} minutes it will be closed";
                 llmServiceObj.LlmMessage = MessageHelper.InfoMessage($" Starting {llmServiceObj.LLMRunnerType} {_serviceID} Assistant {extraMesage}");
                 await _rabbitRepo.PublishAsync<LLMServiceObj>("llmServiceMessage", llmServiceObj);
 
@@ -135,12 +136,20 @@ public class LLMService : ILLMService
         {
             if (_sessions.TryGetValue(llmServiceObj.SessionId, out var session))
             {
-                await session.Runner.RemoveProcess(llmServiceObj.SessionId);
-                _sessions.TryRemove(llmServiceObj.SessionId, out _);
-                await _rabbitRepo.PublishAsync<LLMServiceObj>("llmSessionEnded", llmServiceObj);
+                if (session.Runner != null)
+                {
+                    await session.Runner.RemoveProcess(llmServiceObj.SessionId);
+                    _sessions.TryRemove(llmServiceObj.SessionId, out _);
+                    await _rabbitRepo.PublishAsync<LLMServiceObj>("llmSessionEnded", llmServiceObj);
 
-                llmServiceObj.ResultMessage = " Success : LLMService Removed Session and sent LLM Session Ended message.";
-                llmServiceObj.ResultSuccess = true;
+                    llmServiceObj.ResultMessage = $" Success : LLMService Removed Session and sent LLM Session Ended message for sessionId {llmServiceObj.SessionId}.";
+                    llmServiceObj.ResultSuccess = true;
+                }
+                else
+                {
+                    llmServiceObj.ResultMessage = $" Error : LLMService trying to remove process the runner is already null for sessionId {llmServiceObj.SessionId}.";
+                    llmServiceObj.ResultSuccess = false;
+                }
             }
             else
             {
@@ -165,7 +174,7 @@ public class LLMService : ILLMService
     {
         var result = new ResultObj();
         Session? session = null;
-        bool isWarning = false;
+        //bool isWarning = false;
 
         if (llmServiceObj.SessionId == null || !_sessions.TryGetValue(llmServiceObj.SessionId, out session))
         {
@@ -178,6 +187,16 @@ public class LLMService : ILLMService
             try
             {
                 result.Success = true;
+                 if (session.Runner == null)
+                {
+                     result.Message = " Error : the assistant has no running process";
+                    result.Success = false;
+                    llmServiceObj.LlmMessage = MessageHelper.ErrorMessage(result.Message);
+                    await _rabbitRepo.PublishAsync<LLMServiceObj>("llmServiceMessage", llmServiceObj);
+                    return result;
+              
+                }
+                
                 if (session.Runner.IsStateStarting)
                 {
                     result.Message = " Please wait the assistant is starting...";
@@ -235,7 +254,7 @@ public interface ILLMResponseProcessor
     Task ProcessLLMOuputInChunks(LLMServiceObj serviceObj);
     Task ProcessFunctionCall(LLMServiceObj serviceObj);
     Task ProcessEnd(LLMServiceObj serviceObj);
-     Task UpdateTokensUsed(LLMServiceObj serviceObj);
+    Task UpdateTokensUsed(LLMServiceObj serviceObj);
     bool IsFunctionCallResponse(string input);
     bool SendOutput { get; set; }
 }
@@ -286,7 +305,7 @@ public class LLMResponseProcessor : ILLMResponseProcessor
         //return Task.CompletedTask;
     }
 
-     public async Task UpdateTokensUsed(LLMServiceObj serviceObj)
+    public async Task UpdateTokensUsed(LLMServiceObj serviceObj)
     {
         await _rabbitRepo.PublishAsync<LLMServiceObj>("llmUpdateTokensUsed", serviceObj);
         //return Task.CompletedTask;
@@ -302,13 +321,13 @@ public class LLMResponseProcessor : ILLMResponseProcessor
     {
         try
         {
-            if (input == "") return false;
-            FunctionCallData functionCallData = JsonSerializer.Deserialize<FunctionCallData>(input);
+            if (string.IsNullOrEmpty(input)) return false;
+            FunctionCallData functionCallData = JsonSerializer.Deserialize<FunctionCallData>(input) ?? new FunctionCallData();
             return true;
         }
         catch (Exception ex)
         {
-            //Console.WriteLine($"Error parsing JSON: {ex.Message}");
+            Console.WriteLine($"Error in IsFunctionCallResponse parsing JSON {input}: {ex.Message}");
             return false;
         }
     }
@@ -324,7 +343,7 @@ public class LLMResponseProcessor : ILLMResponseProcessor
         }
         catch (Exception ex)
         {
-            //Console.WriteLine($"Error parsing JSON: {ex.Message}");
+            Console.WriteLine($"Error in IsFunctionCallResponseCL parsing JSON {input}: {ex.Message}");
             return false;
         }
     }
@@ -338,5 +357,5 @@ public enum ResponseState { Initial, AwaitingInput, FunctionCallProcessed, Compl
 public class Session
 {
     public List<string> Responses { get; } = new List<string>();
-    public ILLMRunner Runner { get; set; }
+    public ILLMRunner? Runner { get; set; }
 }
