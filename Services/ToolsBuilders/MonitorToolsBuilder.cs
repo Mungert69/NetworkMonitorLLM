@@ -147,36 +147,36 @@ public class MonitorToolsBuilder : IToolsBuilder
 
    private FunctionDefinition BuildCallNmapFunction()
 {
-    return new FunctionDefinitionBuilder("call_security_expert", "Communicate a security assessment request to a remote security expert LLM. You will craft a detailed message describing the user's request for a security assessment, which may involve either network scans using Nmap or security checks using OpenSSL. The message should specify the type of assessment (e.g., vulnerability scan, SSL/TLS configuration check), the target (e.g., IP address, domain, or service), and any relevant parameters or instructions. Ensure the message clearly outlines the user's security goals. If the security expert LLM requires additional information, present these queries to the user in simple terms and assist in formulating the appropriate responses based on your understanding.")
+    return new FunctionDefinitionBuilder("call_security_expert", "Communicate a security assessment request to a remote security expert LLM. You will craft a detailed message describing the user's request for a security assessment, which may involve either network scans using Nmap or security checks using OpenSSL. The message should specify the type of assessment (e.g., vulnerability scan, SSL/TLS configuration check), the target (e.g., IP address, domain, or service), and any relevant parameters or instructions. Ensure the message clearly outlines the user's security goals. If the security expert LLM requires additional information, present these queries to the user in simple terms and assist in formulating the appropriate responses based on your understanding. Note to call this function the agent needs the nmap command available")
         .AddParameter("message", PropertyDefinition.DefineString("The message to be sent to the security expert LLM, detailing the assessment request and parameters, including scan type (Nmap or OpenSSL), target, and any special instructions."))
-        .AddParameter("agent_location", PropertyDefinition.DefineString("The agent location that will execute the assessment, optional. If provided, specify which agent will perform the scan or check."))
+        .AddParameter("agent_location", PropertyDefinition.DefineString("The agent location that will execute the secutiry assessment. If no location is specified ask the user to choose from available agents to ensure the scan is executed from the correct network or geographic location."))
         .Validate()
         .Build();
 }
 
 private FunctionDefinition BuildCallMetasploitFunction()
 {
-    return new FunctionDefinitionBuilder("call_penetration_expert", "Communicate a penetration testing request to a remote Metasploit expert LLM. You will craft a detailed message describing the user's request for penetration testing, which may involve running Metasploit modules for exploitation, scanning, or information gathering. The message should specify the module name, module options, target, and any additional instructions or parameters. If the Metasploit expert requires further details, present these questions to the user in simple terms and assist in formulating appropriate responses based on your understanding.")
+    return new FunctionDefinitionBuilder("call_penetration_expert", "Communicate a penetration testing request to a remote Metasploit expert LLM. You will craft a detailed message describing the user's request for penetration testing, which may involve running Metasploit modules for exploitation, scanning, or information gathering. The message should specify the module name, module options, target, and any additional instructions or parameters. If the Metasploit expert requires further details, present these questions to the user in simple terms and assist in formulating appropriate responses based on your understanding. Note to call this function the agent needs the msfconsole command available.")
         .AddParameter("message", PropertyDefinition.DefineString("The message to be sent to the Metasploit expert LLM, detailing the penetration testing request including the module name, module options, target, and any special instructions."))
-        .AddParameter("agent_location", PropertyDefinition.DefineString("The agent location that will execute the module, optional. If provided, specify which agent will perform the task."))
+        .AddParameter("agent_location", PropertyDefinition.DefineString("The agent location that will execute the penetration test. If no location is specified ask the user to choose from available agents to ensure the scan is executed from the correct network or geographic location."))
         .Validate()
         .Build();
 }
 
 private FunctionDefinition BuildCallSearchWebFunction()
 {
-    return new FunctionDefinitionBuilder("call_search_expert", "Communicate a web search request to a remote search expert LLM. You will craft a detailed message describing the user's search query, which may involve general information retrieval, fact-checking, or finding specific data. The message should specify the search terms, any filters or constraints, and the type of information needed. If the search expert LLM requires additional information, present these queries to the user in simple terms and assist in formulating the appropriate responses based on your understanding.")
+    return new FunctionDefinitionBuilder("call_search_expert", "Communicate a web search request to a remote search expert LLM. You will craft a detailed message describing the user's search query, which may involve general information retrieval, fact-checking, or finding specific data. The message should specify the search terms, any filters or constraints, and the type of information needed. If the search expert LLM requires additional information, present these queries to the user in simple terms and assist in formulating the appropriate responses based on your understanding. Note to call this function an agent needs the search command available.")
         .AddParameter("message", PropertyDefinition.DefineString("The message to be sent to the search expert LLM, detailing the search request including the query, any specific requirements, and context for the search."))
-        .AddParameter("agent_location", PropertyDefinition.DefineString("The agent location that will execute the search, optional. If provided, specify which agent will perform the search task."))
+        .AddParameter("agent_location", PropertyDefinition.DefineString("The agent location that will perform the web search. If no location is specified ask the user to choose from available agents to ensure the scan is executed from the correct network or geographic location."))
         .Validate()
         .Build();
 }
 
 private FunctionDefinition BuildRunBusyboxFunction()
 {
-    return new FunctionDefinitionBuilder("run_busybox_command", "Run a BusyBox command. Use BusyBox utilities to assist with other functions of the assistant as well as user requests. For instance, you might use BusyBox to gather network diagnostics, troubleshoot connectivity issues, monitor system performance, or perform basic file operations in response to a user's request.")
+    return new FunctionDefinitionBuilder("run_busybox_command", "Run a BusyBox command. Use BusyBox utilities to assist with other functions of the assistant as well as user requests. For instance, you might use BusyBox to gather network diagnostics, troubleshoot connectivity issues, monitor system performance, or perform basic file operations in response to a user's request. Note to call this function the agent needs the busybox command available")
         .AddParameter("command", PropertyDefinition.DefineString("The BusyBox command to be executed. Example commands: 'ls /tmp' to list files in the /tmp directory, 'ping -c 4 8.8.8.8' to ping Google's DNS server 4 times, or 'ifconfig' to display network interface configurations."))
-        .AddParameter("agent_location", PropertyDefinition.DefineString("The agent location that will execute the command, optional. Specify which agent will perform the operation if relevant."))
+        .AddParameter("agent_location", PropertyDefinition.DefineString("The agent location that will run the busybox command. If no location is specified ask the user to choose from available agents to ensure the scan is executed from the correct network or geographic location."))
         .AddParameter("number_lines", PropertyDefinition.DefineInteger("Number of lines to return from the command output. Use this parameter to limit the output. Larger values may return extensive data, so use higher limits cautiously."))
         .AddParameter("page", PropertyDefinition.DefineInteger("The page of lines to return. Use this to paginate through multiple lines of output if the command returns more data than the specified number of lines."))
         .Validate()
@@ -186,8 +186,8 @@ private FunctionDefinition BuildRunBusyboxFunction()
 
     private FunctionDefinition BuildGetAgentsFunction()
     {
-        return new FunctionDefinitionBuilder("get_agents", "Retrieve a list of monitoring agent details")
-            .AddParameter("detail_response", PropertyDefinition.DefineBoolean("Will this function return all agent details. Set to false if only require agent locations"))
+        return new FunctionDefinitionBuilder("get_agents", "Retrieve a list of monitoring agent details. Call this to give the user a list of agents to choose from. Note the agents with a Guid(UserId) in the strings are the user's local agents used for local network tasks. The other agents (Scanner - EU etc.) are internet based agents. Note : All commands  are avaiable to the agents unless they are contained in the DisabledCommands array. ")
+            .AddParameter("detail_response", PropertyDefinition.DefineBoolean("Will this function return all agent details. Set to false if only the agent locations and disabled commands are required. Set to true for full agent details."))
             .Validate()
             .Build();
     }
