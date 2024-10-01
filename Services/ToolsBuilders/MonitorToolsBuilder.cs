@@ -186,7 +186,7 @@ private FunctionDefinition BuildRunBusyboxFunction()
 
     private FunctionDefinition BuildGetAgentsFunction()
     {
-        return new FunctionDefinitionBuilder("get_agents", "Retrieve a list of monitoring agent details. Call this to give the user a list of agents to choose from. Note the agents with a Guid(UserId) in the strings are the user's local agents used for local network tasks. The other agents (Scanner - EU etc.) are internet based agents.")
+        return new FunctionDefinitionBuilder("get_agents", "Retrieve a list of monitoring agent details. Call this to give the user a list of agents to choose from. Note the agents with a Guid(UserId) in the strings are the user's local agents used for local network tasks. The other agents (Scanner - EU etc.) are internet based agents. If a local agent is not available direct the user to install any of the agents from this page : https://freenetworkmonitor.click/download ")
             .AddParameter("detail_response", PropertyDefinition.DefineBoolean("Will this function return all agent details. Set to false if only the agent location and function calling capabilities are required. Set to true for full agent details."))
             .Validate()
             .Build();
