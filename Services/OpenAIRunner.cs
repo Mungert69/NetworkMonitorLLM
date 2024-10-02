@@ -46,6 +46,7 @@ public class OpenAIRunner : ILLMRunner
     //private bool _isFuncCalled;
     private string _serviceID;
     private int _maxTokens = 2000;
+    private string _gptModel = "gpt-4o-mini";
 
     public bool IsStateReady { get => _isStateReady; }
     public bool IsStateStarting { get => _isStateStarting; }
@@ -59,6 +60,7 @@ public class OpenAIRunner : ILLMRunner
         _openAIRunnerSemaphore = openAIRunnerSemaphore;
         _serviceID = systemParamsHelper.GetSystemParams().ServiceID!;
         _maxTokens = systemParamsHelper.GetMLParams().LlmOpenAICtxSize;
+        _gptModel= systemParamsHelper.GetMLParams().LlmGptModel;
         if (_serviceID == "monitor") _toolsBuilder = new MonitorToolsBuilder(serviceObj.UserInfo);
         if (_serviceID == "nmap") _toolsBuilder = new NmapToolsBuilder();
         if (_serviceID == "meta") _toolsBuilder = new MetaToolsBuilder();
@@ -157,7 +159,7 @@ public class OpenAIRunner : ILLMRunner
                     Tools = _toolsBuilder.Tools, // Your pre-defined tools
                     ToolChoice = ToolChoice.Auto,
                     MaxTokens = 1000,
-                    Model = "gpt-4o-mini"
+                    Model = _gptModel
                 });
 
 
@@ -165,6 +167,9 @@ public class OpenAIRunner : ILLMRunner
                 {
 
                     responseServiceObj.TokensUsed = completionResult.Usage.TotalTokens;
+                    if (completionResult.Usage != null && completionResult.Usage.PromptTokensDetails != null) {
+                        _logger.LogInformation($"Cached Prompt Tokens {completionResult.Usage.PromptTokensDetails.CachedTokens}");
+                    }
                     ChatChoiceResponse choice = completionResult.Choices.First();
                     var responseChoiceStr = choice.Message.Content ?? "";
 
