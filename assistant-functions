@@ -1,0 +1,194 @@
+
+### **MonitorToolsBuilder**
+- **Tools:**
+  - **`add_host`**: Adds a new host to be monitored.
+    - Parameters:
+      - `detail_response`: Boolean. Echo all values set (default: false).
+      - `address`: String. Required. The host address.
+      - `endpoint`: Enum. Optional. Types: quantum, http, https, httphtml, icmp, dns, smtp, rawconnect.
+      - `port`: Number. Optional. Service port (0 if standard port for the endpoint type).
+      - `timeout`: Number. Optional. Timeout in milliseconds (default: 59000).
+      - `email`: String. Optional. Used if the user is not logged in for sending alerts.
+      - `agent_location`: String. Optional. Assigned if left blank.
+
+  - **`edit_host`**: Edits an existing host's monitoring configuration.
+    - Parameters:
+      - `detail_response`: Boolean. Echo all values set (default: false).
+      - `auth_key`: String. Optional. Auth key for non-logged-in users.
+      - `id`: Number. Optional. Host ID.
+      - `enabled`: Boolean. Optional.
+      - `address`: String. Optional.
+      - `endpoint`: Enum. Optional. Types: quantum, http, https, httphtml, icmp, dns, smtp, rawconnect.
+      - `port`: Number. Optional.
+      - `timeout`: Number. Optional.
+      - `hidden`: Boolean. Optional. Hide the host from future monitoring.
+      - `agent_location`: String. Optional.
+
+  - **`get_host_data`**: Retrieves monitoring data for a specific host.
+    - Parameters:
+      - `detail_response`: Boolean. Provides all monitoring data if true.
+      - `dataset_id`: Number. Data arranged in 6-hour datasets (0 for latest).
+      - `id`: Number. Optional. Host ID.
+      - `address`: String. Optional.
+      - `email`: String. Optional.
+      - `enabled`: Boolean. Optional.
+      - `port`: Number. Optional.
+      - `endpoint`: String. Optional.
+      - `alert_sent`: Boolean. Optional.
+      - `alert_flag`: Boolean. Optional.
+      - `date_start`: String. Optional.
+      - `date_end`: String. Optional.
+      - `page_number`: Number. Optional.
+      - `agent_location`: String. Optional.
+
+  - **`get_host_list`**: Retrieves a list of monitored hosts.
+    - Parameters:
+      - `detail_response`: Boolean. If true, provides all host config details.
+      - `id`: Number. Optional.
+      - `address`: String. Optional.
+      - `email`: String. Optional.
+      - `enabled`: Boolean. Optional.
+      - `port`: Number. Optional.
+      - `endpoint`: String. Optional.
+      - `page_number`: Number. Optional.
+      - `agent_location`: String. Optional.
+
+  - **`get_user_info`**: Retrieves user information.
+    - Parameters:
+      - `detail_response`: Boolean. Returns all user details if true.
+
+  - **`call_security_expert`**: Requests a security assessment via Nmap or OpenSSL.
+    - Parameters:
+      - `message`: String. Describes the user's security assessment request.
+      - `agent_location`: String. Optional.
+
+  - **`run_busybox_command`**: Executes a BusyBox command for diagnostics or system tasks.
+    - Parameters:
+      - `command`: String. Example: 'ping -c 4 8.8.8.8'.
+      - `agent_location`: String. Optional.
+      - `number_lines`: Integer. Limit for returned lines.
+      - `page`: Integer. For pagination.
+
+  - **`call_penetration_expert`**: Requests penetration testing via Metasploit.
+    - Parameters:
+      - `message`: String. Describes the penetration testing request.
+      - `agent_location`: String. Optional.
+
+  - **`call_search_expert`**: Requests information retrieval from a web search.
+    - Parameters:
+      - `message`: String. Describes the search query.
+      - `agent_location`: String. Optional.
+
+  - **`get_agents`**: Retrieves monitoring agent details.
+    - Parameters:
+      - `detail_response`: Boolean. Returns all agent details if true.
+
+---
+
+### **SearchToolsBuilder**
+- **Tools:**
+  - **`run_search_web`**: Performs a web search for information retrieval.
+    - Parameters:
+      - `search_term`: String. The search term for the web search.
+      - `agent_location`: String. Optional.
+      - `number_lines`: Integer. Limit for search results.
+      - `page`: Integer. For pagination.
+
+  - **`run_crawl_page`**: Crawls a webpage to extract information.
+    - Parameters:
+      - `url`: String. URL of the page to crawl.
+      - `agent_location`: String. Optional.
+      - `number_lines`: Integer. Limit for returned lines.
+      - `page`: Integer. For pagination.
+
+---
+
+### **NmapToolsBuilder**
+- **Tools:**
+  - **`get_user_info`**: Retrieves user details.
+    - Parameters:
+      - `detail_response`: Boolean. Returns all user details if true.
+
+  - **`run_nmap`**: Runs Nmap for network security assessments.
+    - Parameters:
+      - `scan_options`: String. Nmap scan options.
+      - `target`: String. IP, domain, or subnet to scan.
+      - `agent_location`: String. Optional.
+      - `number_lines`: Integer. Limit for returned lines.
+      - `page`: Integer. For pagination.
+
+  - **`run_openssl`**: Performs SSL/TLS configuration checks using OpenSSL.
+    - Parameters:
+      - `command_options`: String. OpenSSL command options.
+      - `target`: String. Target for security checks.
+      - `agent_location`: String. Optional.
+      - `number_lines`: Integer. Limit for returned lines.
+      - `page`: Integer. For pagination.
+
+  - **`run_busybox_command`**: Executes a BusyBox command.
+    - Parameters:
+      - `command`: String. BusyBox command (e.g., 'ping -c 4 8.8.8.8').
+      - `agent_location`: String. Optional.
+      - `number_lines`: Integer. Limit for returned lines.
+      - `page`: Integer. For pagination.
+
+  - **`run_search_web`**: Performs a web search.
+    - Parameters:
+      - `search_term`: String. Search term.
+      - `agent_location`: String. Optional.
+      - `number_lines`: Integer. Limit for returned results.
+      - `page`: Integer. For pagination.
+
+  - **`run_crawl_page`**: Crawls a webpage to extract information.
+    - Parameters:
+      - `url`: String. URL of the page to crawl.
+      - `agent_location`: String. Optional.
+      - `number_lines`: Integer. Limit for returned lines.
+      - `page`: Integer. For pagination.
+
+---
+
+### **MetaToolsBuilder**
+- **Tools:**
+  - **`run_metasploit`**: Executes a Metasploit module.
+    - Parameters:
+      - `module_name`: String. Metasploit module name (e.g., 'exploit/windows/smb/ms17_010_eternalblue').
+      - `module_options`: Object. Optional. Key-value pairs to configure the module.
+      - `target`: String. IP, range, or domain to target.
+      - `agent_location`: String. Optional.
+      - `number_lines`: Integer. Limit for returned lines.
+      - `page`: Integer. For pagination.
+
+  - **`search_metasploit_modules`**: Searches for Metasploit modules.
+    - Parameters:
+      - `search_type`: String. Valid values: 'search', 'show', 'info'.
+      - `search_expression`: String. The search expression (e.g., 'type:exploit platform:windows cve:2021').
+      - `number_lines`: Integer. Limit for returned lines.
+      - `page`: Integer. For pagination.
+
+  - **`get_user_info`**: Retrieves user details.
+    - Parameters:
+      - `detail_response`: Boolean. Returns all user details if true.
+
+  - **`run_busybox_command`**: Executes a BusyBox command.
+    - Parameters:
+      - `command`: String. BusyBox command (e.g., 'ls /tmp').
+      - `agent_location`: String. Optional.
+      - `number_lines`: Integer. Limit for returned lines.
+      - `page`: Integer. For pagination.
+
+  - **`run_search_web`**: Performs a web search.
+    - Parameters:
+      - `search_term`: String. Search term.
+      - `agent_location`: String. Optional.
+      - `number_lines`: Integer. Limit for returned results.
+      - `page`: Integer. For pagination.
+
+  - **`run_crawl_page`**: Crawls a webpage to extract information.
+    - Parameters:
+      - `url`: String. URL of the page to crawl.
+      - `agent_location`: String. Optional.
+      - `number_lines`: Integer. Limit for returned lines.
+      - `page`: Integer. For pagination.
+
+---
