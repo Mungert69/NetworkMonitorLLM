@@ -16,7 +16,6 @@ using NetworkMonitor.Utils.Helpers;
 using NetworkMonitor.Objects.Repository;
 using System.Net;
 using Microsoft.EntityFrameworkCore.Diagnostics;
-using OneOf.Types;
 namespace NetworkMonitor.LLM.Services;
 
 public interface IRabbitListener
