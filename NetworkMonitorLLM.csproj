@@ -6,11 +6,12 @@
     <Nullable>enable</Nullable>
     <ContainerBaseImage>mcr.microsoft.com/dotnet/runtime:8.0</ContainerBaseImage>
     <ContainerRepository>mungert/networkmonitorllm</ContainerRepository>
-    <ContainerImageTag>0.2.0</ContainerImageTag>
+    <ContainerImageTag>0.2.1</ContainerImageTag>
     <StartupObject>NetworkMonitor.LLM.Program</StartupObject>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Betalgo.OpenAI" Version="8.7.2" />
     <PackageReference Include="coverlet.collector" Version="6.0.2">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
@@ -18,11 +19,6 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.10" />
 
   </ItemGroup>
-<ItemGroup>
-    <Reference Include="Betalgo.OpenAI">
-        <HintPath>OpenAI.dll</HintPath>
-    </Reference>
-</ItemGroup>
 
   <ItemGroup>
     <None Update="appsettings.json">
