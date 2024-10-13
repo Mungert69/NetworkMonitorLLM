@@ -373,21 +373,21 @@ public class OpenAIRunner : ILLMRunner
             // Remove messages until the token count is under the limit
             while (tokenCount > _maxTokens)
             {
-                var removeMessage = history[0];
-                var toolCallId = removeMessage.ToolCallId;
-                if (string.IsNullOrEmpty(toolCallId))
+                var firstMessage = history[0];
+                if (firstMessage.ToolCalls != null && firstMessage.ToolCalls.Any())
                 {
-                    history.RemoveAt(0);
+                    // The first message is an assistant tool call, remove it and all associated responses
+                    history.RemoveAt(0); // Remove the assistant tool call itself
+
+                    foreach (var toolCall in firstMessage.ToolCalls)
+                    {
+                        history.RemoveAll(m => m.ToolCallId == toolCall.Id);
+                    }
                 }
                 else
                 {
-                    for (int i = history.Count - 1; i >= 0; i--)
-                    {
-                        if (history[i].ToolCallId == removeMessage.ToolCallId)
-                        {
-                            history.RemoveAt(i);
-                        }
-                    }
+                    // The first message is not a tool call, remove it
+                    history.RemoveAt(0);
                 }
 
                 // Recalculate tokens after removal
