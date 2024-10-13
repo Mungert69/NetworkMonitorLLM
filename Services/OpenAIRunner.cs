@@ -60,12 +60,12 @@ public class OpenAIRunner : ILLMRunner
         _openAIRunnerSemaphore = openAIRunnerSemaphore;
         _serviceID = systemParamsHelper.GetSystemParams().ServiceID!;
         _maxTokens = systemParamsHelper.GetMLParams().LlmOpenAICtxSize;
-        _gptModel= systemParamsHelper.GetMLParams().LlmGptModel;
+        _gptModel = systemParamsHelper.GetMLParams().LlmGptModel;
         if (_serviceID == "monitor") _toolsBuilder = new MonitorToolsBuilder(serviceObj.UserInfo);
         if (_serviceID == "nmap") _toolsBuilder = new NmapToolsBuilder();
         if (_serviceID == "meta") _toolsBuilder = new MetaToolsBuilder();
         if (_serviceID == "search") _toolsBuilder = new SearchToolsBuilder();
-        _maxTokens=AccountTypeFactory.GetAccountTypeByName(serviceObj.UserInfo.AccountType!).ContextSize;
+        _maxTokens = AccountTypeFactory.GetAccountTypeByName(serviceObj.UserInfo.AccountType!).ContextSize;
         _activeSessions = new ConcurrentDictionary<string, DateTime>();
         _sessionHistories = new ConcurrentDictionary<string, List<ChatMessage>>();
 
@@ -167,7 +167,8 @@ public class OpenAIRunner : ILLMRunner
                 {
 
                     responseServiceObj.TokensUsed = completionResult.Usage.TotalTokens;
-                    if (completionResult.Usage != null && completionResult.Usage.PromptTokensDetails != null) {
+                    if (completionResult.Usage != null && completionResult.Usage.PromptTokensDetails != null)
+                    {
                         _logger.LogInformation($"Cached Prompt Tokens {completionResult.Usage.PromptTokensDetails.CachedTokens}");
                     }
                     ChatChoiceResponse choice = completionResult.Choices.First();
@@ -209,7 +210,7 @@ public class OpenAIRunner : ILLMRunner
             }
 
         }
-        catch 
+        catch
         {
             throw;
         }
@@ -222,39 +223,36 @@ public class OpenAIRunner : ILLMRunner
 
     private bool HandleFunctionCallResponse(LLMServiceObj serviceObj, List<ChatMessage> messageHistory, LLMServiceObj responseServiceObj)
     {
-        // Declare funcResponseChatMessage outside the if-else block
         ChatMessage funcResponseChatMessage;
-
-        // Check if a response for the given FunctionCallId already exists in the dictionary
-        if (_pendingFunctionResponses.TryGetValue(serviceObj.FunctionCallId, out var existingFuncResponseChatMessage))
-        {
-            // Update the existing response with the new content
-            funcResponseChatMessage = existingFuncResponseChatMessage;
-            funcResponseChatMessage.Content = serviceObj.UserInput;
-        }
-        else
-        {
-            // Create a new ChatMessage for the function response if it doesn't exist
-            funcResponseChatMessage = ChatMessage.FromTool("", serviceObj.FunctionCallId);
-            funcResponseChatMessage.Name = serviceObj.FunctionName;
-            funcResponseChatMessage.Content = serviceObj.UserInput;
-
-            // Add the new response to the dictionary
-            _pendingFunctionResponses.TryAdd(serviceObj.FunctionCallId, funcResponseChatMessage);
-        }
-
-        // Add the response content to the corresponding chat message
-        funcResponseChatMessage.Content = serviceObj.UserInput;
-        responseServiceObj.LlmMessage = "<Function Response:> " + serviceObj.UserInput + "\n\n";
-
-        // Process the LLM output if it's the primary LLM
-        if (_isPrimaryLlm) _responseProcessor.ProcessLLMOutput(responseServiceObj);
-
         // Check if there are any pending function calls associated with the current message
         _pendingFunctionCalls.TryGetValue(serviceObj.MessageID, out var funcCallChatMessage);
-
-        if (funcCallChatMessage != null && funcCallChatMessage.ToolCalls!=null)
+        if (funcCallChatMessage != null && funcCallChatMessage.ToolCalls != null)
         {
+            // Check if a response for the given FunctionCallId already exists in the dictionary
+            if (_pendingFunctionResponses.TryGetValue(serviceObj.FunctionCallId, out var existingFuncResponseChatMessage))
+            {
+                // Update the existing response with the new content
+                funcResponseChatMessage = existingFuncResponseChatMessage;
+                funcResponseChatMessage.Content = serviceObj.UserInput;
+            }
+            else
+            {
+                // Create a new ChatMessage for the function response if it doesn't exist
+                funcResponseChatMessage = ChatMessage.FromTool("", serviceObj.FunctionCallId);
+                funcResponseChatMessage.Name = serviceObj.FunctionName;
+                funcResponseChatMessage.Content = serviceObj.UserInput;
+
+                // Add the new response to the dictionary
+                _pendingFunctionResponses.TryAdd(serviceObj.FunctionCallId, funcResponseChatMessage);
+            }
+
+            // Add the response content to the corresponding chat message
+            funcResponseChatMessage.Content = serviceObj.UserInput;
+            responseServiceObj.LlmMessage = "<Function Response:> " + serviceObj.UserInput + "\n\n";
+
+            // Process the LLM output if it's the primary LLM
+            if (_isPrimaryLlm) _responseProcessor.ProcessLLMOutput(responseServiceObj);
+
             bool allResponsesReceived = funcCallChatMessage.ToolCalls
                 .All(tc => _pendingFunctionResponses.ContainsKey(tc.Id!));
 
@@ -297,12 +295,12 @@ public class OpenAIRunner : ILLMRunner
     private async Task HandleFunctionCallAsync(LLMServiceObj serviceObj, ToolCall fnCall, LLMServiceObj responseServiceObj, ChatMessage assistantChatMessage)
     {
         var fn = fnCall.FunctionCall;
-       
-        if (fn==null || fnCall.Id == null)
+
+        if (fn == null || fnCall.Id == null)
         {
             throw new Exception($" {_serviceID} Assistant OpenAI Error : Api call returned a Function with no Id");
         }
-         string functionName = fn?.Name ?? "N/A";
+        string functionName = fn?.Name ?? "N/A";
 
 
         serviceObj.FunctionCallId = fnCall.Id;
