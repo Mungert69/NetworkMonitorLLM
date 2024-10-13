@@ -374,7 +374,28 @@ public class OpenAIRunner : ILLMRunner
             while (tokenCount > _maxTokens)
             {
                 var firstMessage = history[0];
-                if (firstMessage.ToolCalls != null && firstMessage.ToolCalls.Any())
+                if (firstMessage.Role == "user")
+                {
+                    // Remove the user message
+                    history.RemoveAt(0);
+
+                    // Remove the corresponding assistant response, which could be a regular response or a tool call
+                    if (history.Count > 0 && history[0].Role == "assistant")
+                    {
+                        var assistantMessage = history[0];
+                        history.RemoveAt(0); // Remove the assistant response or tool call
+
+                        // If the assistant message is a tool call, remove all tool responses associated with it
+                        if (assistantMessage.ToolCalls != null && assistantMessage.ToolCalls.Any())
+                        {
+                            foreach (var toolCall in assistantMessage.ToolCalls)
+                            {
+                                history.RemoveAll(m => m.ToolCallId == toolCall.Id);
+                            }
+                        }
+                    }
+                }
+                else if (firstMessage.ToolCalls != null && firstMessage.ToolCalls.Any())
                 {
                     // The first message is an assistant tool call, remove it and all associated responses
                     history.RemoveAt(0); // Remove the assistant tool call itself
@@ -386,10 +407,9 @@ public class OpenAIRunner : ILLMRunner
                 }
                 else
                 {
-                    // The first message is not a tool call, remove it
+                    // If the first message is anything else (e.g., an orphaned assistant response), remove it to maintain consistency
                     history.RemoveAt(0);
                 }
-
                 // Recalculate tokens after removal
                 tokenCount = CalculateTokens(history);
             }
