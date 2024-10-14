@@ -15,6 +15,7 @@ using System.Net.Mime;
 namespace NetworkMonitor.LLM.Services;
 public class MonitorToolsBuilder : IToolsBuilder
 {
+    private readonly FunctionDefinition fn_are_functions_running;
     private readonly FunctionDefinition fn_add_host;
     private readonly FunctionDefinition fn_edit_host;
     private readonly FunctionDefinition fn_get_host_data;
@@ -29,6 +30,7 @@ public class MonitorToolsBuilder : IToolsBuilder
     public MonitorToolsBuilder(UserInfo userInfo)
     {
         // Initialize all function definitions
+        fn_are_functions_running=    BuildAreFunctionsRunning();
         fn_add_host = BuildAddHostFunction();
         fn_edit_host = BuildEditHostFunction();
         fn_get_host_data = BuildGetHostDataFunction();
@@ -44,6 +46,7 @@ public class MonitorToolsBuilder : IToolsBuilder
         // Assuming these function references are defined in the current context
         var accountTypeFunctions = AccountTypeFactory.GetFunctionsForAccountType<FunctionDefinition>(
             userInfo.AccountType!,
+            fn_are_functions_running,
             fn_add_host,
             fn_edit_host,
             fn_get_host_data,
@@ -150,6 +153,14 @@ public class MonitorToolsBuilder : IToolsBuilder
     return new FunctionDefinitionBuilder("call_security_expert", "Communicate a security assessment request to a remote security expert LLM. You will craft a detailed message describing the user's request for a security assessment, which may involve either network scans using Nmap or security checks using OpenSSL. The message should specify the type of assessment (e.g., vulnerability scan, SSL/TLS configuration check), the target (e.g., IP address, domain, or service), and any relevant parameters or instructions. Ensure the message clearly outlines the user's security goals. If the security expert LLM requires additional information, present these queries to the user in simple terms and assist in formulating the appropriate responses based on your understanding")
         .AddParameter("message", PropertyDefinition.DefineString("The message to be sent to the security expert LLM, detailing the assessment request and parameters, including scan type (Nmap or OpenSSL), target, and any special instructions."))
         .AddParameter("agent_location", PropertyDefinition.DefineString("The agent location that will execute the secutiry assessment. If no location is specified ask the user to choose from available agents to ensure the scan is executed from the correct network or geographic location."))
+        .Validate()
+        .Build();
+}
+
+ private FunctionDefinition BuildAreFunctionsRunning()
+{
+    return new FunctionDefinitionBuilder("are_functions_running", "Check if functions have completed.")
+        .AddParameter("message_id", PropertyDefinition.DefineString("The message_id that is associated with the function calls"))
         .Validate()
         .Build();
 }
