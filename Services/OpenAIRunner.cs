@@ -34,6 +34,7 @@ public class OpenAIRunner : ILLMRunner
     private SemaphoreSlim _openAIRunnerSemaphore;
     private ConcurrentDictionary<string, List<ChatMessage>> _sessionHistories = new ConcurrentDictionary<string, List<ChatMessage>>();
     private ConcurrentDictionary<string, List<ChatMessage>> _messageHistories = new ConcurrentDictionary<string, List<ChatMessage>>();
+    private ConcurrentDictionary<string, string> _toolCallMetadata = new ConcurrentDictionary<string, string>();
 
     private ConcurrentDictionary<string, ChatMessage> _pendingFunctionCalls = new ConcurrentDictionary<string, ChatMessage>();
     private ConcurrentDictionary<string, ChatMessage> _pendingFunctionResponses = new ConcurrentDictionary<string, ChatMessage>();
@@ -177,9 +178,20 @@ public class OpenAIRunner : ILLMRunner
                     if (choice.Message.ToolCalls != null && choice.Message.ToolCalls.Any())
                     {
                         _pendingFunctionCalls.TryAdd(serviceObj.MessageID, choice.Message);
+                        // Create a unique placeholder ID for tracking
+                        var placeholderId = Guid.NewGuid().ToString();
+                        _toolCallMetadata[serviceObj.MessageID] = placeholderId;
+
+                        // Add a lightweight placeholder to history indicating a tool call is in progress.
+                        // This avoids the OpenAI API error of having an incomplete response.
+                        var placeholderUser = ChatMessage.FromUser($"{serviceObj.UserInput} : use Function ID {placeholderId} to track the call");
+                        history.Add(placeholderUser);
+                        var placeholderAssistant = ChatMessage.FromAssistant($"I have called a Function with ID {placeholderId} please wait it may take some time to complete ");
+                        history.Add(placeholderAssistant);
+
                         foreach (var fnCall in choice.Message.ToolCalls)
                         {
-
+                            // Handle the function call asynchronously and remove the placeholder when complete
                             await HandleFunctionCallAsync(serviceObj, fnCall, responseServiceObj, assistantChatMessage);
                         }
                     }
@@ -261,10 +273,12 @@ public class OpenAIRunner : ILLMRunner
             {
                 // Add the function call and responses to the message history
                 messageHistory.Add(funcCallChatMessage);
+
                 foreach (var toolCall in funcCallChatMessage.ToolCalls)
                 {
                     if (_pendingFunctionResponses.TryGetValue(toolCall.Id!, out var response))
                     {
+
                         messageHistory.Add(response);
                         _pendingFunctionResponses.TryRemove(toolCall.Id!, out _);
                     }
@@ -275,7 +289,47 @@ public class OpenAIRunner : ILLMRunner
                 // Mark the function call as complete
                 responseServiceObj.LlmMessage = "</functioncall-complete>";
                 if (_isPrimaryLlm) _responseProcessor.ProcessLLMOutput(responseServiceObj);
+
+                if (_toolCallMetadata.TryGetValue(serviceObj.MessageID, out var foundPlaceholderId))
+                {
+                    if (_sessionHistories.TryGetValue(serviceObj.SessionId, out var history))
+                    {
+                        // Locking just for modifying the internal list, since list modifications are not thread-safe.
+                        lock (history)
+                        {
+                            // Loop through the list from end to start to safely remove multiple items by index
+                            for (int i = history.Count - 1; i >= 0; i--)
+                            {
+                                if (history[i].Content != null && history[i].Content.Contains(foundPlaceholderId))
+                                {
+                                    history.RemoveAt(i);
+                                }
+                            }
+                        }
+
+                        // After removing all relevant messages, remove the metadata entry
+                        _toolCallMetadata.TryRemove(serviceObj.MessageID, out _);
+
+                        _logger.LogInformation($"Successfully removed all placeholders with ID {foundPlaceholderId} from history for session {serviceObj.SessionId}.");
+                    }
+                    else
+                    {
+                        var message = $"Function Error: Could not find history for SessionID {serviceObj.SessionId} to remove placeholders.";
+                        responseServiceObj.LlmMessage = message;
+                        if (_isPrimaryLlm) _responseProcessor.ProcessLLMOutput(responseServiceObj);
+                        _logger.LogError(message);
+                    }
+                }
+                else
+                {
+                    var message = $"Function Error: Could not find metadata for MessageID {serviceObj.MessageID} to remove placeholders.";
+                    responseServiceObj.LlmMessage = message;
+                    if (_isPrimaryLlm) _responseProcessor.ProcessLLMOutput(responseServiceObj);
+                    _logger.LogError(message);
+                }
+
                 return true; // Indicates that the function call response was handled successfully
+
             }
         }
         else
