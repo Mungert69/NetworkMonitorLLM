@@ -186,14 +186,17 @@ public class OpenAIRunner : ILLMRunner
                         // This avoids the OpenAI API error of having an incomplete response.
                         var placeholderUser = ChatMessage.FromUser($"{serviceObj.UserInput} : use Function ID {placeholderId} to track the call");
                         history.Add(placeholderUser);
-                        var placeholderAssistant = ChatMessage.FromAssistant($"I have called a Function with ID {placeholderId} please wait it may take some time to complete ");
-                        history.Add(placeholderAssistant);
-
-                        foreach (var fnCall in choice.Message.ToolCalls)
-                        {
+                        var assistantMessage=new StringBuilder($"I have called a Function with ID {placeholderId} with arguments : ");
+                        foreach (ToolCall fnCall in choice.Message.ToolCalls)
+                        {   
+                            assistantMessage.Append($" {fnCall.FunctionCall.Name} {fnCall.FunctionCall.Arguments} : ");
                             // Handle the function call asynchronously and remove the placeholder when complete
                             await HandleFunctionCallAsync(serviceObj, fnCall, responseServiceObj, assistantChatMessage);
                         }
+                        assistantMessage.Append(" Please wait it may take some time to complete.");
+                          var placeholderAssistant = ChatMessage.FromAssistant(assistantMessage.ToString());
+                        history.Add(placeholderAssistant);
+                       
                     }
                     else
                     {
