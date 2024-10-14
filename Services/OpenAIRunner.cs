@@ -182,7 +182,7 @@ public class OpenAIRunner : ILLMRunner
                         
                         // Add a lightweight placeholder to history indicating a tool call is in progress.
                         // This avoids the OpenAI API error of having an incomplete response.
-                        var placeholderUser = ChatMessage.FromUser($"{serviceObj.UserInput} : us message_id {serviceObj.MessageID} to track the function calls");
+                        var placeholderUser = ChatMessage.FromUser($"{serviceObj.UserInput} : us message_id <|{serviceObj.MessageID}|> to track the function calls");
                         history.Add(placeholderUser);
                         var assistantMessage=new StringBuilder($"I have called the following functions : ");
                         foreach (ToolCall fnCall in choice.Message.ToolCalls)
@@ -191,7 +191,7 @@ public class OpenAIRunner : ILLMRunner
                             // Handle the function call asynchronously and remove the placeholder when complete
                             await HandleFunctionCallAsync(serviceObj, fnCall, responseServiceObj, assistantChatMessage);
                         }
-                        assistantMessage.Append($" using message_id {serviceObj.MessageID} . Please wait it may take some time to complete.");
+                        assistantMessage.Append($" using message_id <|{serviceObj.MessageID}|> . Please wait it may take some time to complete.");
                           var placeholderAssistant = ChatMessage.FromAssistant(assistantMessage.ToString());
                         history.Add(placeholderAssistant);
                        
@@ -300,7 +300,7 @@ public class OpenAIRunner : ILLMRunner
                             // Loop through the list from end to start to safely remove multiple items by index
                             for (int i = history.Count - 1; i >= 0; i--)
                             {
-                                if (history[i].Content != null && history[i].Content.Contains(serviceObj.MessageID))
+                                if (history[i].Content != null && history[i].Content.Contains("<|"+serviceObj.MessageID+"|>"))
                                 {
                                     history.RemoveAt(i);
                                 }

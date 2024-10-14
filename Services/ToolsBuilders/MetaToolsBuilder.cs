@@ -44,7 +44,7 @@ namespace NetworkMonitor.LLM.Services
             fn_search_metasploit_modules = new FunctionDefinitionBuilder("search_metasploit_modules", "Search for information about Metasploit modules or retrieve details about a specific module. Use this function when you need to identify the appropriate module, gather more details on a module's usage, or troubleshoot errors.")
                 .AddParameter("search_type", PropertyDefinition.DefineString("The search type to use. Valid values are 'search' for keyword-based searches, 'show' to list all modules of a specific type, and 'info' to retrieve detailed information about a specific module."))
                 .AddParameter("search_expression", PropertyDefinition.DefineString("The search expression to use, based on the search type. Examples: 'type:exploit platform:windows cve:2021' for 'search', 'exploits' for 'show', or 'exploit/windows/smb/ms17_010_eternalblue' for 'info'."))
-                 .AddParameter("number_lines", PropertyDefinition.DefineInteger("Number of lines to return. Increase this if you need more data returned by the search. Be careful with using larger numbers as a lot of data can be returned. Consider using a more targeted search term instead."))
+                 .AddParameter("number_lines", PropertyDefinition.DefineInteger("Number of lines to return.. Default to 50 increase this if you need more data returned by the search. Be careful with using larger numbers as a lot of data can be returned. Consider using a more targeted search term instead."))
                 .AddParameter("page", PropertyDefinition.DefineInteger("The page of lines to return. Use to paginate through many lines of data."))
                 .Validate()
                 .Build();
