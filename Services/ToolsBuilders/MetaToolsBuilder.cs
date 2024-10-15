@@ -17,8 +17,6 @@ namespace NetworkMonitor.LLM.Services
         private readonly FunctionDefinition fn_search_metasploit_modules;
         private readonly FunctionDefinition fn_get_user_info;
         private readonly FunctionDefinition fn_run_busybox;
-        private readonly FunctionDefinition fn_run_search_web;
-        private readonly FunctionDefinition fn_run_crawl_page;
 
         public MetaToolsBuilder()
         {
@@ -62,27 +60,6 @@ namespace NetworkMonitor.LLM.Services
     .Validate()
     .Build();
 
-            fn_run_search_web = new FunctionDefinitionBuilder("run_search_web",
-            "Search function to gather information from web sources. Use this function to perform a Google search and retrieve a list of websites related to the search term. After retrieving the URLs, you must call the 'run_crawl_page' function to visit and gather details from each site. The search results are intended to guide the selection of relevant links for deeper exploration.")
-            .AddParameter("search_term", PropertyDefinition.DefineString("The search term to be used for the Google search."))
-            .AddParameter("agent_location", PropertyDefinition.DefineString("The agent location that will execute the command, optional. Specify which agent will perform the operation if relevant."))
-            .AddParameter("number_lines", PropertyDefinition.DefineInteger("Number of lines to return from the command output. Limit this to manage the amount of search results returned. Larger values may retrieve more links, but use higher limits cautiously."))
-            .AddParameter("page", PropertyDefinition.DefineInteger("The page of search results to return, allowing pagination through multiple search results pages."))
-            .Validate()
-            .Build();
-
-
-            fn_run_crawl_page = new FunctionDefinitionBuilder("run_crawl_page",
-                   "Website crawler to extract information from a webpage. Use this function to read the text and hyperlinks on a given webpage. When URLs are returned from 'run_search_web', call this function on relevant URLs to gather content. If necessary, you can follow additional links on the page to perform further research.")
-                   .AddParameter("url", PropertyDefinition.DefineString("The URL of the page to crawl."))
-                   .AddParameter("agent_location", PropertyDefinition.DefineString("The agent location that will execute the command, optional. Specify which agent will perform the operation if relevant."))
-                   .AddParameter("number_lines", PropertyDefinition.DefineInteger("Number of lines to return from the command output. Limit this to manage the amount of content returned."))
-                   .AddParameter("page", PropertyDefinition.DefineInteger("The page of content to return, allowing pagination through large pages of data."))
-                   .Validate()
-                   .Build();
-
-
-
 
             // Define the tools list
             _tools = new List<ToolDefinition>()
@@ -90,9 +67,7 @@ namespace NetworkMonitor.LLM.Services
                 new ToolDefinition() { Function = fn_get_user_info, Type = "function" },
                 new ToolDefinition() { Function = fn_run_metasploit, Type = "function" },
                 new ToolDefinition() { Function = fn_search_metasploit_modules, Type = "function" },
-                 new ToolDefinition() { Function = fn_run_busybox, Type = "function" },
-                   new ToolDefinition() { Function = fn_run_search_web, Type = "function" },
-                     new ToolDefinition() { Function = fn_run_crawl_page, Type = "function" },
+                 new ToolDefinition() { Function = fn_run_busybox, Type = "function" }
 
             };
         }
