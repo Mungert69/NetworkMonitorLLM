@@ -157,7 +157,7 @@ public class LLMProcessRunner : ILLMRunner
         }
         serviceObj.UserInput = userInput + input;
 
-        if (_mlParams.LlmVersion == "func_2.5")  serviceObj.UserInput ="<|start_header_id|>user<|end_header_id|>whats my user info";
+        if (_mlParams.LlmVersion == "func_2.5")  serviceObj.UserInput ="<|start_header_id|>user<|end_header_id|>whats my user info<|eot_id|>";
       
 
         serviceObj.IsFunctionCallResponse = false;
@@ -311,7 +311,7 @@ public class LLMProcessRunner : ILLMRunner
                 if (!serviceObj.IsFunctionCallResponse)
                 {
                     if (_mlParams.LlmVersion == "func_2.4") userInput = "<|from|> user\\\n<|recipient|> all\\\n<|content|>" + userInput;
-                    else if (_mlParams.LlmVersion == "func_2.5") userInput = "<|start_header_id|>user<|end_header_id|>" + userInput;
+                    else if (_mlParams.LlmVersion == "func_2.5") userInput = "<|start_header_id|>user<|end_header_id|>" + userInput+"<|eot_id|>";
                     else if (_mlParams.LlmVersion == "func_3.1") userInput = "<|start_header_id|>user<|end_header_id|>" + userInput;
                     //else if (_mlParams.LlmVersion="standard") userInput = userInput;
 
@@ -319,7 +319,7 @@ public class LLMProcessRunner : ILLMRunner
                 else
                 {
                     if (_mlParams.LlmVersion == "func_2.4") userInput = "<|from|> " + serviceObj.FunctionName + "\\\n<|recipient|> all\\\n<|content|>" + serviceObj.UserInput;
-                    else if (_mlParams.LlmVersion == "func_2.5") userInput = "<|start_header_id|>tool<|end_header_id|>name=" + serviceObj.FunctionName + " " + serviceObj.UserInput;
+                    else if (_mlParams.LlmVersion == "func_2.5") userInput = "<|start_header_id|>tool<|end_header_id|>name=" + serviceObj.FunctionName + " " + serviceObj.UserInput+"<|eot_id|>";
                     else if (_mlParams.LlmVersion == "func_3.1") userInput = "<|start_header_id|>ipython<|end_header_id|>" + serviceObj.UserInput;
 
                 }

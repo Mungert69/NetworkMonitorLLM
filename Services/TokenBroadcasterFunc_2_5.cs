@@ -34,7 +34,7 @@ public class TokenBroadcasterFunc_2_5 : ITokenBroadcaster
         _logger.LogWarning(" Start BroadcastAsyc() ");
         string copyUserInput = userInput;
         int startIndex = userInput.IndexOf('/');
-         int stopAfter=2;
+         int stopAfter=1;
         if (sendOutput) stopAfter=1;
         sendOutput = true;
         if (startIndex != -1)
