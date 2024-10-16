@@ -162,7 +162,7 @@ public class LLMProcessRunner : ILLMRunner
         }
         serviceObj.UserInput = userInput + input;
 
-        if (_mlParams.LlmVersion == "func_2.5" || _mlParams.LlmVersion == "func_3.2" || _mlParams.LlmVersion == "llama_3.2" )  serviceObj.UserInput ="<|start_header_id|>user<|end_header_id|>whats my user info<|eot_id|>";
+        if (_mlParams.LlmVersion == "func_2.5" || _mlParams.LlmVersion == "func_3.2" || _mlParams.LlmVersion == "llama_3.2" )  serviceObj.UserInput ="<|eot_id|><|start_header_id|>user<|end_header_id|>whats my user info<|eot_id|>";
       
 
         serviceObj.IsFunctionCallResponse = false;
