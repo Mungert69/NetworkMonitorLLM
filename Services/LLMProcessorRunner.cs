@@ -109,7 +109,7 @@ public class LLMProcessRunner : ILLMRunner
     {
         _isStateStarting = true;
         _isStateReady = false;
-        if (_mlParams.StartOnlyOneFreeLLM && serviceObj.LlmChainStartName != "monitor") throw new Exception($"The advanced {serviceObj.LlmChainStartName} assistant is only available with TurboLLM. However the basic monitor assistant is still available");
+        if (_mlParams.StartOnlyOneFreeLLM && serviceObj.LlmChainStartName != "monitor") return ;// throw new Exception($"The advanced {serviceObj.LlmChainStartName} assistant is only available with TurboLLM. However the basic monitor assistant is still available");
         await _processRunnerSemaphore.WaitAsync(); // Wait to enter the semaphore
         try
         {
@@ -141,6 +141,8 @@ public class LLMProcessRunner : ILLMRunner
         else if (_mlParams.LlmVersion == "func_2.5") userInput = $"<|start_header_id|>tool<|end_header_id|>name=get_user_info";
         else if (_mlParams.LlmVersion == "func_3.1") userInput = "<|start_header_id|>ipython<|end_header_id|>";
         else if (_mlParams.LlmVersion == "func_3.2") userInput = $"<|start_header_id|>tool<|end_header_id|>";
+        else if (_mlParams.LlmVersion == "llama_3.2") userInput = $"<|start_header_id|>ipython<|end_header_id|>";
+        
         else if (_mlParams.LlmVersion == "standard") userInput = "Function Call : ";
 
         if (serviceObj.IsUserLoggedIn)
@@ -160,7 +162,7 @@ public class LLMProcessRunner : ILLMRunner
         }
         serviceObj.UserInput = userInput + input;
 
-        if (_mlParams.LlmVersion == "func_2.5" || _mlParams.LlmVersion == "func_3.2" )  serviceObj.UserInput ="<|start_header_id|>user<|end_header_id|>whats my user info<|eot_id|>";
+        if (_mlParams.LlmVersion == "func_2.5" || _mlParams.LlmVersion == "func_3.2" || _mlParams.LlmVersion == "llama_3.2" )  serviceObj.UserInput ="<|start_header_id|>user<|end_header_id|>whats my user info<|eot_id|>";
       
 
         serviceObj.IsFunctionCallResponse = false;
@@ -302,6 +304,8 @@ public class LLMProcessRunner : ILLMRunner
                 else if (_mlParams.LlmVersion == "func_2.5") tokenBroadcaster = new TokenBroadcasterFunc_2_5(_responseProcessor, _logger);
                 else if (_mlParams.LlmVersion == "func_3.1") tokenBroadcaster = new TokenBroadcasterFunc_3_1(_responseProcessor, _logger);
                  else if (_mlParams.LlmVersion == "func_3.2") tokenBroadcaster = new TokenBroadcasterFunc_3_2(_responseProcessor, _logger);
+                else if (_mlParams.LlmVersion == "llama_3.2") tokenBroadcaster = new TokenBroadcasterLlama_3_2(_responseProcessor, _logger);
+                
                 else if (_mlParams.LlmVersion == "standard") tokenBroadcaster = new TokenBroadcasterStandard(_responseProcessor, _logger);
 
                 else throw new InvalidOperationException($" Error there is no Token Broadcaster for LLM Version {_mlParams.LlmVersion}");
@@ -318,8 +322,9 @@ public class LLMProcessRunner : ILLMRunner
                     else if (_mlParams.LlmVersion == "func_2.5") userInput = "<|start_header_id|>user<|end_header_id|>" + userInput+"<|eot_id|>";
                     else if (_mlParams.LlmVersion == "func_3.1") userInput = "<|start_header_id|>user<|end_header_id|>" + userInput+"<|eot_id|>";
                     else if (_mlParams.LlmVersion == "func_3.2") userInput = "<|start_header_id|>user<|end_header_id|>" + userInput+"<|eot_id|>";
+                   else if (_mlParams.LlmVersion == "llama_3.2") userInput = "<|start_header_id|>user<|end_header_id|>" + userInput+"<|eot_id|>";
                    
-                    //else if (_mlParams.LlmVersion="standard") userInput = userInput;
+                    else if (_mlParams.LlmVersion=="standard") userInput = userInput;
 
                 }
                 else
@@ -328,7 +333,8 @@ public class LLMProcessRunner : ILLMRunner
                     else if (_mlParams.LlmVersion == "func_2.5") userInput = "<|start_header_id|>tool<|end_header_id|>name=" + serviceObj.FunctionName + " " + serviceObj.UserInput+"<|eot_id|>";
                     else if (_mlParams.LlmVersion == "func_3.1") userInput = "<|start_header_id|>ipython<|end_header_id|>" + serviceObj.UserInput+"<|eot_id|>";
                     else if (_mlParams.LlmVersion == "func_3.2") userInput = "<|start_header_id|>tool<|end_header_id|>" + serviceObj.UserInput+"<|eot_id|>";
-                   
+                    else if (_mlParams.LlmVersion == "llama_3.2") userInput = "<|start_header_id|>ipython<|end_header_id|>" + serviceObj.UserInput+"<|eot_id|>";
+                    else if (_mlParams.LlmVersion=="standard") userInput = "Funtion Call: "+serviceObj.UserInput;
                 }
             }
 
