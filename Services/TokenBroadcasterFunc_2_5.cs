@@ -32,68 +32,66 @@ public class TokenBroadcasterFunc_2_5 : ITokenBroadcaster
     public async Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput, bool sendOutput = true)
     {
         _logger.LogWarning(" Start BroadcastAsyc() ");
-        // trim up to / otherwise it won't match 
         string copyUserInput = userInput;
         int startIndex = userInput.IndexOf('/');
-        // If '{' is not found or is too far into the input, return the original input
+         int stopAfter=2;
+        if (sendOutput) stopAfter=1;
+        sendOutput = true;
         if (startIndex != -1)
         {
             copyUserInput = userInput.Substring(0, startIndex);
         }
         var lineBuilder = new StringBuilder();
         var llmOutFull = new StringBuilder();
-        var tokenBuilder = new StringBuilder();
+        //var tokenBuilder = new StringBuilder();
         _isPrimaryLlm = serviceObj.IsPrimaryLlm;
         _isFuncCalled = false;
         var cancellationToken = _cancellationTokenSource.Token;
-        //int newlineCounter = 0;
-        //bool isNewline = false;
+        int stopCount = 0;
+       
+
         while (!cancellationToken.IsCancellationRequested)
         {
-
             byte[] buffer = new byte[1];
             int charRead = await process.StandardOutput.ReadAsync(buffer, 0, buffer.Length);
             string textChunk = Encoding.UTF8.GetString(buffer, 0, charRead);
-            //lineBuilder.Append(textChunk);
-            char currentChar = (char)charRead;
-            tokenBuilder.Append(textChunk);
+            //tokenBuilder.Append(textChunk);
             llmOutFull.Append(textChunk);
             var chunkServiceObj = new LLMServiceObj(serviceObj);
             chunkServiceObj.LlmMessage = textChunk;
             if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(chunkServiceObj);
-            if (IsTokenComplete(tokenBuilder))
+
+            /*if (IsTokenComplete(tokenBuilder))
             {
                 string token = tokenBuilder.ToString();
                 tokenBuilder.Clear();
                 token = token.Replace("/\b", "");
-            }
-            if (llmOutFull.ToString().Contains("<|eot_id|>"))
-            {
-                _logger.LogInformation($"sessionID={serviceObj.SessionId} line is =>{llmOutFull.ToString()}<=");
-                await ProcessLine(llmOutFull.ToString(), serviceObj);
-                //state = ResponseState.Completed;
-                _logger.LogInformation(" Cancel due to output end detected ");
-                _cancellationTokenSource.Cancel();
-            }
-            /*if (IsLineComplete(lineBuilder))
-            {
-                string line = lineBuilder.ToString();
-                if (line.Equals(userInput + "\n") || line.StartsWith(copyUserInput))
-                {
-                    var serviceObj = new LLMServiceObj { SessionId = sessionId, LlmMessage = "\nAssistant: " };
-                    await _responseProcessor.ProcessLLMOutput(serviceObj);
-                }
-                else
-                {
-                    llmOutFull.Append(line);
-                    if (line == "\n") isNewline = true;
-                }
-                lineBuilder.Clear();
             }*/
+
+            string llmOutStr = llmOutFull.ToString();
+            int eotIdCount = CountOccurrences(llmOutStr, "<|eot_id|>");
+
+            //_logger.LogInformation($"EOT {eotIdCount}Output: {textChunk}");
+            if (eotIdCount > stopCount)
+            {
+                stopCount++;
+                // Process the full output only after the stopCount occurrence of <|eot_id|>
+                _logger.LogInformation($" Stop count {stopCount} output is {llmOutStr}");
+
+
+
+            }
+            if (stopCount == stopAfter)
+            {
+                await ProcessLine(llmOutStr, serviceObj);
+                _logger.LogInformation($" Cancel due to {stopCount} <|eot_id|> detected ");
+                _cancellationTokenSource.Cancel(); // Cancel after second <|eot_id|>}
+
+            }
         }
+
         if (!_isPrimaryLlm && !_isFuncCalled)
         {
-            // TODO sort this so it only sends the part produced by the llm not the input
             string llmOutput = llmOutFull.ToString().Replace("\n", " ");
             var finalServiceObj = new LLMServiceObj(serviceObj);
             finalServiceObj.LlmMessage = llmOutput;
@@ -101,7 +99,21 @@ public class TokenBroadcasterFunc_2_5 : ITokenBroadcaster
             await _responseProcessor.ProcessLLMOutput(finalServiceObj);
             _logger.LogInformation($" --> Sent redirected LLM Output {finalServiceObj.LlmMessage}");
         }
-        _logger.LogInformation(" --> Finshed LLM Interaction ");
+        _logger.LogInformation(" --> Finished LLM Interaction ");
+    }
+
+    private int CountOccurrences(string source, string substring)
+    {
+        int count = 0;
+        int index = 0;
+
+        while ((index = source.IndexOf(substring, index)) != -1)
+        {
+            count++;
+            index += substring.Length;
+        }
+
+        return count;
     }
     private bool IsLineComplete(StringBuilder lineBuilder)
     {

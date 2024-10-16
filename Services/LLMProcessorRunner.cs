@@ -136,7 +136,7 @@ public class LLMProcessRunner : ILLMRunner
         string input = "";
         string userInput = "";
         if (_mlParams.LlmVersion == "func_2.4") userInput = $"<|from|> get_login_info\\\n<|recipient|> all\\\n<|content|>User info ";
-        else if (_mlParams.LlmVersion == "func_2.5") userInput = $"<|start_header_id|>tool<|end_header_id|>name=get_user_info ";
+        else if (_mlParams.LlmVersion == "func_2.5") userInput = $"<|start_header_id|>tool<|end_header_id|>name=get_user_info";
         else if (_mlParams.LlmVersion == "func_3.1") userInput = "<|start_header_id|>ipython<|end_header_id|>";
         else if (_mlParams.LlmVersion == "standard") userInput = "Function Call : ";
 
@@ -156,6 +156,9 @@ public class LLMProcessRunner : ILLMRunner
             input = PrintPropertiesAsJson.PrintUserInfoPropertiesWithDate(user, serviceObj.IsUserLoggedIn, currentTime.ToString("yyyy-MM-ddTHH:mm:ss"), false);
         }
         serviceObj.UserInput = userInput + input;
+
+        if (_mlParams.LlmVersion == "func_2.5")  serviceObj.UserInput ="<|start_header_id|>user<|end_header_id|>whats my user info";
+      
 
         serviceObj.IsFunctionCallResponse = false;
         _sendOutput = false;
