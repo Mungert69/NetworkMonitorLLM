@@ -1,1 +1,0 @@
-~/code/models/llama.cpp/llama-cli -c 6000  -m ~/code/models/functionary-small-v2.5.Q4_0.gguf  --prompt-cache context-func-2.5_free.gguf  -r "<|eot_id|>"  -f system_prompt_func_2.5_run_free  --temp 0  -sp 
