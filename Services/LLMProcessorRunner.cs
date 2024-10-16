@@ -75,12 +75,14 @@ public class LLMProcessRunner : ILLMRunner
             _logger.LogError($" Error : User {_startServiceoObj.UserInfo.UserID} account type is null setting to Free as default");
         }
 
-        string permissionSuffix = "_free";
+        string permissionSuffix = "";
+        // Old way of doing permission is to load different context. new way is to let the api deal with it
+        /*string permissionSuffix = "_free";
         if (!_mlParams.StartOnlyOneFreeLLM) permissionSuffix = AccountTypeFactory.GetPermissionSuffix(
             _startServiceoObj.UserInfo.AccountType,
             _startServiceoObj.LlmSessionStartName,
             _startServiceoObj.LlmChainStartName
-        );
+        );*/
 
         var promptName = mlParams.LlmSystemPrompt + permissionSuffix;
         string contextFileName;
