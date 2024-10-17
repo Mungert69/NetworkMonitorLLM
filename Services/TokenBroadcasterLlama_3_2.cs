@@ -62,10 +62,12 @@ public class TokenBroadcasterLlama_3_2 : ITokenBroadcaster
             if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(chunkServiceObj);
             string llmOutStr = llmOutFull.ToString();
             int eotIdCount = CountOccurrences(llmOutStr, "<|eot_id|>");
+            eotIdCount += CountOccurrences(llmOutStr, "<|eom_id|>");
 
             if (eotIdCount > stopCount)
             {
                 stopCount++;
+                if (llmOutStr.Contains("<|start_header_id|>assistant<|eot_id|>")) stopAfter=2;
                 _logger.LogInformation($" Stop count {stopCount} output is {llmOutStr}");
 
             }

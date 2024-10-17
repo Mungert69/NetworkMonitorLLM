@@ -66,7 +66,7 @@ public class LLMProcessRunner : ILLMRunner
         string promptPrefix = "";
         string extraReversePrompt = "";
         // if (!mlParams.LlmIsfunc_2.4) promptPrefix = " --in-prefix \"<|user|>\" ";
-        //if (mlParams.LlmVersion == "func_3.1" || mlParams.LlmVersion == "func_3.2") extraReversePrompt = " -r \"<|eom_id|>\" ";
+        if (mlParams.LlmVersion == "llama_3.2") extraReversePrompt = " -r \"<|eom_id|>\" ";
 
 
         if (_startServiceoObj.UserInfo.AccountType == null)
@@ -315,7 +315,8 @@ public class LLMProcessRunner : ILLMRunner
 
             if (_sendOutput)
             {
-                userInput = userInput.Replace("\r\n", "\\\n").Replace("\n", "\\\n");
+                userInput = userInput.Replace("\r\n", " ").Replace("\n", " ");
+                //userInput = userInput.Replace("\r\n", "\\\n").Replace("\n", "\\\n");
                 if (!serviceObj.IsFunctionCallResponse)
                 {
                     if (_mlParams.LlmVersion == "func_2.4") userInput = "<|from|> user\\\n<|recipient|> all\\\n<|content|>" + userInput;
@@ -329,12 +330,12 @@ public class LLMProcessRunner : ILLMRunner
                 }
                 else
                 {
-                    if (_mlParams.LlmVersion == "func_2.4") userInput = "<|from|> " + serviceObj.FunctionName + "\\\n<|recipient|> all\\\n<|content|>" + serviceObj.UserInput;
-                    else if (_mlParams.LlmVersion == "func_2.5") userInput = "<|start_header_id|>tool<|end_header_id|>name=" + serviceObj.FunctionName + " " + serviceObj.UserInput+"<|eot_id|>";
-                    else if (_mlParams.LlmVersion == "func_3.1") userInput = "<|start_header_id|>ipython<|end_header_id|>" + serviceObj.UserInput+"<|eot_id|>";
-                    else if (_mlParams.LlmVersion == "func_3.2") userInput = "<|start_header_id|>tool<|end_header_id|>" + serviceObj.UserInput+"<|eot_id|>";
-                    else if (_mlParams.LlmVersion == "llama_3.2") userInput = "<|start_header_id|>ipython<|end_header_id|>" + serviceObj.UserInput+"<|eot_id|>";
-                    else if (_mlParams.LlmVersion=="standard") userInput = "Funtion Call: "+serviceObj.UserInput;
+                    if (_mlParams.LlmVersion == "func_2.4") userInput = "<|from|> " + serviceObj.FunctionName + "\\\n<|recipient|> all\\\n<|content|>" + userInput;
+                    else if (_mlParams.LlmVersion == "func_2.5") userInput = "<|start_header_id|>tool<|end_header_id|>name=" + serviceObj.FunctionName + " " + userInput+"<|eot_id|>";
+                    else if (_mlParams.LlmVersion == "func_3.1") userInput = "<|start_header_id|>ipython<|end_header_id|>" + userInput+"<|eot_id|>";
+                    else if (_mlParams.LlmVersion == "func_3.2") userInput = "<|start_header_id|>tool<|end_header_id|>" + userInput+"<|eot_id|>";
+                    else if (_mlParams.LlmVersion == "llama_3.2") userInput = "<|start_header_id|>ipython<|end_header_id|>" + userInput+"<|eot_id|>";
+                    else if (_mlParams.LlmVersion=="standard") userInput = "Funtion Call: "+userInput;
                 }
             }
 
