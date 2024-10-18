@@ -33,23 +33,19 @@ public class TokenBroadcasterFunc_2_5 : ITokenBroadcaster
     {
         _logger.LogWarning(" Start BroadcastAsyc() ");
          _isPrimaryLlm = serviceObj.IsPrimaryLlm;
-        var chunkServiceObj = new LLMServiceObj(serviceObj);
-        if (serviceObj.IsFunctionCallResponse) chunkServiceObj.LlmMessage =  userInput.Replace("<|start_header_id|>tool<|end_header_id|>","<Function Response:>");
-        else chunkServiceObj.LlmMessage = userInput.Replace("<|start_header_id|>user<|end_header_id|>","<User:>");
+         var chunkServiceObj = new LLMServiceObj(serviceObj);
+        if (serviceObj.IsFunctionCallResponse) chunkServiceObj.LlmMessage = userInput.Replace("<|start_header_id|>tool<|end_header_id|>", "<Function Response:> ")+"\n";
+        else chunkServiceObj.LlmMessage = userInput.Replace("<|start_header_id|>user<|end_header_id|>", "<User:> ")+"\n";
         if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(chunkServiceObj);
-        string copyUserInput = userInput;
-        //int startIndex = userInput.IndexOf('/');
-        int stopAfter = 1;
+        chunkServiceObj.LlmMessage = "<Assistant:> ";
+         if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(chunkServiceObj);
+       
+       int stopAfter = 2;
         if (sendOutput) stopAfter = 1;
         sendOutput = true;
-        /*if (startIndex != -1)
-        {
-            copyUserInput = userInput.Substring(0, startIndex);
-        }*/
+      
         var lineBuilder = new StringBuilder();
         var llmOutFull = new StringBuilder();
-        //var tokenBuilder = new StringBuilder();
-       
         _isFuncCalled = false;
         var cancellationToken = _cancellationTokenSource.Token;
         int stopCount = 0;
@@ -65,13 +61,6 @@ public class TokenBroadcasterFunc_2_5 : ITokenBroadcaster
             chunkServiceObj = new LLMServiceObj(serviceObj);
             chunkServiceObj.LlmMessage = textChunk;
             if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(chunkServiceObj);
-
-            /*if (IsTokenComplete(tokenBuilder))
-            {
-                string token = tokenBuilder.ToString();
-                tokenBuilder.Clear();
-                token = token.Replace("/\b", "");
-            }*/
 
             string llmOutStr = llmOutFull.ToString();
             int eotIdCount = CountOccurrences(llmOutStr, "<|eot_id|>");

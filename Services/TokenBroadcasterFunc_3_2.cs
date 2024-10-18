@@ -34,12 +34,12 @@ public class TokenBroadcasterFunc_3_2 : ITokenBroadcaster
         _logger.LogWarning(" Start BroadcastAsyc() ");
         _isPrimaryLlm = serviceObj.IsPrimaryLlm;
         var chunkServiceObj = new LLMServiceObj(serviceObj);
-        if (serviceObj.IsFunctionCallResponse) chunkServiceObj.LlmMessage = userInput.Replace("<|start_header_id|>tool<|end_header_id|>", "<Function Response:>");
-        else chunkServiceObj.LlmMessage = userInput.Replace("<|start_header_id|>user<|end_header_id|>", "<User:>");
+        if (serviceObj.IsFunctionCallResponse) chunkServiceObj.LlmMessage = userInput.Replace("<|start_header_id|>tool<|end_header_id|>", "<Function Response:> ") + "\n";
+        else chunkServiceObj.LlmMessage = userInput.Replace("<|start_header_id|>user<|end_header_id|>", "<User:> ") + "\n";
         if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(chunkServiceObj);
-        string copyUserInput = userInput;
-        //int startIndex = userInput.IndexOf('/');
-        int stopAfter = 1;
+        chunkServiceObj.LlmMessage = "<Assistant:> ";
+        if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(chunkServiceObj);
+        int stopAfter = 2;
         if (sendOutput) stopAfter = 1;
         sendOutput = true;
 
