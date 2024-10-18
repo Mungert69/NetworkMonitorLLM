@@ -39,8 +39,8 @@ public class TokenBroadcasterFunc_3_2 : ITokenBroadcaster
         if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(chunkServiceObj);
         chunkServiceObj.LlmMessage = "<Assistant:> ";
         if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(chunkServiceObj);
-        int stopAfter = 2;
-        if (sendOutput) stopAfter = 1;
+        int stopAfter = 1;
+        if (sendOutput) stopAfter = 2;
         sendOutput = true;
 
         var lineBuilder = new StringBuilder();
