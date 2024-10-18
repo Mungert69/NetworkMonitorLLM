@@ -254,7 +254,7 @@ public class LLMProcessRunner : ILLMRunner
         while (!cancellationTokenSource.IsCancellationRequested)
         {
             line = await process.StandardOutput.ReadLineAsync();
-            if (line.StartsWith("<|eot_id|>"))
+            if (line.StartsWith("<|eot_id|>") || line.Contains("<|LLM_STARTED|>"))
             {
                 isReady = true;
                 break;
