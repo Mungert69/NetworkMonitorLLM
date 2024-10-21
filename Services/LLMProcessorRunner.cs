@@ -142,7 +142,8 @@ public class LLMProcessRunner : ILLMRunner
         else if (_mlParams.LlmVersion == "func_3.1") userInput = "<|start_header_id|>ipython<|end_header_id|>";
         else if (_mlParams.LlmVersion == "func_3.2") userInput = $"<|start_header_id|>tool<|end_header_id|>";
         else if (_mlParams.LlmVersion == "llama_3.2") userInput = $"<|start_header_id|>ipython<|end_header_id|>";
-        
+         else if (_mlParams.LlmVersion == "qwen_2.5") userInput = $"<tool_response>\\\n";
+       
         else if (_mlParams.LlmVersion == "standard") userInput = "Function Call : ";
 
         if (serviceObj.IsUserLoggedIn)
@@ -163,7 +164,8 @@ public class LLMProcessRunner : ILLMRunner
         serviceObj.UserInput = userInput + input;
 
         if (_mlParams.LlmVersion == "llama_3.2" )  serviceObj.UserInput ="<|eot_id|><|start_header_id|>user<|end_header_id|>whats my user info<|eot_id|>";
-      
+       else if (_mlParams.LlmVersion == "qwen_2.5") serviceObj.UserInput += $"\\\n</tool_response>";
+       
 
         serviceObj.IsFunctionCallResponse = false;
         _sendOutput = false;
@@ -305,7 +307,7 @@ public class LLMProcessRunner : ILLMRunner
                 else if (_mlParams.LlmVersion == "func_3.1") tokenBroadcaster = new TokenBroadcasterFunc_3_1(_responseProcessor, _logger);
                  else if (_mlParams.LlmVersion == "func_3.2") tokenBroadcaster = new TokenBroadcasterFunc_3_2(_responseProcessor, _logger);
                 else if (_mlParams.LlmVersion == "llama_3.2") tokenBroadcaster = new TokenBroadcasterLlama_3_2(_responseProcessor, _logger);
-                
+                else if (_mlParams.LlmVersion == "qwen_2.5") tokenBroadcaster = new TokenBroadcasterQwen_2_5(_responseProcessor, _logger);
                 else if (_mlParams.LlmVersion == "standard") tokenBroadcaster = new TokenBroadcasterStandard(_responseProcessor, _logger);
 
                 else throw new InvalidOperationException($" Error there is no Token Broadcaster for LLM Version {_mlParams.LlmVersion}");
@@ -324,7 +326,7 @@ public class LLMProcessRunner : ILLMRunner
                     else if (_mlParams.LlmVersion == "func_3.1") userInput = "<|start_header_id|>user<|end_header_id|>" + userInput+"<|eot_id|>";
                     else if (_mlParams.LlmVersion == "func_3.2") userInput = "<|start_header_id|>user<|end_header_id|>" + userInput+"<|eot_id|>";
                    else if (_mlParams.LlmVersion == "llama_3.2") userInput = "<|start_header_id|>user<|end_header_id|>" + userInput+"<|eot_id|>";
-                   
+                   else if (_mlParams.LlmVersion == "qwen_2.5") userInput=userInput;
                     else if (_mlParams.LlmVersion=="standard") userInput = userInput;
 
                 }
@@ -335,6 +337,7 @@ public class LLMProcessRunner : ILLMRunner
                     else if (_mlParams.LlmVersion == "func_3.1") userInput = "<|start_header_id|>ipython<|end_header_id|>" + userInput+"<|eot_id|>";
                     else if (_mlParams.LlmVersion == "func_3.2") userInput = "<|start_header_id|>tool<|end_header_id|>" + userInput+"<|eot_id|>";
                     else if (_mlParams.LlmVersion == "llama_3.2") userInput = "<|start_header_id|>ipython<|end_header_id|>" + userInput+"<|eot_id|>";
+                    else if (_mlParams.LlmVersion == "qwen_2.5") userInput="<tool_response>\\\n"+userInput+"\\\n</tool_response>";
                     else if (_mlParams.LlmVersion=="standard") userInput = "Funtion Call: "+userInput;
                 }
             }

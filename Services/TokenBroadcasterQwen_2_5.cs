@@ -10,7 +10,7 @@ using Microsoft.Extensions.Logging;
 using NetworkMonitor.Objects.ServiceMessage;
 using NetworkMonitor.Objects;
 namespace NetworkMonitor.LLM.Services;
-public class TokenBroadcasterFunc_3_2 : ITokenBroadcaster
+public class TokenBroadcasterQwen_2_5 : ITokenBroadcaster
 {
     private readonly ILLMResponseProcessor _responseProcessor;
     private readonly ILogger _logger;
@@ -18,7 +18,7 @@ public class TokenBroadcasterFunc_3_2 : ITokenBroadcaster
     private CancellationTokenSource _cancellationTokenSource;
     private bool _isPrimaryLlm;
     private bool _isFuncCalled;
-    public TokenBroadcasterFunc_3_2(ILLMResponseProcessor responseProcessor, ILogger logger)
+    public TokenBroadcasterQwen_2_5(ILLMResponseProcessor responseProcessor, ILogger logger)
     {
         _responseProcessor = responseProcessor;
         _logger = logger;
@@ -34,13 +34,20 @@ public class TokenBroadcasterFunc_3_2 : ITokenBroadcaster
         _logger.LogWarning(" Start BroadcastAsyc() ");
         _isPrimaryLlm = serviceObj.IsPrimaryLlm;
         var chunkServiceObj = new LLMServiceObj(serviceObj);
-        if (serviceObj.IsFunctionCallResponse) chunkServiceObj.LlmMessage = userInput.Replace("<|start_header_id|>tool<|end_header_id|>", "<Function Response:> ") + "\n";
-        else chunkServiceObj.LlmMessage = userInput.Replace("<|start_header_id|>user<|end_header_id|>", "<User:> ") + "\n";
+        if (serviceObj.IsFunctionCallResponse)
+        {
+            string funcChunk = userInput.Replace("<tool_response>\\\n", "<Function Response:> ");
+            funcChunk = funcChunk.Replace("\\\n</tool_response", "");
+            chunkServiceObj.LlmMessage = funcChunk;
+        }
+        else
+        {
+            chunkServiceObj.LlmMessage = "<User:> " + userInput;
+        }
         if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(chunkServiceObj);
-        chunkServiceObj.LlmMessage = "<Assistant:> ";
-        if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(chunkServiceObj);
-        int stopAfter = 1;
-        if (sendOutput) stopAfter = 1;
+
+        int stopAfter = 2;
+        if (sendOutput) stopAfter = 2;
         sendOutput = true;
 
         var lineBuilder = new StringBuilder();
@@ -61,7 +68,7 @@ public class TokenBroadcasterFunc_3_2 : ITokenBroadcaster
             chunkServiceObj.LlmMessage = textChunk;
             if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(chunkServiceObj);
             string llmOutStr = llmOutFull.ToString();
-            int eotIdCount = CountOccurrences(llmOutStr, "<|eot_id|>");
+            int eotIdCount = CountOccurrences(llmOutStr, "<|im_end|>");
 
             if (eotIdCount > stopCount)
             {
@@ -72,7 +79,7 @@ public class TokenBroadcasterFunc_3_2 : ITokenBroadcaster
             if (stopCount == stopAfter)
             {
                 await ProcessLine(llmOutStr, serviceObj);
-                _logger.LogInformation($" Cancel due to {stopCount} <|eot_id|> detected ");
+                _logger.LogInformation($" Cancel due to {stopCount} <|im_end|> detected ");
                 _cancellationTokenSource.Cancel(); // Cancel after second <|eot_id|>}
 
             }
@@ -125,7 +132,7 @@ public class TokenBroadcasterFunc_3_2 : ITokenBroadcaster
         }
         else
         {
-            (string jsonLine, string functionName) = ParseInputForJson(line);
+            string jsonLine = ParseInputForJson(line);
             //string cleanLine = line;
             if (line != jsonLine)
             {
@@ -138,10 +145,7 @@ public class TokenBroadcasterFunc_3_2 : ITokenBroadcaster
                 responseServiceObj.LlmMessage = "";
                 responseServiceObj.IsFunctionCall = true;
                 responseServiceObj.JsonFunction = jsonLine;
-                if (!String.IsNullOrEmpty(functionName))
-                {
-                    responseServiceObj.FunctionName = functionName;
-                }
+
                 //responseServiceObj.JsonFunction = CallFuncJson(cleanLine);
                 await _responseProcessor.ProcessFunctionCall(responseServiceObj);
                 _isFuncCalled = true;
@@ -150,49 +154,24 @@ public class TokenBroadcasterFunc_3_2 : ITokenBroadcaster
         responseServiceObj.LlmMessage = "<end-of-line>";
         if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
     }
-    public string CallFuncJson(string input)
-    {
-        string callFuncJson = "";
-        string funcName = "addHost";
-        int startIndex = input.IndexOf('{');
-        int lastClosingBraceIndex = input.LastIndexOf('}');
-        string json = "";
-        if (startIndex != -1)
-        {
-            json = input.Substring(startIndex, lastClosingBraceIndex + 1);
-        }
-        callFuncJson = "{ \"name\" : \"" + funcName + "\" \"arguments\" : \"" + json + "\"}";
-        return callFuncJson;
-    }
-    private static (string json, string functionName) ParseInputForJson(string input)
+
+    private static string ParseInputForJson(string input)
     {
         // Find the start and end of the function header (between <| and the first |)
-        int headerStart = input.IndexOf("<|");
-        int headerEnd = input.IndexOf('|', headerStart + 2);
+        int tagStart = input.IndexOf("<tool_call>\n");
+        int tagEnd = input.IndexOf("\n</tool_call>");
 
         // If no valid function header is found, return input as-is
-        if (headerStart == -1 || headerEnd == -1)
+        if (tagStart == -1 || tagEnd == -1)
         {
-            return (input, "");
+            return input;
         }
 
-        // Extract the function name from between <| and the first |
-        string functionName = input.Substring(headerStart + 2, headerEnd - (headerStart + 2)).Trim();
+        tagStart += "<tool_call>\n".Length;
+        string jsonContent = input.Substring(tagStart, tagEnd - tagStart).Trim();
 
-        // The JSON part starts right after the first |
-        int jsonStart = headerEnd + 1;
-        int jsonEnd = input.IndexOf(">\n<|eot_id|>", jsonStart);
 
-        // If no valid JSON end marker is found, return input as-is
-        if (jsonEnd == -1)
-        {
-            return (input, functionName);
-        }
-
-        // Extract the JSON content between | and ><|eot_id|>
-        string jsonContent = input.Substring(jsonStart, jsonEnd - jsonStart).Trim();
-
-        return (JsonSanitizer.SanitizeJson(jsonContent), functionName);
+        return JsonSanitizer.SanitizeJson(jsonContent);
     }
 
 }
