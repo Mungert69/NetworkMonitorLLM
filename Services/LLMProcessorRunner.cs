@@ -140,7 +140,7 @@ public class LLMProcessRunner : ILLMRunner
         if (_mlParams.LlmVersion == "func_2.4") userInput = $"<|from|> get_login_info\\\n<|recipient|> all\\\n<|content|>User info ";
         else if (_mlParams.LlmVersion == "func_2.5") userInput = $"<|start_header_id|>tool<|end_header_id|>name=get_user_info";
         else if (_mlParams.LlmVersion == "func_3.1") userInput = "<|start_header_id|>ipython<|end_header_id|>";
-        else if (_mlParams.LlmVersion == "func_3.2") userInput = $"<|start_header_id|>tool<|end_header_id|>";
+        else if (_mlParams.LlmVersion == "func_3.2") userInput = $"<|start_header_id|>tool<|end_header_id|>\\\n\\\n";
         else if (_mlParams.LlmVersion == "llama_3.2") userInput = $"<|start_header_id|>ipython<|end_header_id|>";
          else if (_mlParams.LlmVersion == "qwen_2.5") userInput = $"<tool_response>\\\n";
        
@@ -163,8 +163,7 @@ public class LLMProcessRunner : ILLMRunner
         }
         serviceObj.UserInput = userInput + input;
 
-        if (_mlParams.LlmVersion == "llama_3.2" )  serviceObj.UserInput ="<|eot_id|><|start_header_id|>user<|end_header_id|>whats my user info<|eot_id|>";
-       else if (_mlParams.LlmVersion == "qwen_2.5") serviceObj.UserInput += $"\\\n</tool_response>";
+       if (_mlParams.LlmVersion == "qwen_2.5") serviceObj.UserInput += $"\\\n</tool_response>";
        
 
         serviceObj.IsFunctionCallResponse = false;
@@ -324,7 +323,7 @@ public class LLMProcessRunner : ILLMRunner
                     if (_mlParams.LlmVersion == "func_2.4") userInput = "<|from|> user\\\n<|recipient|> all\\\n<|content|>" + userInput;
                     else if (_mlParams.LlmVersion == "func_2.5") userInput = "<|start_header_id|>user<|end_header_id|>" + userInput+"<|eot_id|>";
                     else if (_mlParams.LlmVersion == "func_3.1") userInput = "<|start_header_id|>user<|end_header_id|>" + userInput+"<|eot_id|>";
-                    else if (_mlParams.LlmVersion == "func_3.2") userInput = "<|start_header_id|>user<|end_header_id|>" + userInput+"<|eot_id|>";
+                    else if (_mlParams.LlmVersion == "func_3.2") userInput = "<|start_header_id|>user<|end_header_id|>\\\n\\\n" + userInput;
                    else if (_mlParams.LlmVersion == "llama_3.2") userInput = "<|start_header_id|>user<|end_header_id|>" + userInput+"<|eot_id|>";
                    else if (_mlParams.LlmVersion == "qwen_2.5") userInput=userInput;
                     else if (_mlParams.LlmVersion=="standard") userInput = userInput;
@@ -335,7 +334,7 @@ public class LLMProcessRunner : ILLMRunner
                     if (_mlParams.LlmVersion == "func_2.4") userInput = "<|from|> " + serviceObj.FunctionName + "\\\n<|recipient|> all\\\n<|content|>" + userInput;
                     else if (_mlParams.LlmVersion == "func_2.5") userInput = "<|start_header_id|>tool<|end_header_id|>name=" + serviceObj.FunctionName + " " + userInput+"<|eot_id|>";
                     else if (_mlParams.LlmVersion == "func_3.1") userInput = "<|start_header_id|>ipython<|end_header_id|>" + userInput+"<|eot_id|>";
-                    else if (_mlParams.LlmVersion == "func_3.2") userInput = "<|start_header_id|>tool<|end_header_id|>" + userInput+"<|eot_id|>";
+                    else if (_mlParams.LlmVersion == "func_3.2") userInput = "<|start_header_id|>tool<|end_header_id|>\\\n\\\n" + userInput;
                     else if (_mlParams.LlmVersion == "llama_3.2") userInput = "<|start_header_id|>ipython<|end_header_id|>" + userInput+"<|eot_id|>";
                     else if (_mlParams.LlmVersion == "qwen_2.5") userInput="<tool_response>\\\n"+userInput+"\\\n</tool_response>";
                     else if (_mlParams.LlmVersion=="standard") userInput = "Funtion Call: "+userInput;

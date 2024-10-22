@@ -185,3 +185,5 @@ whats my user info<|eot_id|><|start_header_id|>assistant<|end_header_id|>
 I will get your user info
 >>>get_user_info
 {"detail_response": false}
+<|eot_id|>
+

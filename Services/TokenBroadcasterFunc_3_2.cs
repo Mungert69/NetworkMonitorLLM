@@ -34,13 +34,11 @@ public class TokenBroadcasterFunc_3_2 : ITokenBroadcaster
         _logger.LogWarning(" Start BroadcastAsyc() ");
         _isPrimaryLlm = serviceObj.IsPrimaryLlm;
         var chunkServiceObj = new LLMServiceObj(serviceObj);
-        if (serviceObj.IsFunctionCallResponse) chunkServiceObj.LlmMessage = userInput.Replace("<|start_header_id|>tool<|end_header_id|>", "<Function Response:> ") + "\n";
-        else chunkServiceObj.LlmMessage = userInput.Replace("<|start_header_id|>user<|end_header_id|>", "<User:> ") + "\n";
+        if (serviceObj.IsFunctionCallResponse) chunkServiceObj.LlmMessage = userInput.Replace("<|start_header_id|>tool<|end_header_id|>\\\n\\\n", "<Function Response:> ") + "\n";
+        else chunkServiceObj.LlmMessage = userInput.Replace("<|start_header_id|>user<|end_header_id|>\\\n\\\n", "<User:> ") + "\n";
         if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(chunkServiceObj);
-        chunkServiceObj.LlmMessage = "<Assistant:> ";
-        if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(chunkServiceObj);
-        int stopAfter = 1;
-        if (sendOutput) stopAfter = 1;
+          int stopAfter = 2;
+        if (sendOutput) stopAfter = 2;
         sendOutput = true;
 
         var lineBuilder = new StringBuilder();
@@ -166,9 +164,21 @@ public class TokenBroadcasterFunc_3_2 : ITokenBroadcaster
     }
     private static (string json, string functionName) ParseInputForJson(string input)
     {
+          int tagStart = input.IndexOf("<|start_header_id|>assistant<|end_header_id|>");
+       
+  if (tagStart == -1 )
+        {
+            return (input,"");
+        }
+
+        int tagStartLength = "<|start_header_id|>assistant<|end_header_id|>\n\n>>>all\n".Length;
+     string noHeaderLine = input.Substring(tagStart+tagStartLength).Trim();
+
+       
         // Find the start and end of the function header (between <| and the first |)
-        int headerStart = input.IndexOf("<|");
-        int headerEnd = input.IndexOf('|', headerStart + 2);
+        int headerStart = noHeaderLine.IndexOf(">>>");
+        noHeaderLine=noHeaderLine.Substring(headerStart+3);
+        int headerEnd = noHeaderLine.IndexOf('\n');
 
         // If no valid function header is found, return input as-is
         if (headerStart == -1 || headerEnd == -1)
@@ -177,20 +187,20 @@ public class TokenBroadcasterFunc_3_2 : ITokenBroadcaster
         }
 
         // Extract the function name from between <| and the first |
-        string functionName = input.Substring(headerStart + 2, headerEnd - (headerStart + 2)).Trim();
+        string functionName = noHeaderLine.Substring(0,headerEnd).Trim();
 
         // The JSON part starts right after the first |
         int jsonStart = headerEnd + 1;
-        int jsonEnd = input.IndexOf(">\n<|eot_id|>", jsonStart);
+        int jsonEnd = noHeaderLine.IndexOf("<|eot_id|>", jsonStart);
 
         // If no valid JSON end marker is found, return input as-is
         if (jsonEnd == -1)
         {
-            return (input, functionName);
+            return (input, "");
         }
 
         // Extract the JSON content between | and ><|eot_id|>
-        string jsonContent = input.Substring(jsonStart, jsonEnd - jsonStart).Trim();
+        string jsonContent = noHeaderLine.Substring(jsonStart, jsonEnd - jsonStart).Trim();
 
         return (JsonSanitizer.SanitizeJson(jsonContent), functionName);
     }
