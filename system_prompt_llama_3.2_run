@@ -31,3 +31,4 @@ Important: After calling the function, use the response to answer the user's que
 Whats my user info<|eot_id|><|start_header_id|>assistant<|end_header_id|>
 
 {"name" : "get_user_info", "parameters" : {"detail_response" : false}}
+<|eot_id|>

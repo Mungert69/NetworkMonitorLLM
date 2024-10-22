@@ -34,13 +34,13 @@ public class TokenBroadcasterLlama_3_2 : ITokenBroadcaster
         _logger.LogWarning(" Start BroadcastAsyc() ");
         _isPrimaryLlm = serviceObj.IsPrimaryLlm;
         var chunkServiceObj = new LLMServiceObj(serviceObj);
-        if (serviceObj.IsFunctionCallResponse) chunkServiceObj.LlmMessage = userInput.Replace("<|start_header_id|>ipython<|end_header_id|>", "<Function Response:>");
-        else chunkServiceObj.LlmMessage = userInput.Replace("<|start_header_id|>user<|end_header_id|>", "<User:>");
+        if (serviceObj.IsFunctionCallResponse) chunkServiceObj.LlmMessage = userInput.Replace("<|start_header_id|>ipython<|end_header_id|>\\\n\\\n", "<Function Response:>");
+        else chunkServiceObj.LlmMessage = userInput.Replace("<|start_header_id|>user<|end_header_id|>\\\n\\\n", "<User:>");
         if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(chunkServiceObj);
         string copyUserInput = userInput;
         //int startIndex = userInput.IndexOf('/');
-        int stopAfter = 1;
-        if (sendOutput) stopAfter = 1;
+        int stopAfter = 3;
+        if (sendOutput) stopAfter = 2;
         sendOutput = true;
 
         var lineBuilder = new StringBuilder();
@@ -151,20 +151,6 @@ public class TokenBroadcasterLlama_3_2 : ITokenBroadcaster
         }
         responseServiceObj.LlmMessage = "<end-of-line>";
         if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
-    }
-    public string CallFuncJson(string input)
-    {
-        string callFuncJson = "";
-        string funcName = "addHost";
-        int startIndex = input.IndexOf('{');
-        int lastClosingBraceIndex = input.LastIndexOf('}');
-        string json = "";
-        if (startIndex != -1)
-        {
-            json = input.Substring(startIndex, lastClosingBraceIndex + 1);
-        }
-        callFuncJson = "{ \"name\" : \"" + funcName + "\" \"arguments\" : \"" + json + "\"}";
-        return callFuncJson;
     }
    private static (string json, string functionName) ParseInputForJson(string input)
 {
