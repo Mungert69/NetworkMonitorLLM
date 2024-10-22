@@ -1,14 +1,7 @@
 <|start_header_id|>system<|end_header_id|>
 
-You are capable of executing available function(s) if required.
-Only execute function(s) when absolutely necessary.
-Ask for the required input to:recipient==all
-Use JSON for function arguments.
-Respond in this format:
->>>${recipient}
-${content}
-Available functions:
 // Supported function definitions that should be called when necessary. 
+
 namespace functions {
   // Add a host to be monitored
   type add_host = (_: {
@@ -112,7 +105,15 @@ namespace functions {
     detail_response: boolean,
   }) => any;
 
-// Run nmap command. Use this to perform various network scans. Based on user input, construct the correct scan_options. Example options include: Basic Scans: -sn for ping scan. Port Scanning: -sS for TCP SYN scan, -p <ports> to specify ports. Service/Version Detection: -sV. OS Detection: -O. Aggressive Scans: -A for a comprehensive scan. Stealth and Timing Options: -T<0-5>, -Pn for stealth scans. IPv6 Scanning: -6 make sure the target is a valid IPv6 address. Additional Options: --script <script_name>, --traceroute, -v, etc. Target (target): Always include the target in the target parameter. This is the IP address, hostname, domain name, or subnet that you are scanning. Example targets include: A single IP address: 192.168.1.1 An IP range: 192.168.1.1-254 A domain name: example.com A subnet: 192.168.1.0/24 3. Running Vulnerability Scans with NSE Scripts: If the user requests a vulnerability scan, or if the scan involves checking for specific security vulnerabilities, you should utilize NSE scripts. Common options include: -sC to run the default set of NSE scripts. --script <script_name> to specify particular scripts for vulnerabilities or checks, such as "vuln" for a general vulnerability scan. Some scripts may require additional arguments, which should be included in the scan_options. Example: --script "vuln". Ensure that the appropriate scripts are selected based on the user’s intent.   
+  // Perform a scan using a remote network scanning assistant. You will create a message to send to the scanning assistant. It will be in laymans english describing what the user wants to scan and how. If the scanning assistant asks questions then present these to the user using simple language and try to create the message using your knowledge if possible. 
+  type call_nmap = (_: {
+    // The message to be sent to the network scanning assistant
+    message: string,
+    // The agent location from which the network scanning assistant will perform the scan, optional
+    agent_location: string,
+  }) => any;
+
+  // Run nmap command. Use this to perform various network scans. Based on user input, construct the correct scan_options. Example options include: Basic Scans: -sn for ping scan. Port Scanning: -sS for TCP SYN scan, -p <ports> to specify ports. Service/Version Detection: -sV. OS Detection: -O. Aggressive Scans: -A for a comprehensive scan. Stealth and Timing Options: -T<0-5>, -Pn for stealth scans. IPv6 Scanning: -6 make sure the target is a valid IPv6 address. Additional Options: --script <script_name>, --traceroute, -v, etc. Target (target): Always include the target in the target parameter. This is the IP address, hostname, domain name, or subnet that you are scanning. Example targets include: A single IP address: 192.168.1.1 An IP range: 192.168.1.1-254 A domain name: example.com A subnet: 192.168.1.0/24 3. Running Vulnerability Scans with NSE Scripts: If the user requests a vulnerability scan, or if the scan involves checking for specific security vulnerabilities, you should utilize NSE scripts. Common options include: -sC to run the default set of NSE scripts. --script <script_name> to specify particular scripts for vulnerabilities or checks, such as "vuln" for a general vulnerability scan. Some scripts may require additional arguments, which should be included in the scan_options. Example: --script "vuln". Ensure that the appropriate scripts are selected based on the user’s intent.   
   type run_nmap = (_: {
     scan_options: string, // The nmap scan options. Must reflect the user's desired scan goal, e.g., ping scan, vulnerability scan, etc.
     target: string, // Target to scan, like an IP, domain, or subnet.
@@ -121,7 +122,6 @@ namespace functions {
     number_lines?: number, // optional
     // The page of lines to return. Use to paginate through many lines of data.
     page?: number, // optional
-
   }) => any;
 
   // Run openssl command. Use this to perform security checks on SSL/TLS configurations of servers or services. You will emulate the role of a professional security auditor by identifying weak encryption methods, checking for expired certificates, or finding other cryptographic vulnerabilities. Ensure to structure commands based on the user’s request for scope and depth of analysis. 
@@ -155,7 +155,7 @@ type run_metasploit = (_: {
     target: string,
     // The location of the agent that will execute the module. If not provided, the default agent location will be used. Optional.
     agent_location?: string,
-}) => any;
+  }) => any;
 
   // Search information and Metasploit modules. Use this to get information about modules and which modules are available. Use this if you get an error when using a module.
   type search_metasploit_modules = (_: {
@@ -177,11 +177,11 @@ type run_metasploit = (_: {
 
 }// namespace functions<|eot_id|><|start_header_id|>system<|end_header_id|>
 
-All dates must be in ISO 8601 Standard yyyy-MM-ddTHH:mm:ss .<|eot_id|><|start_header_id|>user<|end_header_id|>
+All dates must be in ISO 8601 Standard yyyy-MM-ddTHH:mm:ss<|eot_id|><|start_header_id|>user<|end_header_id|>
 
 whats my user info<|eot_id|><|start_header_id|>assistant<|end_header_id|>
 
->>>all
-I will get your user info
->>>get_user_info
+I will get you user info
+<|reserved_special_token_249|>get_user_info
 {"detail_response": false}
+<|eot_id|>

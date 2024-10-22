@@ -33,39 +33,79 @@ namespace NetworkMonitor.LLM.Services
             await _cancellationTokenSource.CancelAsync();
         }
 
-        public async Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput, bool sendOutput = true)
+     public async Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput, bool sendOutput = true)
+    {
+        _logger.LogWarning(" Start BroadcastAsyc() ");
+        _isPrimaryLlm = serviceObj.IsPrimaryLlm;
+        var chunkServiceObj = new LLMServiceObj(serviceObj);
+        if (serviceObj.IsFunctionCallResponse) chunkServiceObj.LlmMessage = userInput.Replace("<|start_header_id|>tool<|end_header_id|>\\\n\\\n", "<Function Response:> ") + "\n";
+        else chunkServiceObj.LlmMessage = userInput.Replace("<|start_header_id|>user<|end_header_id|>\\\n\\\n", "<User:> ") + "\n";
+        if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(chunkServiceObj);
+          int stopAfter = 2;
+        if (sendOutput) stopAfter = 2;
+        sendOutput = true;
+
+        var lineBuilder = new StringBuilder();
+        var llmOutFull = new StringBuilder();
+        _isFuncCalled = false;
+        var cancellationToken = _cancellationTokenSource.Token;
+        int stopCount = 0;
+
+
+        while (!cancellationToken.IsCancellationRequested)
         {
-            _logger.LogWarning("Start BroadcastAsync()");
-            var outputBuilder = new StringBuilder();
-            _isPrimaryLlm = serviceObj.IsPrimaryLlm;
-            _isFuncCalled = false;
-            var cancellationToken = _cancellationTokenSource.Token;
+            byte[] buffer = new byte[1024];
+            int charRead = await process.StandardOutput.ReadAsync(buffer, 0, buffer.Length);
+            string textChunk = Encoding.UTF8.GetString(buffer, 0, charRead);
+            //tokenBuilder.Append(textChunk);
+            llmOutFull.Append(textChunk);
+            chunkServiceObj = new LLMServiceObj(serviceObj);
+            chunkServiceObj.LlmMessage = textChunk;
+            if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(chunkServiceObj);
+            string llmOutStr = llmOutFull.ToString();
+            int eotIdCount = CountOccurrences(llmOutStr, "<|eot_id|>");
 
-            while (!cancellationToken.IsCancellationRequested)
+            if (eotIdCount > stopCount)
             {
-                byte[] buffer = new byte[1];
-                int charRead = await process.StandardOutput.ReadAsync(buffer, 0, buffer.Length);
-                if (charRead == 0) break; // End of stream
+                stopCount++;
+                _logger.LogInformation($" Stop count {stopCount} output is {llmOutStr}");
 
-                string textChunk = Encoding.UTF8.GetString(buffer, 0, charRead);
-                outputBuilder.Append(textChunk);
-
-                var chunkServiceObj = new LLMServiceObj(serviceObj) { LlmMessage = textChunk };
-                if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(chunkServiceObj);
-
-                if (outputBuilder.ToString().Contains("<|eot_id|>") || outputBuilder.ToString().Contains("<|eom_id|>"))
-               
-                //if (outputBuilder.ToString().Contains("<|eot_id|>") )
-                {
-                    await ProcessOutput(outputBuilder.ToString(), serviceObj);
-                    outputBuilder.Clear();
-                }
             }
-            // TODO send completed conversation to calling llm if its a function call to this llm from a llm
-            _logger.LogInformation("Finished LLM Interaction");
+            if (stopCount == stopAfter)
+            {
+                await ProcessLine(llmOutStr, serviceObj);
+                _logger.LogInformation($" Cancel due to {stopCount} <|eot_id|> detected ");
+                _cancellationTokenSource.Cancel(); // Cancel after second <|eot_id|>}
+
+            }
         }
 
-        private async Task ProcessOutput(string output, LLMServiceObj serviceObj)
+        if (!_isPrimaryLlm && !_isFuncCalled)
+        {
+            string llmOutput = llmOutFull.ToString().Replace("\n", " ");
+            var finalServiceObj = new LLMServiceObj(serviceObj);
+            finalServiceObj.LlmMessage = llmOutput;
+            finalServiceObj.IsFunctionCallResponse = true;
+            await _responseProcessor.ProcessLLMOutput(finalServiceObj);
+            _logger.LogInformation($" --> Sent redirected LLM Output {finalServiceObj.LlmMessage}");
+        }
+        _logger.LogInformation(" --> Finished LLM Interaction ");
+    }
+ private int CountOccurrences(string source, string substring)
+    {
+        int count = 0;
+        int index = 0;
+
+        while ((index = source.IndexOf(substring, index)) != -1)
+        {
+            count++;
+            index += substring.Length;
+        }
+
+        return count;
+    }
+   
+        private async Task ProcessLine(string output, LLMServiceObj serviceObj)
         {
             _logger.LogInformation($"sessionID={serviceObj.SessionId} output is =>{output}<=");
 

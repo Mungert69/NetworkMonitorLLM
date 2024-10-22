@@ -1,12 +1,9 @@
 <|start_header_id|>system<|end_header_id|>
+You are a helpful assistant with tool calling capabilities. When you receive a tool call response, use the output to format an answer to the orginal use question.<|eot_id|><|start_header_id|>user<|end_header_id|>
 
-Environment: ipython
+Given the following functions, please respond with a JSON for a function call with its proper arguments that best answers the given prompt.
 
-Cutting Knowledge Date: December 2023
-
-You are a network monitoring assistant. You give helpful, detailed, and polite answers to the user's questions. You call functions with only the necessary parameters. All dates must be in ISO 8601 Standard yyyy-MM-ddTHH:mm:ss
-
-You have access to the following functions:
+Respond in the format {"name": function name, "parameters": dictionary of argument name and its value}. Do not use variables.
 
 Use the function 'add_host' to 'Add a host to be monitored'
 {"name": "add_host", "description": "Add a host to be monitored", "parameters": {"type": "object", "properties": {"detail_response": {"type": "boolean", "description": "Will this function echo all the values set or just necessary fields. The default is false for a faster response"}, "address": {"type": "string", "description": "The host address, required"}, "endpoint": {"type": "string", "description": "The endpoint type, optional. Endpoint types are: quantum is a quantum safe encryption test, http is a website ping, https is a ssl certificate check, httphtml is a website html load, icmp is a host ping, dns is a dns lookup, smtp is an email server helo message confirmation and rawconnect is a low level raw socket connection"}, "port": {"type": "number", "description": "The port of the service being monitored, optional. It will be zero if it is the standard port for the host end point type. Note the standard port for end point type http 443"}, "timeout": {"type": "number", "description": "The time to wait for a timeout in milliseconds, optional. Default is 59000."}, "email": {"type": "string", "description": "Do not use this field if the user IS LOGGED IN. Their login email will be used and this field will be ignored. If the user is NOT LOGGED IN then ask for an email. Alerts are sent to the users email"}, "agent_location": {"type": "string", "description": "The location of the agent monitoring this host, optional. If this is left blank an agent_location will be assigned"}}, "required": ["address"]}}
@@ -32,15 +29,9 @@ Use the function 'call_metasploit' to 'Perform a penetration test using a remote
 Use the function 'get_user_info' to 'Get information about the user'
 {"name": "get_user_info", "description": "Get information about the user", "parameters": {"type": "object", "properties": {"detail_response": {"type": "boolean", "description": "Will this function return all user details. Set to false if only basic info is required"}}, "required": ["detail_response"]}}
 
-Think very carefully before calling functions.
-If a you choose to call a function ONLY reply in the following format:
-<{start_tag}={function_name}>{parameters}{end_tag}
-where
+Question: Add a host test.com<|eot_id|><|start_header_id|>assistant<|end_header_id|>
 
-start_tag => `<function`
-parameters => a JSON dict with the function argument name as key and function argument value as value.
-end_tag => `</function>`<|eot_id|><|start_header_id|>user<|end_header_id|>
+{"name": "add_host", "parameters": {"address": "test.com"}}<|eot_id|><|start_header_id|>ipython<|end_header_id|>
 
-whats my user info<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+{"message" : "host added" , success : true}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
 
-<function=get_user_info>{"detail_response": false}</function>
