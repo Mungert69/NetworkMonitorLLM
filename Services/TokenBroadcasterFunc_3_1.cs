@@ -38,7 +38,7 @@ namespace NetworkMonitor.LLM.Services
         _logger.LogWarning(" Start BroadcastAsyc() ");
         _isPrimaryLlm = serviceObj.IsPrimaryLlm;
         var chunkServiceObj = new LLMServiceObj(serviceObj);
-        if (serviceObj.IsFunctionCallResponse) chunkServiceObj.LlmMessage = userInput.Replace("<|start_header_id|>tool<|end_header_id|>\\\n\\\n", "<Function Response:> ") ;
+        if (serviceObj.IsFunctionCallResponse) chunkServiceObj.LlmMessage = userInput.Replace("<|start_header_id|>ipython<|end_header_id|>\\\n\\\n", "<Function Response:> ") ;
         else chunkServiceObj.LlmMessage = userInput.Replace("<|start_header_id|>user<|end_header_id|>\\\n\\\n", "<User:> ") + "\n";
         if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(chunkServiceObj);
           int stopAfter = 3;
@@ -64,7 +64,7 @@ namespace NetworkMonitor.LLM.Services
             if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(chunkServiceObj);
             string llmOutStr = llmOutFull.ToString();
             int eotIdCount = CountOccurrences(llmOutStr, "<|eot_id|>");
-
+            eotIdCount += CountOccurrences(llmOutStr, "<|eom_id|>");
             if (eotIdCount > stopCount)
             {
                 stopCount++;
@@ -107,7 +107,7 @@ namespace NetworkMonitor.LLM.Services
    
         private async Task ProcessLine(string output, LLMServiceObj serviceObj)
         {
-            _logger.LogInformation($"sessionID={serviceObj.SessionId} output is =>{output}<=");
+            //_logger.LogInformation($"sessionID={serviceObj.SessionId} output is =>{output}<=");
 
             // Process function calls
             var functionCalls = ExtractFunctionCalls(output);
@@ -118,13 +118,13 @@ namespace NetworkMonitor.LLM.Services
                 await ProcessFunctionCall(functionCall, serviceObj);
             }
 
-            // Process regular output
+            /*// Process regular output
             var cleanedOutput = RemoveFunctionCalls(output);
             if (!string.IsNullOrWhiteSpace(cleanedOutput))
             {
                 var outputServiceObj = new LLMServiceObj(serviceObj) { LlmMessage = cleanedOutput };
                 await _responseProcessor.ProcessLLMOutput(outputServiceObj);
-            }
+            }*/
         }
 
         private async Task ProcessFunctionCall(string functionCall, LLMServiceObj serviceObj)

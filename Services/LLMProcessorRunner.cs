@@ -66,7 +66,7 @@ public class LLMProcessRunner : ILLMRunner
         string promptPrefix = "";
         string extraReversePrompt = "";
         // if (!mlParams.LlmIsfunc_2.4) promptPrefix = " --in-prefix \"<|user|>\" ";
-        if (mlParams.LlmVersion == "llama_3.2") extraReversePrompt = " -r \"<|eom_id|>\" ";
+        if (mlParams.LlmVersion == "llama_3.2" || mlParams.LlmVersion == "func_3.1") extraReversePrompt = " -r \"<|eom_id|>\" ";
 
 
         if (_startServiceoObj.UserInfo.AccountType == null)
