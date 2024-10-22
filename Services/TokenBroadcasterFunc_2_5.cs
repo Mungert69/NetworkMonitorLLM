@@ -34,14 +34,12 @@ public class TokenBroadcasterFunc_2_5 : ITokenBroadcaster
         _logger.LogWarning(" Start BroadcastAsyc() ");
          _isPrimaryLlm = serviceObj.IsPrimaryLlm;
          var chunkServiceObj = new LLMServiceObj(serviceObj);
-        if (serviceObj.IsFunctionCallResponse) chunkServiceObj.LlmMessage = userInput.Replace("<|start_header_id|>tool<|end_header_id|>", "<Function Response:> ")+"\n";
-        else chunkServiceObj.LlmMessage = userInput.Replace("<|start_header_id|>user<|end_header_id|>", "<User:> ")+"\n";
-        if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(chunkServiceObj);
-        chunkServiceObj.LlmMessage = "<Assistant:> ";
+        if (serviceObj.IsFunctionCallResponse) chunkServiceObj.LlmMessage = userInput.Replace("<|start_header_id|>tool<|end_header_id|>\\\n\\\n", "<Function Response:> ");
+        else chunkServiceObj.LlmMessage = userInput.Replace("<|start_header_id|>user<|end_header_id|>\\\n\\\n", "<User:> ")+"\n";
          if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(chunkServiceObj);
        
        int stopAfter = 2;
-        if (sendOutput) stopAfter = 1;
+        if (sendOutput) stopAfter = 2;
         sendOutput = true;
       
         var lineBuilder = new StringBuilder();
@@ -156,20 +154,7 @@ public class TokenBroadcasterFunc_2_5 : ITokenBroadcaster
         responseServiceObj.LlmMessage = "<end-of-line>";
         if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
     }
-    public string CallFuncJson(string input)
-    {
-        string callFuncJson = "";
-        string funcName = "addHost";
-        int startIndex = input.IndexOf('{');
-        int lastClosingBraceIndex = input.LastIndexOf('}');
-        string json = "";
-        if (startIndex != -1)
-        {
-            json = input.Substring(startIndex, lastClosingBraceIndex + 1);
-        }
-        callFuncJson = "{ \"name\" : \"" + funcName + "\" \"arguments\" : \"" + json + "\"}";
-        return callFuncJson;
-    }
+  
     private static (string json, string functionName) ParseInputForJson(string input)
     {
         string specialToken = "<|reserved_special_token_249|>";
