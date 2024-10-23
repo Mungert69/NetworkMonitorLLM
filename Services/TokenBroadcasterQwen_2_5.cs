@@ -38,6 +38,7 @@ public class TokenBroadcasterQwen_2_5 : ITokenBroadcaster
         {
             string funcChunk = userInput.Replace("<|im_start|>user\\\n<tool_response>\\\n", "<Function Response:> ");
             funcChunk = funcChunk.Replace("\\\n</tool_response", "");
+            funcChunk =funcChunk.Replace("\n","");
             chunkServiceObj.LlmMessage = funcChunk;
         }
           else chunkServiceObj.LlmMessage = userInput.Replace("<|im_start|>user\\\n", "<User:> ") ;
