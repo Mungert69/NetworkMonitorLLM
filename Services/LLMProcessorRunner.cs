@@ -142,7 +142,7 @@ public class LLMProcessRunner : ILLMRunner
         else if (_mlParams.LlmVersion == "func_3.1") userInput = "<|start_header_id|>ipython<|end_header_id|>\\\n\\\n";
         else if (_mlParams.LlmVersion == "func_3.2") userInput = $"<|start_header_id|>tool<|end_header_id|>\\\n\\\n";
         else if (_mlParams.LlmVersion == "llama_3.2") userInput = $"<|start_header_id|>ipython<|end_header_id|>\\\n\\\n";
-         else if (_mlParams.LlmVersion == "qwen_2.5") userInput = $"<tool_response>\\\n";
+         else if (_mlParams.LlmVersion == "qwen_2.5") userInput = $"<|im_start|>user\\\n<tool_response>\\\n";
        
         else if (_mlParams.LlmVersion == "standard") userInput = "Function Call : ";
 
@@ -325,7 +325,7 @@ public class LLMProcessRunner : ILLMRunner
                     else if (_mlParams.LlmVersion == "func_3.1") userInput = "<|start_header_id|>user<|end_header_id|>\\\n\\\n" + userInput;
                     else if (_mlParams.LlmVersion == "func_3.2") userInput = "<|start_header_id|>user<|end_header_id|>\\\n\\\n" + userInput;
                    else if (_mlParams.LlmVersion == "llama_3.2") userInput = "<|start_header_id|>user<|end_header_id|>\\\n\\\n" + userInput;
-                   else if (_mlParams.LlmVersion == "qwen_2.5") userInput=userInput;
+                   else if (_mlParams.LlmVersion == "qwen_2.5") userInput="<|im_start|>user\\\n"+userInput;
                     else if (_mlParams.LlmVersion=="standard") userInput = userInput;
 
                 }
@@ -336,7 +336,7 @@ public class LLMProcessRunner : ILLMRunner
                     else if (_mlParams.LlmVersion == "func_3.1") userInput = "<|start_header_id|>ipython<|end_header_id|>\\\n\\\n" + userInput;
                     else if (_mlParams.LlmVersion == "func_3.2") userInput = "<|start_header_id|>tool<|end_header_id|>\\\n\\\n" + userInput;
                     else if (_mlParams.LlmVersion == "llama_3.2") userInput = "<|start_header_id|>ipython<|end_header_id|>\\\n\\\n" + userInput;
-                    else if (_mlParams.LlmVersion == "qwen_2.5") userInput="<tool_response>\\\n"+userInput+"\\\n</tool_response>";
+                    else if (_mlParams.LlmVersion == "qwen_2.5") userInput="<|im_start|>user\\\n<tool_response>\\\n"+userInput+"\\\n</tool_response>";
                     else if (_mlParams.LlmVersion=="standard") userInput = "Funtion Call: "+userInput;
                 }
             }

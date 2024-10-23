@@ -36,14 +36,12 @@ public class TokenBroadcasterQwen_2_5 : ITokenBroadcaster
         var chunkServiceObj = new LLMServiceObj(serviceObj);
         if (serviceObj.IsFunctionCallResponse)
         {
-            string funcChunk = userInput.Replace("<tool_response>\\\n", "<Function Response:> ");
+            string funcChunk = userInput.Replace("<|im_start|>user\\\n<tool_response>\\\n", "<Function Response:> ");
             funcChunk = funcChunk.Replace("\\\n</tool_response", "");
             chunkServiceObj.LlmMessage = funcChunk;
         }
-        else
-        {
-            chunkServiceObj.LlmMessage = "<User:> " + userInput;
-        }
+          else chunkServiceObj.LlmMessage = userInput.Replace("<|im_start|>user\\\n", "<User:> ") ;
+      
         if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(chunkServiceObj);
 
         int stopAfter = 2;
