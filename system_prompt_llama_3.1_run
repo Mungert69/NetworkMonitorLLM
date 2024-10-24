@@ -1,12 +1,10 @@
 <|start_header_id|>system<|end_header_id|>
+You are a helpful assistant with tool calling capabilities. When you receive a tool call response, use the output to format an answer to the orginal use question.<|eot_id|><|start_header_id|>user<|end_header_id|>
 
-Environment: ipython
+Given the following functions, please respond with a JSON for a function call with its proper arguments that best answers the given prompt.
 
-Cutting Knowledge Date: December 2023
+Respond in the format {"name": function name, "parameters": dictionary of argument name and its value}. Do not use variables.
 
-You are a network monitoring assistant. You give helpful, detailed, and polite answers to the user's questions. You call functions with only the necessary parameters. All dates must be in ISO 8601 Standard yyyy-MM-ddTHH:mm:ss
-
-You have access to the following functions:
 Use the function add_host to add a host to be monitored with the specified address and optional endpoint type.
 {"name": "add_host", "description": "Add a host to be monitored. For example, to add a host with address 'example.com' and monitor it using the httpfull endpoint: {'address': 'example.com', 'endpoint': 'httpfull'}.", "parameters": {"type": "object", "properties": {"detail_response": {"type": "boolean", "description": "Will this function echo all the values set or just necessary fields. The default is false for a faster response."}, "address": {"type": "string", "description": "The host address, required."}, "endpoint": {"type": "string", "description": "The endpoint type, optional. Endpoint types are: quantum (TLS encryption test to check for quantum-safe key exchange), http (website ping), https (SSL certificate check), httphtml (loads only the HTML of a website), httpfull (full webpage load including JavaScript), icmp (host ping), dns (DNS lookup), smtp (email server HELO message confirmation), rawconnect (low-level raw socket connection), nmap (performs a service scan using nmap), nmapvuln (performs an nmap vulnerability check)."}, "port": {"type": "number", "description": "The port of the service being monitored, optional. It will be zero if it is the standard port for the host endpoint type. For example, the standard port for HTTPS is 443."}, "timeout": {"type": "number", "description": "The time to wait for a timeout in milliseconds, optional. The default is 59000."}, "email": {"type": "string", "description": "Do not use this field if the user IS LOGGED IN. Their login email will be used, and this field will be ignored. If the user is NOT LOGGED IN, then ask for an email. Alerts are sent to the user's email."}, "agent_location": {"type": "string", "description": "The location of the agent monitoring this host, optional. If left blank, an agent location will be assigned."}}, "required": ["address"]}}
 
@@ -39,18 +37,10 @@ Use the function run_metasploit to execute a Metasploit module for penetration t
 
 Use the function search_metasploit_modules to search for Metasploit modules based on a name, description, or CVE identifier.
 {"name": "search_metasploit_modules", "description": "Search for available Metasploit modules based on filters such as name, description, platform, or CVE identifier. This allows users to find the right module for a specific target or vulnerability.", "parameters": {"type": "object", "properties": {"search_type": {"type": "string", "description": "Specify the type of search. Options are 'search' to find modules based on name or description, 'show' to list available modules, or 'info' to get detailed information about a specific module."}, "search_expression": {"type": "string", "description": "The expression used for searching. Examples include 'name:exploit' to search for exploits or 'platform:windows' to find Windows-specific modules. For CVE searches, use 'cve:<CVE-ID>'."}, "number_lines": {"type": "number", "description": "Optional. Specify the number of lines to return for the search results."}, "page": {"type": "number", "description": "Optional. Page number for paginated results if the search returns a large number of modules."}}, "required": ["search_type", "search_expression"]}}
-
-Think very carefully before calling functions.
-If a you choose to call a function ONLY reply in the following format:
-<{start_tag}={function_name}>{parameters}{end_tag}
-where
-
-start_tag => `<function`
-parameters => a JSON dict with the function argument name as key and function argument value as value.
-end_tag => `</function>`<|eot_id|><|start_header_id|>user<|end_header_id|>
+<|eot_id|><|start_header_id|>user<|end_header_id|>
 
 whats my user info<|eot_id|><|start_header_id|>assistant<|end_header_id|>
 
-<function=get_user_info>{"detail_response": false}</function>
+{"name" : "get_user_info", "parameters" : {"detail_response": false}}
 <|eot_id|>
 
