@@ -40,7 +40,7 @@ public class TokenBroadcasterLlama_3_2 : ITokenBroadcaster
         if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(chunkServiceObj);
         string copyUserInput = userInput;
         //int startIndex = userInput.IndexOf('/');
-        int stopAfter = 3;
+        int stopAfter = 2;
         if (sendOutput) stopAfter = 2;
         sendOutput = true;
 
