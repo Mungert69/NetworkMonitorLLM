@@ -172,14 +172,15 @@ public class TokenBroadcasterLlama_3_2 : ITokenBroadcaster
     string functionName = input.Substring(functionNameStart, functionNameEnd - functionNameStart);
 
     // Find the parameters in the JSON format
-    int paramsStart = input.IndexOf("\"parameters\":", functionNameEnd);
+    string paramStr="\"parameters\"",;
+    int paramsStart = input.IndexOf(paramStr, functionNameEnd);
     if (paramsStart == -1)
     {
         return (input, functionName);  // No parameters found
     }
 
     // Extract the JSON parameters part
-    int jsonStart = paramsStart + "\"parameters\":".Length;
+    int jsonStart = input.IndexOf("{", paramsStart+paramStr.Length)
     int jsonEnd = input.LastIndexOf("}");
     if (jsonEnd == -1 || jsonEnd <= jsonStart)
     {
