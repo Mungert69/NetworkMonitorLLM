@@ -68,7 +68,7 @@ public class TokenBroadcasterLlama_3_2 : ITokenBroadcaster
             if (eotIdCount > stopCount)
             {
                 stopCount++;
-                if (llmOutStr.Contains("<|start_header_id|>assistant<|eot_id|>")) stopAfter=2;
+                if (llmOutStr.Contains("<|start_header_id|>assistant<|eot_id|>")) stopAfter = 2;
                 _logger.LogInformation($" Stop count {stopCount} output is {llmOutStr}");
 
             }
@@ -153,44 +153,61 @@ public class TokenBroadcasterLlama_3_2 : ITokenBroadcaster
         responseServiceObj.LlmMessage = "<end-of-line>";
         if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
     }
-   private static (string json, string functionName) ParseInputForJson(string input)
-{
-    // Find the start of the function name (the "name" field will be extracted from the JSON)
-    int headerStart = input.IndexOf("{\"name\": \"");
-    if (headerStart == -1)
+    private static (string json, string functionName) ParseInputForJson(string input)
     {
-        return (input, "");
+        // Find the start of the function name
+        int headerStart = input.IndexOf("{\"name\": \"");
+        if (headerStart == -1)
+        {
+            return (input, "");
+        }
+
+        // Extract the function name
+        int functionNameStart = headerStart + "{\"name\": \"".Length;
+        int functionNameEnd = input.IndexOf("\"", functionNameStart);
+        if (functionNameEnd == -1)
+        {
+            return (input, "");
+        }
+        string functionName = input.Substring(functionNameStart, functionNameEnd - functionNameStart);
+
+        // Find the parameters in the JSON format
+        string paramStr = "\"parameters\"";
+        int paramsStart = input.IndexOf(paramStr, functionNameEnd);
+        if (paramsStart == -1)
+        {
+            return (input, functionName);  // No parameters found
+        }
+
+        // Extract the JSON parameters part
+        int jsonStart = input.IndexOf("{", paramsStart + paramStr.Length);
+        int braceCount = 0;
+        int jsonEnd = -1;
+
+        // Traverse the JSON starting point to find the matching closing brace
+        for (int i = jsonStart; i < input.Length; i++)
+        {
+            if (input[i] == '{') braceCount++;
+            else if (input[i] == '}') braceCount--;
+
+            if (braceCount == 0)
+            {
+                jsonEnd = i;
+                break;
+            }
+        }
+
+        // Check if we found a valid JSON block
+        if (jsonEnd == -1 || jsonEnd <= jsonStart)
+        {
+            return (input, functionName);
+        }
+
+        // Extract the JSON object for parameters
+        string jsonContent = input.Substring(jsonStart, jsonEnd - jsonStart + 1).Trim();
+
+        return (JsonSanitizer.SanitizeJson(jsonContent), functionName);
     }
 
-    // Extract the function name
-    int functionNameStart = headerStart + "{\"name\": \"".Length;
-    int functionNameEnd = input.IndexOf("\"", functionNameStart);
-    if (functionNameEnd == -1)
-    {
-        return (input, "");
-    }
-    string functionName = input.Substring(functionNameStart, functionNameEnd - functionNameStart);
-
-    // Find the parameters in the JSON format
-    string paramStr="\"parameters\"",;
-    int paramsStart = input.IndexOf(paramStr, functionNameEnd);
-    if (paramsStart == -1)
-    {
-        return (input, functionName);  // No parameters found
-    }
-
-    // Extract the JSON parameters part
-    int jsonStart = input.IndexOf("{", paramsStart+paramStr.Length)
-    int jsonEnd = input.LastIndexOf("}");
-    if (jsonEnd == -1 || jsonEnd <= jsonStart)
-    {
-        return (input, functionName);
-    }
-
-    // Extract the JSON object for parameters
-    string jsonContent = input.Substring(jsonStart, jsonEnd - jsonStart).Trim();
-
-    return (JsonSanitizer.SanitizeJson(jsonContent), functionName);
-}
 
 }
