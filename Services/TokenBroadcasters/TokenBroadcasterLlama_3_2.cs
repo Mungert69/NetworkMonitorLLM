@@ -10,26 +10,12 @@ using Microsoft.Extensions.Logging;
 using NetworkMonitor.Objects.ServiceMessage;
 using NetworkMonitor.Objects;
 namespace NetworkMonitor.LLM.Services;
-public class TokenBroadcasterLlama_3_2 : ITokenBroadcaster
+public class TokenBroadcasterLlama_3_2 : TokenBroadcasterBase
 {
-    private readonly ILLMResponseProcessor _responseProcessor;
-    private readonly ILogger _logger;
-    //public event Func<object, string, Task> LineReceived;
-    private CancellationTokenSource _cancellationTokenSource;
-    private bool _isPrimaryLlm;
-    private bool _isFuncCalled;
-    public TokenBroadcasterLlama_3_2(ILLMResponseProcessor responseProcessor, ILogger logger)
-    {
-        _responseProcessor = responseProcessor;
-        _logger = logger;
-        _cancellationTokenSource = new CancellationTokenSource();
-    }
-    public async Task ReInit(string sessionId)
-    {
-        _logger.LogInformation(" Cancel due to ReInit called ");
-        await _cancellationTokenSource.CancelAsync();
-    }
-    public async Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput, bool sendOutput = true)
+
+   public TokenBroadcasterLlama_3_2(ILLMResponseProcessor responseProcessor, ILogger logger) 
+        : base(responseProcessor, logger) { }
+    public override async Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput, bool sendOutput = true)
     {
         _logger.LogWarning(" Start BroadcastAsyc() ");
         _responseProcessor.SendOutput = sendOutput;
@@ -93,67 +79,7 @@ public class TokenBroadcasterLlama_3_2 : ITokenBroadcaster
         _logger.LogInformation(" --> Finished LLM Interaction ");
     }
 
-    private int CountOccurrences(string source, string substring)
-    {
-        int count = 0;
-        int index = 0;
-
-        while ((index = source.IndexOf(substring, index)) != -1)
-        {
-            count++;
-            index += substring.Length;
-        }
-
-        return count;
-    }
-    private bool IsLineComplete(StringBuilder lineBuilder)
-    {
-        return lineBuilder.ToString().EndsWith("\n");
-    }
-    private bool IsTokenComplete(StringBuilder tokenBuilder)
-    {
-        string token = tokenBuilder.ToString();
-        if (token.Length > 0 && char.IsWhiteSpace(token[^1])) return true;
-        // Check for whitespace characters that indicate token boundaries
-        return false;
-    }
-    private async Task ProcessLine(string line, LLMServiceObj serviceObj)
-    {
-        //LLMServiceObj responseServiceObj = new LLMServiceObj() { SessionId = sessionId, SourceLlm = sourceLlm, DestinationLlm = destinationLlm };
-        var responseServiceObj = new LLMServiceObj(serviceObj);
-        if (serviceObj.IsFunctionCallResponse)
-        {
-            responseServiceObj.LlmMessage = "</functioncall-complete>";
-            if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
-        }
-        else
-        {
-            (string jsonLine, string functionName) = ParseInputForJson(line);
-            //string cleanLine = line;
-            if (line != jsonLine)
-            {
-                _logger.LogInformation($" ProcessLLMOutput(call_func) -> {jsonLine}");
-
-                // TODO send the function call achknowledgement back to calling llm :   forwardFuncServiceObj.LlmMessage = $"Please wait calling {functionName} function. Be patient this may take some time";
-                //responseServiceObj = new LLMServiceObj() { SessionId = sessionId, UserInput = userInput, SourceLlm = sourceLlm, DestinationLlm = destinationLlm };
-                responseServiceObj.LlmMessage = "</functioncall>";
-                if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
-                responseServiceObj.LlmMessage = "";
-                responseServiceObj.IsFunctionCall = true;
-                responseServiceObj.JsonFunction = jsonLine;
-                if (!String.IsNullOrEmpty(functionName))
-                {
-                    responseServiceObj.FunctionName = functionName;
-                }
-                //responseServiceObj.JsonFunction = CallFuncJson(cleanLine);
-                await _responseProcessor.ProcessFunctionCall(responseServiceObj);
-                _isFuncCalled = true;
-            }
-        }
-        responseServiceObj.LlmMessage = "<end-of-line>";
-        if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
-    }
-    private static (string json, string functionName) ParseInputForJson(string input)
+      protected override  (string json, string functionName) ParseInputForJson(string input)
     {
         // Find the start of the function name
         int headerStart = input.IndexOf("{\"name\": \"");

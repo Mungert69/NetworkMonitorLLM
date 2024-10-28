@@ -13,26 +13,13 @@ using System.Text.RegularExpressions;
 using System.Security.Cryptography;
 using System.Linq;
 namespace NetworkMonitor.LLM.Services;
-public class TokenBroadcasterFunc_2_4 : ITokenBroadcaster
+public class TokenBroadcasterFunc_2_4 : TokenBroadcasterBase
 {
-    private readonly ILLMResponseProcessor _responseProcessor;
-    private readonly ILogger _logger;
-    private bool _isPrimaryLlm;
-    private bool _isFuncCalled;
-    //public event Func<object, string, Task> LineReceived;
-    private CancellationTokenSource _cancellationTokenSource;
-    public TokenBroadcasterFunc_2_4(ILLMResponseProcessor responseProcessor, ILogger logger)
-    {
-        _responseProcessor = responseProcessor;
-        _logger = logger;
-        _cancellationTokenSource = new CancellationTokenSource();
-    }
-    public async Task ReInit(string sessionId)
-    {
-        _logger.LogInformation(" Cancel due to ReInit called ");
-        await _cancellationTokenSource.CancelAsync();
-    }
-    public async Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput, bool sendOutput)
+
+   public TokenBroadcasterFunc_2_4(ILLMResponseProcessor responseProcessor, ILogger logger) 
+        : base(responseProcessor, logger) { }
+  
+    public override async Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput, bool sendOutput)
     {
         _logger.LogWarning($" Start BroadcastAsync() DestinationLlm {serviceObj.DestinationLlm} SourceLlm {serviceObj.SourceLlm} ");
         _responseProcessor.SendOutput = sendOutput;

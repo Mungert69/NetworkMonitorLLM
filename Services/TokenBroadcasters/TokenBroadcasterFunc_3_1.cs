@@ -11,21 +11,11 @@ using NetworkMonitor.Objects;
 
 namespace NetworkMonitor.LLM.Services
 {
-    public class TokenBroadcasterFunc_3_1 : ITokenBroadcaster
-    {
-        private readonly ILLMResponseProcessor _responseProcessor;
-        private readonly ILogger _logger;
-        //public event Func<object, string, Task> LineReceived;
-        private CancellationTokenSource _cancellationTokenSource;
-        private bool _isPrimaryLlm;
-        private bool _isFuncCalled=false;
+    public class TokenBroadcasterFunc_3_1 : TokenBroadcasterBase
+{
 
-        public TokenBroadcasterFunc_3_1(ILLMResponseProcessor responseProcessor, ILogger logger)
-        {
-            _responseProcessor = responseProcessor;
-            _logger = logger;
-            _cancellationTokenSource = new CancellationTokenSource();
-        }
+   public TokenBroadcasterFunc_3_1(ILLMResponseProcessor responseProcessor, ILogger logger) 
+        : base(responseProcessor, logger) { }
 
         public async Task ReInit(string sessionId)
         {
@@ -33,7 +23,7 @@ namespace NetworkMonitor.LLM.Services
             await _cancellationTokenSource.CancelAsync();
         }
 
-     public async Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput, bool sendOutput = true)
+     public override async Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput, bool sendOutput = true)
     {
         _logger.LogWarning(" Start BroadcastAsyc() ");
         _responseProcessor.SendOutput = sendOutput;
@@ -92,20 +82,6 @@ namespace NetworkMonitor.LLM.Services
         }
         _logger.LogInformation(" --> Finished LLM Interaction ");
     }
- private int CountOccurrences(string source, string substring)
-    {
-        int count = 0;
-        int index = 0;
-
-        while ((index = source.IndexOf(substring, index)) != -1)
-        {
-            count++;
-            index += substring.Length;
-        }
-
-        return count;
-    }
-   
         private async Task ProcessLine(string output, LLMServiceObj serviceObj)
         {
             //_logger.LogInformation($"sessionID={serviceObj.SessionId} output is =>{output}<=");
