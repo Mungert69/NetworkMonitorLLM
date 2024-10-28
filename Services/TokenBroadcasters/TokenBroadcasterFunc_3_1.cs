@@ -32,7 +32,7 @@ namespace NetworkMonitor.LLM.Services
         if (serviceObj.IsFunctionCallResponse) chunkServiceObj.LlmMessage = userInput.Replace("<|start_header_id|>ipython<|end_header_id|>\\\n\\\n", "<Function Response:> ") ;
         else chunkServiceObj.LlmMessage = userInput.Replace("<|start_header_id|>user<|end_header_id|>\\\n\\\n", "<User:> ") + "\n";
         if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(chunkServiceObj);
-          int stopAfter = 3;
+          int stopAfter = 2;
         if (sendOutput) stopAfter = 2;
         sendOutput = true;
 

@@ -21,6 +21,8 @@ public class LLMProcessRunner : ILLMRunner
     //private ProcessWrapper _llamaProcess;
     private readonly ConcurrentDictionary<string, ProcessWrapper> _processes = new ConcurrentDictionary<string, ProcessWrapper>();
     private readonly ConcurrentDictionary<string, ITokenBroadcaster> _tokenBroadcasters = new ConcurrentDictionary<string, ITokenBroadcaster>();
+    private readonly ConcurrentDictionary<string, List<LLMServiceObj>> _pendingResponses = new();
+
     private bool _sendOutput = false;
     private ILogger _logger;
     private ILLMResponseProcessor _responseProcessor;
@@ -109,7 +111,7 @@ public class LLMProcessRunner : ILLMRunner
     {
         _isStateStarting = true;
         _isStateReady = false;
-        if (_mlParams.StartOnlyOneFreeLLM && serviceObj.LlmChainStartName != "monitor") return ;// throw new Exception($"The advanced {serviceObj.LlmChainStartName} assistant is only available with TurboLLM. However the basic monitor assistant is still available");
+        if (_mlParams.StartOnlyOneFreeLLM && serviceObj.LlmChainStartName != "monitor") return;// throw new Exception($"The advanced {serviceObj.LlmChainStartName} assistant is only available with TurboLLM. However the basic monitor assistant is still available");
         await _processRunnerSemaphore.WaitAsync(); // Wait to enter the semaphore
         try
         {
@@ -142,8 +144,8 @@ public class LLMProcessRunner : ILLMRunner
         else if (_mlParams.LlmVersion == "func_3.1") userInput = "<|start_header_id|>ipython<|end_header_id|>\\\n\\\n";
         else if (_mlParams.LlmVersion == "func_3.2") userInput = $"<|start_header_id|>tool<|end_header_id|>\\\n\\\n";
         else if (_mlParams.LlmVersion == "llama_3.2") userInput = $"<|start_header_id|>ipython<|end_header_id|>\\\n\\\n";
-         else if (_mlParams.LlmVersion == "qwen_2.5") userInput = $"<|im_start|>user\\\n<tool_response>\\\n";
-       
+        else if (_mlParams.LlmVersion == "qwen_2.5") userInput = $"<|im_start|>user\\\n<tool_response>\\\n";
+
         else if (_mlParams.LlmVersion == "standard") userInput = "Function Call : ";
 
         if (serviceObj.IsUserLoggedIn)
@@ -152,7 +154,7 @@ public class LLMProcessRunner : ILLMRunner
             {
                 Email = serviceObj.UserInfo.Email,
             };
-           
+
             input += PrintPropertiesAsJson.PrintUserInfoPropertiesWithDate(user, serviceObj.IsUserLoggedIn, currentTime.ToString("yyyy-MM-ddTHH:mm:ss"), false);
 
         }
@@ -163,8 +165,8 @@ public class LLMProcessRunner : ILLMRunner
         }
         serviceObj.UserInput = userInput + input;
 
-       if (_mlParams.LlmVersion == "qwen_2.5") serviceObj.UserInput += $"\\\n</tool_response>";
-       
+        if (_mlParams.LlmVersion == "qwen_2.5") serviceObj.UserInput += $"\\\n</tool_response>";
+
 
         serviceObj.IsFunctionCallResponse = false;
         _sendOutput = false;
@@ -255,7 +257,7 @@ public class LLMProcessRunner : ILLMRunner
         while (!cancellationTokenSource.IsCancellationRequested)
         {
             line = await process.StandardOutput.ReadLineAsync();
-            if (line.StartsWith("<|eot_id|>") || line.StartsWith("<|im_end|>")  || line.Contains("<|LLM_STARTED|>"))
+            if (line.StartsWith("<|eot_id|>") || line.StartsWith("<|im_end|>") || line.Contains("<|LLM_STARTED|>"))
             {
                 isReady = true;
                 break;
@@ -295,6 +297,28 @@ public class LLMProcessRunner : ILLMRunner
             }
             process.LastActivity = DateTime.UtcNow;
             ITokenBroadcaster? tokenBroadcaster;
+            // Check if all function calls for this MessageID have been processed
+            bool allResponsesReady = await _responseProcessor.AreAllFunctionsProcessed(serviceObj.MessageID);
+
+            if (!allResponsesReady)
+            {
+                // Store response temporarily if all function calls are not yet complete
+                _logger.LogInformation("Storing response until all function calls are complete.");
+
+                // Add serviceObj to the list of pending responses for the MessageID
+                _pendingResponses.AddOrUpdate(
+                    serviceObj.MessageID,
+                    new List<LLMServiceObj> { serviceObj },
+                    (key, existingList) =>
+                    {
+                        existingList.Add(serviceObj);
+                        return existingList;
+                    }
+                );
+
+                return;
+            }
+
             if (_tokenBroadcasters.TryGetValue(serviceObj.SessionId, out tokenBroadcaster))
             {
                 await tokenBroadcaster.ReInit(serviceObj.SessionId);
@@ -304,7 +328,7 @@ public class LLMProcessRunner : ILLMRunner
                 if (_mlParams.LlmVersion == "func_2.4") tokenBroadcaster = new TokenBroadcasterFunc_2_4(_responseProcessor, _logger);
                 else if (_mlParams.LlmVersion == "func_2.5") tokenBroadcaster = new TokenBroadcasterFunc_2_5(_responseProcessor, _logger);
                 else if (_mlParams.LlmVersion == "func_3.1") tokenBroadcaster = new TokenBroadcasterFunc_3_1(_responseProcessor, _logger);
-                 else if (_mlParams.LlmVersion == "func_3.2") tokenBroadcaster = new TokenBroadcasterFunc_3_2(_responseProcessor, _logger);
+                else if (_mlParams.LlmVersion == "func_3.2") tokenBroadcaster = new TokenBroadcasterFunc_3_2(_responseProcessor, _logger);
                 else if (_mlParams.LlmVersion == "llama_3.2") tokenBroadcaster = new TokenBroadcasterLlama_3_2(_responseProcessor, _logger);
                 else if (_mlParams.LlmVersion == "qwen_2.5") tokenBroadcaster = new TokenBroadcasterQwen_2_5(_responseProcessor, _logger);
                 else if (_mlParams.LlmVersion == "standard") tokenBroadcaster = new TokenBroadcasterStandard(_responseProcessor, _logger);
@@ -320,13 +344,33 @@ public class LLMProcessRunner : ILLMRunner
                 //userInput = userInput.Replace("\r\n", "\\\n").Replace("\n", "\\\n");
                 if (!serviceObj.IsFunctionCallResponse)
                 {
-                    if (_mlParams.LlmVersion == "func_2.4") userInput = "<|from|> user\\\n<|recipient|> all\\\n<|content|>" + userInput;
-                    else if (_mlParams.LlmVersion == "func_2.5") userInput = "<|start_header_id|>user<|end_header_id|>\\\n\\\n" + userInput;
-                    else if (_mlParams.LlmVersion == "func_3.1") userInput = "<|start_header_id|>user<|end_header_id|>\\\n\\\n" + userInput;
-                    else if (_mlParams.LlmVersion == "func_3.2") userInput = "<|start_header_id|>user<|end_header_id|>\\\n\\\n" + userInput;
-                   else if (_mlParams.LlmVersion == "llama_3.2") userInput = "<|start_header_id|>user<|end_header_id|>\\\n\\\n" + userInput;
-                   else if (_mlParams.LlmVersion == "qwen_2.5") userInput="<|im_start|>user\\\n"+userInput;
-                    else if (_mlParams.LlmVersion=="standard") userInput = userInput;
+                    // Once all responses are ready, gather all pending responses for this MessageID
+                    if (_pendingResponses.TryRemove(serviceObj.MessageID, out var pendingServiceObjs))
+                    {
+                        // Aggregate all LLMServiceObj messages for this MessageID
+                        var constructedInputs = pendingServiceObjs.Select(pendingServiceObj =>
+                        {
+                            // Construct userInput for each response
+                            string userInput = pendingServiceObj.UserInput;
+
+                            if (!pendingServiceObj.IsFunctionCallResponse)
+                            {
+                                if (_mlParams.LlmVersion == "func_2.4") userInput = "<|from|> user\\\n<|recipient|> all\\\n<|content|>" + userInput;
+                                else if (_mlParams.LlmVersion == "func_2.5") userInput = "<|start_header_id|>user<|end_header_id|>\\\n\\\n" + userInput;
+                                else if (_mlParams.LlmVersion == "func_3.1") userInput = "<|start_header_id|>user<|end_header_id|>\\\n\\\n" + userInput;
+                                else if (_mlParams.LlmVersion == "func_3.2") userInput = "<|start_header_id|>user<|end_header_id|>\\\n\\\n" + userInput;
+                                else if (_mlParams.LlmVersion == "llama_3.2") userInput = "<|start_header_id|>user<|end_header_id|>\\\n\\\n" + userInput;
+                                else if (_mlParams.LlmVersion == "qwen_2.5") userInput = "<|im_start|>user\\\n" + userInput;
+                                else if (_mlParams.LlmVersion == "standard") userInput = userInput;
+                            }
+
+                            return userInput;
+                        });
+
+                        // Combine the constructed inputs for all responses
+                        serviceObj.UserInput = string.Join("\n", constructedInputs);
+                    }
+
 
                 }
                 else
@@ -336,8 +380,8 @@ public class LLMProcessRunner : ILLMRunner
                     else if (_mlParams.LlmVersion == "func_3.1") userInput = "<|start_header_id|>ipython<|end_header_id|>\\\n\\\n" + userInput;
                     else if (_mlParams.LlmVersion == "func_3.2") userInput = "<|start_header_id|>tool<|end_header_id|>\\\n\\\n" + userInput;
                     else if (_mlParams.LlmVersion == "llama_3.2") userInput = "<|start_header_id|>ipython<|end_header_id|>\\\n\\\n" + userInput;
-                    else if (_mlParams.LlmVersion == "qwen_2.5") userInput="<|im_start|>user\\\n<tool_response>\\\n"+userInput+"\\\n</tool_response>";
-                    else if (_mlParams.LlmVersion=="standard") userInput = "Funtion Call: "+userInput;
+                    else if (_mlParams.LlmVersion == "qwen_2.5") userInput = "<|im_start|>user\\\n<tool_response>\\\n" + userInput + "\\\n</tool_response>";
+                    else if (_mlParams.LlmVersion == "standard") userInput = "Funtion Call: " + userInput;
                 }
             }
 
