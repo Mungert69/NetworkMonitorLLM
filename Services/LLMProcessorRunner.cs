@@ -298,25 +298,16 @@ public class LLMProcessRunner : ILLMRunner
             process.LastActivity = DateTime.UtcNow;
             ITokenBroadcaster? tokenBroadcaster;
             // Check if all function calls for this MessageID have been processed
-            bool allResponsesReady = await _responseProcessor.AreAllFunctionsProcessed(serviceObj.MessageID);
-
-            if (!allResponsesReady)
+            if (serviceObj.IsFunctionCallResponse)
             {
-                // Store response temporarily if all function calls are not yet complete
-                _logger.LogInformation("Storing response until all function calls are complete.");
+                _responseProcessor.MarkFunctionAsProcessed(serviceObj);
 
-                // Add serviceObj to the list of pending responses for the MessageID
-                _pendingResponses.AddOrUpdate(
-                    serviceObj.MessageID,
-                    new List<LLMServiceObj> { serviceObj },
-                    (key, existingList) =>
-                    {
-                        existingList.Add(serviceObj);
-                        return existingList;
-                    }
-                );
-
-                return;
+                bool allResponsesReady = _responseProcessor.AreAllFunctionsProcessed(serviceObj.MessageID);
+                if (!allResponsesReady)
+                {
+                    _logger.LogInformation("Waiting for additional function calls to complete.");
+                    return;
+                }
             }
 
             if (_tokenBroadcasters.TryGetValue(serviceObj.SessionId, out tokenBroadcaster))
@@ -337,51 +328,52 @@ public class LLMProcessRunner : ILLMRunner
 
             }
             string userInput = serviceObj.UserInput;
-
+            int countEOT = 0;
             if (_sendOutput)
             {
                 userInput = userInput.Replace("\r\n", " ").Replace("\n", " ");
                 //userInput = userInput.Replace("\r\n", "\\\n").Replace("\n", "\\\n");
                 if (!serviceObj.IsFunctionCallResponse)
                 {
-                    // Once all responses are ready, gather all pending responses for this MessageID
-                    if (_pendingResponses.TryRemove(serviceObj.MessageID, out var pendingServiceObjs))
-                    {
-                        // Aggregate all LLMServiceObj messages for this MessageID
-                        var constructedInputs = pendingServiceObjs.Select(pendingServiceObj =>
-                        {
-                            // Construct userInput for each response
-                            string userInput = pendingServiceObj.UserInput;
-
-                            if (!pendingServiceObj.IsFunctionCallResponse)
-                            {
-                                if (_mlParams.LlmVersion == "func_2.4") userInput = "<|from|> user\\\n<|recipient|> all\\\n<|content|>" + userInput;
-                                else if (_mlParams.LlmVersion == "func_2.5") userInput = "<|start_header_id|>user<|end_header_id|>\\\n\\\n" + userInput;
-                                else if (_mlParams.LlmVersion == "func_3.1") userInput = "<|start_header_id|>user<|end_header_id|>\\\n\\\n" + userInput;
-                                else if (_mlParams.LlmVersion == "func_3.2") userInput = "<|start_header_id|>user<|end_header_id|>\\\n\\\n" + userInput;
-                                else if (_mlParams.LlmVersion == "llama_3.2") userInput = "<|start_header_id|>user<|end_header_id|>\\\n\\\n" + userInput;
-                                else if (_mlParams.LlmVersion == "qwen_2.5") userInput = "<|im_start|>user\\\n" + userInput;
-                                else if (_mlParams.LlmVersion == "standard") userInput = userInput;
-                            }
-
-                            return userInput;
-                        });
-
-                        // Combine the constructed inputs for all responses
-                        serviceObj.UserInput = string.Join("\n", constructedInputs);
-                    }
-
+                    if (_mlParams.LlmVersion == "func_2.4") userInput = "<|from|> user\\\n<|recipient|> all\\\n<|content|>" + userInput;
+                    else if (_mlParams.LlmVersion == "func_2.5") userInput = "<|start_header_id|>user<|end_header_id|>\\\n\\\n" + userInput;
+                    else if (_mlParams.LlmVersion == "func_3.1") userInput = "<|start_header_id|>user<|end_header_id|>\\\n\\\n" + userInput;
+                    else if (_mlParams.LlmVersion == "func_3.2") userInput = "<|start_header_id|>user<|end_header_id|>\\\n\\\n" + userInput;
+                    else if (_mlParams.LlmVersion == "llama_3.2") userInput = "<|start_header_id|>user<|end_header_id|>\\\n\\\n" + userInput;
+                    else if (_mlParams.LlmVersion == "qwen_2.5") userInput = "<|im_start|>user\\\n" + userInput;
+                    else if (_mlParams.LlmVersion == "standard") userInput = userInput;
 
                 }
                 else
                 {
-                    if (_mlParams.LlmVersion == "func_2.4") userInput = "<|from|> " + serviceObj.FunctionName + "\\\n<|recipient|> all\\\n<|content|>" + userInput;
-                    else if (_mlParams.LlmVersion == "func_2.5") userInput = "<|start_header_id|>tool<|end_header_id|>\\\n\\\nname=" + serviceObj.FunctionName + " " + userInput;
-                    else if (_mlParams.LlmVersion == "func_3.1") userInput = "<|start_header_id|>ipython<|end_header_id|>\\\n\\\n" + userInput;
-                    else if (_mlParams.LlmVersion == "func_3.2") userInput = "<|start_header_id|>tool<|end_header_id|>\\\n\\\n" + userInput;
-                    else if (_mlParams.LlmVersion == "llama_3.2") userInput = "<|start_header_id|>ipython<|end_header_id|>\\\n\\\n" + userInput;
-                    else if (_mlParams.LlmVersion == "qwen_2.5") userInput = "<|im_start|>user\\\n<tool_response>\\\n" + userInput + "\\\n</tool_response>";
-                    else if (_mlParams.LlmVersion == "standard") userInput = "Funtion Call: " + userInput;
+                    var processedFunctionCalls = _responseProcessor.GetProcessedFunctionCalls(serviceObj.MessageID);
+                    var constructedInputs = processedFunctionCalls.Select((pendingServiceObj, index) =>
+  {
+      // Construct userInput for each response
+      string userInput = pendingServiceObj.UserInput;
+      userInput = userInput.Replace("\r\n", " ").Replace("\n", " ");
+
+      if (_mlParams.LlmVersion == "func_2.4") userInput = "<|from|> " + pendingServiceObj.FunctionName + "\\\n<|recipient|> all\\\n<|content|>" + userInput;
+      else if (_mlParams.LlmVersion == "func_2.5") userInput = "<|start_header_id|>tool<|end_header_id|>\\\n\\\nname=" + pendingServiceObj.FunctionName + " " + userInput;
+      else if (_mlParams.LlmVersion == "func_3.1") userInput = "<|start_header_id|>ipython<|end_header_id|>\\\n\\\n" + userInput;
+      else if (_mlParams.LlmVersion == "func_3.2") userInput = "<|start_header_id|>tool<|end_header_id|>\\\n\\\n" + userInput;
+      else if (_mlParams.LlmVersion == "llama_3.2") userInput = "<|start_header_id|>ipython<|end_header_id|>\\\n\\\n" + userInput;
+      else if (_mlParams.LlmVersion == "qwen_2.5") userInput = "<|im_start|>user\\\n<tool_response>\\\n" + userInput + "\\\n</tool_response>";
+      else if (_mlParams.LlmVersion == "standard") userInput = "FUNCTION RESPONSE: " + userInput;
+      // Add "<|eot_id|>" if it's not the last item
+      if (index < processedFunctionCalls.Count - 1)
+      {
+          userInput += "<|eot_id|>";
+          countEOT++;
+      }
+
+      return userInput;
+  });
+
+                    // Combine the constructed inputs for all responses
+                    userInput = string.Join("", constructedInputs);
+                    _responseProcessor.ClearFunctionCallTracker(serviceObj.MessageID);
+
                 }
             }
 
@@ -389,7 +381,7 @@ public class LLMProcessRunner : ILLMRunner
             await process.StandardInput.FlushAsync();
             _logger.LogInformation($" ProcessLLMOutput(user input) -> {userInput}");
             // Wait for a response or a timeout
-            Task broadcastTask = tokenBroadcaster.BroadcastAsync(process, serviceObj, userInput, _sendOutput);
+            Task broadcastTask = tokenBroadcaster.BroadcastAsync(process, serviceObj, userInput, countEOT, _sendOutput);
             if (await Task.WhenAny(broadcastTask, Task.Delay(Timeout.Infinite, cts.Token)) == broadcastTask)
             {
                 // Task completed within timeout

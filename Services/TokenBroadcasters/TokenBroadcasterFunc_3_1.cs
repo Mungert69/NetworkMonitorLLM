@@ -23,7 +23,7 @@ namespace NetworkMonitor.LLM.Services
             await _cancellationTokenSource.CancelAsync();
         }
 
-     public override async Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput, bool sendOutput = true)
+     public override async Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput, int countEOT, bool sendOutput = true)
     {
         _logger.LogWarning(" Start BroadcastAsyc() ");
         _responseProcessor.SendOutput = sendOutput;
@@ -32,8 +32,8 @@ namespace NetworkMonitor.LLM.Services
         if (serviceObj.IsFunctionCallResponse) chunkServiceObj.LlmMessage = userInput.Replace("<|start_header_id|>ipython<|end_header_id|>\\\n\\\n", "<Function Response:> ") ;
         else chunkServiceObj.LlmMessage = userInput.Replace("<|start_header_id|>user<|end_header_id|>\\\n\\\n", "<User:> ") + "\n";
         if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(chunkServiceObj);
-          int stopAfter = 2;
-        if (sendOutput) stopAfter = 2;
+          int stopAfter = 2+countEOT;
+        if (sendOutput) stopAfter = 2+countEOT;
         sendOutput = true;
 
         var lineBuilder = new StringBuilder();

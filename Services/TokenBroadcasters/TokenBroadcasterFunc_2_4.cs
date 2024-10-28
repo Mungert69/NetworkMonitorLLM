@@ -19,7 +19,7 @@ public class TokenBroadcasterFunc_2_4 : TokenBroadcasterBase
    public TokenBroadcasterFunc_2_4(ILLMResponseProcessor responseProcessor, ILogger logger) 
         : base(responseProcessor, logger) { }
   
-    public override async Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput, bool sendOutput)
+    public override async Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput, int countEOT, bool sendOutput)
     {
         _logger.LogWarning($" Start BroadcastAsync() DestinationLlm {serviceObj.DestinationLlm} SourceLlm {serviceObj.SourceLlm} ");
         _responseProcessor.SendOutput = sendOutput;

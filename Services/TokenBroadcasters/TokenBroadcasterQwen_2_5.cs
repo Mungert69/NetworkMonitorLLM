@@ -17,7 +17,7 @@ public class TokenBroadcasterQwen_2_5 : TokenBroadcasterBase
         : base(responseProcessor, logger) { }
 
   
-    public override async Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput, bool sendOutput = true)
+    public override async Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput,  int countEOT,bool sendOutput = true)
     {
         _logger.LogWarning(" Start BroadcastAsyc() ");
         _responseProcessor.SendOutput = sendOutput;
@@ -34,8 +34,8 @@ public class TokenBroadcasterQwen_2_5 : TokenBroadcasterBase
       
         if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(chunkServiceObj);
 
-        int stopAfter = 2;
-        if (sendOutput) stopAfter = 2;
+        int stopAfter = 2+countEOT;
+        if (sendOutput) stopAfter = 2+countEOT;
         //sendOutput = true;
 
         var lineBuilder = new StringBuilder();
@@ -86,20 +86,30 @@ public class TokenBroadcasterQwen_2_5 : TokenBroadcasterBase
     }
 
   
-    protected override (string json, string functionName) ParseInputForJson(string input)
-        {
-            // Custom parsing logic for TokenBroadcasterQwen_2_5
-            int tagStart = input.IndexOf("<tool_call>\n");
-            int tagEnd = input.IndexOf("\n</tool_call>");
+   protected override List<(string json, string functionName)> ParseInputForJson(string input)
+{
+    var functionCalls = new List<(string json, string functionName)>();
+    int tagStart = input.IndexOf("<tool_call>\n");
+    int tagEnd;
 
-            // If no valid function header is found, return input as-is
-            if (tagStart == -1 || tagEnd == -1)
-            {
-                return (input, string.Empty);
-            }
+    while (tagStart != -1)
+    {
+        // Move the starting index after the "<tool_call>\n" tag
+        tagStart += "<tool_call>\n".Length;
+        tagEnd = input.IndexOf("\n</tool_call>", tagStart);
 
-            tagStart += "<tool_call>\n".Length;
-            string jsonContent = input.Substring(tagStart, tagEnd - tagStart).Trim();
-            return (JsonSanitizer.SanitizeJson(jsonContent), string.Empty);
-        }
+        // If no matching end tag is found, break the loop
+        if (tagEnd == -1) break;
+
+        // Extract the JSON content between the tags
+        string jsonContent = input.Substring(tagStart, tagEnd - tagStart).Trim();
+        functionCalls.Add((JsonSanitizer.SanitizeJson(jsonContent), string.Empty));
+
+        // Look for the next "<tool_call>\n" tag after the current end tag
+        tagStart = input.IndexOf("<tool_call>\n", tagEnd + "</tool_call>".Length);
+    }
+
+    return functionCalls;
+}
+
 }

@@ -16,7 +16,7 @@ public class TokenBroadcasterFunc_2_5 : TokenBroadcasterBase
    public TokenBroadcasterFunc_2_5(ILLMResponseProcessor responseProcessor, ILogger logger) 
         : base(responseProcessor, logger) { }
   
-    public override async Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput, bool sendOutput = true)
+    public override async Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput, int countEOT, bool sendOutput = true)
     {
         _logger.LogWarning(" Start BroadcastAsyc() ");
         _responseProcessor.SendOutput = sendOutput;
@@ -26,8 +26,8 @@ public class TokenBroadcasterFunc_2_5 : TokenBroadcasterBase
         else chunkServiceObj.LlmMessage = userInput.Replace("<|start_header_id|>user<|end_header_id|>\\\n\\\n", "<User:> ")+"\n";
          if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(chunkServiceObj);
        
-       int stopAfter = 2;
-        if (sendOutput) stopAfter = 2;
+       int stopAfter = 2+countEOT;
+        if (sendOutput) stopAfter = 2+countEOT;
         sendOutput = true;
       
         var lineBuilder = new StringBuilder();
@@ -83,16 +83,19 @@ public class TokenBroadcasterFunc_2_5 : TokenBroadcasterBase
     }
 
   
-      protected override  (string json, string functionName) ParseInputForJson(string input)
-    {
-        string specialToken = "<|reserved_special_token_249|>";
-        string output = input;
+     protected override List<(string json, string functionName)> ParseInputForJson(string input)
+{
+    string specialToken = "<|reserved_special_token_249|>";
+    var functionCalls = new List<(string json, string functionName)>();
 
-        // Check if the input contains the special token
-        int tokenIndex = input.IndexOf(specialToken);
+    int currentIndex = 0;
+    while (true)
+    {
+        // Find the special token
+        int tokenIndex = input.IndexOf(specialToken, currentIndex);
         if (tokenIndex == -1)
         {
-            return (output, "");
+            break; // No more special tokens found
         }
 
         // Extract the string after the special token
@@ -102,15 +105,16 @@ public class TokenBroadcasterFunc_2_5 : TokenBroadcasterBase
         int jsonStartIndex = postTokenString.IndexOf('{');
         if (jsonStartIndex == -1)
         {
-            return (output, "");
+            currentIndex = tokenIndex + specialToken.Length;
+            continue; // No JSON found; move to the next token
         }
+
+        // Extract the function name (content before JSON start)
+        string functionNamePart = postTokenString.Substring(0, jsonStartIndex);
+        string functionName = functionNamePart.Replace("\n", "").Trim();
 
         // Extract the JSON content
         string jsonContent = postTokenString.Substring(jsonStartIndex);
-
-        // Extract the function name
-        string functionNamePart = postTokenString.Substring(0, jsonStartIndex);
-        string functionName = functionNamePart.Replace("\n", "").Trim();
 
         // Find the end of the JSON content
         int jsonEndIndex = jsonContent.LastIndexOf('}');
@@ -120,9 +124,18 @@ public class TokenBroadcasterFunc_2_5 : TokenBroadcasterBase
         }
         else
         {
-            return (output, "");
+            currentIndex = tokenIndex + specialToken.Length;
+            continue; // Malformed JSON; move to the next token
         }
 
-        return (JsonSanitizer.SanitizeJson(jsonContent), functionName);
+        // Sanitize and add the extracted JSON and function name to the list
+        functionCalls.Add((JsonSanitizer.SanitizeJson(jsonContent), functionName));
+
+        // Update currentIndex to continue searching after this function call
+        currentIndex = tokenIndex + specialToken.Length + jsonEndIndex + 1;
     }
+
+    return functionCalls;
+}
+
 }

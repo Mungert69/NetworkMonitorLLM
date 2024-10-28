@@ -24,7 +24,10 @@ public interface ILLMResponseProcessor
     Task ProcessLLMOutput(LLMServiceObj serviceObj);
     Task ProcessLLMOuputInChunks(LLMServiceObj serviceObj);
     Task ProcessFunctionCall(LLMServiceObj serviceObj);
-    Task<bool> AreAllFunctionsProcessed(string messageId);
+    bool AreAllFunctionsProcessed(string messageId);
+    void MarkFunctionAsProcessed(LLMServiceObj serviceObj);
+    List<LLMServiceObj> GetProcessedFunctionCalls(string messageId);
+    void ClearFunctionCallTracker (string messageId);
     Task ProcessEnd(LLMServiceObj serviceObj);
     Task UpdateTokensUsed(LLMServiceObj serviceObj);
     bool IsFunctionCallResponse(string input);
@@ -37,7 +40,7 @@ public class LLMResponseProcessor : ILLMResponseProcessor
     private IRabbitRepo _rabbitRepo;
     private bool _sendOutput = true;
 
-        private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, LLMServiceObj>> _functionCallTracker = new();
+    private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, LLMServiceObj>> _functionCallTracker = new();
 
 
     public bool SendOutput { get => _sendOutput; set => _sendOutput = value; }
@@ -72,11 +75,11 @@ public class LLMResponseProcessor : ILLMResponseProcessor
 
 
 
-     public async Task ProcessEnd(LLMServiceObj serviceObj)
+    public async Task ProcessEnd(LLMServiceObj serviceObj)
     {
         serviceObj.LlmMessage = MessageHelper.ErrorMessage(serviceObj.LlmMessage);
         await _rabbitRepo.PublishAsync<LLMServiceObj>("llmServiceTimeout", serviceObj);
-        
+
         // Cleanup function calls related to this MessageID to avoid memory leaks
         _functionCallTracker.TryRemove(serviceObj.MessageID, out _);
     }
@@ -87,12 +90,12 @@ public class LLMResponseProcessor : ILLMResponseProcessor
         //return Task.CompletedTask;
     }
 
-   /* public async Task ProcessFunctionCall(LLMServiceObj serviceObj)
-    {
-        if (_sendOutput) await _rabbitRepo.PublishAsync<LLMServiceObj>("llmServiceFunction", serviceObj);
+    /* public async Task ProcessFunctionCall(LLMServiceObj serviceObj)
+     {
+         if (_sendOutput) await _rabbitRepo.PublishAsync<LLMServiceObj>("llmServiceFunction", serviceObj);
 
-    }*/
-   public async Task ProcessFunctionCall(LLMServiceObj serviceObj)
+     }*/
+    public async Task ProcessFunctionCall(LLMServiceObj serviceObj)
     {
         // Assign a unique ID to the function call
         string functionCallId = Guid.NewGuid().ToString();
@@ -105,16 +108,46 @@ public class LLMResponseProcessor : ILLMResponseProcessor
         if (_sendOutput)
             await _rabbitRepo.PublishAsync<LLMServiceObj>("llmServiceFunction", serviceObj);
     }
-
-   public async Task<bool> AreAllFunctionsProcessed(string messageId)
-{
-    if (_functionCallTracker.TryGetValue(messageId, out var calls))
+    public void MarkFunctionAsProcessed(LLMServiceObj serviceObj)
     {
-        // Use .Values to access all LLMServiceObj instances and check if all are processed
-        return calls.Values.All(call => call.IsProcessed);
+        if (_functionCallTracker.TryGetValue(serviceObj.MessageID, out var calls))
+        {
+            // Set IsProcessed to true for this function call in the tracker
+            if (calls.TryGetValue(serviceObj.FunctionCallId, out var trackedServiceObj))
+            {
+                trackedServiceObj.IsProcessed = true;
+                 trackedServiceObj.UserInput = serviceObj.UserInput;
+                 trackedServiceObj.IsFunctionCallResponse=serviceObj.IsFunctionCallResponse;
+                 trackedServiceObj.FunctionName=serviceObj.FunctionName;
+            }
+        }
     }
-    return false;
-}
+     public List<LLMServiceObj> GetProcessedFunctionCalls(string messageId)
+    {
+        if (_functionCallTracker.TryGetValue(messageId, out var calls))
+        {
+            return calls.Values.Where(call => call.IsProcessed).ToList();
+        }
+        return new List<LLMServiceObj>();
+    }
+
+    public void ClearFunctionCallTracker (string messageId){
+         
+                _functionCallTracker.TryRemove(messageId, out _);
+            
+    }
+
+    public bool AreAllFunctionsProcessed(string messageId)
+    {
+        if (_functionCallTracker.TryGetValue(messageId, out var calls))
+        {
+            // Check if all function calls associated with this messageId are marked as processed
+            bool allProcessed = calls.Values.All(call => call.IsProcessed);
+            return allProcessed;
+        }
+        return false;
+    }
+
 
     public bool IsFunctionCallResponse(string input)
     {

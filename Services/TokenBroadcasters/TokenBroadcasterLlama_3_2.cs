@@ -15,7 +15,7 @@ public class TokenBroadcasterLlama_3_2 : TokenBroadcasterBase
 
    public TokenBroadcasterLlama_3_2(ILLMResponseProcessor responseProcessor, ILogger logger) 
         : base(responseProcessor, logger) { }
-    public override async Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput, bool sendOutput = true)
+    public override async Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput, int countEOT, bool sendOutput = true)
     {
         _logger.LogWarning(" Start BroadcastAsyc() ");
         _responseProcessor.SendOutput = sendOutput;
@@ -55,7 +55,7 @@ public class TokenBroadcasterLlama_3_2 : TokenBroadcasterBase
             {
                 stopCount++;
                 if (llmOutStr.Contains("<|start_header_id|>assistant<|eot_id|>")) stopAfter = 2;
-                _logger.LogInformation($" Stop count {stopCount} output is {llmOutStr}");
+                _logger.LogInformation($" Stop count {stopCount} output is {llmOutStr} countEOT {countEOT}");
 
             }
             if (stopCount == stopAfter)
@@ -78,14 +78,18 @@ public class TokenBroadcasterLlama_3_2 : TokenBroadcasterBase
         }
         _logger.LogInformation(" --> Finished LLM Interaction ");
     }
+protected override List<(string json, string functionName)> ParseInputForJson(string input)
+{
+    var functionCalls = new List<(string json, string functionName)>();
+    int currentIndex = 0;
 
-      protected override  (string json, string functionName) ParseInputForJson(string input)
+    while (true)
     {
         // Find the start of the function name
-        int headerStart = input.IndexOf("{\"name\": \"");
+        int headerStart = input.IndexOf("{\"name\": \"", currentIndex);
         if (headerStart == -1)
         {
-            return (input, "");
+            break; // No more function calls found
         }
 
         // Extract the function name
@@ -93,7 +97,7 @@ public class TokenBroadcasterLlama_3_2 : TokenBroadcasterBase
         int functionNameEnd = input.IndexOf("\"", functionNameStart);
         if (functionNameEnd == -1)
         {
-            return (input, "");
+            break; // Malformed input; stop processing
         }
         string functionName = input.Substring(functionNameStart, functionNameEnd - functionNameStart);
 
@@ -102,7 +106,9 @@ public class TokenBroadcasterLlama_3_2 : TokenBroadcasterBase
         int paramsStart = input.IndexOf(paramStr, functionNameEnd);
         if (paramsStart == -1)
         {
-            return (input, functionName);  // No parameters found
+            functionCalls.Add((string.Empty, functionName));  // No parameters found, add function call with empty JSON
+            currentIndex = functionNameEnd + 1;
+            continue; // Continue to next function call
         }
 
         // Extract the JSON parameters part
@@ -126,14 +132,22 @@ public class TokenBroadcasterLlama_3_2 : TokenBroadcasterBase
         // Check if we found a valid JSON block
         if (jsonEnd == -1 || jsonEnd <= jsonStart)
         {
-            return (input, functionName);
+            functionCalls.Add((string.Empty, functionName)); // Malformed JSON; add function call with empty JSON
+            currentIndex = jsonStart + 1;
+            continue; // Continue to next function call
         }
 
         // Extract the JSON object for parameters
         string jsonContent = input.Substring(jsonStart, jsonEnd - jsonStart + 1).Trim();
+        functionCalls.Add((JsonSanitizer.SanitizeJson(jsonContent), functionName));
 
-        return (JsonSanitizer.SanitizeJson(jsonContent), functionName);
+        // Update the current index to search for the next function call
+        currentIndex = jsonEnd + 1;
     }
+
+    return functionCalls;
+}
+
 
 
 }

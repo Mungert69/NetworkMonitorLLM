@@ -18,14 +18,14 @@ public class TokenBroadcasterStandard : TokenBroadcasterBase
     public TokenBroadcasterStandard(ILLMResponseProcessor responseProcessor, ILogger logger)
          : base(responseProcessor, logger) { }
 
-    public override async Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput, bool sendOutput = true)
+    public override async Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput,int countEOT, bool sendOutput = true)
     {
         _logger.LogWarning(" Start BroadcastAsyc() ");
         _responseProcessor.SendOutput = sendOutput;
         _isPrimaryLlm = serviceObj.IsPrimaryLlm;
         var chunkServiceObj = new LLMServiceObj(serviceObj);
-       int stopAfter = 2;
-        if (sendOutput) stopAfter = 2;
+       int stopAfter = 2+countEOT;
+        if (sendOutput) stopAfter = 2+countEOT;
         sendOutput = true;
 
         var lineBuilder = new StringBuilder();
