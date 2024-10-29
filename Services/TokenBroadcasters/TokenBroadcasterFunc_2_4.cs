@@ -97,13 +97,7 @@ public class TokenBroadcasterFunc_2_4 : TokenBroadcasterBase
         _logger.LogInformation(" --> Finished LLM Interaction ");
     }
 
-    private bool IsTokenComplete(StringBuilder tokenBuilder)
-    {
-        string token = tokenBuilder.ToString();
-        if (token.Length > 0 && char.IsWhiteSpace(token[^1])) return true;
-        // Check for whitespace characters that indicate token boundaries
-        return false;
-    }
+   
     public static (MessageSegment, bool, bool) ParseLLMOutput(string output)
     {
         var regex = new Regex(@"<\|(?<tag>\w+)\|>(?<value>.+?(?=<\|))");
@@ -211,7 +205,7 @@ public class TokenBroadcasterFunc_2_4 : TokenBroadcasterBase
 
         if (messageSegment.From == "assistant" && messageSegment.Recipient != "all")
         {
-            var (isJson, jsonLine) = ParseInputForJson(line);
+            var (isJson, jsonLine) = ParseSegmentInputForJson(line);
             //string cleanLine = line;
             if (isJson)
             {
@@ -257,7 +251,7 @@ public class TokenBroadcasterFunc_2_4 : TokenBroadcasterBase
         callFuncJson = "{ \"name\" : \"" + funcName + "\" \"arguments\" : \"" + json + "\"}";
         return callFuncJson;
     }
-    private (bool, string) ParseInputForJson(string input)
+    private   (bool, string) ParseSegmentInputForJson(string input)
     {
         string newLine = string.Empty;
         // bool foundStart = false;

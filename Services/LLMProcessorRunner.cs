@@ -341,7 +341,7 @@ public class LLMProcessRunner : ILLMRunner
                     else if (_mlParams.LlmVersion == "func_3.2") userInput = "<|start_header_id|>user<|end_header_id|>\\\n\\\n" + userInput;
                     else if (_mlParams.LlmVersion == "llama_3.2") userInput = "<|start_header_id|>user<|end_header_id|>\\\n\\\n" + userInput;
                     else if (_mlParams.LlmVersion == "qwen_2.5") userInput = "<|im_start|>user\\\n" + userInput;
-                    else if (_mlParams.LlmVersion == "standard") userInput = userInput;
+                    // else if (_mlParams.LlmVersion == "standard") userInput = userInput;
 
                 }
                 else

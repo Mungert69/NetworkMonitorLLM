@@ -17,12 +17,7 @@ namespace NetworkMonitor.LLM.Services
    public TokenBroadcasterFunc_3_1(ILLMResponseProcessor responseProcessor, ILogger logger) 
         : base(responseProcessor, logger) { }
 
-        public async Task ReInit(string sessionId)
-        {
-            _logger.LogInformation("Cancel due to ReInit called");
-            await _cancellationTokenSource.CancelAsync();
-        }
-
+      
      public override async Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput, int countEOT, bool sendOutput = true)
     {
         _logger.LogWarning(" Start BroadcastAsyc() ");
@@ -82,7 +77,7 @@ namespace NetworkMonitor.LLM.Services
         }
         _logger.LogInformation(" --> Finished LLM Interaction ");
     }
-        private async Task ProcessLine(string output, LLMServiceObj serviceObj)
+        protected override async Task ProcessLine(string output, LLMServiceObj serviceObj)
         {
             //_logger.LogInformation($"sessionID={serviceObj.SessionId} output is =>{output}<=");
 

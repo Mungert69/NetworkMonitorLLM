@@ -179,22 +179,28 @@ public class OpenAIRunner : ILLMRunner
                     {
                         _pendingFunctionCalls.TryAdd(serviceObj.MessageID, choice.Message);
                         // Create a unique placeholder ID for tracking
-                        
+
                         // Add a lightweight placeholder to history indicating a tool call is in progress.
                         // This avoids the OpenAI API error of having an incomplete response.
                         var placeholderUser = ChatMessage.FromUser($"{serviceObj.UserInput} : us message_id <|{serviceObj.MessageID}|> to track the function calls");
                         history.Add(placeholderUser);
-                        var assistantMessage=new StringBuilder($"I have called the following functions : ");
+                        var assistantMessage = new StringBuilder($"I have called the following functions : ");
                         foreach (ToolCall fnCall in choice.Message.ToolCalls)
-                        {   
-                            assistantMessage.Append($" Name {fnCall.FunctionCall.Name} Arguments {fnCall.FunctionCall.Arguments} : ");
-                            // Handle the function call asynchronously and remove the placeholder when complete
-                            await HandleFunctionCallAsync(serviceObj, fnCall, responseServiceObj, assistantChatMessage);
+                        {
+                            if (fnCall.FunctionCall != null)
+                            {
+                                var funcName = fnCall.FunctionCall.Name;
+                                var funcArgs = fnCall.FunctionCall.Arguments;
+                                assistantMessage.Append($" Name {funcName} Arguments {funcArgs} : ");
+                                // Handle the function call asynchronously and remove the placeholder when complete
+                                await HandleFunctionCallAsync(serviceObj, fnCall, responseServiceObj, assistantChatMessage);
+
+                            }
                         }
                         assistantMessage.Append($" using message_id <|{serviceObj.MessageID}|> . Please wait it may take some time to complete.");
-                          var placeholderAssistant = ChatMessage.FromAssistant(assistantMessage.ToString());
+                        var placeholderAssistant = ChatMessage.FromAssistant(assistantMessage.ToString());
                         history.Add(placeholderAssistant);
-                       
+
                     }
                     else
                     {
@@ -291,33 +297,32 @@ public class OpenAIRunner : ILLMRunner
                 responseServiceObj.LlmMessage = "</functioncall-complete>";
                 if (_isPrimaryLlm) _responseProcessor.ProcessLLMOutput(responseServiceObj);
 
-               
-                    if (_sessionHistories.TryGetValue(serviceObj.SessionId, out var history))
+
+                if (_sessionHistories.TryGetValue(serviceObj.SessionId, out var history))
+                {
+                   lock (history)
                     {
-                        // Locking just for modifying the internal list, since list modifications are not thread-safe.
-                        lock (history)
+                        // Loop through the list from end to start to safely remove multiple items by index
+                        for (int i = history.Count - 1; i >= 0; i--)
                         {
-                            // Loop through the list from end to start to safely remove multiple items by index
-                            for (int i = history.Count - 1; i >= 0; i--)
+                            if (history[i].Content != null && history[i].Content.Contains("<|" + serviceObj.MessageID + "|>"))
                             {
-                                if (history[i].Content != null && history[i].Content.Contains("<|"+serviceObj.MessageID+"|>"))
-                                {
-                                    history.RemoveAt(i);
-                                }
+                                history.RemoveAt(i);
                             }
                         }
+                    }
 
-                       
-                        _logger.LogInformation($"Successfully removed all placeholder messages with ID {serviceObj.MessageID} from history for session {serviceObj.SessionId}.");
-                    }
-                    else
-                    {
-                        var message = $"Function Error: Could not find history for SessionID {serviceObj.SessionId} to remove placeholders.";
-                        responseServiceObj.LlmMessage = message;
-                        if (_isPrimaryLlm) _responseProcessor.ProcessLLMOutput(responseServiceObj);
-                        _logger.LogError(message);
-                    }
-              
+
+                    _logger.LogInformation($"Successfully removed all placeholder messages with ID {serviceObj.MessageID} from history for session {serviceObj.SessionId}.");
+                }
+                else
+                {
+                    var message = $"Function Error: Could not find history for SessionID {serviceObj.SessionId} to remove placeholders.";
+                    responseServiceObj.LlmMessage = message;
+                    if (_isPrimaryLlm) _responseProcessor.ProcessLLMOutput(responseServiceObj);
+                    _logger.LogError(message);
+                }
+
                 return true; // Indicates that the function call response was handled successfully
 
             }
