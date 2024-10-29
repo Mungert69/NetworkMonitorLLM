@@ -1,7 +1,7 @@
-sudo ./publish-us-nmap
-sudo ./publish-us-meta
-sudo ./publish-us-search
-sudo ./publish-us-monitor
+#sudo ./publish-us-nmap
+#sudo ./publish-us-meta
+#sudo ./publish-us-search
+#sudo ./publish-us-monitor
 sudo ./publish-eu-nmap
 sudo ./publish-eu-meta
 sudo ./publish-eu-search
