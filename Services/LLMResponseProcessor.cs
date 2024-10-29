@@ -27,10 +27,11 @@ public interface ILLMResponseProcessor
     bool AreAllFunctionsProcessed(string messageId);
     void MarkFunctionAsProcessed(LLMServiceObj serviceObj);
     List<LLMServiceObj> GetProcessedFunctionCalls(string messageId);
-    void ClearFunctionCallTracker (string messageId);
+    void ClearFunctionCallTracker(string messageId);
     Task ProcessEnd(LLMServiceObj serviceObj);
     Task UpdateTokensUsed(LLMServiceObj serviceObj);
     bool IsFunctionCallResponse(string input);
+    bool IsManagedMultiFunc { get; set; }
     bool SendOutput { get; set; }
 }
 
@@ -40,10 +41,13 @@ public class LLMResponseProcessor : ILLMResponseProcessor
     private IRabbitRepo _rabbitRepo;
     private bool _sendOutput = true;
 
+    private bool _isManagedMultiFunc = false;
+
     private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, LLMServiceObj>> _functionCallTracker = new();
 
 
     public bool SendOutput { get => _sendOutput; set => _sendOutput = value; }
+    public bool IsManagedMultiFunc { get => _isManagedMultiFunc; set => _isManagedMultiFunc = value; }
 
     public LLMResponseProcessor(IRabbitRepo rabbitRepo)
     {
@@ -98,12 +102,15 @@ public class LLMResponseProcessor : ILLMResponseProcessor
     public async Task ProcessFunctionCall(LLMServiceObj serviceObj)
     {
         // Assign a unique ID to the function call
-        string functionCallId = Guid.NewGuid().ToString();
-        serviceObj.FunctionCallId = functionCallId;
+        if (!_isManagedMultiFunc)
+        {
+            string functionCallId = Guid.NewGuid().ToString();
+            serviceObj.FunctionCallId = functionCallId;
 
-        // Thread-safe addition to the tracker based on MessageID
-        var callDictionary = _functionCallTracker.GetOrAdd(serviceObj.MessageID, _ => new ConcurrentDictionary<string, LLMServiceObj>());
-        callDictionary[functionCallId] = serviceObj;
+            // Thread-safe addition to the tracker based on MessageID
+            var callDictionary = _functionCallTracker.GetOrAdd(serviceObj.MessageID, _ => new ConcurrentDictionary<string, LLMServiceObj>());
+            callDictionary[functionCallId] = serviceObj;
+        }
 
         if (_sendOutput)
             await _rabbitRepo.PublishAsync<LLMServiceObj>("llmServiceFunction", serviceObj);
@@ -116,13 +123,13 @@ public class LLMResponseProcessor : ILLMResponseProcessor
             if (calls.TryGetValue(serviceObj.FunctionCallId, out var trackedServiceObj))
             {
                 trackedServiceObj.IsProcessed = true;
-                 trackedServiceObj.UserInput = serviceObj.UserInput;
-                 trackedServiceObj.IsFunctionCallResponse=serviceObj.IsFunctionCallResponse;
-                 trackedServiceObj.FunctionName=serviceObj.FunctionName;
+                trackedServiceObj.UserInput = serviceObj.UserInput;
+                trackedServiceObj.IsFunctionCallResponse = serviceObj.IsFunctionCallResponse;
+                trackedServiceObj.FunctionName = serviceObj.FunctionName;
             }
         }
     }
-     public List<LLMServiceObj> GetProcessedFunctionCalls(string messageId)
+    public List<LLMServiceObj> GetProcessedFunctionCalls(string messageId)
     {
         if (_functionCallTracker.TryGetValue(messageId, out var calls))
         {
@@ -131,10 +138,11 @@ public class LLMResponseProcessor : ILLMResponseProcessor
         return new List<LLMServiceObj>();
     }
 
-    public void ClearFunctionCallTracker (string messageId){
-         
-                _functionCallTracker.TryRemove(messageId, out _);
-            
+    public void ClearFunctionCallTracker(string messageId)
+    {
+
+        _functionCallTracker.TryRemove(messageId, out _);
+
     }
 
     public bool AreAllFunctionsProcessed(string messageId)

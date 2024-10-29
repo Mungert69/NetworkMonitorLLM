@@ -57,6 +57,7 @@ public class OpenAIRunner : ILLMRunner
     {
         _logger = logger;
         _responseProcessor = responseProcessor;
+        responseProcessor.IsManagedMultiFunc=true;
         _openAiService = openAiService;
         _openAIRunnerSemaphore = openAIRunnerSemaphore;
         _serviceID = systemParamsHelper.GetSystemParams().ServiceID!;
