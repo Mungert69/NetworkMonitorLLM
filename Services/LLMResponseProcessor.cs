@@ -106,10 +106,11 @@ public class LLMResponseProcessor : ILLMResponseProcessor
         {
             string functionCallId = Guid.NewGuid().ToString();
             serviceObj.FunctionCallId = functionCallId;
+            var newServiceObj=new LLMServiceObj(serviceObj);
 
             // Thread-safe addition to the tracker based on MessageID
-            var callDictionary = _functionCallTracker.GetOrAdd(serviceObj.MessageID, _ => new ConcurrentDictionary<string, LLMServiceObj>());
-            callDictionary[functionCallId] = serviceObj;
+            var callDictionary = _functionCallTracker.GetOrAdd(newServiceObj.MessageID, _ => new ConcurrentDictionary<string, LLMServiceObj>());
+            callDictionary[functionCallId] = newServiceObj;
         }
 
         if (_sendOutput)
@@ -124,7 +125,8 @@ public class LLMResponseProcessor : ILLMResponseProcessor
             {
                 trackedServiceObj.IsProcessed = true;
                 trackedServiceObj.UserInput = serviceObj.UserInput;
-                trackedServiceObj.IsFunctionCallResponse = serviceObj.IsFunctionCallResponse;
+                trackedServiceObj.IsFunctionCallResponse = true;
+                trackedServiceObj.IsFunctionCall=false;
                 trackedServiceObj.FunctionName = serviceObj.FunctionName;
             }
         }

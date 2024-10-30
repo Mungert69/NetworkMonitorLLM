@@ -74,6 +74,7 @@ namespace NetworkMonitor.LLM.Services
                         responseServiceObj.IsFunctionCall = true;
                         responseServiceObj.JsonFunction = jsonArguments;
                         responseServiceObj.FunctionName = functionName;
+                        responseServiceObj.IsProcessed=false;
                         await _responseProcessor.ProcessFunctionCall(responseServiceObj);
                         _isFuncCalled = true;
 

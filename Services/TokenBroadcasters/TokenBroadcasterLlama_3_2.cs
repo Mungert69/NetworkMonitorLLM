@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 using NetworkMonitor.Objects.ServiceMessage;
 using NetworkMonitor.Objects;
+using System.Text.RegularExpressions;
 namespace NetworkMonitor.LLM.Services;
 public class TokenBroadcasterLlama_3_2 : TokenBroadcasterBase
 {
@@ -78,76 +79,27 @@ public class TokenBroadcasterLlama_3_2 : TokenBroadcasterBase
         }
         _logger.LogInformation(" --> Finished LLM Interaction ");
     }
+
+
 protected override List<(string json, string functionName)> ParseInputForJson(string input)
 {
     var functionCalls = new List<(string json, string functionName)>();
-    int currentIndex = 0;
 
-    while (true)
+    // Define regex pattern to capture the function name and parameters JSON block
+    var pattern = @"{""name"":\s*""(?<name>[^""]+)"",\s*""parameters"":\s*(?<parameters>{.*?})}";
+    var matches = Regex.Matches(input, pattern);
+
+    foreach (Match match in matches)
     {
-        // Find the start of the function name
-        int headerStart = input.IndexOf("{\"name\": \"", currentIndex);
-        if (headerStart == -1)
-        {
-            break; // No more function calls found
-        }
+        // Get function name and JSON parameters block
+        var functionName = match.Groups["name"].Value;
+        var jsonContent = match.Groups["parameters"].Value;
 
-        // Extract the function name
-        int functionNameStart = headerStart + "{\"name\": \"".Length;
-        int functionNameEnd = input.IndexOf("\"", functionNameStart);
-        if (functionNameEnd == -1)
-        {
-            break; // Malformed input; stop processing
-        }
-        string functionName = input.Substring(functionNameStart, functionNameEnd - functionNameStart);
-
-        // Find the parameters in the JSON format
-        string paramStr = "\"parameters\"";
-        int paramsStart = input.IndexOf(paramStr, functionNameEnd);
-        if (paramsStart == -1)
-        {
-            functionCalls.Add((string.Empty, functionName));  // No parameters found, add function call with empty JSON
-            currentIndex = functionNameEnd + 1;
-            continue; // Continue to next function call
-        }
-
-        // Extract the JSON parameters part
-        int jsonStart = input.IndexOf("{", paramsStart + paramStr.Length);
-        int braceCount = 0;
-        int jsonEnd = -1;
-
-        // Traverse the JSON starting point to find the matching closing brace
-        for (int i = jsonStart; i < input.Length; i++)
-        {
-            if (input[i] == '{') braceCount++;
-            else if (input[i] == '}') braceCount--;
-
-            if (braceCount == 0)
-            {
-                jsonEnd = i;
-                break;
-            }
-        }
-
-        // Check if we found a valid JSON block
-        if (jsonEnd == -1 || jsonEnd <= jsonStart)
-        {
-            functionCalls.Add((string.Empty, functionName)); // Malformed JSON; add function call with empty JSON
-            currentIndex = jsonStart + 1;
-            continue; // Continue to next function call
-        }
-
-        // Extract the JSON object for parameters
-        string jsonContent = input.Substring(jsonStart, jsonEnd - jsonStart + 1).Trim();
+        // Optionally sanitize the JSON content
         functionCalls.Add((JsonSanitizer.SanitizeJson(jsonContent), functionName));
-
-        // Update the current index to search for the next function call
-        currentIndex = jsonEnd + 1;
     }
 
     return functionCalls;
 }
-
-
 
 }
