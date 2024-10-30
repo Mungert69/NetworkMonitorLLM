@@ -115,7 +115,7 @@ public class LLMProcessRunner : ILLMRunner
         await _processRunnerSemaphore.WaitAsync(); // Wait to enter the semaphore
         try
         {
-
+            _responseProcessor.IsManagedMultiFunc=false;
             if (_processes.ContainsKey(serviceObj.SessionId))
                 throw new Exception("FreeLLM Assistant already running");
             _logger.LogInformation($" LLM Service : Start Process for sessionsId {serviceObj.SessionId}");

@@ -57,7 +57,6 @@ public class OpenAIRunner : ILLMRunner
     {
         _logger = logger;
         _responseProcessor = responseProcessor;
-        responseProcessor.IsManagedMultiFunc=true;
         _openAiService = openAiService;
         _openAIRunnerSemaphore = openAIRunnerSemaphore;
         _serviceID = systemParamsHelper.GetSystemParams().ServiceID!;
@@ -77,6 +76,8 @@ public class OpenAIRunner : ILLMRunner
     {
         _isStateStarting = true;
         _isStateReady = false;
+        _responseProcessor.IsManagedMultiFunc=true;
+        
         if (!_activeSessions.TryAdd(serviceObj.SessionId, currentTime))
         {
             _isStateStarting = false;
