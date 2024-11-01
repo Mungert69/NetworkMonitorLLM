@@ -72,7 +72,7 @@ public class LLMResponseProcessor : ILLMResponseProcessor
         {
             serviceObj.LlmMessage = chunk;
             await ProcessLLMOutput(serviceObj);
-            await Task.Delay(50); // Pause between sentences 
+            await Task.Delay(30); // Pause between sentences 
         }
 
     }
