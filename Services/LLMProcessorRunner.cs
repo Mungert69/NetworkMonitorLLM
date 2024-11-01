@@ -111,7 +111,7 @@ public class LLMProcessRunner : ILLMRunner
     {
         _isStateStarting = true;
         _isStateReady = false;
-        if (_mlParams.StartOnlyOneFreeLLM && serviceObj.LlmChainStartName != "monitor") return;// throw new Exception($"The advanced {serviceObj.LlmChainStartName} assistant is only available with TurboLLM. However the basic monitor assistant is still available");
+        if (_mlParams.StartOnlyOneFreeLLM && serviceObj.LlmChainStartName != "monitor" && !serviceObj.IsSystemLlm) return;// throw new Exception($"The advanced {serviceObj.LlmChainStartName} assistant is only available with TurboLLM. However the basic monitor assistant is still available");
         await _processRunnerSemaphore.WaitAsync(); // Wait to enter the semaphore
         try
         {
@@ -170,7 +170,7 @@ public class LLMProcessRunner : ILLMRunner
 
         serviceObj.IsFunctionCallResponse = false;
         _sendOutput = false;
-        await SendInputAndGetResponse(serviceObj);
+        if (!_mlParams.LlmNoInitMessage) await SendInputAndGetResponse(serviceObj);
 
         _logger.LogInformation($"LLM process started for session {serviceObj.SessionId}");
         _sendOutput = true;
