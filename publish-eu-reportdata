@@ -1,0 +1,4 @@
+systemctl stop NM-LLM-EU-ReportData.service
+cp appsettings-eu-reportdata.json appsettings.json
+dotnet publish NetworkMonitorLLM.csproj --os linux --arch x64  --output ../services/llm-eu-reportdata -c Release --self-contained true 
+systemctl start NM-LLM-EU-ReportData.service
