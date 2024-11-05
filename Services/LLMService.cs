@@ -98,6 +98,8 @@ public class LLMService : ILLMService
                 string extraMesage = "";
                 if (llmServiceObj.LLMRunnerType == "FreeLLM") extraMesage = $" , this can take up to {_mlParams.LlmSystemPromptTimeout} seconds. If the session is not used for {_mlParams.LlmSessionIdleTimeout} minutes it will be closed";
                 llmServiceObj.LlmMessage = MessageHelper.InfoMessage($" Starting {llmServiceObj.LLMRunnerType} {_serviceID} Assistant {extraMesage}");
+                  llmServiceObj.ResultMessage =$" Starting {llmServiceObj.LLMRunnerType} {_serviceID} Assistant {extraMesage}";
+                llmServiceObj.ResultSuccess = true;
                 await _rabbitRepo.PublishAsync<LLMServiceObj>("llmServiceMessage", llmServiceObj);
 
 
@@ -187,20 +189,24 @@ public class LLMService : ILLMService
             try
             {
                 result.Success = true;
-                 if (session.Runner == null)
+                if (session.Runner == null)
                 {
-                     result.Message = " Error : the assistant has no running process";
+                    result.Message = " Error : the assistant has no running process";
                     result.Success = false;
+                    llmServiceObj.ResultMessage = result.Message;
+                    llmServiceObj.ResultSuccess = false;
                     llmServiceObj.LlmMessage = MessageHelper.ErrorMessage(result.Message);
                     await _rabbitRepo.PublishAsync<LLMServiceObj>("llmServiceMessage", llmServiceObj);
                     return result;
-              
+
                 }
-                
+
                 if (session.Runner.IsStateStarting)
                 {
                     result.Message = " Please wait the assistant is starting...";
                     result.Success = false;
+                    llmServiceObj.ResultMessage = result.Message;
+                    llmServiceObj.ResultSuccess = false;
                     llmServiceObj.LlmMessage = MessageHelper.WarningMessage(result.Message);
                     await _rabbitRepo.PublishAsync<LLMServiceObj>("llmServiceMessage", llmServiceObj);
                 }
@@ -209,6 +215,8 @@ public class LLMService : ILLMService
                 {
                     result.Message = " Please wait the assistant is processing the last message..." + llmServiceObj.UserInput;
                     result.Success = false;
+                    llmServiceObj.ResultMessage = result.Message;
+                    llmServiceObj.ResultSuccess = false;
                     llmServiceObj.LlmMessage = MessageHelper.WarningMessage(result.Message);
                     await _rabbitRepo.PublishAsync<LLMServiceObj>("llmServiceMessage", llmServiceObj);
                 }
@@ -216,6 +224,8 @@ public class LLMService : ILLMService
                 {
                     result.Message = " The Assistant is stopped try reloading or refresh the page";
                     result.Success = false;
+                    llmServiceObj.ResultMessage = result.Message;
+                    llmServiceObj.ResultSuccess = false;
                     llmServiceObj.LlmMessage = MessageHelper.ErrorMessage(result.Message);
                     await _rabbitRepo.PublishAsync<LLMServiceObj>("llmServiceMessage", llmServiceObj);
                 }
@@ -228,9 +238,12 @@ public class LLMService : ILLMService
             }
             catch (Exception e)
             {
-                result.Message += $" Error : {e.Message}";
+                result.Message += $" Error : unable to SendInputAndGetReponse. Error was : {e.Message}";
                 result.Success = false;
+                 llmServiceObj.ResultMessage = result.Message;
+                    llmServiceObj.ResultSuccess = false;
                 llmServiceObj.LlmMessage = MessageHelper.ErrorMessage(result.Message);
+                
                 await _rabbitRepo.PublishAsync<LLMServiceObj>("llmServiceMessage", llmServiceObj);
             }
         }
