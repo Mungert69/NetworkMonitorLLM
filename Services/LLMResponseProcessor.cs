@@ -58,8 +58,8 @@ public class LLMResponseProcessor : ILLMResponseProcessor
     public async Task ProcessLLMOutput(LLMServiceObj serviceObj)
     {
         //Console.WriteLine(serviceObj.LlmMessage);
-         llmServiceObj.ResultMessage = "Sending Output";
-        llmServiceObj.ResultSuccess = true;
+         serviceObj.ResultMessage = "Sending Output";
+        serviceObj.ResultSuccess = true;
         if (_sendOutput && !string.IsNullOrEmpty(serviceObj.LlmMessage)) await _rabbitRepo.PublishAsync<LLMServiceObj>("llmServiceMessage", serviceObj);
         //return Task.CompletedTask;
     }
@@ -85,8 +85,8 @@ public class LLMResponseProcessor : ILLMResponseProcessor
     public async Task ProcessEnd(LLMServiceObj serviceObj)
     {
         serviceObj.LlmMessage = MessageHelper.ErrorMessage(serviceObj.LlmMessage);
-        llmServiceObj.ResultMessage = MessageHelper.ErrorMessage(serviceObj.LlmMessage);
-        llmServiceObj.ResultSuccess = true;
+        serviceObj.ResultMessage = MessageHelper.ErrorMessage(serviceObj.LlmMessage);
+        serviceObj.ResultSuccess = true;
         await _rabbitRepo.PublishAsync<LLMServiceObj>("llmServiceTimeout", serviceObj);
 
         // Cleanup function calls related to this MessageID to avoid memory leaks
@@ -95,8 +95,8 @@ public class LLMResponseProcessor : ILLMResponseProcessor
 
     public async Task UpdateTokensUsed(LLMServiceObj serviceObj)
     {
-         llmServiceObj.ResultMessage = "Sending Tokens Used";
-        llmServiceObj.ResultSuccess = true;
+        serviceObj.ResultMessage = "Sending Tokens Used";
+        serviceObj.ResultSuccess = true;
         await _rabbitRepo.PublishAsync<LLMServiceObj>("llmUpdateTokensUsed", serviceObj);
         //return Task.CompletedTask;
     }
@@ -119,8 +119,8 @@ public class LLMResponseProcessor : ILLMResponseProcessor
             var callDictionary = _functionCallTracker.GetOrAdd(newServiceObj.MessageID, _ => new ConcurrentDictionary<string, LLMServiceObj>());
             callDictionary[functionCallId] = newServiceObj;
         }
-         llmServiceObj.ResultMessage = "Sending Function call response";
-        llmServiceObj.ResultSuccess = true;
+        serviceObj.ResultMessage = "Sending Function call response";
+        serviceObj.ResultSuccess = true;
         if (_sendOutput)
             await _rabbitRepo.PublishAsync<LLMServiceObj>("llmServiceFunction", serviceObj);
     }
