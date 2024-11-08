@@ -1,0 +1,1 @@
+~/code/models/llama.cpp/llama-cli -c 5000  -m ~/code/models/Meta-Llama-3.1-8B-Instruct-Q4_K_L.gguf  --prompt-cache context-llama-data-3.1.gguf --prompt-cache-ro  -f system_prompt_llama_data_3.1_run   -r "<|eot_id|>"  -sp -if --keep -1 --temp 0 --color --simple-io -sp --grammar-file report_grammar.gbnf --in-suffix "<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"

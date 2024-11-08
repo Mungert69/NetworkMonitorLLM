@@ -1,0 +1,14 @@
+# Start with the main JSON object structure
+<start> ::= '{' <key_value_pairs> '}'
+
+# Define the key-value pairs in the JSON
+<key_value_pairs> ::= '"performance_assessment"' ':' <string> ',' '"expert_recommendations"' ':' <string>
+
+# Define a string value as any sequence of characters within quotes
+<string> ::= '"' <char_sequence> '"'
+
+# Define allowed characters within a string (excluding quotes and control characters)
+<char_sequence> ::= <char> <char_sequence> | ""
+<char> ::= [a-zA-Z0-9 .,!?;:'()\-]
+
+
