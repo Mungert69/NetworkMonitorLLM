@@ -5,6 +5,7 @@ using OpenAI.ObjectModels;
 using OpenAI.ObjectModels.RequestModels;
 using OpenAI.Tokenizer.GPT3;
 using OpenAI.ObjectModels.SharedModels;
+using OpenAI.ObjectModels.ResponseModels;
 using System;
 using System.IO;
 using System.Text;
@@ -44,6 +45,7 @@ public class OpenAIRunner : ILLMRunner
     private bool _isStateStarting = false;
     private bool _isStateFailed = false;
     private bool _isPrimaryLlm;
+    private bool _isSystemLlm;
     //private bool _isFuncCalled;
     private string _serviceID;
     private int _maxTokens = 2000;
@@ -66,6 +68,7 @@ public class OpenAIRunner : ILLMRunner
         if (_serviceID == "nmap") _toolsBuilder = new NmapToolsBuilder();
         if (_serviceID == "meta") _toolsBuilder = new MetaToolsBuilder();
         if (_serviceID == "search") _toolsBuilder = new SearchToolsBuilder();
+        if (_serviceID == "reportdata") _toolsBuilder = new ReportDataToolsBuilder();
         _maxTokens = AccountTypeFactory.GetAccountTypeByName(serviceObj.UserInfo.AccountType!).ContextSize;
         _activeSessions = new ConcurrentDictionary<string, DateTime>();
         _sessionHistories = new ConcurrentDictionary<string, List<ChatMessage>>();
@@ -76,8 +79,8 @@ public class OpenAIRunner : ILLMRunner
     {
         _isStateStarting = true;
         _isStateReady = false;
-        _responseProcessor.IsManagedMultiFunc=true;
-        
+        _responseProcessor.IsManagedMultiFunc = true;
+
         if (!_activeSessions.TryAdd(serviceObj.SessionId, currentTime))
         {
             _isStateStarting = false;
@@ -130,6 +133,7 @@ public class OpenAIRunner : ILLMRunner
 
         _logger.LogInformation("Sending input and waiting for response...");
         _isPrimaryLlm = serviceObj.IsPrimaryLlm;
+        _isSystemLlm= serviceObj.IsSystemLlm;
 
         try
         {
@@ -155,15 +159,27 @@ public class OpenAIRunner : ILLMRunner
             if (!serviceObj.IsFunctionCallResponse || (serviceObj.IsFunctionCallResponse && canAddFuncMessage))
             {
                 var currentHistory = new List<ChatMessage>(history.Concat(messageHistory));
-
-                var completionResult = await _openAiService.ChatCompletion.CreateCompletion(new ChatCompletionCreateRequest
+                ChatCompletionCreateResponse completionResult;
+                if (_toolsBuilder.Tools == null || _toolsBuilder.Tools.Count == 0)
                 {
-                    Messages = currentHistory,
-                    Tools = _toolsBuilder.Tools, // Your pre-defined tools
-                    ToolChoice = ToolChoice.Auto,
-                    MaxTokens = 1000,
-                    Model = _gptModel
-                });
+                    completionResult = await _openAiService.ChatCompletion.CreateCompletion(new ChatCompletionCreateRequest
+                    {
+                        Messages = currentHistory,
+                        MaxTokens = 1000,
+                        Model = _gptModel
+                    });
+                }
+                else
+                {
+                    completionResult = await _openAiService.ChatCompletion.CreateCompletion(new ChatCompletionCreateRequest
+                    {
+                        Messages = currentHistory,
+                        Tools = _toolsBuilder.Tools, // Your pre-defined tools
+                        ToolChoice = ToolChoice.Auto,
+                        MaxTokens = 1000,
+                        Model = _gptModel
+                    });
+                }
 
 
                 if (completionResult.Successful)
@@ -302,7 +318,7 @@ public class OpenAIRunner : ILLMRunner
 
                 if (_sessionHistories.TryGetValue(serviceObj.SessionId, out var history))
                 {
-                   lock (history)
+                    lock (history)
                     {
                         // Loop through the list from end to start to safely remove multiple items by index
                         for (int i = history.Count - 1; i >= 0; i--)
@@ -321,7 +337,7 @@ public class OpenAIRunner : ILLMRunner
                 {
                     var message = $"Function Error: Could not find history for SessionID {serviceObj.SessionId} to remove placeholders.";
                     responseServiceObj.LlmMessage = message;
-                    if (_isPrimaryLlm) _responseProcessor.ProcessLLMOutput(responseServiceObj);
+                    if (_isPrimaryLlm || _isSystemLlm) _responseProcessor.ProcessLLMOutputError(responseServiceObj);
                     _logger.LogError(message);
                 }
 
@@ -334,8 +350,8 @@ public class OpenAIRunner : ILLMRunner
             responseServiceObj.LlmMessage = $"Function Error: No pending function call found for Message ID: {serviceObj.MessageID}\n\n";
 
             // Process the LLM output if it's the primary LLM
-            if (_isPrimaryLlm) _responseProcessor.ProcessLLMOutput(responseServiceObj);
-
+            if (_isPrimaryLlm || _isSystemLlm) _responseProcessor.ProcessLLMOutputError(responseServiceObj);
+                   
             _logger.LogWarning($"No pending function call found for Message ID: {serviceObj.MessageID}");
         }
 
@@ -392,9 +408,9 @@ public class OpenAIRunner : ILLMRunner
             responseServiceObj.IsFunctionCallResponse = false;
             responseServiceObj.LlmMessage = "<Assistant:> " + responseChoiceStr + "\n\n";
             if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOuputInChunks(responseServiceObj);
-            else
+            else 
             {
-                responseServiceObj.IsFunctionCallResponse = true;
+                if (!_isSystemLlm) responseServiceObj.IsFunctionCallResponse = true;
                 responseServiceObj.LlmMessage = responseChoiceStr;
                 await _responseProcessor.ProcessLLMOutput(responseServiceObj);
             }

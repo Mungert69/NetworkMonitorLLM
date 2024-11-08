@@ -22,6 +22,7 @@ namespace NetworkMonitor.LLM.Services;
 public interface ILLMResponseProcessor
 {
     Task ProcessLLMOutput(LLMServiceObj serviceObj);
+    Task ProcessLLMOutputError(LLMServiceObj serviceObj);
     Task ProcessLLMOuputInChunks(LLMServiceObj serviceObj);
     Task ProcessFunctionCall(LLMServiceObj serviceObj);
     bool AreAllFunctionsProcessed(string messageId);
@@ -58,8 +59,17 @@ public class LLMResponseProcessor : ILLMResponseProcessor
     public async Task ProcessLLMOutput(LLMServiceObj serviceObj)
     {
         //Console.WriteLine(serviceObj.LlmMessage);
-         serviceObj.ResultMessage = "Sending Output";
+         serviceObj.ResultMessage = "Sending Success Output";
         serviceObj.ResultSuccess = true;
+        if (_sendOutput && !string.IsNullOrEmpty(serviceObj.LlmMessage)) await _rabbitRepo.PublishAsync<LLMServiceObj>("llmServiceMessage", serviceObj);
+        //return Task.CompletedTask;
+    }
+
+    public async Task ProcessLLMOutputError(LLMServiceObj serviceObj)
+    {
+        //Console.WriteLine(serviceObj.LlmMessage);
+         serviceObj.ResultMessage = "Sending Fail Output";
+        serviceObj.ResultSuccess = false;
         if (_sendOutput && !string.IsNullOrEmpty(serviceObj.LlmMessage)) await _rabbitRepo.PublishAsync<LLMServiceObj>("llmServiceMessage", serviceObj);
         //return Task.CompletedTask;
     }

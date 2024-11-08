@@ -100,7 +100,7 @@ public class LLMService : ILLMService
                 llmServiceObj.LlmMessage = MessageHelper.InfoMessage($" Starting {llmServiceObj.LLMRunnerType} {_serviceID} Assistant {extraMesage}");
                   llmServiceObj.ResultMessage =$" Starting {llmServiceObj.LLMRunnerType} {_serviceID} Assistant {extraMesage}";
                 llmServiceObj.ResultSuccess = true;
-                await _rabbitRepo.PublishAsync<LLMServiceObj>("llmServiceMessage", llmServiceObj);
+                if (!llmServiceObj.IsSystemLlm) await _rabbitRepo.PublishAsync<LLMServiceObj>("llmServiceMessage", llmServiceObj);
 
 
                 await runner.StartProcess(llmServiceObj, usersCurrentTime);
@@ -108,14 +108,14 @@ public class LLMService : ILLMService
                 llmServiceObj.ResultMessage = $" Success {runner.Type} {_serviceID} Assistant Started";
                 llmServiceObj.ResultSuccess = true;
                 llmServiceObj.LlmMessage = MessageHelper.SuccessMessage(llmServiceObj.ResultMessage);
-                await _rabbitRepo.PublishAsync<LLMServiceObj>("llmServiceMessage", llmServiceObj);
+                if (!llmServiceObj.IsSystemLlm) await _rabbitRepo.PublishAsync<LLMServiceObj>("llmServiceMessage", llmServiceObj);
             }
             else
             {
                 llmServiceObj.ResultMessage = $"{llmServiceObj.LlmChainStartName} Info Assistant already running so it was not reloaded";
                 llmServiceObj.ResultSuccess = true;
                 llmServiceObj.LlmMessage = MessageHelper.InfoMessage(llmServiceObj.ResultMessage);
-                await _rabbitRepo.PublishAsync<LLMServiceObj>("llmServiceMessage", llmServiceObj);
+                if (!llmServiceObj.IsSystemLlm) await _rabbitRepo.PublishAsync<LLMServiceObj>("llmServiceMessage", llmServiceObj);
             }
             await _rabbitRepo.PublishAsync<LLMServiceObj>("llmServiceStarted", llmServiceObj);
         }
