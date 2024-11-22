@@ -72,13 +72,13 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
 
 
     }
-    protected override ResultObj DeclareConsumers()
+    protected override async Task<ResultObj> DeclareConsumers()
     {
         var result = new ResultObj();
         result.Success = true;
         try
         {
-            _rabbitMQObjs.ForEach(rabbitMQObj =>
+          foreach (var rabbitMQObj in  _rabbitMQObjs)
         {
             if (rabbitMQObj.ConnectChannel == null)
             {
@@ -87,7 +87,7 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
                 _logger.LogCritical(result.Message);
                 return;
             }
-            rabbitMQObj.Consumer = new EventingBasicConsumer(rabbitMQObj.ConnectChannel);
+            rabbitMQObj.Consumer = new AsyncEventingBasicConsumer(rabbitMQObj.ConnectChannel);
 
             if (rabbitMQObj.Consumer == null)
             {
@@ -99,13 +99,13 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
             switch (rabbitMQObj.FuncName)
             {
                 case "llmStartSession":
-                    rabbitMQObj.ConnectChannel.BasicQos(prefetchSize: 0, prefetchCount: 1, global: false);
-                    rabbitMQObj.Consumer.Received += async (model, ea) =>
+                    await rabbitMQObj.ConnectChannel.BasicQosAsync(prefetchSize: 0, prefetchCount: 1, global: false);
+                    rabbitMQObj.Consumer.ReceivedAsync += async (model, ea) =>
                 {
                     try
                     {
                         result = await StartSession(ConvertToObject<LLMServiceObj>(model, ea));
-                        rabbitMQObj.ConnectChannel.BasicAck(ea.DeliveryTag, false);
+                        await rabbitMQObj.ConnectChannel.BasicAckAsync(ea.DeliveryTag, false);
                     }
                     catch (Exception ex)
                     {
@@ -114,13 +114,13 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
                 };
                     break;
                 case "llmRemoveSession":
-                    rabbitMQObj.ConnectChannel.BasicQos(prefetchSize: 0, prefetchCount: 1, global: false);
-                    rabbitMQObj.Consumer.Received += async (model, ea) =>
+                    await rabbitMQObj.ConnectChannel.BasicQosAsync(prefetchSize: 0, prefetchCount: 1, global: false);
+                    rabbitMQObj.Consumer.ReceivedAsync += async (model, ea) =>
                 {
                     try
                     {
                         result = await RemoveSession(ConvertToObject<LLMServiceObj>(model, ea));
-                        rabbitMQObj.ConnectChannel.BasicAck(ea.DeliveryTag, false);
+                        await rabbitMQObj.ConnectChannel.BasicAckAsync(ea.DeliveryTag, false);
                     }
                     catch (Exception ex)
                     {
@@ -129,13 +129,13 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
                 };
                     break;
                 case "llmUserInput":
-                    rabbitMQObj.ConnectChannel.BasicQos(prefetchSize: 0, prefetchCount: 1, global: false);
-                    rabbitMQObj.Consumer.Received += async (model, ea) =>
+                    await rabbitMQObj.ConnectChannel.BasicQosAsync(prefetchSize: 0, prefetchCount: 1, global: false);
+                    rabbitMQObj.Consumer.ReceivedAsync += async (model, ea) =>
                 {
                     try
                     {
                         result = await UserInput(ConvertToObject<LLMServiceObj>(model, ea));
-                        rabbitMQObj.ConnectChannel.BasicAck(ea.DeliveryTag, false);
+                        await rabbitMQObj.ConnectChannel.BasicAckAsync(ea.DeliveryTag, false);
                     }
                     catch (Exception ex)
                     {
@@ -145,7 +145,7 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
                     break;
 
             }
-        });
+        }
             if (result.Success) result.Message += " Success : Declared all consumers ";
         }
         catch (Exception e)
