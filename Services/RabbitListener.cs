@@ -85,7 +85,7 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
                 result.Message += $" Error : RabbitListener Connect Channel not open for Exchange {rabbitMQObj.ExchangeName}";
                 result.Success = false;
                 _logger.LogCritical(result.Message);
-                return;
+                return result;
             }
             rabbitMQObj.Consumer = new AsyncEventingBasicConsumer(rabbitMQObj.ConnectChannel);
 
@@ -94,7 +94,7 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
                 result.Message += $" Error : RabbitListener can't create Consumer for queue  {rabbitMQObj.QueueName}";
                 result.Success = false;
                 _logger.LogCritical(result.Message);
-                return;
+                return result;
             }
             switch (rabbitMQObj.FuncName)
             {
