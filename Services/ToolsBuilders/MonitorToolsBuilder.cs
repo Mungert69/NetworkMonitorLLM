@@ -16,6 +16,7 @@ namespace NetworkMonitor.LLM.Services;
 public class MonitorToolsBuilder : IToolsBuilder
 {
     private readonly FunctionDefinition fn_are_functions_running;
+     private readonly FunctionDefinition fn_cancel_functions;
     private readonly FunctionDefinition fn_add_host;
     private readonly FunctionDefinition fn_edit_host;
     private readonly FunctionDefinition fn_get_host_data;
@@ -31,6 +32,7 @@ public class MonitorToolsBuilder : IToolsBuilder
     {
         // Initialize all function definitions
         fn_are_functions_running=    BuildAreFunctionsRunning();
+        fn_cancel_functions=    BuildCancelFunctions();
         fn_add_host = BuildAddHostFunction();
         fn_edit_host = BuildEditHostFunction();
         fn_get_host_data = BuildGetHostDataFunction();
@@ -47,6 +49,7 @@ public class MonitorToolsBuilder : IToolsBuilder
         var accountTypeFunctions = AccountTypeFactory.GetFunctionsForAccountType<FunctionDefinition>(
             userInfo.AccountType!,
             fn_are_functions_running,
+            fn_cancel_functions,
             fn_add_host,
             fn_edit_host,
             fn_get_host_data,
@@ -160,6 +163,13 @@ public class MonitorToolsBuilder : IToolsBuilder
  private FunctionDefinition BuildAreFunctionsRunning()
 {
     return new FunctionDefinitionBuilder("are_functions_running", "Check if functions have completed.")
+        .AddParameter("message_id", PropertyDefinition.DefineString("The message_id that is associated with the function calls"))
+        .Validate()
+        .Build();
+}
+private FunctionDefinition BuildCancelFunctions()
+{
+    return new FunctionDefinitionBuilder("cancel_functions", "Cancel running functions")
         .AddParameter("message_id", PropertyDefinition.DefineString("The message_id that is associated with the function calls"))
         .Validate()
         .Build();
