@@ -65,6 +65,8 @@ public class OpenAIRunner : ILLMRunner
         _maxTokens = systemParamsHelper.GetMLParams().LlmOpenAICtxSize;
         _gptModel = systemParamsHelper.GetMLParams().LlmGptModel;
         if (_serviceID == "monitor") _toolsBuilder = new MonitorToolsBuilder(serviceObj.UserInfo);
+          if (_serviceID == "blogmonitor") _toolsBuilder = new BlogMonitorToolsBuilder(serviceObj.UserInfo);
+      
         if (_serviceID == "nmap") _toolsBuilder = new NmapToolsBuilder();
         if (_serviceID == "meta") _toolsBuilder = new MetaToolsBuilder();
         if (_serviceID == "search") _toolsBuilder = new SearchToolsBuilder();

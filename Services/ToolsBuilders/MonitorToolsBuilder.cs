@@ -217,7 +217,7 @@ private FunctionDefinition BuildRunBusyboxFunction()
 
     public List<ToolDefinition> Tools => _tools;
 
-    public List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj)
+    public virtual List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj)
 {
     string content = "You are a network monitoring and security assistant. Use the tools where necessary to assist the user. Your name is TurboLLM, and you are faster than FreeLLM.";
 
