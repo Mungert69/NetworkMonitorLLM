@@ -417,31 +417,6 @@ public class LLMProcessRunner : ILLMRunner
                             // Construct userInput for each response
                             string userInput = pendingServiceObj.UserInput;
                             userInput = userInput.Replace("\r\n", " ").Replace("\n", " ");
-
-                           /* if (!serviceObj.IsPrimaryLlm)
-                            {
-                                switch (_mlParams.LlmVersion)
-                                {
-                                    case "func_2.5":
-                                    case "func_3.1":
-                                    case "func_3.2":
-                                    case "llama_3.2":
-                                        userInput = userInput.Replace("<|start_header_id|>assistant<|end_header_id|>", "")
-                                                             .Replace("<|eot_id|>", ""); // Additional replacement
-                                        break;
-
-                                    case "qwen_2.5":
-                                        userInput = userInput.Replace("<|im_start|>assistant", "")
-                                                             .Replace("<|im_end|>", ""); // Additional replacement
-                                        break;
-
-                                    default:
-                                        // Handle any other LlmVersion cases
-                                        break;
-                                }
-                            }*/
-
-
                             switch (_mlParams.LlmVersion)
                             {
                                 case "func_2.4":
@@ -473,10 +448,26 @@ public class LLMProcessRunner : ILLMRunner
                                     // Optionally handle unexpected LlmVersion values
                                     break;
                             }
-                            // Add "<|eot_id|>" if it's not the last item
+                            // Add "<|eot_id|>" etc. if it's not the last item
                             if (index < processedFunctionCalls.Count - 1)
                             {
-                                userInput += "<|eot_id|>";
+                                 switch (_mlParams.LlmVersion)
+                                {
+                                    case "func_2.5":
+                                    case "func_3.1":
+                                    case "func_3.2":
+                                    case "llama_3.2":
+                                         userInput += "<|eot_id|>";
+                                    break;
+
+                                    case "qwen_2.5":
+                                         userInput += "<|im_end|>";
+                                          break;
+
+                                    default:
+                                        // Handle any other LlmVersion cases
+                                        break;
+                                }
                                 countEOT++;
                             }
 
