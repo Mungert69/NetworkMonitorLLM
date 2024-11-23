@@ -468,7 +468,7 @@ public class LLMProcessRunner : ILLMRunner
                                         // Handle any other LlmVersion cases
                                         break;
                                 }
-                                countEOT++;
+                                //countEOT++;
                             }
 
                             return userInput;

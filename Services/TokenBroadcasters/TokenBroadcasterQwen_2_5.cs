@@ -61,7 +61,7 @@ public class TokenBroadcasterQwen_2_5 : TokenBroadcasterBase
             if (eotIdCount > stopCount)
             {
                 stopCount++;
-                _logger.LogInformation($" Stop count {stopCount} output is {llmOutStr}");
+                _logger.LogInformation($"Stop after {stopAfter} : Stop count {stopCount} : output is {llmOutStr}");
 
             }
             if (stopCount == stopAfter)
