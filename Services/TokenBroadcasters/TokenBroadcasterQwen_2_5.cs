@@ -76,6 +76,9 @@ public class TokenBroadcasterQwen_2_5 : TokenBroadcasterBase
         if (!_isPrimaryLlm && !_isFuncCalled)
         {
             string llmOutput = llmOutFull.ToString().Replace("\n", " ");
+                llmOutput= llmOutput.Replace("<|im_start|>assistant", "")
+                                                             .Replace("<|im_end|>", ""); // Additional replacement
+                                
             var finalServiceObj = new LLMServiceObj(serviceObj);
             finalServiceObj.LlmMessage = llmOutput;
             finalServiceObj.IsFunctionCallResponse = true;

@@ -14,8 +14,8 @@ namespace NetworkMonitor.LLM.Services;
 public class TokenBroadcasterLlama_3_2 : TokenBroadcasterBase
 {
 
-   public TokenBroadcasterLlama_3_2(ILLMResponseProcessor responseProcessor, ILogger logger) 
-        : base(responseProcessor, logger) { }
+    public TokenBroadcasterLlama_3_2(ILLMResponseProcessor responseProcessor, ILogger logger)
+         : base(responseProcessor, logger) { }
     public override async Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput, int countEOT, bool sendOutput = true)
     {
         _logger.LogWarning(" Start BroadcastAsyc() ");
@@ -71,6 +71,9 @@ public class TokenBroadcasterLlama_3_2 : TokenBroadcasterBase
         if (!_isPrimaryLlm && !_isFuncCalled)
         {
             string llmOutput = llmOutFull.ToString().Replace("\n", " ");
+            llmOutput = llmOutput.Replace("<|start_header_id|>assistant<|end_header_id|>", "")
+                                                         .Replace("<|eot_id|>", ""); // Additional replacement
+
             var finalServiceObj = new LLMServiceObj(serviceObj);
             finalServiceObj.LlmMessage = llmOutput;
             finalServiceObj.IsFunctionCallResponse = true;
@@ -81,25 +84,25 @@ public class TokenBroadcasterLlama_3_2 : TokenBroadcasterBase
     }
 
 
-protected override List<(string json, string functionName)> ParseInputForJson(string input)
-{
-    var functionCalls = new List<(string json, string functionName)>();
-
-    // Define regex pattern to capture the function name and parameters JSON block
-    var pattern = @"{""name"":\s*""(?<name>[^""]+)"",\s*""parameters"":\s*(?<parameters>{.*?})}";
-    var matches = Regex.Matches(input, pattern);
-
-    foreach (Match match in matches)
+    protected override List<(string json, string functionName)> ParseInputForJson(string input)
     {
-        // Get function name and JSON parameters block
-        var functionName = match.Groups["name"].Value;
-        var jsonContent = match.Groups["parameters"].Value;
+        var functionCalls = new List<(string json, string functionName)>();
 
-        // Optionally sanitize the JSON content
-        functionCalls.Add((JsonSanitizer.SanitizeJson(jsonContent), functionName));
+        // Define regex pattern to capture the function name and parameters JSON block
+        var pattern = @"{""name"":\s*""(?<name>[^""]+)"",\s*""parameters"":\s*(?<parameters>{.*?})}";
+        var matches = Regex.Matches(input, pattern);
+
+        foreach (Match match in matches)
+        {
+            // Get function name and JSON parameters block
+            var functionName = match.Groups["name"].Value;
+            var jsonContent = match.Groups["parameters"].Value;
+
+            // Optionally sanitize the JSON content
+            functionCalls.Add((JsonSanitizer.SanitizeJson(jsonContent), functionName));
+        }
+
+        return functionCalls;
     }
-
-    return functionCalls;
-}
 
 }

@@ -125,5 +125,6 @@ Notes:
     Strings are enclosed in quotes (e.g., "example").
     Refer to the function definitions to ensure all parameters are in the correct types.
 
-Important: After calling the function, use the response to answer the user's query. Do not just return the function call response, but provide a helpful explanation or answer based on the function's result.<|eot_id|>
+Important: After calling the function, use the response to answer the user's query. Do not just return the function call response, but provide a helpful explanation or answer based on the function's result.
+<|eot_id|>
 

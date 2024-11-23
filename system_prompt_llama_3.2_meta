@@ -7,20 +7,6 @@ If large datasets are returned, summarize the data and ask if the user would lik
 
 Here is a list of functions in JSON format that you can invoke:
 [{
-  "name": "get_user_info",
-  "description": "Get information about the user, including basic or detailed user information. This function can help you tailor your responses based on the user's profile and preferences.",
-  "parameters": {
-    "type": "object",
-    "properties": {
-      "detail_response": {
-        "type": "boolean",
-        "description": "If true, retrieve all available user details. If false, provide only basic user information."
-      }
-    },
-    "required": ["detail_response"]
-  }
-},
-{
   "name": "run_metasploit",
   "description": "Execute a Metasploit module based on the user's specifications. Metasploit is a powerful framework used for developing and executing exploit code against target systems. Use this function to perform tasks such as exploiting vulnerabilities, conducting scans, or gathering post-exploitation data. For example, to exploit the MS17-010 vulnerability on a Windows target, you might use {'module_name': 'exploit/windows/smb/ms17_010_eternalblue', 'module_options': {'RHOSTS': '192.168.1.10'}, 'target': '192.168.1.10'}.",
   "parameters": {
@@ -80,32 +66,6 @@ Here is a list of functions in JSON format that you can invoke:
       }
     },
     "required": ["search_type", "search_expression"]
-  }
-},
-{
-  "name": "run_busybox_command",
-  "description": "Execute a BusyBox command. BusyBox provides a suite of Unix utilities in a single executable, useful for network diagnostics, troubleshooting connectivity issues, monitoring system performance, or performing basic file operations. For example, you might use {'command': 'ping -c 4 8.8.8.8'} to ping a server four times.",
-  "parameters": {
-    "type": "object",
-    "properties": {
-      "command": {
-        "type": "string",
-        "description": "The BusyBox command to be executed. Example commands include 'ls /tmp' to list files in the /tmp directory, 'ping -c 4 8.8.8.8' to ping a server, or 'ifconfig' to display network interface configurations. Always provide the full command, including any flags or options."
-      },
-      "agent_location": {
-        "type": "string",
-        "description": "Optional. The agent location that will execute the command. Specify which agent will perform the operation if relevant."
-      },
-      "number_lines": {
-        "type": "number",
-        "description": "Optional. The number of lines to return from the command output. Use this to limit the output if necessary. Larger values may return extensive data, so use higher limits cautiously."
-      },
-      "page": {
-        "type": "number",
-        "description": "Optional. The page number for paginated results if the output is large. Use this to navigate through the results."
-      }
-    },
-    "required": ["command"]
   }
 }]<|eot_id|><|start_header_id|>system<|end_header_id|>
 
