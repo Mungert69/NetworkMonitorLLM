@@ -1,0 +1,4 @@
+systemctl stop NM-LLM-EU-BlogMonitor.service
+cp appsettings-eu-blogmonitor.json appsettings.json
+dotnet publish NetworkMonitorLLM.csproj --os linux --arch x64  --output ../services/llm-eu-blogmonitor -c Release --self-contained true 
+systemctl start NM-LLM-EU-BlogMonitor.service
