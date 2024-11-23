@@ -6,7 +6,7 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/bin/Debug/net8.0/NetworkMonitorLLM.dll",
+            "program": "${workspaceFolder}/bin/Debug/net9.0/NetworkMonitorLLM.dll",
             "args": ["dev"],
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,
