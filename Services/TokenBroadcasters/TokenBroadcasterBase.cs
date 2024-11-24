@@ -59,29 +59,29 @@ namespace NetworkMonitor.LLM.Services
                 responseServiceObj.LlmMessage = "</functioncall-complete>";
                 if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
             }
-            else
+
+            var functionCalls = ParseInputForJson(line);
+
+            foreach (var (jsonArguments, functionName) in functionCalls)
             {
-                var functionCalls = ParseInputForJson(line);
-
-                foreach (var (jsonArguments, functionName) in functionCalls)
+                if (!string.IsNullOrWhiteSpace(jsonArguments))
                 {
-                    if (!string.IsNullOrWhiteSpace(jsonArguments))
-                    {
-                        _logger.LogInformation($"ProcessLLMOutput(call_func) -> {jsonArguments}");
-                        responseServiceObj.LlmMessage = "</functioncall>";
-                        if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
-                        responseServiceObj.LlmMessage = "";
-                        responseServiceObj.IsFunctionCall = true;
-                        responseServiceObj.JsonFunction = jsonArguments;
-                        responseServiceObj.FunctionName = functionName;
-                        responseServiceObj.IsProcessed=false;
-                        await _responseProcessor.ProcessFunctionCall(responseServiceObj);
-                        _isFuncCalled = true;
+                    _logger.LogInformation($"ProcessLLMOutput(call_func) -> {jsonArguments}");
+                    responseServiceObj.LlmMessage = "</functioncall>";
+                    if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+                    responseServiceObj.LlmMessage = "";
+                    responseServiceObj.IsFunctionCall = true;
+                    responseServiceObj.IsFunctionCallResponse = false;
+                    responseServiceObj.JsonFunction = jsonArguments;
+                    responseServiceObj.FunctionName = functionName;
+                    responseServiceObj.IsProcessed = false;
+                    await _responseProcessor.ProcessFunctionCall(responseServiceObj);
+                    _isFuncCalled = true;
 
-                    }
                 }
-
             }
+
+
             responseServiceObj.LlmMessage = "<end-of-line>";
             if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
         }
