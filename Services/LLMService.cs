@@ -37,7 +37,6 @@ public class LLMService : ILLMService
     private MLParams _mlParams;
     private string _serviceID;
     private readonly ConcurrentDictionary<string, Session> _sessions = new ConcurrentDictionary<string, Session>();
-    // private readonly ILLMResponseProcessor _responseProcessor;
 
     public LLMService(ILogger<LLMService> logger, IRabbitRepo rabbitRepo, ISystemParamsHelper systemParamsHelper, IServiceProvider serviceProvider)
     {

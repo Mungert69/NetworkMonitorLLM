@@ -66,7 +66,7 @@ namespace NetworkMonitor.LLM
             services.AddSingleton<IRabbitRepo, RabbitRepo>();
             services.AddSingleton<IFileRepo, FileRepo>();
             services.AddSingleton<ISystemParamsHelper, SystemParamsHelper>();
-            services.AddSingleton<ILLMResponseProcessor, LLMResponseProcessor>();
+            services.AddTransient<ILLMResponseProcessor, LLMResponseProcessor>();
             services.AddSingleton<ILLMService, LLMService>();
 
 
