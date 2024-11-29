@@ -55,6 +55,41 @@ Here is a list of functions in JSON format that you can invoke:
     "required": ["url"]
   }
 }
+{
+  "name": "run_crawl_site",
+  "description": "Request a site be crawled by a remote agent. The purpose is to generate traffic for the site.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "url": {
+        "type": "string",
+        "description": "The URL of the first page to navigate to on the site. The agent will automatically follow internal links on the site."
+      },
+      "agent_location": {
+        "type": "string",
+        "description": "Optional. The agent location that will execute the crawl. Specify which agent will perform the operation if relevant to access region-specific content."
+      },
+      "max_pages": {
+        "type": "number",
+        "description": "Optional. Default 10. The maximum number of pages to navigate to on the site."
+      },
+      "max_depth": {
+        "type": "number",
+        "description": "Optional. Default 3. The maximum depth of navigational links to follow on the site."
+      },
+      "number_lines": {
+        "type": "number",
+        "description": "Optional. Default 10. The function returns a list of pages crawlled and operations performed on the pages. Limit the number of lines of data returned"
+      },
+      "page": {
+        "type": "number",
+        "description": "Optional. The page number for paginated returned data, allowing navigation through large amounts of data."
+      }
+    },
+    "required": ["url"]
+  }
+}
+
 ] <|eot_id|><|start_header_id|>system<|end_header_id|>
 
 Think very carefully before calling functions. If you choose to call a function, ONLY reply in the following format:
@@ -67,8 +102,5 @@ Notes:
     Booleans are true or false, not "true" or "false".
     Strings are enclosed in quotes (e.g., "example").
 
-Important: In order to perform the search first call run_search_web. Then using the list of pages call run_crawl_page for each of the pages. Give the user a summary of all the data found.
-ALWAYS call both run_search_web followed by run_crawl_page for each page found in the search before giving the user feedback.
-NEVER only run_search_web on its own. It only returns a list of urls and is not useful if its run on its own; run_crawl_page for all the pages to find the information requested.
 <|eot_id|>
 
