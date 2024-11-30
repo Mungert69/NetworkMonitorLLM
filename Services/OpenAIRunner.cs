@@ -65,8 +65,8 @@ public class OpenAIRunner : ILLMRunner
         _maxTokens = systemParamsHelper.GetMLParams().LlmOpenAICtxSize;
         _gptModel = systemParamsHelper.GetMLParams().LlmGptModel;
         if (_serviceID == "monitor") _toolsBuilder = new MonitorToolsBuilder(serviceObj.UserInfo);
-          if (_serviceID == "blogmonitor") _toolsBuilder = new BlogMonitorToolsBuilder(serviceObj.UserInfo);
-      
+        if (_serviceID == "blogmonitor") _toolsBuilder = new BlogMonitorToolsBuilder(serviceObj.UserInfo);
+
         if (_serviceID == "nmap") _toolsBuilder = new NmapToolsBuilder();
         if (_serviceID == "meta") _toolsBuilder = new MetaToolsBuilder();
         if (_serviceID == "search") _toolsBuilder = new SearchToolsBuilder();
@@ -133,9 +133,16 @@ public class OpenAIRunner : ILLMRunner
             throw new Exception($"No TurboLLM {_serviceID} Assistants found for session {serviceObj.SessionId}. Try reloading the Assistant or refreshing the page. If the problems persists contact support@freenetworkmontior.click");
         }
 
+        if (serviceObj.IsFunctionStillRunning)
+        {
+            //TODO work out how to use function still running messages
+            _logger.LogInformation("Ignoring FunctionStillRunning message.");
+            return;
+        }
+
         _logger.LogInformation("Sending input and waiting for response...");
         _isPrimaryLlm = serviceObj.IsPrimaryLlm;
-        _isSystemLlm= serviceObj.IsSystemLlm;
+        _isSystemLlm = serviceObj.IsSystemLlm;
 
         try
         {
@@ -353,7 +360,7 @@ public class OpenAIRunner : ILLMRunner
 
             // Process the LLM output if it's the primary LLM
             if (_isPrimaryLlm || _isSystemLlm) _responseProcessor.ProcessLLMOutputError(responseServiceObj);
-                   
+
             _logger.LogWarning($"No pending function call found for Message ID: {serviceObj.MessageID}");
         }
 
@@ -410,7 +417,7 @@ public class OpenAIRunner : ILLMRunner
             responseServiceObj.IsFunctionCallResponse = false;
             responseServiceObj.LlmMessage = "<Assistant:> " + responseChoiceStr + "\n\n";
             if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOuputInChunks(responseServiceObj);
-            else 
+            else
             {
                 if (!_isSystemLlm) responseServiceObj.IsFunctionCallResponse = true;
                 responseServiceObj.LlmMessage = responseChoiceStr;

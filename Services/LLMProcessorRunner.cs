@@ -100,7 +100,7 @@ public class LLMProcessRunner : ILLMRunner
             contextFileName = mlParams.LlmContextFileName + permissionSuffix;
         }
         startInfo.FileName = $"{mlParams.LlmModelPath}llama.cpp/llama-cli";
-        startInfo.Arguments = $" -c {mlParams.LlmCtxSize} -n {mlParams.LlmPromptTokens} -m {mlParams.LlmModelPath + mlParams.LlmModelFileName}  --prompt-cache {mlParams.LlmModelPath + contextFileName} --prompt-cache-ro  -f {mlParams.LlmModelPath + promptName} {mlParams.LlmPromptMode} -r \"{mlParams.LlmReversePrompt}\" {extraReversePrompt}  --keep -1 --temp 0 -t {mlParams.LlmThreads} {promptPrefix}";
+        startInfo.Arguments = $" -c {mlParams.LlmCtxSize} -n {mlParams.LlmPromptTokens} -m {mlParams.LlmModelPath + mlParams.LlmModelFileName}  --prompt-cache {mlParams.LlmModelPath + contextFileName} --prompt-cache-ro  -f {mlParams.LlmModelPath + promptName} {mlParams.LlmPromptMode} -r \"{mlParams.LlmReversePrompt}\" {extraReversePrompt}  --keep -1 --temp {mlParams.LlmTemp} -t {mlParams.LlmThreads} {promptPrefix}";
         _logger.LogInformation($"Running command : {startInfo.FileName}{startInfo.Arguments}");
         startInfo.UseShellExecute = false;
         startInfo.RedirectStandardInput = true;
@@ -324,14 +324,23 @@ public class LLMProcessRunner : ILLMRunner
             // Check if all function calls for this MessageID have been processed
             if (serviceObj.IsFunctionCallResponse)
             {
-                _responseProcessor.MarkFunctionAsProcessed(serviceObj);
-
-                bool allResponsesReady = _responseProcessor.AreAllFunctionsProcessed(serviceObj.MessageID);
-                if (!allResponsesReady)
+                if (!serviceObj.IsFunctionStillRunning)
                 {
-                    _logger.LogInformation("Waiting for additional function calls to complete.");
-                    return;
+                    _responseProcessor.MarkFunctionAsProcessed(serviceObj);
+                    bool allResponsesReady = _responseProcessor.AreAllFunctionsProcessed(serviceObj.MessageID);
+                    if (!allResponsesReady)
+                    {
+                        _logger.LogInformation("Waiting for additional function calls to complete.");
+                        return;
+                    }
                 }
+                else {
+                    //TODO work out how to use function still running messages
+                       _logger.LogInformation("Ignoring FunctionStillRunning message.");
+                        return;
+                }
+
+
             }
 
             if (_tokenBroadcasters.TryGetValue(serviceObj.SessionId, out tokenBroadcaster))
@@ -451,18 +460,18 @@ public class LLMProcessRunner : ILLMRunner
                             // Add "<|eot_id|>" etc. if it's not the last item
                             if (index < processedFunctionCalls.Count - 1)
                             {
-                                 switch (_mlParams.LlmVersion)
+                                switch (_mlParams.LlmVersion)
                                 {
                                     case "func_2.5":
                                     case "func_3.1":
                                     case "func_3.2":
                                     case "llama_3.2":
-                                         userInput += "<|eot_id|>";
-                                    break;
+                                        userInput += "<|eot_id|>";
+                                        break;
 
                                     case "qwen_2.5":
-                                         userInput += "<|im_end|>";
-                                          break;
+                                        userInput += "<|im_end|>";
+                                        break;
 
                                     default:
                                         // Handle any other LlmVersion cases
