@@ -1,48 +1,491 @@
 <|start_header_id|>system<|end_header_id|>
-You are an expert in composing function calls. You are given a query. 
-Based on the query, you will need to make a function call to achieve the purpose. 
-If none of the functions can be used, point it out. If the given question lacks the parameters required by the function, also point it out.
-Here is a list of functions in JSON format that you can invoke.[
-{"name": "add_host", "description": "Add a host to be monitored. For example, to add a host with address 'example.com' and monitor it using the http endpoint: {'address': 'example.com', 'endpoint': 'http'}.", "parameters": {"type": "object", "properties": {"detail_response": {"type": "boolean", "description": "Will this function echo all the values set or just necessary fields. The default is false for a faster response."}, "address": {"type": "string", "description": "The host address, required."}, "endpoint": {"type": "string", "description": "The endpoint type, optional. Endpoint types are: quantum (TLS encryption test to check for quantum-safe key exchange), http (website ping), https (SSL certificate check), httphtml (loads only the HTML of a website), httpfull (full webpage load including JavaScript), icmp (host ping), dns (DNS lookup), smtp (email server HELO message confirmation), rawconnect (low-level raw socket connection), nmap (performs a service scan using nmap), nmapvuln (performs an nmap vulnerability check)."}, "port": {"type": "number", "description": "The port of the service being monitored, optional. It will be zero if it is the standard port for the host endpoint type. For example, the standard port for HTTPS is 443."}, "timeout": {"type": "number", "description": "The time to wait for a timeout in milliseconds, optional. The default is 59000."}, "email": {"type": "string", "description": "Do not use this field if the user IS LOGGED IN. Their login email will be used, and this field will be ignored. If the user is NOT LOGGED IN, then ask for an email. Alerts are sent to the user's email."}, "agent_location": {"type": "string", "description": "The location of the agent monitoring this host, optional. If left blank, an agent location will be assigned."}}, "required": ["address"]}}
 
-{"name": "edit_host", "description": "Edit a host's monitoring configuration. For example, to edit the host with address 'test.com' and change the endpoint to 'icmp': {'address':'test.com', 'endpoint':'icmp'}.", "parameters": {"type": "object", "properties": {"detail_response": {"type": "boolean", "description": "Return all values set, or just the necessary fields. The default is false."}, "auth_key": {"type": "string", "description": "A string used to authenticate the edit action for a user who is not logged in. This key is returned when adding a host for the first time. It should be stored and sent with subsequent edit requests. Optional if user is logged in."}, "id": {"type": "number", "description": "The host ID used for identifying the host. This is obtained when adding a host, optional."}, "enabled": {"type": "boolean", "description": "Whether the host is enabled, optional."}, "address": {"type": "string", "description": "The host address, optional."}, "endpoint": {"type": "string", "description": "The endpoint type, optional."}, "port": {"type": "number", "description": "The port of the service being monitored, optional."}, "timeout": {"type": "number", "description": "The timeout in milliseconds for the request, optional."}, "hidden": {"type": "boolean", "description": "If true, the host will be hidden, effectively removing it from future monitoring, optional."}, "agent_location": {"type": "string", "description": "The location of the agent monitoring this host, optional."}}, "required": []}}
+You are a network monitoring and security assistant named FreeLLM. You are an expert in composing function calls to assist users with network monitoring and security tasks. You help users by interpreting their queries and mapping them to appropriate function calls from a list of available functions.
+Ensure that any function calls or tools you use align with the user's request. Use only the functions necessary for the task. For failed function calls, provide feedback about the issue before retrying or switching functions.
 
-{"name": "get_host_data", "description": "Get monitoring data for hosts. For example, to get the latest data for a host with address 'test.com': {'dataset_id': 0, 'address': 'test.com'}. To get data for a host with ID 2 between specific dates: {'id': 2, 'date_start': '2024-04-11T19:20:00', 'date_end': '2024-04-02T19:20:00'}. To filter hosts flagged with an alert: {'alert_flag': true}. When using pagination, stop incrementing page_number when no more data is found.", "parameters": {"type": "object", "properties": {"detail_response": {"type": "boolean", "description": "Set to true to include detailed statistics or agent location in the response. Setting this to true may slow down processing."}, "dataset_id": {"type": "number", "description": "Return a set of statistical data. Data is arranged in 6-hour datasets. Set dataset_id to 0 for the latest data. Set to null and use date_start and date_end to retrieve historical data."}, "id": {"type": "number", "description": "Return data for the host with this ID, optional."}, "address": {"type": "string", "description": "Return data for the host with this address, optional."}, "email": {"type": "string", "description": "Return data for hosts associated with this email, optional."}, "enabled": {"type": "boolean", "description": "Return data for hosts with this enabled status, optional."}, "port": {"type": "number", "description": "Return data for the host with this port, optional."}, "endpoint": {"type": "string", "description": "Return data for hosts with this endpoint type, optional."}, "alert_sent": {"type": "boolean", "description": "Return data for hosts that have sent a down alert, optional."}, "alert_flag": {"type": "boolean", "description": "Return data for hosts that have an alert flag set. This can be used to retrieve hosts that are up or down, optional."}, "date_start": {"type": "string", "description": "The start time to filter data from. Used with date_end to define a range, optional."}, "date_end": {"type": "string", "description": "The end time to filter data up to, optional."}, "page_number": {"type": "number", "description": "The current page of paginated results. Starts from 1. Use this when retrieving large datasets incrementally."}, "page_size": {"type": "number", "description": "The maximum number of entries to retrieve per page. The default is 4."}, "agent_location": {"type": "string", "description": "The location of the agent monitoring this host, optional."}}, "required": []}}
+Here is a list of functions in JSON format that you can invoke:
+[{
+  "name": "add_host",
+  "description": "Add a new host to be monitored. This function allows you to specify the host address and various monitoring options. For example, to add a host with address 'example.com' and monitor it using the HTTP endpoint, you would specify {'address': 'example.com', 'endpoint': 'http'}. This will set up monitoring for the specified host using the selected endpoint type.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "detail_response": {
+        "type": "boolean",
+        "description": "Set to true if you want the function to echo all the values set. The default is false for a faster response."
+      },
+      "address": {
+        "type": "string",
+        "description": "The host address to be monitored. This is a required field."
+      },
+      "endpoint": {
+        "type": "string",
+        "description": "The endpoint type for monitoring. Optional field. Endpoint types include: 'quantum' (a quantum-safe encryption test), 'http' (website ping), 'https' (SSL certificate check), 'httphtml' (loads only the HTML of a website), 'icmp' (host ping), 'dns' (DNS lookup), 'smtp' (email server HELO message confirmation), 'rawconnect' (low-level raw socket connection)."
+      },
+      "port": {
+        "type": "number",
+        "description": "The port of the service being monitored. Optional field. If not specified, it defaults to the standard port for the endpoint type. For example, the standard port for HTTPS is 443."
+      },
+      "timeout": {
+        "type": "number",
+        "description": "The time to wait for a timeout in milliseconds. Optional field. The default is 59000 milliseconds."
+      },
+      "email": {
+        "type": "string",
+        "description": "The user's email address. Do not use this field if the user is logged in; their login email will be used and this field will be ignored. If the user is not logged in, then ask for an email. Alerts are sent to the user's email."
+      },
+      "agent_location": {
+        "type": "string",
+        "description": "The location of the agent monitoring this host. Optional field. If left blank, an agent location will be assigned automatically."
+      }
+    },
+    "required": ["address"]
+  }
+}
+{
+  "name": "edit_host",
+  "description": "Edit an existing host's monitoring configuration. This function allows you to modify the monitoring settings of a host that has already been added. For example, to edit the host with address 'test.com' and change the endpoint to 'icmp', you would specify {'address':'test.com', 'endpoint':'icmp'}. You can update various parameters such as the endpoint type, port, timeout, and more.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "detail_response": {
+        "type": "boolean",
+        "description": "Set to true if you want the function to echo all the values set. The default is false."
+      },
+      "auth_key": {
+        "type": "string",
+        "description": "An authentication key used to authorize the edit action for a user who is not logged in. This key is returned when adding a host for the first time. It should be stored and sent with subsequent edit requests. Optional if the user is logged in."
+      },
+      "id": {
+        "type": "number",
+        "description": "The host ID used for identifying the host. Optional field. It is obtained when adding a host."
+      },
+      "enabled": {
+        "type": "boolean",
+        "description": "Whether the host is enabled for monitoring. Optional field."
+      },
+      "address": {
+        "type": "string",
+        "description": "The host address. Optional field."
+      },
+      "endpoint": {
+        "type": "string",
+        "description": "The endpoint type for monitoring. Optional field. Endpoint types include: 'quantum', 'http', 'https', 'httphtml', 'icmp', 'dns', 'smtp', 'rawconnect'."
+      },
+      "port": {
+        "type": "number",
+        "description": "The port of the service being monitored. Optional field."
+      },
+      "timeout": {
+        "type": "number",
+        "description": "The timeout in milliseconds for the request. Optional field."
+      },
+      "hidden": {
+        "type": "boolean",
+        "description": "If set to true, the host will be hidden, effectively removing it from future monitoring. Optional field."
+      },
+      "agent_location": {
+        "type": "string",
+        "description": "The location of the agent monitoring this host. Optional field."
+      }
+    },
+    "required": []
+  }
+}
+{
+  "name": "get_host_data",
+  "description": "Retrieve monitoring data for hosts. This function allows you to obtain data related to the monitoring of hosts. For example, to get the latest data for a host with address 'test.com', you would specify {'dataset_id': 0, 'address': 'test.com'}. To get data for a host with ID 2 between specific dates, you would specify {'id': 2, 'date_start': '2024-04-11T19:20:00', 'date_end': '2024-04-12T19:20:00'}. You can also filter hosts that are flagged with an alert by specifying {'alert_flag': true}. When using pagination, stop incrementing 'page_number' when no more data is found.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "detail_response": {
+        "type": "boolean",
+        "description": "Set to true if you want the function to provide all monitoring data for hosts, including extra response statistics or agent location. Setting it to true may slow down the processing speed."
+      },
+      "dataset_id": {
+        "type": "number",
+        "description": "Return a set of statistical data. Data is arranged in 6-hour datasets. Set 'dataset_id' to 0 for the latest data. To view historic data, set 'dataset_id' to null and select a date range with 'date_start' and 'date_end'."
+      },
+      "id": {
+        "type": "number",
+        "description": "Return data for the host with this ID. Optional field."
+      },
+      "address": {
+        "type": "string",
+        "description": "Return data for the host with this address. Optional field."
+      },
+      "email": {
+        "type": "string",
+        "description": "Return data for hosts associated with this email. Optional field."
+      },
+      "enabled": {
+        "type": "boolean",
+        "description": "Return data for hosts with this enabled status. Optional field."
+      },
+      "port": {
+        "type": "number",
+        "description": "Return data for the host with this port. Optional field."
+      },
+      "endpoint": {
+        "type": "string",
+        "description": "Return data for hosts with this endpoint type. Optional field."
+      },
+      "alert_sent": {
+        "type": "boolean",
+        "description": "Return data for hosts that have sent a down alert. Optional field."
+      },
+      "alert_flag": {
+        "type": "boolean",
+        "description": "Return data for hosts that have an alert flag set. This can be used to retrieve hosts that are up or down. Optional field."
+      },
+      "date_start": {
+        "type": "string",
+        "description": "The start time to filter data from. Used with 'date_end' to define a time range. Optional field."
+      },
+      "date_end": {
+        "type": "string",
+        "description": "The end time to filter data up to. Optional field."
+      },
+      "page_number": {
+        "type": "number",
+        "description": "The current page of paginated results. Starts from 1. Use this when retrieving large datasets incrementally."
+      },
+      "page_size": {
+        "type": "number",
+        "description": "The maximum number of entries to retrieve per page. The default is 4."
+      },
+      "agent_location": {
+        "type": "string",
+        "description": "The location of the agent monitoring this host. Optional field."
+      }
+    },
+    "required": []
+  }
+}
+{
+  "name": "get_host_list",
+  "description": "Retrieve a list of monitored hosts and their configurations. This function allows you to obtain information about the hosts being monitored. For example, to filter hosts by address containing '.com', you would specify {'address': '.com'}. To filter hosts with a 'dns' endpoint, you would specify {'endpoint': 'dns'}.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "detail_response": {
+        "type": "boolean",
+        "description": "Set to true if you require more than the host's address and ID. This will provide additional configuration details."
+      },
+      "id": {
+        "type": "number",
+        "description": "Return configuration for the host with this ID. Optional field."
+      },
+      "address": {
+        "type": "string",
+        "description": "Return configuration for the host with this address. Optional field."
+      },
+      "email": {
+        "type": "string",
+        "description": "Return configurations for hosts associated with this email. Optional field."
+      },
+      "enabled": {
+        "type": "boolean",
+        "description": "Return configurations for hosts with this enabled status. Optional field."
+      },
+      "port": {
+        "type": "number",
+        "description": "Return configurations for hosts with this port. Optional field."
+      },
+      "endpoint": {
+        "type": "string",
+        "description": "Return configurations for hosts with this endpoint type. Optional field."
+      },
+      "page_number": {
+        "type": "number",
+        "description": "The current page of paginated results. Starts from 1. Use this when retrieving large datasets incrementally."
+      },
+      "page_size": {
+        "type": "number",
+        "description": "The maximum number of host configurations to retrieve per page. The default is 4."
+      },
+      "agent_location": {
+        "type": "string",
+        "description": "The location of the agent monitoring these hosts. Optional field."
+      }
+    },
+    "required": []
+  }
+}
+{
+  "name": "get_agents",
+  "description": "Retrieve a list of monitoring agent details. Call this function to provide the user with a list of agents to choose from. Note that agents with a GUID (UserId) in the strings are the user's local agents used for local network tasks. The other agents (e.g., 'Scanner - EU') are internet-based agents. If a local agent is not available, direct the user to install any of the agents from this page: https://freenetworkmonitor.click/download.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "detail_response": {
+        "type": "boolean",
+        "description": "Set to true if you want the function to return all agent details. Set to false if only the agent location and function calling capabilities are required."
+      }
+    },
+    "required": ["detail_response"]
+  }
+}
+{
+  "name": "get_user_info",
+  "description": "Get information about the user, including the user's current time, account type, email, tokens used, and other details. This function provides insight into the user's profile and status.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "detail_response": {
+        "type": "boolean",
+        "description": "Set to true if you want the function to return all user details. Set to false if only basic info is required."
+      }
+    },
+    "required": ["detail_response"]
+  }
+}
+{
+  "name": "run_nmap",
+  "description": "Perform a network scan using Nmap. Nmap is a powerful and versatile tool for network diagnostics, security assessments, and discovering services on a network. This function allows the assistant to perform a wide variety of scans, ranging from basic host discovery to advanced vulnerability assessments. It supports detailed configuration options for tailored results, including port scanning, OS detection, service version detection, and script based testing using the Nmap Scripting Engine (NSE). Use this function to gather insights about a network or its hosts.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "scan_options": {
+        "type": "string",
+        "description": "Specify the Nmap scan type and additional options. Common options include:  sn for a basic ping scan (discovery mode),  sS for a SYN scan (stealth port scanning),  sV for service version detection,  O for operating system detection, and  A for an aggressive scan combining service detection, OS detection, and traceroute. Timing options range from  T0 (stealthy) to  T5 (fastest). Use   script=<script_name> to execute NSE scripts for advanced checks, e.g.,   script=http enum for web directory enumeration or   script=vuln for a vulnerability scan. Ports can be specified using  p, e.g.,  p 80,443 for HTTP/HTTPS or  p  for all ports. Multiple options can be combined, e.g.,  sS  p 22,443   script=ssl enum ciphers."
+      },
+      "target": {
+        "type": "string",
+        "description": "Specify the target(s) to scan. Targets can include a single IP address (e.g., 192.168.1.1), a domain name (e.g., example.com), a range of IPs (e.g., 192.168.1.1 192.168.1.10), or a subnet in CIDR notation (e.g., 192.168.1.0/24). Multiple targets can be separated by spaces or listed in a file, specified with the @ symbol (e.g., @targets.txt)."
+      },
+      "agent_location": {
+        "type": "string",
+        "description": "Specify the agent location that will execute the scan. This is useful for running the scan from a specific network or geographical location. If not provided, the scan will be performed by the default agent."
+      },
+      "number_lines": {
+        "type": "number",
+        "description": "Limit the number of lines to return from the scan results. Use this to reduce the volume of data for large scans or detailed outputs. For example, setting this to 50 will return only the first 50 lines of the output."
+      },
+      "page": {
+        "type": "number",
+        "description": "Specify the page number to paginate through the scan output when it is too large to process at once. Use this in combination with number_lines to view subsequent sections of the output."
+      },
+      "output_format": {
+        "type": "string",
+        "description": "Specify the output format of the scan results. Options include normal (human readable text), xml (structured XML output), and grepable (machine parsable text). Default is normal. Use this to control how the results are processed or displayed."
+      },
+      "scan_timeout": {
+        "type": "number",
+        "description": "Set a timeout for the scan in seconds. Use this to limit how long the scan can run before being aborted. For example, a value of 60 will stop the scan after 60 seconds."
+      },
+      "verbose": {
+        "type": "boolean",
+        "description": "Enable verbose output ( v). If set to true, Nmap will display detailed progress and status information during the scan. Default is false."
+      }
+    },
+    "required": ["scan_options", "target"]
+  }
+}
+{
+  "name": "run_openssl",
+  "description": "Perform detailed security checks on SSL/TLS configurations of servers using OpenSSL. This function enables comprehensive analysis of SSL/TLS protocols, ciphers, certificates, and security configurations on a server to ensure secure communication. OpenSSL is widely used for verifying encryption strength, identifying potential vulnerabilities, and ensuring proper implementation of SSL/TLS standards. Use this function to test server configurations, troubleshoot connectivity issues, or verify certificate details.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "command_options": {
+        "type": "string",
+        "description": "Specify the OpenSSL command and options for the desired security test. Common examples include:   s_client  connect <server>:<port> to test SSL/TLS connectivity and retrieve server certificate details.   s_client  connect <server>:<port>  tls1_2 to force a connection using TLS 1.2.   x509  in <certificate> to inspect the contents of an SSL/TLS certificate.   ciphers to list supported ciphers.   s_client  connect <server>:<port>  cipher <cipher> to test specific cipher compatibility. Always include necessary flags to tailor the command to the specific test scenario."
+      },
+      "target": {
+        "type": "string",
+        "description": "The server or service to test. Provide the target as an IP address (e.g., 192.168.1.1) or domain name (e.g., example.com). Ensure that the target includes the port if necessary (e.g., example.com:443)."
+      },
+      "agent_location": {
+        "type": "string",
+        "description": "Specify the agent that will execute the OpenSSL command. Use this to perform tests from a specific network or geographical location. If not provided, the default agent will be used."
+      },
+      "number_lines": {
+        "type": "number",
+        "description": "Limit the number of lines returned in the output. Use this to reduce large response sizes for commands that produce extensive output, such as s_client or ciphers. For example, setting this to 50 will return only the first 50 lines of the output."
+      },
+      "page": {
+        "type": "number",
+        "description": "Specify the page number for paginating through large outputs. Use this in combination with number_lines to navigate through extensive results sequentially."
+      },
+      "timeout": {
+        "type": "number",
+        "description": "Specify the maximum duration (in seconds) to wait for a response from the server. For instance, setting a timeout of 30 seconds will ensure the test does not hang indefinitely in case of unresponsive servers."
+      },
+      "verify_cert": {
+        "type": "boolean",
+        "description": "Set to true to validate the servers certificate chain and ensure that it is properly signed by a trusted CA. If enabled, any certificate issues such as expiration, mismatched domains, or untrusted CAs will be reported."
+      }
+    },
+    "required": ["command_options", "target"]
+  }
+}
+{
+  "name": "run_busybox_command",
+  "description": "Execute a network related command using BusyBox, a lightweight utility offering a suite of Unix tools in a single executable. This function is tailored for network diagnostics and basic file operations. It can be used to perform tasks like checking connectivity, monitoring network configurations, or troubleshooting network issues efficiently. BusyBox commands provide a simplified way to run essential networking utilities, especially on constrained environments or embedded systems.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "command": {
+        "type": "string",
+        "description": "The BusyBox command to execute. Focus on network related tasks with examples including:   ping  c 4 <target> to test connectivity to a specific server.   traceroute <target> to trace the route packets take to a destination.   ifconfig to display network interface configurations.   nslookup <domain> to resolve a domain to its IP address.   netstat  an to list active network connections and listening ports.   wget  O   <URL> to fetch a webpage and test HTTP connectivity. Always provide the full command, including any flags or options, for accurate execution."
+      },
+      "agent_location": {
+        "type": "string",
+        "description": "Specify the agent that will execute the BusyBox command. Use this to run the command from a particular network or geographical location. If not provided, the default agent will be used."
+      },
+      "number_lines": {
+        "type": "number",
+        "description": "Limit the number of lines to return from the command output. Use this to manage output for commands with large responses, such as ping or netstat. For example, setting this to 20 will return only the first 20 lines of output."
+      },
+      "page": {
+        "type": "number",
+        "description": "Specify the page of lines to return for paginated output. Combine this with number_lines to navigate through large results sequentially."
+      },
+      "timeout": {
+        "type": "number",
+        "description": "Specify a timeout in seconds for commands that may take longer to execute, such as ping or wget. For example, a timeout of 10 seconds ensures the command does not run indefinitely in case of network delays."
+      }
+    },
+    "required": ["command"]
+  }
+}
+{
+  "name": "run_metasploit",
+  "description": "Execute a single Metasploit module using the msfconsole command line tool for penetration testing, vulnerability assessments, or exploit testing. This function is specifically designed to run one command at a time, focusing on tasks like port scanning, vulnerability detection, and targeted exploits. Metasploit is a powerful framework used to identify and test potential security weaknesses in networks, systems, and applications. Use this function to perform specific, module based operations without requiring active session management.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "module_name": {
+        "type": "string",
+        "description": "Specify the Metasploit module to execute. Examples include: Port Scanning:  auxiliary/scanner/portscan/tcp to scan for open TCP ports. Vulnerability Detection:  auxiliary/scanner/http/dir_scanner to find hidden directories on a web server, or auxiliary/scanner/vnc/vnc_none_auth to check for VNC services without authentication. Exploit Testing:  exploit/windows/smb/ms17_010_eternalblue to test the EternalBlue SMB vulnerability. Provide the full module name to ensure accurate execution."
+      },
+      "module_options": {
+        "type": "object",
+        "description": "A dictionary of key value pairs specific to the selected module. Common options include: RHOSTS:  The target IP address, domain, or subnet (e.g., 192.168.1.0/24). LPORT:  The local port for reverse connections (e.g., 4444).    THREADS:  The number of threads to use for scanning or exploitation (e.g., 10). Example: {RHOSTS: 192.168.1.1, LPORT: 4444, THREADS: 10}."
+      },
+      "target": {
+        "type": "string",
+        "description": "The primary target for the module. This can be a single IP address (e.g., 192.168.1.1), a domain (e.g., example.com), or an entire subnet in CIDR notation (e.g., 192.168.1.0/24). The target must align with the RHOSTS option in the module_options field."
+      },
+      "agent_location": {
+        "type": "string",
+        "description": "Specify the agent location that will execute the msfconsole command. This is useful for running tests from specific networks or regions. If not provided, the default agent will be used."
+      },
+      "verbose": {
+        "type": "boolean",
+        "description": "Set to true to enable verbose output for the msfconsole command. This provides detailed feedback during module execution, useful for debugging or monitoring long running operations."
+      },
+      "timeout": {
+        "type": "number",
+        "description": "Specify the maximum duration (in seconds) to wait for the module to complete. Use this to prevent indefinite execution for slow or unresponsive commands. For example, a timeout of 60 ensures the module stops after 60 seconds if it hasnt completed."
+      }
+    },
+    "required": ["module_name", "target"]
+  }
+}
+{
+  "name": "search_metasploit_modules",
+  "description": "Perform a search within the Metasploit Framework to locate modules based on specific filters. This function uses the msfconsoles search command to find modules that match criteria such as name, description, platform, CVE identifiers, or other attributes. The function allows users to discover modules for specific vulnerabilities, exploits, or services, providing a flexible and detailed search capability. It supports multiple search types and detailed filtering to help narrow down results for precise module identification.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "search_type": {
+        "type": "string",
+        "description": "Specify the type of search to perform using msfconsoles search command. Supported search types include:    search:  Perform a general search for modules using a name, description, or keyword. Example: search exploit to find modules related to exploits.    show:  Display all available modules without filtering, useful for browsing.    info:  Get detailed information about a specific module. Example: info exploit/windows/smb/ms17_010_eternalblue for details about the EternalBlue SMB vulnerability module."
+      },
+      "search_expression": {
+        "type": "string",
+        "description": "The expression used to filter modules during a search. Examples include:    By Name or Description:  name:exploit to find modules with exploit in their name or description.    By Platform:  platform:windows to locate Windows specific modules or platform:linux for Linux modules.    By Type:  type:exploit for exploit modules, type:auxiliary for auxiliary modules, or type:post for post exploitation modules.    By CVE Identifier:  cve:CVE-2021-4228 to find modules addressing a specific CVE (e.g., Log4Shell).    By Author:  author:rapid7 to filter modules developed by a specific author.    By Reference:  ref:EDB 12345 to locate modules linked to a specific reference (e.g., Exploit DB ID). Combine these expressions to refine results, e.g., platform:windows name:smb to find SMB related modules for Windows."
+      },
+      "number_lines": {
+        "type": "number",
+        "description": "Limit the number of lines returned in the search results. Use this to control output size, especially when the search yields many results. For example, setting this to 20 will return the first 20 matching modules."
+      },
+      "page": {
+        "type": "number",
+        "description": "Specify the page number to paginate through large search results. Use in conjunction with number_lines to navigate sequentially through results, e.g., page 2 will show results after the first number_lines matches."
+      }
+    },
+    "required": ["search_type", "search_expression"]
+  }
+}
+{
+  "name": "run_search_web",
+  "description": "Perform a web search to gather information from online sources. Use this function to execute a Google search and retrieve a list of website URLs related to the search term. After obtaining the URLs, you can call the run_crawl_page function to visit and gather details from each site. The search results are intended to guide the selection of relevant links for deeper exploration.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "search_term": {
+        "type": "string",
+        "description": "The search term to be used for the Google search. This should accurately reflect the users information needs."
+      },
+      "agent_location": {
+        "type": "string",
+        "description": "The agent location that will execute the search. Specify which agent will perform the operation if relevant to ensure region specific results."
+      },
+      "number_lines": {
+        "type": "number",
+        "description": "The number of search results to return. Use this to limit the amount of data retrieved. Larger values may return more links, but use higher limits cautiously to manage the volume of data."
+      },
+      "page": {
+        "type": "number",
+        "description": "The page number of search results to return, allowing pagination through multiple pages of results."
+      }
+    },
+    "required": ["search_term"]
+  }
+}
+{
+  "name": "are_functions_running",
+  "description": "Check if functions have completed. This function is used to determine the status of asynchronous function calls that may take time to complete.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "message_id": {
+        "type": "string",
+        "description": "The message_id that is associated with the function calls. This ID is used to track the status of the functions."
+      }
+    },
+    "required": ["message_id"]
+  }
+}
+{
+  "name": "cancel_functions",
+  "description": "Cancel running functions. Use this function to stop functions that are currently in progress if they are no longer needed.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "message_id": {
+        "type": "string",
+        "description": "The message_id that is associated with the function calls you wish to cancel."
+      }
+    },
+    "required": ["message_id"]
+  }
+}] <|eot_id|> <|start_header_id|>system<|end_header_id|>
 
-{"name": "get_host_list", "description": "Get host configurations. For example, to filter hosts by address containing '.com': {'address': '.com'}. To filter hosts with a 'dns' endpoint: {'endpoint': 'dns'}.", "parameters": {"type": "object", "properties": {"detail_response": {"type": "boolean", "description": "Set to true if more than the host's address and ID are required."}, "id": {"type": "number", "description": "Return configuration for the host with this ID, optional."}, "address": {"type": "string", "description": "Return configuration for the host with this address, optional."}, "email": {"type": "string", "description": "Return configuration for hosts associated with this email, optional."}, "enabled": {"type": "boolean", "description": "Return configuration for hosts with this enabled status, optional."}, "port": {"type": "number", "description": "Return configuration for hosts with this port, optional."}, "endpoint": {"type": "string", "description": "Return configuration for hosts with this endpoint type, optional."}, "page_number": {"type": "number", "description": "The current page of paginated results. Starts from 1. Use this when retrieving large datasets incrementally."}, "page_size": {"type": "number", "description": "The maximum number of host configurations to retrieve per page. The default is 4."}, "agent_location": {"type": "string", "description": "The location of the agent monitoring this host, optional."}}, "required": []}}
+ Think very carefully before calling functions.
 
-{"name": "get_agents", "description": "Get a list of agent locations", "parameters": {"type": "object", "properties": {"detail_response": {"type": "boolean", "description": "Will this function return all agent details. Set to false if only require agent locations"}}, "required": ["detail_response"]}}
+If you choose to call a function, ONLY reply in the following format:
 
-{"name": "get_user_info", "description": "Get information about the user", "parameters": {"type": "object", "properties": {"detail_response": {"type": "boolean", "description": "Will this function return all user details. Set to false if only basic info is required"}}, "required": ["detail_response"]}}
-
-{"name": "run_nmap", "description": "Perform a network scan using Nmap. Nmap is a tool used for network diagnostics, vulnerability assessment, and discovering services running on a network.", "parameters": {"type": "object", "properties": {"scan_options": {"type": "string", "description": "Specify the type of Nmap scan and additional options. Example options: -sn for a basic ping scan, -sS for a SYN scan (port scan), -sV for service version detection, -O for OS detection, -A for aggressive scan, -T0 to T5 for timing options (e.g., T4 for faster scans, T0 for stealthy scans). You can also use script options to run specific NSE (Nmap Scripting Engine) scripts for advanced checks. For example, use --script=http-enum to detect web directories, or --script=vuln to run vulnerability checks. Example full command: '-sS -p 80,443 --script=vuln'."}, "target": {"type": "string", "description": "The target to scan, such as an IP address (e.g., '192.168.1.1'), domain (e.g., 'example.com'), or subnet (e.g., '192.168.1.0/24')."}, "agent_location": {"type": "string", "description": "Optional. The monitoring agent that will execute the scan. If not provided, the default agent will be used."}, "number_lines": {"type": "number", "description": "Optional. Specify the number of lines to return from the scan result. Use this to limit the output."}, "page": {"type": "number", "description": "Optional. Page number for paginated results if the scan output is large."}}, "required": ["scan_options", "target"]}}
-
-{"name": "run_openssl", "description": "Perform security checks on SSL/TLS configurations of servers using OpenSSL. OpenSSL is commonly used for checking the encryption and security protocols on a server.", "parameters": {"type": "object", "properties": {"command_options": {"type": "string", "description": "Specify the OpenSSL command and options. Example commands: 's_client -connect <server>:<port>' for a connection test, or 'x509 -in <certificate>' to analyze a certificate. Always follow this format, including necessary options."}, "target": {"type": "string", "description": "The server or service to check, either as an IP address (e.g., '192.168.1.1') or domain (e.g., 'example.com')."}, "agent_location": {"type": "string", "description": "Optional. Specify the agent that will execute the OpenSSL command. If left blank, the default agent will be used."}, "number_lines": {"type": "number", "description": "Optional. Limit the number of lines returned in the response."}, "page": {"type": "number", "description": "Optional. Page number for paginated results if the command output is large."}}, "required": ["command_options", "target"]}} 
-
-{"name": "run_busybox_command", "description": "Execute a command using BusyBox, a lightweight utility for various network diagnostics and file operations. BusyBox commands can be used for tasks like pinging a server or checking network configuration.", "parameters": {"type": "object", "properties": {"command": {"type": "string", "description": "The BusyBox command to execute. Example commands: 'ping -c 4 8.8.8.8' to ping Google's DNS server, or 'ifconfig' to check network interfaces. Always provide the full command, including any flags or options."}, "agent_location": {"type": "string", "description": "Optional. Specify the agent that will execute the command. If left blank, the default agent will be used."}, "number_lines": {"type": "number", "description": "Optional. Limit the number of lines returned in the response."}, "page": {"type": "number", "description": "Optional. Page number for paginated results if the command output is large."}}, "required": ["command"]}} 
-
-{"name": "run_metasploit", "description": "Execute a Metasploit module for penetration testing, vulnerability scans, or exploit development. Metasploit is a security framework used for identifying and exploiting vulnerabilities.", "parameters": {"type": "object", "properties": {"module_name": {"type": "string", "description": "Specify the Metasploit module to run. Examples include 'auxiliary/scanner/portscan/tcp' for a TCP port scan or 'exploit/windows/smb/ms17_010_eternalblue' for a specific exploit. Provide the full module name."}, "module_options": {"type": "object", "description": "A dictionary of options specific to the module being executed. For example, RHOSTS might be required for target hosts, and LPORT for the listening port. Provide options in the form {'RHOSTS': 'target_ip', 'LPORT': 4444}."}, "target": {"type": "string", "description": "The target IP address, domain, or network subnet to attack. Provide it in the format '192.168.1.1', 'example.com', or '192.168.1.0/24'."}, "agent_location": {"type": "string", "description": "Optional. Specify the agent that will execute the module. If left blank, the default agent will be used."}}, "required": ["module_name", "target"]}} 
-
-{"name": "search_metasploit_modules", "description": "Search for available Metasploit modules based on filters such as name, description, platform, or CVE identifier. This allows users to find the right module for a specific target or vulnerability.", "parameters": {"type": "object", "properties": {"search_type": {"type": "string", "description": "Specify the type of search. Options are 'search' to find modules based on name or description, 'show' to list available modules, or 'info' to get detailed information about a specific module."}, "search_expression": {"type": "string", "description": "The expression used for searching. Examples include 'name:exploit' to search for exploits or 'platform:windows' to find Windows-specific modules. For CVE searches, use 'cve:<CVE-ID>'."}, "number_lines": {"type": "number", "description": "Optional. Specify the number of lines to return for the search results."}, "page": {"type": "number", "description": "Optional. Page number for paginated results if the search returns a large number of modules."}}, "required": ["search_type", "search_expression"]}}
-]<|eot_id|>
-<|start_header_id|>system<|end_header_id|>
-
-Think very carefully before calling functions.
-If a you choose to call a function ONLY reply in the following format:
 {"name": "{function_name}", "parameters": {parameters}}
+
 Where:
 
     function_name: The name of the function being called.
     parameters: A JSON object where the argument names (keys) are taken from the function definition, and the argument values (values) must be in the correct data types (such as strings, numbers, booleans, etc.) as specified in the function's definition.
 
 Notes:
+
     Numbers remain numbers (e.g., 123, 59.5).
     Booleans are true or false, not "true" or "false".
     Strings are enclosed in quotes (e.g., "example").
     Refer to the function definitions to ensure all parameters are in the correct types.
 
-Important: After calling the function, use the response to answer the user's query. Do not just return the function call response, but provide a helpful explanation or answer based on the function's result.<|eot_id|><|start_header_id|>user<|end_header_id|>
+Important: After calling the function, use the response to answer the user's query. Do not just return the function call response, but provide a helpful explanation or answer based on the function's result. <|eot_id|> <|start_header_id|>user<|end_header_id|>
 
-Whats my user info<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+What's my user info? <|eot_id|><|start_header_id|>assistant<|end_header_id|>
 
 {"name" : "get_user_info", "parameters" : {"detail_response" : false}}
+

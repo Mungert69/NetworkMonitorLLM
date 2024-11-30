@@ -28,7 +28,7 @@ Here is a list of functions in JSON format that you can invoke:
     },
     "required": ["search_term"]
   }
-}
+},
 {
   "name": "run_crawl_page",
   "description": "Extract information from a specific webpage by crawling its content. Use this function to read the text and hyperlinks on a given webpage. When URLs are returned from 'run_search_web', call this function on relevant URLs to gather detailed content. If necessary, you can follow additional links on the page to perform further research. For example, to crawl the page \"https://example.com/ai-advancements-2024\", you might use {\"url\": \"https://example.com/ai-advancements-2024\", \"number_lines\": 100, \"page\": 1}.",
@@ -54,7 +54,7 @@ Here is a list of functions in JSON format that you can invoke:
     },
     "required": ["url"]
   }
-}
+},
 {
   "name": "run_crawl_site",
   "description": "Request a site be crawled by a remote agent. The purpose is to generate traffic for the site.",
@@ -88,8 +88,21 @@ Here is a list of functions in JSON format that you can invoke:
     },
     "required": ["url"]
   }
+},
+{
+  "name": "are_functions_running",
+  "description": "Check if a function is still running. The total running time will be returned. Ask the user to wait before calling it again."
+  "parameters": {
+    "message_id": "The message_id that is associated with the function calls"
+  }
+},
+{
+  "name": "cancel_functions",
+  "description": "Cancel a running function. Only cancel a function if the user confirms its ok to do so."
+  "parameters": {
+    "message_id": "The message_id that is associated with the function calls"
+  }
 }
-
 ] <|eot_id|><|start_header_id|>system<|end_header_id|>
 
 Think very carefully before calling functions. If you choose to call a function, ONLY reply in the following format:
