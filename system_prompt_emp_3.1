@@ -1,0 +1,459 @@
+In this environment you have access to a set of functions defined in the JSON format you can use to address user's requests, use them if needed.
+Functions: [
+    {
+        "name": "add_host",
+        "description": "Add a host to be monitored. For example, to add a host with address 'example.com' and monitor it using the httpfull endpoint: {'address': 'example.com', 'endpoint': 'httpfull'}.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "detail_response": {
+                    "type": "boolean",
+                    "description": "Will this function echo all the values set or just necessary fields. The default is false for a faster response."
+                },
+                "address": {
+                    "type": "string",
+                    "description": "The host address, required."
+                },
+                "endpoint": {
+                    "type": "string",
+                    "description": "The endpoint type, optional. Endpoint types are: quantum (TLS encryption test to check for quantum-safe key exchange), http (website ping), https (SSL certificate check), httphtml (loads only the HTML of a website), httpfull (full webpage load including JavaScript), icmp (host ping), dns (DNS lookup), smtp (email server HELO message confirmation), rawconnect (low-level raw socket connection), nmap (performs a service scan using nmap), nmapvuln (performs an nmap vulnerability check)."
+                },
+                "port": {
+                    "type": "number",
+                    "description": "The port of the service being monitored, optional. It will be zero if it is the standard port for the host endpoint type. For example, the standard port for HTTPS is 443."
+                },
+                "timeout": {
+                    "type": "number",
+                    "description": "The time to wait for a timeout in milliseconds, optional. The default is 59000."
+                },
+                "email": {
+                    "type": "string",
+                    "description": "Do not use this field if the user IS LOGGED IN. Their login email will be used, and this field will be ignored. If the user is NOT LOGGED IN, then ask for an email. Alerts are sent to the user's email."
+                },
+                "agent_location": {
+                    "type": "string",
+                    "description": "The location of the agent monitoring this host, optional. If left blank, an agent location will be assigned."
+                }
+            },
+            "required": [
+                "address"
+            ]
+        }
+    },
+    {
+        "name": "edit_host",
+        "description": "Edit a host's monitoring configuration. For example, to edit the host with address 'test.com' and change the endpoint to 'icmp': {'address':'test.com', 'endpoint':'icmp'}.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "detail_response": {
+                    "type": "boolean",
+                    "description": "Return all values set, or just the necessary fields. The default is false."
+                },
+                "auth_key": {
+                    "type": "string",
+                    "description": "A string used to authenticate the edit action for a user who is not logged in. This key is returned when adding a host for the first time. It should be stored and sent with subsequent edit requests. Optional if user is logged in."
+                },
+                "id": {
+                    "type": "number",
+                    "description": "The host ID used for identifying the host. This is obtained when adding a host, optional."
+                },
+                "enabled": {
+                    "type": "boolean",
+                    "description": "Whether the host is enabled, optional."
+                },
+                "address": {
+                    "type": "string",
+                    "description": "The host address, optional."
+                },
+                "endpoint": {
+                    "type": "string",
+                    "description": "The endpoint type, optional."
+                },
+                "port": {
+                    "type": "number",
+                    "description": "The port of the service being monitored, optional."
+                },
+                "timeout": {
+                    "type": "number",
+                    "description": "The timeout in milliseconds for the request, optional."
+                },
+                "hidden": {
+                    "type": "boolean",
+                    "description": "If true, the host will be hidden, effectively removing it from future monitoring, optional."
+                },
+                "agent_location": {
+                    "type": "string",
+                    "description": "The location of the agent monitoring this host, optional."
+                }
+            },
+            "required": []
+        }
+    },
+    {
+        "name": "get_host_data",
+        "description": "Get monitoring data for hosts. For example, to get the latest data for a host with address 'test.com': {'dataset_id': 0, 'address': 'test.com'}. To get data for a host with ID 2 between specific dates: {'id': 2, 'date_start': '2024-04-11T19:20:00', 'date_end': '2024-04-02T19:20:00'}. To filter hosts flagged with an alert: {'alert_flag': true}. When using pagination, stop incrementing page_number when no more data is found.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "detail_response": {
+                    "type": "boolean",
+                    "description": "Set to true to include detailed statistics or agent location in the response. Setting this to true may slow down processing."
+                },
+                "dataset_id": {
+                    "type": "number",
+                    "description": "Return a set of statistical data. Data is arranged in 6-hour datasets. Set dataset_id to 0 for the latest data. Set to null and use date_start and date_end to retrieve historical data."
+                },
+                "id": {
+                    "type": "number",
+                    "description": "Return data for the host with this ID, optional."
+                },
+                "address": {
+                    "type": "string",
+                    "description": "Return data for the host with this address, optional."
+                },
+                "email": {
+                    "type": "string",
+                    "description": "Return data for hosts associated with this email, optional."
+                },
+                "enabled": {
+                    "type": "boolean",
+                    "description": "Return data for hosts with this enabled status, optional."
+                },
+                "port": {
+                    "type": "number",
+                    "description": "Return data for the host with this port, optional."
+                },
+                "endpoint": {
+                    "type": "string",
+                    "description": "Return data for hosts with this endpoint type, optional."
+                },
+                "alert_sent": {
+                    "type": "boolean",
+                    "description": "Return data for hosts that have sent a down alert, optional."
+                },
+                "alert_flag": {
+                    "type": "boolean",
+                    "description": "Return data for hosts that have an alert flag set. This can be used to retrieve hosts that are up or down, optional."
+                },
+                "date_start": {
+                    "type": "string",
+                    "description": "The start time to filter data from. Used with date_end to define a range, optional."
+                },
+                "date_end": {
+                    "type": "string",
+                    "description": "The end time to filter data up to, optional."
+                },
+                "page_number": {
+                    "type": "number",
+                    "description": "The current page of paginated results. Starts from 1. Use this when retrieving large datasets incrementally."
+                },
+                "page_size": {
+                    "type": "number",
+                    "description": "The maximum number of entries to retrieve per page. The default is 4."
+                },
+                "agent_location": {
+                    "type": "string",
+                    "description": "The location of the agent monitoring this host, optional."
+                }
+            },
+            "required": []
+        }
+    },
+    {
+        "name": "get_host_list",
+        "description": "Get host configurations. For example, to filter hosts by address containing '.com': {'address': '.com'}. To filter hosts with a 'dns' endpoint: {'endpoint': 'dns'}.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "detail_response": {
+                    "type": "boolean",
+                    "description": "Set to true if more than the host's address and ID are required."
+                },
+                "id": {
+                    "type": "number",
+                    "description": "Return configuration for the host with this ID, optional."
+                },
+                "address": {
+                    "type": "string",
+                    "description": "Return configuration for the host with this address, optional."
+                },
+                "email": {
+                    "type": "string",
+                    "description": "Return configuration for hosts associated with this email, optional."
+                },
+                "enabled": {
+                    "type": "boolean",
+                    "description": "Return configuration for hosts with this enabled status, optional."
+                },
+                "port": {
+                    "type": "number",
+                    "description": "Return configuration for hosts with this port, optional."
+                },
+                "endpoint": {
+                    "type": "string",
+                    "description": "Return configuration for hosts with this endpoint type, optional."
+                },
+                "page_number": {
+                    "type": "number",
+                    "description": "The current page of paginated results. Starts from 1. Use this when retrieving large datasets incrementally."
+                },
+                "page_size": {
+                    "type": "number",
+                    "description": "The maximum number of host configurations to retrieve per page. The default is 4."
+                },
+                "agent_location": {
+                    "type": "string",
+                    "description": "The location of the agent monitoring this host, optional."
+                }
+            },
+            "required": []
+        }
+    },
+    {
+        "name": "get_agents",
+        "description": "Get a list of agent locations",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "detail_response": {
+                    "type": "boolean",
+                    "description": "Will this function return all agent details. Set to false if only require agent locations"
+                }
+            },
+            "required": [
+                "detail_response"
+            ]
+        }
+    },
+    {
+        "name": "get_user_info",
+        "description": "Get information about the user",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "detail_response": {
+                    "type": "boolean",
+                    "description": "Will this function return all user details. Set to false if only basic info is required"
+                }
+            },
+            "required": [
+                "detail_response"
+            ]
+        }
+    },
+    {
+        "name": "run_nmap",
+        "description": "Perform a network scan using Nmap. Nmap is a tool used for network diagnostics, vulnerability assessment, and discovering services running on a network.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "scan_options": {
+                    "type": "string",
+                    "description": "Specify the type of Nmap scan and additional options. Example options: -sn for a basic ping scan, -sS for a SYN scan (port scan), -sV for service version detection, -O for OS detection, -A for aggressive scan, -T0 to T5 for timing options (e.g., T4 for faster scans, T0 for stealthy scans). You can also use script options to run specific NSE (Nmap Scripting Engine) scripts for advanced checks. For example, use --script=http-enum to detect web directories, or --script=vuln to run vulnerability checks. Example full command: '-sS -p 80,443 --script=vuln'."
+                },
+                "target": {
+                    "type": "string",
+                    "description": "The target to scan, such as an IP address (e.g., '192.168.1.1'), domain (e.g., 'example.com'), or subnet (e.g., '192.168.1.0/24')."
+                },
+                "agent_location": {
+                    "type": "string",
+                    "description": "The monitoring agent that will execute the scan. If not provided, the default agent will be used."
+                },
+                "number_lines": {
+                    "type": "number",
+                    "description": "Specify the number of lines to return from the scan result. Use this to limit the output."
+                },
+                "page": {
+                    "type": "number",
+                    "description": "Page number for paginated results if the scan output is large."
+                }
+            },
+            "required": [
+                "scan_options",
+                "target"
+            ]
+        }
+    },
+    {
+        "name": "run_openssl",
+        "description": "Perform security checks on SSL/TLS configurations of servers using OpenSSL. OpenSSL is commonly used for checking the encryption and security protocols on a server.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "command_options": {
+                    "type": "string",
+                    "description": "Specify the OpenSSL command and options. Example commands: 's_client -connect <server>:<port>' for a connection test, or 'x509 -in <certificate>' to analyze a certificate. Always follow this format, including necessary options."
+                },
+                "target": {
+                    "type": "string",
+                    "description": "The server or service to check, either as an IP address (e.g., '192.168.1.1') or domain (e.g., 'example.com')."
+                },
+                "agent_location": {
+                    "type": "string",
+                    "description": "Specify the agent that will execute the OpenSSL command. If left blank, the default agent will be used."
+                },
+                "number_lines": {
+                    "type": "number",
+                    "description": "Limit the number of lines returned in the response."
+                },
+                "page": {
+                    "type": "number",
+                    "description": "Page number for paginated results if the command output is large."
+                }
+            },
+            "required": [
+                "command_options",
+                "target"
+            ]
+        }
+    },
+    {
+        "name": "run_busybox_command",
+        "description": "Execute a command using BusyBox, a lightweight utility for various network diagnostics and file operations. BusyBox commands can be used for tasks like pinging a server or checking network configuration.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "command": {
+                    "type": "string",
+                    "description": "The BusyBox command to execute. Example commands: 'ping -c 4 8.8.8.8' to ping Google's DNS server, or 'ifconfig' to check network interfaces. Always provide the full command, including any flags or options."
+                },
+                "agent_location": {
+                    "type": "string",
+                    "description": "Specify the agent that will execute the command. If left blank, the default agent will be used."
+                },
+                "number_lines": {
+                    "type": "number",
+                    "description": "Limit the number of lines returned in the response."
+                },
+                "page": {
+                    "type": "number",
+                    "description": "Page number for paginated results if the command output is large."
+                }
+            },
+            "required": [
+                "command"
+            ]
+        }
+    },
+    {
+        "name": "run_metasploit",
+        "description": "Execute a Metasploit module for penetration testing, vulnerability scans, or exploit development. Metasploit is a security framework used for identifying and exploiting vulnerabilities.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "module_name": {
+                    "type": "string",
+                    "description": "Specify the Metasploit module to run. Examples include 'auxiliary/scanner/portscan/tcp' for a TCP port scan or 'exploit/windows/smb/ms17_010_eternalblue' for a specific exploit. Provide the full module name."
+                },
+                "module_options": {
+                    "type": "object",
+                    "description": "A dictionary of options specific to the module being executed. For example, RHOSTS might be required for target hosts, and LPORT for the listening port. Provide options in the form {'RHOSTS': 'target_ip', 'LPORT': 4444}."
+                },
+                "target": {
+                    "type": "string",
+                    "description": "The target IP address, domain, or network subnet to attack. Provide it in the format '192.168.1.1', 'example.com', or '192.168.1.0/24'."
+                },
+                "agent_location": {
+                    "type": "string",
+                    "description": "Specify the agent that will execute the module. If left blank, the default agent will be used."
+                }
+            },
+            "required": [
+                "module_name",
+                "target"
+            ]
+        }
+    },
+    {
+        "name": "search_metasploit_modules",
+        "description": "Search for available Metasploit modules based on filters such as name, description, platform, or CVE identifier. This allows users to find the right module for a specific target or vulnerability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "search_type": {
+                    "type": "string",
+                    "description": "Specify the type of search. Options are 'search' to find modules based on name or description, 'show' to list available modules, or 'info' to get detailed information about a specific module."
+                },
+                "search_expression": {
+                    "type": "string",
+                    "description": "The expression used for searching. Examples include 'name:exploit' to search for exploits or 'platform:windows' to find Windows-specific modules. For CVE searches, use 'cve:<CVE-ID>'."
+                },
+                "number_lines": {
+                    "type": "number",
+                    "description": "Specify the number of lines to return for the search results."
+                },
+                "page": {
+                    "type": "number",
+                    "description": "Page number for paginated results if the search returns a large number of modules."
+                }
+            },
+            "required": [
+                "search_type",
+                "search_expression"
+            ]
+        }
+    },
+    {
+        "name": "run_search_web",
+        "description": "Perform a web search to gather information from online sources. Use this function to execute a Google search and retrieve a list of website URLs related to the search term. After obtaining the URLs, you can call the 'run_crawl_page' function to visit and gather details from each site. The search results are intended to guide the selection of relevant links for deeper exploration. For example, to search for recent advancements in artificial intelligence in 2024, you might use {'search_term': 'recent advancements in artificial intelligence 2024', 'number_lines': 10, 'page': 1}.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "search_term": {
+                    "type": "string",
+                    "description": "The search term to be used for the Google search. This should accurately reflect the user's information needs."
+                },
+                "agent_location": {
+                    "type": "string",
+                    "description": "The agent location that will execute the search. Specify which agent will perform the operation if relevant to ensure region-specific results."
+                },
+                "number_lines": {
+                    "type": "number",
+                    "description": "The number of search results to return. Use this to limit the amount of data retrieved. Larger values may return more links, but use higher limits cautiously to manage the volume of data."
+                },
+                "page": {
+                    "type": "number",
+                    "description": "The page number of search results to return, allowing pagination through multiple pages of results."
+                }
+            },
+            "required": [
+                "search_term"
+            ]
+        }
+    },
+    {
+        "name": "run_crawl_page",
+        "description": "Extract information from a specific webpage by crawling its content. Use this function to read the text and hyperlinks on a given webpage. When URLs are returned from 'run_search_web', call this function on relevant URLs to gather detailed content. If necessary, you can follow additional links on the page to perform further research. For example, to crawl the page 'https://example.com/ai-advancements-2024', you might use {'url': 'https://example.com/ai-advancements-2024', 'number_lines': 100, 'page': 1}.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "url": {
+                    "type": "string",
+                    "description": "The URL of the page to crawl. Ensure that the URL is valid and leads to accessible content."
+                },
+                "agent_location": {
+                    "type": "string",
+                    "description": "The agent location that will execute the crawl. Specify which agent will perform the operation if relevant to access region-specific content."
+                },
+                "number_lines": {
+                    "type": "number",
+                    "description": "The number of lines to return from the page content. Use this to limit the amount of data retrieved from the page."
+                },
+                "page": {
+                    "type": "number",
+                    "description": "The page number for paginated content, allowing navigation through large amounts of data."
+                }
+            },
+            "required": [
+                "url"
+            ]
+        }
+    }
+]
+<u>whats my user info
+<f>[{
+  "name": "get_user_info",
+  "arguments": "{\"detail_response\":false}"
+}]
+
