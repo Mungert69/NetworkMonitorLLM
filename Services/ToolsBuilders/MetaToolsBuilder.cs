@@ -17,6 +17,7 @@ namespace NetworkMonitor.LLM.Services
         private readonly FunctionDefinition fn_search_metasploit_modules;
         private readonly FunctionDefinition fn_get_user_info;
         private readonly FunctionDefinition fn_run_busybox;
+        private readonly FunctionDefinition fn_get_metasploit_module_info;
 
         public MetaToolsBuilder()
         {
@@ -52,6 +53,12 @@ namespace NetworkMonitor.LLM.Services
                 .Validate()
                 .Build();
 
+            // Define the get_metasploit_module_info function
+            fn_get_metasploit_module_info = new FunctionDefinitionBuilder("get_metasploit_module_info", "Retrieve detailed information about a specific Metasploit module. Use this function to understand how to configure and use a module, including its options and supported targets.")
+                .AddParameter("module_name", PropertyDefinition.DefineString("The full name of the Metasploit module to retrieve information for. Examples include 'exploit/windows/smb/ms17_010_eternalblue'."))
+                .Validate()
+                .Build();
+         
 
             // Define the get_user_info function
             fn_get_user_info = new FunctionDefinitionBuilder("get_user_info", "Get information about the user")
@@ -69,13 +76,14 @@ namespace NetworkMonitor.LLM.Services
 
             // Define the tools list
             _tools = new List<ToolDefinition>()
-            {
-                new ToolDefinition() { Function = fn_get_user_info, Type = "function" },
-                new ToolDefinition() { Function = fn_run_metasploit, Type = "function" },
-                new ToolDefinition() { Function = fn_search_metasploit_modules, Type = "function" },
-                 new ToolDefinition() { Function = fn_run_busybox, Type = "function" }
+{
+    new ToolDefinition() { Function = fn_get_user_info, Type = "function" },
+    new ToolDefinition() { Function = fn_run_metasploit, Type = "function" },
+    new ToolDefinition() { Function = fn_search_metasploit_modules, Type = "function" },
+    new ToolDefinition() { Function = fn_get_metasploit_module_info, Type = "function" },
+    new ToolDefinition() { Function = fn_run_busybox, Type = "function" }
+};
 
-            };
         }
 
         private readonly List<ToolDefinition> _tools;

@@ -210,7 +210,7 @@ public class LLMService : ILLMService
                     await _rabbitRepo.PublishAsync<LLMServiceObj>("llmServiceMessage", llmServiceObj);
                 }
 
-                if (!session.Runner.IsStateReady)
+                if (!session.Runner.IsStateReady && llmServiceObj.IsFunctionCallResponse==false)
                 {
                     result.Message = " Please wait the assistant is processing the last message..." + llmServiceObj.UserInput;
                     result.Success = false;

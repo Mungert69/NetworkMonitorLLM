@@ -401,7 +401,7 @@ public class OpenAIRunner : ILLMRunner
         await _responseProcessor.ProcessFunctionCall(functionResponseServiceObj);
 
         responseServiceObj.LlmMessage = "<Function Call:> " + functionName + " " + json + "\n";
-        if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOuputInChunks(responseServiceObj);
+        if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
         // This is disabled until I find out how to set this without confusing chatgpt
         //assistantChatMessage.Content = $"Please wait I am calling the function {functionName}. Some functions take a long time to complete so please be patient...";
     }
