@@ -1,4 +1,5 @@
 using System;
+using System.Text;
 using NetworkMonitor.Objects.ServiceMessage;
 using System.Threading.Tasks;
 namespace NetworkMonitor.LLM.Services;
@@ -6,5 +7,6 @@ namespace NetworkMonitor.LLM.Services;
     {
         //event Func<object, string, Task> LineReceived;
         Task ReInit(string sessionId);
+        StringBuilder AssistantMessage { get ;  }
         Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput, int countEOT,bool sendOutput);
     }

@@ -224,7 +224,7 @@ public class OpenAIRunner : ILLMRunner
 
                             }
                         }
-                        assistantMessage.Append($" using message_id <|{serviceObj.MessageID}|> . Please wait it may take some time to complete.");
+                        assistantMessage.Append($" using message_id {serviceObj.MessageID} . Please wait it may take some time to complete.");
                         var placeholderAssistant = ChatMessage.FromAssistant(assistantMessage.ToString());
                         history.Add(placeholderAssistant);
 

@@ -18,6 +18,9 @@ namespace NetworkMonitor.LLM.Services
         protected CancellationTokenSource _cancellationTokenSource;
         protected bool _isPrimaryLlm;
         protected bool _isFuncCalled;
+        StringBuilder? _assistantMessage=null;
+
+        public StringBuilder AssistantMessage { get => _assistantMessage;  }
 
         protected TokenBroadcasterBase(ILLMResponseProcessor responseProcessor, ILogger logger)
         {
@@ -61,11 +64,14 @@ namespace NetworkMonitor.LLM.Services
             }
 
             var functionCalls = ParseInputForJson(line);
-
+            if (functionCalls!=null && functionCalls.Count>0) _assistantMessage = new StringBuilder($"I have called the following functions : ");
+                            
             foreach (var (jsonArguments, functionName) in functionCalls)
             {
                 if (!string.IsNullOrWhiteSpace(jsonArguments))
                 {
+                    _assistantMessage.Append($" Name {functionName} Arguments {jsonArguments} : ");
+                                
                     _logger.LogInformation($"ProcessLLMOutput(call_func) -> {jsonArguments}");
                     responseServiceObj.LlmMessage = "</functioncall>";
                     if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
@@ -80,8 +86,8 @@ namespace NetworkMonitor.LLM.Services
 
                 }
             }
-
-
+            if (functionCalls!=null && functionCalls.Count>0) _assistantMessage.Append($" using message_id {serviceObj.MessageID} . Please wait it may take some time to complete.");
+                       
             responseServiceObj.LlmMessage = "<end-of-line>";
             if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
         }

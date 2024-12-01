@@ -40,6 +40,7 @@ public class LLMProcessRunner : ILLMRunner
     public bool IsStateReady { get => _isStateReady; }
     public bool IsStateStarting { get => _isStateStarting; }
     public bool IsStateFailed { get => _isStateFailed; }
+    private ConcurrentDictionary<string, StringBuilder?> _assistantMessages = new ConcurrentDictionary<string, StringBuilder?>();
 
     public LLMProcessRunner(ILogger<LLMProcessRunner> logger, ILLMResponseProcessor responseProcessor, ISystemParamsHelper systemParamsHelper, LLMServiceObj startServiceObj, SemaphoreSlim processRunnerSemaphore)
     {
@@ -296,6 +297,7 @@ public class LLMProcessRunner : ILLMRunner
     public async Task SendInputAndGetResponse(LLMServiceObj serviceObj)
     {
         _isStateReady = false;
+        string tokenBroadcasterMessage="";
         await _processRunnerSemaphore.WaitAsync();
         CancellationTokenSource cts = new CancellationTokenSource(TimeSpan.FromSeconds(_mlParams.LlmUserPromptTimeout)); // Default timeout is 30 seconds, can be adjusted
 
@@ -330,14 +332,18 @@ public class LLMProcessRunner : ILLMRunner
                     bool allResponsesReady = _responseProcessor.AreAllFunctionsProcessed(serviceObj.MessageID);
                     if (!allResponsesReady)
                     {
+
                         _logger.LogInformation("Waiting for additional function calls to complete.");
                         return;
                     }
+                    else _assistantMessages.TryRemove(serviceObj.MessageID, out _);
+
                 }
-                else {
+                else
+                {
                     //TODO work out how to use function still running messages
-                       _logger.LogInformation("Ignoring FunctionStillRunning message.");
-                        return;
+                    _logger.LogInformation("Ignoring FunctionStillRunning message.");
+                    return;
                 }
 
 
@@ -415,7 +421,38 @@ public class LLMProcessRunner : ILLMRunner
                             // Optionally handle unexpected LlmVersion values
                             break;
                     }
-                    // else if (_mlParams.LlmVersion == "standard") userInput = userInput;
+                    tokenBroadcasterMessage=userInput;
+                    foreach (var assistantMessageEntry in _assistantMessages.ToList())
+                    {
+                        var assistantMessageBuilder = assistantMessageEntry.Value;
+                        if (assistantMessageBuilder != null)
+                        {
+                            string assistantMessage = assistantMessageBuilder.ToString();
+                            switch (_mlParams.LlmVersion)
+                            {
+                                case "func_2.4":
+                                    userInput = "<|from|> assistant\\\n<|recipient|> all\\\n<|content|>" + assistantMessage + "\\\n" + userInput;
+                                    break;
+
+                                case "func_2.5":
+                                case "func_3.1":
+                                case "func_3.2":
+                                case "llama_3.2":
+                                    userInput = "<|start_header_id|>assistant<|end_header_id|>\\\n\\\n" + assistantMessage + "<|eot_id|>" + userInput;
+                                    break;
+
+                                case "qwen_2.5":
+                                    userInput = "<|im_start|>assistant\\\n" + userInput + "<|im_end|>" + userInput;
+                                    break;
+
+                                default:
+                                    // Optionally handle unexpected LlmVersion values
+                                    break;
+                            }
+                        }
+
+                    }
+                    _assistantMessages.Clear();
 
                 }
                 else
@@ -485,20 +522,23 @@ public class LLMProcessRunner : ILLMRunner
 
                     // Combine the constructed inputs for all responses
                     userInput = string.Join("", constructedInputs);
+                    tokenBroadcasterMessage=userInput;
                     _responseProcessor.ClearFunctionCallTracker(serviceObj.MessageID);
 
                 }
             }
 
+
             await process.StandardInput.WriteLineAsync(userInput);
             await process.StandardInput.FlushAsync();
             _logger.LogInformation($" ProcessLLMOutput(user input) -> {userInput}");
             // Wait for a response or a timeout
-            Task broadcastTask = tokenBroadcaster.BroadcastAsync(process, serviceObj, userInput, countEOT, _sendOutput);
+            Task broadcastTask = tokenBroadcaster.BroadcastAsync(process, serviceObj, tokenBroadcasterMessage, countEOT, _sendOutput);
             if (await Task.WhenAny(broadcastTask, Task.Delay(Timeout.Infinite, cts.Token)) == broadcastTask)
             {
                 // Task completed within timeout
                 await broadcastTask;
+                if (tokenBroadcaster.AssistantMessage != null) _assistantMessages.TryAdd(serviceObj.MessageID, tokenBroadcaster.AssistantMessage);
             }
             else
             {
