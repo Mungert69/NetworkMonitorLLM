@@ -38,19 +38,19 @@ namespace NetworkMonitor.LLM.Services
                 .Validate()
                 .Build();
 
-           // Define the search_metasploit_modules function
-fn_search_metasploit_modules = new FunctionDefinitionBuilder("search_metasploit_modules", "Search for Metasploit modules using msfconsole's search command. Provide any combination of search filters to narrow down the results. This function constructs the msfconsole search command based on the provided parameters.")
-    .AddParameter("module_type", PropertyDefinition.DefineString("Module type to search for. Options include 'exploit', 'auxiliary', 'post', 'payload', 'encoder', 'nop'. Corresponds to the 'type' search filter."))
-    .AddParameter("platform", PropertyDefinition.DefineString("Platform to search for. Examples include 'windows', 'linux', 'multi', etc. Corresponds to the 'platform' search filter."))
-    .AddParameter("architecture", PropertyDefinition.DefineString("Architecture to search for. Examples include 'x86', 'x64'. Corresponds to the 'arch' search filter."))
-    .AddParameter("cve", PropertyDefinition.DefineString("CVE identifier to search for. Format: 'CVE-YYYY-NNNN'. Corresponds to the 'cve' search filter."))
-    .AddParameter("edb", PropertyDefinition.DefineString("Exploit-DB ID to search for. Corresponds to the 'edb' search filter."))
-    .AddParameter("rank", PropertyDefinition.DefineString("Minimum rank of modules to include. Options include 'excellent', 'great', 'good', 'normal', 'average', 'low', 'manual'. Corresponds to the 'rank' search filter."))
-    .AddParameter("keywords", PropertyDefinition.DefineString("Additional keywords to search for in module names and descriptions."))
-    .AddParameter("number_lines", PropertyDefinition.DefineInteger("Limit the number of lines returned in the search results. Use this to control output size, especially when the search yields many results. For example, setting this to 20 will return the first 20 matching modules."))
-    .AddParameter("page", PropertyDefinition.DefineInteger("Specify the page number to paginate through large search results. Use in conjunction with number_lines to navigate sequentially through results, e.g., page 2 will show results after the first number_lines matches."))
-    .Validate()
-    .Build();
+            // Define the search_metasploit_modules function
+            fn_search_metasploit_modules = new FunctionDefinitionBuilder("search_metasploit_modules", "Search for Metasploit modules using msfconsole's search command. Provide any combination of search filters to narrow down the results. This function constructs the msfconsole search command based on the provided parameters.")
+                .AddParameter("module_type", PropertyDefinition.DefineString("Module type to search for. Options include 'exploit', 'auxiliary', 'post', 'payload', 'encoder', 'nop'. Corresponds to the 'type' search filter."))
+                .AddParameter("platform", PropertyDefinition.DefineString("Platform to search for. Examples include 'windows', 'linux', 'multi', etc. Corresponds to the 'platform' search filter."))
+                .AddParameter("architecture", PropertyDefinition.DefineString("Architecture to search for. Examples include 'x86', 'x64'. Corresponds to the 'arch' search filter."))
+                .AddParameter("cve", PropertyDefinition.DefineString("CVE identifier to search for. Format: 'CVE-YYYY-NNNN'. Corresponds to the 'cve' search filter."))
+                .AddParameter("edb", PropertyDefinition.DefineString("Exploit-DB ID to search for. Corresponds to the 'edb' search filter."))
+                .AddParameter("rank", PropertyDefinition.DefineString("Minimum rank of modules to include. Options include 'excellent', 'great', 'good', 'normal', 'average', 'low', 'manual'. Corresponds to the 'rank' search filter."))
+                .AddParameter("keywords", PropertyDefinition.DefineString("Additional keywords to search for in module names and descriptions."))
+                .AddParameter("number_lines", PropertyDefinition.DefineInteger("Limit the number of lines returned in the search results. Use this to control output size, especially when the search yields many results. For example, setting this to 20 will return the first 20 matching modules."))
+                .AddParameter("page", PropertyDefinition.DefineInteger("Specify the page number to paginate through large search results. Use in conjunction with number_lines to navigate sequentially through results, e.g., page 2 will show results after the first number_lines matches."))
+                .Validate()
+                .Build();
 
 
             // Define the get_user_info function
