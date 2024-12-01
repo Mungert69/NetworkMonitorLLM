@@ -33,7 +33,7 @@ public class LLMService : ILLMService
     private IServiceProvider _serviceProvider;
     private IRabbitRepo _rabbitRepo;
     private SemaphoreSlim _processRunnerSemaphore = new SemaphoreSlim(1);
-    private SemaphoreSlim _openAIRunnerSemaphore = new SemaphoreSlim(10);
+    private SemaphoreSlim _openAIRunnerSemaphore = new SemaphoreSlim(1);
     private MLParams _mlParams;
     private string _serviceID;
     private readonly ConcurrentDictionary<string, Session> _sessions = new ConcurrentDictionary<string, Session>();
