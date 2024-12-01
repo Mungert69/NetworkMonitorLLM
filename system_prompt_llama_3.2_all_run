@@ -248,7 +248,7 @@ Here is a list of functions in JSON format that you can invoke:
     "properties": {
       "scan_options": {
         "type": "string",
-        "description": "Specify the Nmap scan type and additional options. Common options include:  sn for a basic ping scan (discovery mode),  sS for a SYN scan (stealth port scanning),  sV for service version detection,  O for operating system detection, and  A for an aggressive scan combining service detection, OS detection, and traceroute. Timing options range from  T0 (stealthy) to  T5 (fastest). Use   script=<script_name> to execute NSE scripts for advanced checks, e.g.,   script=http enum for web directory enumeration or   script=vuln for a vulnerability scan. Ports can be specified using  p, e.g.,  p 80,443 for HTTP/HTTPS or  p  for all ports. Multiple options can be combined, e.g.,  sS  p 22,443   script=ssl enum ciphers."
+        "description": "Specify the Nmap scan type and additional options. Common options include: Basic Scans: -sn for ping scan. Port Scanning: -sS for TCP SYN scan, -p <ports> to specify ports. Service/Version Detection: -sV. OS Detection: -O. Aggressive Scans: -A for a comprehensive scan. Stealth and Timing Options: -T<0-5>, -Pn for stealth scans. Additional Options: --script <script_name>, --traceroute, -v, etc. Target (target): Always include the target in the target parameter. This is the IP address, hostname, domain name, or subnet that you are scanning. Example targets include: A single IP address: 192.168.1.1 An IP range: 192.168.1.1-254 A domain name: example.com A subnet: 192.168.1.0/24 3. Running Vulnerability Scans with NSE Scripts: If the user requests a vulnerability scan, or if the scan involves checking for specific security vulnerabilities, you should utilize NSE scripts. Common options include: -sC to run the default set of NSE scripts. --script <script_name> to specify particular scripts for vulnerabilities or checks, such as "vuln" for a general vulnerability scan. Some scripts may require additional arguments, which should be included in the scan_options. Example: --script=vuln. --script=http-enum for web directory enumeration . Ports can be specified using -p, e.g. -p 80,443 for HTTP/HTTPS or -p- for all ports. Multiple options can be combined, e.g. -sS -p 22,443 --script=ssl-enum-ciphers."
       },
       "target": {
         "type": "string",
@@ -266,18 +266,6 @@ Here is a list of functions in JSON format that you can invoke:
         "type": "number",
         "description": "Specify the page number to paginate through the scan output when it is too large to process at once. Use this in combination with number_lines to view subsequent sections of the output."
       },
-      "output_format": {
-        "type": "string",
-        "description": "Specify the output format of the scan results. Options include normal (human readable text), xml (structured XML output), and grepable (machine parsable text). Default is normal. Use this to control how the results are processed or displayed."
-      },
-      "scan_timeout": {
-        "type": "number",
-        "description": "Set a timeout for the scan in seconds. Use this to limit how long the scan can run before being aborted. For example, a value of 60 will stop the scan after 60 seconds."
-      },
-      "verbose": {
-        "type": "boolean",
-        "description": "Enable verbose output ( v). If set to true, Nmap will display detailed progress and status information during the scan. Default is false."
-      }
     },
     "required": ["scan_options", "target"]
   }
@@ -290,7 +278,7 @@ Here is a list of functions in JSON format that you can invoke:
     "properties": {
       "command_options": {
         "type": "string",
-        "description": "Specify the OpenSSL command and options for the desired security test. Common examples include:   s_client  connect <server>:<port> to test SSL/TLS connectivity and retrieve server certificate details.   s_client  connect <server>:<port>  tls1_2 to force a connection using TLS 1.2.   x509  in <certificate> to inspect the contents of an SSL/TLS certificate.   ciphers to list supported ciphers.   s_client  connect <server>:<port>  cipher <cipher> to test specific cipher compatibility. Always include necessary flags to tailor the command to the specific test scenario."
+        "description": "Specify the OpenSSL command and options for the desired security test. Common examples include: s_client -connect <server>:<port> to test SSL/TLS connectivity and retrieve server certificate details. s_client -connect <server>:<port> -tls1_2 to force a connection using TLS 1.2. x509 -in <certificate> to inspect the contents of an SSL/TLS certificate. ciphers to list supported ciphers. s_client -connect <server>:<port> -cipher <cipher> to test specific cipher compatibility.Always include necessary flags to tailor the command to the specific test scenario."
       },
       "target": {
         "type": "string",
@@ -298,23 +286,23 @@ Here is a list of functions in JSON format that you can invoke:
       },
       "agent_location": {
         "type": "string",
-        "description": "Specify the agent that will execute the OpenSSL command. Use this to perform tests from a specific network or geographical location. If not provided, the default agent will be used."
+        "description": "Optional. Specify the agent that will execute the OpenSSL command. Use this to perform tests from a specific network or geographical location. If not provided, the default agent will be used."
       },
       "number_lines": {
         "type": "number",
-        "description": "Limit the number of lines returned in the output. Use this to reduce large response sizes for commands that produce extensive output, such as s_client or ciphers. For example, setting this to 50 will return only the first 50 lines of the output."
+        "description": "Optional. Limit the number of lines returned in the output. Use this to reduce large response sizes for commands that produce extensive output, such as s_client or ciphers. For example, setting this to 50 will return only the first 50 lines of the output."
       },
       "page": {
         "type": "number",
-        "description": "Specify the page number for paginating through large outputs. Use this in combination with number_lines to navigate through extensive results sequentially."
+        "description": "Optional. Specify the page number for paginating through large outputs. Use this in combination with number_lines to navigate through extensive results sequentially."
       },
       "timeout": {
         "type": "number",
-        "description": "Specify the maximum duration (in seconds) to wait for a response from the server. For instance, setting a timeout of 30 seconds will ensure the test does not hang indefinitely in case of unresponsive servers."
+        "description": "Optional. Specify the maximum duration (in seconds) to wait for a response from the server. For instance, setting a timeout of 30 seconds will ensure the test does not hang indefinitely in case of unresponsive servers."
       },
       "verify_cert": {
         "type": "boolean",
-        "description": "Set to true to validate the servers certificate chain and ensure that it is properly signed by a trusted CA. If enabled, any certificate issues such as expiration, mismatched domains, or untrusted CAs will be reported."
+        "description": "Optional. Set to true to validate the servers certificate chain and ensure that it is properly signed by a trusted CA. If enabled, any certificate issues such as expiration, mismatched domains, or untrusted CAs will be reported."
       }
     },
     "required": ["command_options", "target"]
@@ -386,17 +374,37 @@ Here is a list of functions in JSON format that you can invoke:
 }
 {
   "name": "search_metasploit_modules",
-  "description": "Perform a search within the Metasploit Framework to locate modules based on specific filters. This function uses the msfconsoles search command to find modules that match criteria such as name, description, platform, CVE identifiers, or other attributes. The function allows users to discover modules for specific vulnerabilities, exploits, or services, providing a flexible and detailed search capability. It supports multiple search types and detailed filtering to help narrow down results for precise module identification.",
+  "description": "Search for Metasploit modules using msfconsole's search command. Provide any combination of search filters to narrow down the results. This function constructs the msfconsole search command based on the provided parameters.",
   "parameters": {
     "type": "object",
     "properties": {
-      "search_type": {
+      "module_type": {
         "type": "string",
-        "description": "Specify the type of search to perform using msfconsoles search command. Supported search types include:    search:  Perform a general search for modules using a name, description, or keyword. Example: search exploit to find modules related to exploits.    show:  Display all available modules without filtering, useful for browsing.    info:  Get detailed information about a specific module. Example: info exploit/windows/smb/ms17_010_eternalblue for details about the EternalBlue SMB vulnerability module."
+        "description": "Module type to search for. Options include 'exploit', 'auxiliary', 'post', 'payload', 'encoder', 'nop'. Corresponds to the 'type' search filter."
       },
-      "search_expression": {
+      "platform": {
         "type": "string",
-        "description": "The expression used to filter modules during a search. Examples include:    By Name or Description:  name:exploit to find modules with exploit in their name or description.    By Platform:  platform:windows to locate Windows specific modules or platform:linux for Linux modules.    By Type:  type:exploit for exploit modules, type:auxiliary for auxiliary modules, or type:post for post exploitation modules.    By CVE Identifier:  cve:CVE-2021-4228 to find modules addressing a specific CVE (e.g., Log4Shell).    By Author:  author:rapid7 to filter modules developed by a specific author.    By Reference:  ref:EDB 12345 to locate modules linked to a specific reference (e.g., Exploit DB ID). Combine these expressions to refine results, e.g., platform:windows name:smb to find SMB related modules for Windows."
+        "description": "Platform to search for. Examples include 'windows', 'linux', 'multi', etc. Corresponds to the 'platform' search filter."
+      },
+      "architecture": {
+        "type": "string",
+        "description": "Architecture to search for. Examples include 'x86', 'x64'. Corresponds to the 'arch' search filter."
+      },
+      "cve": {
+        "type": "string",
+        "description": "CVE identifier to search for. Format: 'CVE-YYYY-NNNN'. Corresponds to the 'cve' search filter."
+      },
+      "edb": {
+        "type": "string",
+        "description": "Exploit-DB ID to search for. Corresponds to the 'edb' search filter."
+      },
+      "rank": {
+        "type": "string",
+        "description": "Minimum rank of modules to include. Options include 'excellent', 'great', 'good', 'normal', 'average', 'low', 'manual'. Corresponds to the 'rank' search filter."
+      },
+      "keywords": {
+        "type": "string",
+        "description": "Additional keywords to search for in module names and descriptions."
       },
       "number_lines": {
         "type": "number",
@@ -407,7 +415,7 @@ Here is a list of functions in JSON format that you can invoke:
         "description": "Specify the page number to paginate through large search results. Use in conjunction with number_lines to navigate sequentially through results, e.g., page 2 will show results after the first number_lines matches."
       }
     },
-    "required": ["search_type", "search_expression"]
+    "required": []
   }
 }
 {
