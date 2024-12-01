@@ -419,6 +419,28 @@ Here is a list of functions in JSON format that you can invoke:
   }
 }
 {
+  "name": "get_metasploit_module_info",
+  "description": "Retrieve detailed information about a specific Metasploit module using msfconsole's info command. Provide the full module name to get comprehensive details, including its description, options, targets, references, and more.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "module_name": {
+        "type": "string",
+        "description": "The full name of the Metasploit module to retrieve information for. Examples include 'exploit/windows/smb/ms17_010_eternalblue'."
+      },
+      "number_lines": {
+        "type": "number",
+        "description": "Limit the number of lines returned in the info output. Use this to control output size, especially when the module has extensive information. For example, setting this to 50 will return the first 50 lines of the module's information."
+      },
+      "page": {
+        "type": "number",
+        "description": "Specify the page number to paginate through large info outputs. Use in conjunction with number_lines to navigate sequentially through the module's information. For example, page 2 will show lines after the first number_lines matches."
+      }
+    },
+    "required": ["module_name"]
+  }
+}
+{
   "name": "run_search_web",
   "description": "Perform a web search to gather information from online sources. Use this function to execute a Google search and retrieve a list of website URLs related to the search term. After obtaining the URLs, you can call the run_crawl_page function to visit and gather details from each site. The search results are intended to guide the selection of relevant links for deeper exploration.",
   "parameters": {
