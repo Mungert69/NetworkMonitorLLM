@@ -23,6 +23,8 @@ public interface IRabbitListener
 
     Task<ResultObj> StartSession(LLMServiceObj? llmServiceObj);
     Task<ResultObj> UserInput(LLMServiceObj? llmServiceObj);
+ Task Shutdown();
+        Task<ResultObj> Setup();
 
 
 }

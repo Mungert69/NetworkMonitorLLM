@@ -73,10 +73,14 @@ namespace NetworkMonitor.LLM
             services.AddSingleton(_cancellationTokenSource);
             services.Configure<HostOptions>(s => s.ShutdownTimeout = TimeSpan.FromMinutes(5));
             services.AddAsyncServiceInitialization()
-
-                 .AddInitAction<IRabbitListener>((rabbitListener) =>
+                .AddInitAction<IRabbitRepo>(async (rabbitRepo) =>
                     {
-                        return Task.CompletedTask;
+                        await rabbitRepo.ConnectAndSetUp();
+                    })
+                .AddInitAction<IRabbitListener>(async (rabbitListener) =>
+                    {
+                        await rabbitListener.Setup();
+
                     });
         }
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
