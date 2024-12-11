@@ -14,8 +14,10 @@ namespace NetworkMonitor.LLM.Services;
 public class TokenBroadcasterLlama_3_2 : TokenBroadcasterBase
 {
 
-    public TokenBroadcasterLlama_3_2(ILLMResponseProcessor responseProcessor, ILogger logger)
-         : base(responseProcessor, logger) { }
+    public TokenBroadcasterLlama_3_2(ILLMResponseProcessor responseProcessor, ILogger logger, bool xmlFunctionParsing=false)
+         : base(responseProcessor, logger) {
+            _xmlFunctionParsing=xmlFunctionParsing;
+          }
     public override async Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput, int countEOT, bool sendOutput = true)
     {
         _logger.LogWarning(" Start BroadcastAsyc() ");
@@ -61,6 +63,9 @@ public class TokenBroadcasterLlama_3_2 : TokenBroadcasterBase
             }
             if (stopCount == stopAfter)
             {
+                  llmOutStr = llmOutStr.Replace("<|start_header_id|>assistant<|end_header_id|>", "")
+                                                         .Replace("<|eot_id|>", ""); // Additional replacement
+
                 await ProcessLine(llmOutStr, serviceObj);
                 _logger.LogInformation($" Cancel due to {stopCount} <|eot_id|> detected ");
                 _cancellationTokenSource.Cancel(); // Cancel after second <|eot_id|>}

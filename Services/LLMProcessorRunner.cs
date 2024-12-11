@@ -282,7 +282,8 @@ public class LLMProcessRunner : ILLMRunner
         while (!cancellationTokenSource.IsCancellationRequested)
         {
             line = await process.StandardOutput.ReadLineAsync();
-            if (line.StartsWith("<|eot_id|>") || line.StartsWith("<|im_end|>") || line.Contains("<|LLM_STARTED|>"))
+            
+            
             {
                 isReady = true;
                 break;
@@ -374,7 +375,7 @@ public class LLMProcessRunner : ILLMRunner
                         break;
 
                     case "llama_3.2":
-                        tokenBroadcaster = new TokenBroadcasterLlama_3_2(_responseProcessor, _logger);
+                        tokenBroadcaster = new TokenBroadcasterLlama_3_2(_responseProcessor, _logger, _mlParams.XmlFunctionParsing);
                         break;
 
                     case "qwen_2.5":
