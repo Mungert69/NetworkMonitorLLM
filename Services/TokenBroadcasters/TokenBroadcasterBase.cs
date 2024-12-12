@@ -151,7 +151,7 @@ private string CleanCdata(string parameters)
 {
     parameters=parameters.Trim();
     // Check if the parameters contain a CDATA section
-    if (parameters.Contains("<![CDATA["))
+   /* if (parameters.Contains("<![CDATA["))
     {
         // If there's an opening <![CDATA[ but no closing ]]> tag, add it
         if (!parameters.Contains("]]>"))
@@ -163,7 +163,7 @@ private string CleanCdata(string parameters)
      if (!parameters.StartsWith("<![CDATA["))
     { 
             parameters = "<![CDATA["+parameters + "]]>";      
-    }
+    }*/
 
     return parameters;
 }
