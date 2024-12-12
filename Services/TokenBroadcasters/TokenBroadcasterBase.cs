@@ -149,6 +149,7 @@ namespace NetworkMonitor.LLM.Services
 // Clean the CDATA content by ensuring proper CDATA formatting
 private string CleanCdata(string parameters)
 {
+    parameters=parameters.Trim();
     // Check if the parameters contain a CDATA section
     if (parameters.Contains("<![CDATA["))
     {
@@ -158,9 +159,12 @@ private string CleanCdata(string parameters)
             parameters = parameters + "]]>";  // Add the closing CDATA tag
         }
     }
-
-    // Optionally, remove any extra whitespace or newline characters after CDATA content
-    parameters = parameters.Replace("\n", " ").Replace("\r", "");
+    // Add CDATA if its missing
+     if (!parameters.StartWith("<![CDATA["))
+    { 
+            parameters = "<![CDATA["+parameters + "]]>"; 
+        
+    }
 
     return parameters;
 }
