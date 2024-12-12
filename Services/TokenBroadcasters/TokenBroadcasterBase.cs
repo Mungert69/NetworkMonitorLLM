@@ -129,12 +129,10 @@ namespace NetworkMonitor.LLM.Services
         var functionName = match.Groups["name"].Value;
         var parameters = match.Groups["parameters"].Value;
 
-        // Handle CDATA content by fixing incomplete CDATA sections
-        string cleanedParameters = CleanCdata(parameters);
-
+     
         // Load the cleaned parameters XML into an XmlDocument
         var doc = new XmlDocument();
-        doc.LoadXml($"<parameters>{cleanedParameters}</parameters>");
+        doc.LoadXml($"<parameters>{parameters}</parameters>");
 
         // Extract the <parameters> node and convert it to JSON
         string jsonParameters = JsonConvert.SerializeXmlNode(doc.DocumentElement, Newtonsoft.Json.Formatting.None, true);
@@ -144,28 +142,6 @@ namespace NetworkMonitor.LLM.Services
     }
 
     return functionCalls;
-}
-
-// Clean the CDATA content by ensuring proper CDATA formatting
-private string CleanCdata(string parameters)
-{
-    parameters=parameters.Trim();
-    // Check if the parameters contain a CDATA section
-   /* if (parameters.Contains("<![CDATA["))
-    {
-        // If there's an opening <![CDATA[ but no closing ]]> tag, add it
-        if (!parameters.Contains("]]>"))
-        {
-            parameters = parameters + "]]>";  // Add the closing CDATA tag
-        }
-    }
-    // Add CDATA if its missing
-     if (!parameters.StartsWith("<![CDATA["))
-    { 
-            parameters = "<![CDATA["+parameters + "]]>";      
-    }*/
-
-    return parameters;
 }
 
         protected virtual List<(string json, string functionName)> ParseInputForJson(string input)
