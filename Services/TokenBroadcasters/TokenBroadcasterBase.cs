@@ -160,10 +160,9 @@ private string CleanCdata(string parameters)
         }
     }
     // Add CDATA if its missing
-     if (!parameters.StartWith("<![CDATA["))
+     if (!parameters.StartsWith("<![CDATA["))
     { 
-            parameters = "<![CDATA["+parameters + "]]>"; 
-        
+            parameters = "<![CDATA["+parameters + "]]>";      
     }
 
     return parameters;
