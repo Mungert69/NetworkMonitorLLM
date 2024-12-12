@@ -33,7 +33,7 @@ public class LLMService : ILLMService
     private IServiceProvider _serviceProvider;
     private IRabbitRepo _rabbitRepo;
     private SemaphoreSlim _processRunnerSemaphore = new SemaphoreSlim(1);
-    private SemaphoreSlim _openAIRunnerSemaphore = new SemaphoreSlim(1);
+
     private MLParams _mlParams;
     private string _serviceID;
     private readonly ConcurrentDictionary<string, Session> _sessions = new ConcurrentDictionary<string, Session>();
@@ -85,7 +85,8 @@ public class LLMService : ILLMService
                 switch (llmServiceObj.LLMRunnerType)
                 {
                     case "TurboLLM":
-                        runner = _openAIRunnerFactory.CreateRunner(_serviceProvider, llmServiceObj, _openAIRunnerSemaphore);
+                        var openAIRunnerSemaphore = new SemaphoreSlim(1);
+                        runner = _openAIRunnerFactory.CreateRunner(_serviceProvider, llmServiceObj, openAIRunnerSemaphore);
                         break;
                     case "FreeLLM":
                         runner = _processRunnerFactory.CreateRunner(_serviceProvider, llmServiceObj, _processRunnerSemaphore);

@@ -242,6 +242,11 @@ public class LLMProcessRunner : ILLMRunner
                 process.Dispose();
                 _processes.TryRemove(sessionId, out _);
             }
+            try {
+                 _processRunnerSemaphore.Release();
+            }
+            catch {}
+           
         }
 
         _logger.LogInformation($"LLM process removed for session {sessionId}");
