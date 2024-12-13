@@ -110,9 +110,10 @@ public class LLMProcessRunner : ILLMRunner
     }
     public async Task StartProcess(LLMServiceObj serviceObj, DateTime currentTime)
     {
+          if (_mlParams.StartOnlyOneFreeLLM && serviceObj.LlmChainStartName != "monitor" && !serviceObj.IsSystemLlm) return;// throw new Exception($"The advanced {serviceObj.LlmChainStartName} assistant is only available with TurboLLM. However the basic monitor assistant is still available");
+      
         _isStateStarting = true;
         _isStateReady = false;
-        if (_mlParams.StartOnlyOneFreeLLM && serviceObj.LlmChainStartName != "monitor" && !serviceObj.IsSystemLlm) return;// throw new Exception($"The advanced {serviceObj.LlmChainStartName} assistant is only available with TurboLLM. However the basic monitor assistant is still available");
         await _processRunnerSemaphore.WaitAsync(); // Wait to enter the semaphore
         try
         {
@@ -242,11 +243,12 @@ public class LLMProcessRunner : ILLMRunner
                 process.Dispose();
                 _processes.TryRemove(sessionId, out _);
             }
-            try {
-                 _processRunnerSemaphore.Release();
+            try
+            {
+                _processRunnerSemaphore.Release();
             }
-            catch {}
-           
+            catch { }
+
         }
 
         _logger.LogInformation($"LLM process removed for session {sessionId}");
@@ -287,12 +289,12 @@ public class LLMProcessRunner : ILLMRunner
         while (!cancellationTokenSource.IsCancellationRequested)
         {
             line = await process.StandardOutput.ReadLineAsync();
-            
-           if (line != null && (line.Trim() == "<|eot_id|>" || line.Trim() == "<|im_end|>" || line.Trim() == "<|LLM_STARTED|>"))
-        {
-            isReady = true;
-            break;
-        }
+
+            if (line != null && (line.Trim() == "<|eot_id|>" || line.Trim() == "<|im_end|>" || line.Trim() == "<|LLM_STARTED|>"))
+            {
+                isReady = true;
+                break;
+            }
         }
         if (!isReady)
         {
@@ -303,7 +305,7 @@ public class LLMProcessRunner : ILLMRunner
     public async Task SendInputAndGetResponse(LLMServiceObj serviceObj)
     {
         _isStateReady = false;
-        string tokenBroadcasterMessage="";
+        string tokenBroadcasterMessage = "";
         await _processRunnerSemaphore.WaitAsync();
         CancellationTokenSource cts = new CancellationTokenSource(TimeSpan.FromSeconds(_mlParams.LlmUserPromptTimeout)); // Default timeout is 30 seconds, can be adjusted
 
@@ -339,6 +341,7 @@ public class LLMProcessRunner : ILLMRunner
                     if (!allResponsesReady)
                     {
 
+                        _isStateReady = true;
                         _logger.LogInformation("Waiting for additional function calls to complete.");
                         return;
                     }
@@ -349,6 +352,7 @@ public class LLMProcessRunner : ILLMRunner
                 {
                     //TODO work out how to use function still running messages
                     _logger.LogInformation("Ignoring FunctionStillRunning message.");
+                    _isStateReady = true;
                     return;
                 }
 
@@ -427,7 +431,7 @@ public class LLMProcessRunner : ILLMRunner
                             // Optionally handle unexpected LlmVersion values
                             break;
                     }
-                    tokenBroadcasterMessage=userInput;
+                    tokenBroadcasterMessage = userInput;
                     foreach (var assistantMessageEntry in _assistantMessages.ToList())
                     {
                         var assistantMessageBuilder = assistantMessageEntry.Value;
@@ -528,7 +532,7 @@ public class LLMProcessRunner : ILLMRunner
 
                     // Combine the constructed inputs for all responses
                     userInput = string.Join("", constructedInputs);
-                    tokenBroadcasterMessage=userInput;
+                    tokenBroadcasterMessage = userInput;
                     _responseProcessor.ClearFunctionCallTracker(serviceObj.MessageID);
 
                 }

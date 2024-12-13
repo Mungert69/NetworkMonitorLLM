@@ -137,6 +137,7 @@ public class OpenAIRunner : ILLMRunner
         {
             //TODO work out how to use function still running messages
             _logger.LogInformation("Ignoring FunctionStillRunning message.");
+             _isStateReady = true;
             return;
         }
 
@@ -174,7 +175,7 @@ public class OpenAIRunner : ILLMRunner
                     completionResult = await _openAiService.ChatCompletion.CreateCompletion(new ChatCompletionCreateRequest
                     {
                         Messages = currentHistory,
-                        MaxTokens = 1000,
+                        MaxTokens = 10000,
                         Model = _gptModel
                     });
                 }
@@ -185,7 +186,7 @@ public class OpenAIRunner : ILLMRunner
                         Messages = currentHistory,
                         Tools = _toolsBuilder.Tools, // Your pre-defined tools
                         ToolChoice = ToolChoice.Auto,
-                        MaxTokens = 1000,
+                        MaxTokens = 10000,
                         Model = _gptModel
                     });
                 }
