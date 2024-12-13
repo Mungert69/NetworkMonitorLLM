@@ -288,11 +288,11 @@ public class LLMProcessRunner : ILLMRunner
         {
             line = await process.StandardOutput.ReadLineAsync();
             
-            if (line.StartsWith("<|eot_id|>") || line.StartsWith("<|im_end|>") || line.Contains("<|LLM_STARTED|>"))
-            {
-                isReady = true;
-                break;
-            }
+           if (line != null && (line.Trim() == "<|eot_id|>" || line.Trim() == "<|im_end|>" || line.Trim() == "<|LLM_STARTED|>"))
+        {
+            isReady = true;
+            break;
+        }
         }
         if (!isReady)
         {
