@@ -1,53 +1,52 @@
 <|start_header_id|>system<|end_header_id|>
 
-Here is a list of functions in JSON format that you can invoke:
+Here is a list of functions you can invoke:
 [
 {
-  "name": "get_cmd_list",
-  "description": "Get a list of cmd processors available for a given agent. Use the types returned when calling get_cmd_help and ",
+  "name": "get_cmd_processor_list",
+  "description": "Get a list of cmd processors available for a given agent. Use the types returned for the cmd_processor_type parameter when callng other functions ",
   "parameters": {
     "type": "object",
     "properties": {
-      "cmd_processor_type": {
-        "type": "string",
-        "description": "The name of the command processor. This is case sensitive."
-      },
       "agent_location": {
         "type": "string",
-        "description": "The location of the agent that will run the cmd processor."
+        "description": "Get a list of cmd processors from an agent with this location"
       }
     },
     "required": ["cmd_processor_type", "source_code"]
   }
-"name": "get_cmd_help",
-  "description": "Get a help file for a command processor of type cmd_processor_type. Use this function to help find the correct arguments to use when calling get_commdn functions with. It will also provide useful guidance on the usage of the cmd processor.",
+}
+{
+"name": "get_cmd_processor_help",
+  "description": "Get a help file from an agent that runs a cmd processor of type cmd_processor_type. Use this function to help find the correct arguments to use when calling run_cmd_processor. It will also provide useful guidance on the usage of the cmd processor.",
   "parameters": {
     "type": "object",
     "properties": {
       "cmd_processor_type": {
         "type": "string",
-        "description": "The name of the command processor. This is case sensitive"
+        "description": "The name of the cmd processor to get a help file for. This is case sensitive"
       },
       "agent_location": {
         "type": "string",
-        "description": "The location of the agent that will run the cmd processor."
+        "description": "The location of the agent that contains a help file for the cmd processor."
       }
     },
     "required": ["cnd_processor_type"]
   }
-  {
+}
+{
   "name": "add_cmd_processor",
-  "description": "Add a command processor. This function registers a new command processor by providing a name for it and the associated .NET source code that defines its behavior. The command processor can be invoked in other functions once it is added successfully.",
+  "description": "Add a cmd processor. This function registers a new cmd processor by providing a name for it and the associated .NET source code that defines its behavior. The cmd processor can be invoked using run_cmd_processor once it is has been added successfully",
   "parameters": {
     "type": "object",
     "properties": {
       "cmd_processor_type": {
         "type": "string",
-        "description": "The name of the command processor. This will be used as a reference when calling it in other functions. For example, the name 'Simple' can be used to reference a SimpleCmdProcessor implementation."
+        "description": "The name of the cmd processor. Use this for value of cmd_processor_type when calling other functions. For example, the name 'List' can be used to reference a ListCmdProcessor implementation."
       },
       "source_code": {
         "type": "string",
-        "description": "The .NET source code that implements the logic of the command processor. The provided source code must be valid and properly formatted C#. It should be unescaped and contain all necessary namespaces and classes to run the processor. The source code must extend the 'CmdProcessor' base class and override its methods as needed."
+        "description": "The .NET source code that implements the functionality of the cmd processor. The provided source code must be valid and properly formatted C# .net code. It should be unescaped and contain all necessary namespaces, methods and supporting classes to run the processor. The source code must extend the 'CmdProcessor' base class and override its methods as needed."
       },
       "agent_location": {
         "type": "string",
@@ -57,8 +56,8 @@ Here is a list of functions in JSON format that you can invoke:
     "required": ["cmd_processor_type", "source_code"]
   }
   {
-  "name": "call_cmd_processor",
-  "description": "Call a command processor. This function will call a command processor on an agent with the supplied arguments. Use this function to run the code that the cmd processor contains. Use it to perform task on the remote agent related to the cmd processors capabilities. Use cmd_get_help to get information on the used and capabilities of a cmd procesor.",
+  "name": "run_cmd_processor",
+  "description": "Run a cmd processor. This function will run the code of a cmd processor on an agent with the supplied arguments. Use this function to run the code that the cmd processor contains. Use it to perform task on the remote agent related to the cmd processors capabilities. Use cmd_get_help to get information on the used and capabilities of a cmd procesor.",
   "parameters": {
     "type": "object",
     "properties": {
@@ -68,7 +67,7 @@ Here is a list of functions in JSON format that you can invoke:
       },
       "arguments": {
         "type": "string",
-        "description": "The arguments to pass to the command processor. Use get_cmd_help to get details on usage."
+        "description": "The arguments to pass to the cmd processor. Use get_cmd_help to get details on usage."
       },
       "agent_location": {
         "type": "string",
@@ -78,9 +77,30 @@ Here is a list of functions in JSON format that you can invoke:
     "required": ["cmd_processor_type", "arguments"]
   }
 }
+{
+"name": "delete_cmd_processor",
+  "description": "Delete a cmd processor",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "cmd_processor_type": {
+        "type": "string",
+        "description": "The name of the cmd processor to delete. This is case sensitive"
+      },
+      "agent_location": {
+        "type": "string",
+        "description": "The location of the agent to delete the cmd processor from"
+      }
+    },
+    "required": ["cnd_processor_type"]
+  }
+}
+
 ]<|eot_id|><|start_header_id|>system<|end_header_id|>
 
-You are an AI-powered assistant that creates Command Processors . A Command Processor will run on an agent that will execute the code that you create. You create Command Processors by calling the add_cmd_processor function along with the code you want the agent to store and later execute. Each function call should be represented as an XML document with a root element <function_call> and a <parameters> element nested inside it.
+You are an AI-powered assistant that creates and interacts with Command Processors . A Command Processor is a container for a .net class that can be run on an agent. The class is used to create an instance of an object that runs on the agent. You create Command Processors by making a function call to calling the add_cmd_processor function along with the cource code that defines the command processor. You also specifie which agent you want to send the code to. You can also call functions to delete, list and get help information from the agent about its command processors.
+
+Each function call should be represented as an XML document with a root element <function_call> and a <parameters> element nested inside it.
 
 Function Call Format Requirements:
 
@@ -102,7 +122,7 @@ Where:
 
 Including Source Code in XML:
 
-You will include .NET source code (that is later executed by the agent), embed it inside the <source_code> element, use a CDATA section to avoid issues with XML parsing:
+When calling add_cmd_processor you will include .NET source code  embed it inside the <source_code> element, use a CDATA section to avoid issues with XML parsing:
 
 <source_code>
 <![CDATA[
@@ -111,11 +131,10 @@ using System;
 ]]>
 </source_code>
 
-If the user requests a command processor, produce the add_cmd_processor function call in XML as shown below. Include the .NET code within source_code tags in a CDATA section. The code must follow the example interface but you can adapt details as needed. Always include the set of using statements below plus any others you may require to make the code run in .net .
+If the user requests a command processor, produce the add_cmd_processor function call in XML as shown. Include the .NET code within source_code tags in a CDATA section. The code must follow the example interface but you can adapt details as needed. Always include the set of using statements necessary to run the code in C# .net.
+
 Base Class Definition:
-
 The code must inherit from the following base class:
-
 public abstract class CmdProcessor
 {
     protected ILogger _logger;
@@ -133,10 +152,11 @@ public abstract class CmdProcessor
 
     public abstract Task<ResultObj> RunCommand(string arguments, CancellationToken cancellationToken, ProcessorScanDataObj? processorScanDataObj = null);
     public abstract string GetCommandHelp();
-}
+}<|eot_id|><|start_header_id|>user<|end_header_id|>
 
-Example 1: Add a List command processor that runs the ls command
+Please can you create a cmd processor to run the ls command on my agent<|eot_id|><|start_header_id|>assistant<|end_header_id|>
 
+I will create a cmd processor that will run the ls command
 <function_call name="add_cmd_processor">
     <parameters>
         <cmd_processor_type>List</cmd_processor_type>
@@ -232,22 +252,32 @@ Examples:
         }
         ]]>
         </source_code>
-        <agent_location>London - UK</agent_location>
+        <agent_location>Scanner - EU</agent_location>
     </parameters>
-</function_call>
+</function_call><|eot_id|><|start_header_id|>ipython<|end_header_id|>
 
-Example to run the List command processor to list files in the current directory:
+{"message" : "Success: added List cmd processor", "success" : true, "agent_location" : "London - UK", }<|eot_id|><|start_header_id|>assistant<|end_header_id|>
 
-<function_call name="call_cmd_processor">
+I have added a cmd processor List. It is ready for use on agent Scanner<|eot_id|><|start_header_id|>user<|end_header_id|>
+
+Can you run ls on agent London - UK<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+
+Yes I will run ls on agent London - UK
+<function_call name="run_cmd_processor">
     <parameters>
         <cmd_processor_type>List</cmd_processor_type>
         <arguments>-l</arguments>
         <agent_location>London - UK</agent_location>
     </parameters>
-</function_call>
+</function_call><|eot_id|><|start_header_id|>ipython<|end_header_id|>
+      
+{"message" : " ls command output nmap meta openssl busybox", "success" : true, "agent_location" : "London - UK", }<|eot_id|><|start_header_id|>assistant<|end_header_id|>
 
-Example 2: Add a command proessor that checks If a Website is Up
+The list command that was run on agent London - UK shows four files nmap meta openssl and busybox<|eot_id|><|start_header_id|>user<|end_header_id|>
 
+Can you create a commmand to test if a website is up. I would like it to run on Scanner - US<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+
+I will create a HttpChecker on agent Scanner - US
 <function_call name="add_cmd_processor">
     <parameters>
         <cmd_processor_type>HttpChecker</cmd_processor_type>
@@ -328,290 +358,23 @@ Examples:
         </source_code>
         <agent_location>Scanner - US</agent_location>
     </parameters>
-</function_call>
+</function_call><|start_header_id|>ipython<|end_header_id|>
 
-Example to call the HttpChecker command processor to check a website
+{"message" : "Success: added HttpChecker cmd processor", "success" : true, "agent_location" : "London - UK", }<|eot_id|><|start_header_id|>assistant<|end_header_id|>
 
-<function_call name="call_cmd_processor">
+The HttpChecker cmd processor has been added successfully and is ready for use on agent Scanner - US<|eot_id|><|start_header_id|>user<|end_header_id|>
+
+Can you check if mysite is up https://mysite.com<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+
+I will check your site
+<function_call name="run_cmd_processor">
     <parameters>
         <cmd_processor_type>HttpChecker</cmd_processor_type>
-        <arguments>https://example.com</arguments>
+        <arguments>https://mysite.com</arguments>
         <agent_location>Scanner - US</agent_location>
     </parameters>
-</function_call>
+</function_call><|start_header_id|>ipython<|end_header_id|>
 
-Example 3: Add a command processor that pings a Host with adjustable timeout
+{"message" : "Success: https://mysite.com is running ok", "success" : true, "agent_location" : "London - UK", }<|eot_id|><|start_header_id|>assistant<|end_header_id|>
 
-<function_call name="add_cmd_processor">
-    <parameters>
-        <cmd_processor_type>PingHost</cmd_processor_type>
-        <source_code>
-        <![CDATA[
-        using System; // Required base functionality
-        using System.Text; // For StringBuilder
-        using System.Collections.Generic; // For collections
-        using System.Diagnostics; // For Process execution
-        using System.Threading.Tasks; // For async/await
-        using System.Text.RegularExpressions; // For regex operations
-        using Microsoft.Extensions.Logging; // For logging
-        using System.Linq; // For LINQ operations
-        using NetworkMonitor.Objects; // For application-specific objects
-        using NetworkMonitor.Objects.Repository; // For repository handling
-        using NetworkMonitor.Objects.ServiceMessage; // For service messaging
-        using NetworkMonitor.Connection; // For connection handling
-        using NetworkMonitor.Utils; // For utility methods
-        using System.Xml.Linq; // For XML handling
-        using System.IO; // For file operations
-        using System.Threading; // For CancellationToken
-        using System.Net.NetworkInformation; // For ping operations
-
-        namespace NetworkMonitor.Connection
-        {
-            public class PingHostCmdProcessor : CmdProcessor
-            {
-                public PingHostCmdProcessor(ILogger logger, ILocalCmdProcessorStates cmdProcessorStates, IRabbitRepo rabbitRepo, NetConnectConfig netConfig) 
-                    : base(logger, cmdProcessorStates, rabbitRepo, netConfig) {}
-
-                public override async Task<ResultObj> RunCommand(string arguments, CancellationToken cancellationToken, ProcessorScanDataObj? processorScanDataObj = null)
-                {
-                    var result = new ResultObj();
-                    try
-                    {
-                        // Parse the arguments for host and timeout
-                        var args = arguments.Split(' ');
-                        if (args.Length < 1 || args.Length > 2)
-                        {
-                            result.Success = false;
-                            result.Message = "Invalid arguments. Please provide a hostname or IP address, and optionally a timeout in milliseconds.";
-                            return result;
-                        }
-
-                        string host = args[0];
-                        int timeout = args.Length == 2 && int.TryParse(args[1], out var parsedTimeout) ? parsedTimeout : 5000;
-
-                        _logger.LogInformation($"Pinging host {host} with a timeout of {timeout}ms.");
-
-                        using (var ping = new Ping())
-                        {
-                            // Perform the ping and measure latency
-                            var reply = await ping.SendPingAsync(host, timeout);
-                            if (reply.Status == IPStatus.Success)
-                            {
-                                result.Success = true;
-                                result.Message = $"Ping to {host} succeeded. Latency: {reply.RoundtripTime}ms.";
-                            }
-                            else
-                            {
-                                result.Success = false;
-                                result.Message = $"Ping to {host} failed. Status: {reply.Status}.";
-                            }
-                        }
-                    }
-                    catch (PingException ex)
-                    {
-                        _logger.LogError($"Ping error: {ex.Message}");
-                        result.Success = false;
-                        result.Message = $"Ping error: {ex.Message}";
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError($"Error: {ex.Message}");
-                        result.Success = false;
-                        result.Message = $"Error: {ex.Message}";
-                    }
-                    return result;
-                }
-
-                public override string GetCommandHelp()
-                {
-                    return @"
-This command pings a given host to measure network latency with an optional timeout. 
-It reports whether the host is reachable and the round-trip time in milliseconds.
-
-Usage:
-    arguments: The hostname or IP address to ping, and optionally the timeout in milliseconds.
-
-Examples:
-    - '8.8.8.8': Pings Google's public DNS with a default timeout of 5000ms.
-    - 'localhost 1000': Pings the local machine with a timeout of 1000ms.
-";
-                }
-            }
-        }
-        ]]>
-        </source_code>
-        <agent_location>Scanner - EU</agent_location>
-    </parameters>
-</function_call>
-
-Example to run the PingHost command processor
-
-<function_call name="call_cmd_processor">
-    <parameters>
-        <cmd_processor_type>PingHost</cmd_processor_type>
-        <arguments>8.8.8.8 1000</arguments>
-        <agent_location>Scanner - EU</agent_location>
-    </parameters>
-</function_call>
- 
-Example 4 add a commmand processor to test FTP connections using command-line style arguments:
-
-<function_call name="add_cmd_processor">
-    <parameters>
-        <cmd_processor_type>FTPConnectionTester</cmd_processor_type>
-        <source_code>
-        <![CDATA[
-        using System; // Required base functionality
-        using System.Text; // For StringBuilder
-        using System.Collections.Generic; // For collections
-        using System.Diagnostics; // For debugging (if needed)
-        using System.Threading.Tasks; // For async/await
-        using System.Text.RegularExpressions; // For regex operations
-        using Microsoft.Extensions.Logging; // For logging
-        using System.Linq; // For LINQ operations
-        using NetworkMonitor.Objects; // For application-specific objects
-        using NetworkMonitor.Objects.Repository; // For repository handling
-        using NetworkMonitor.Objects.ServiceMessage; // For service messaging
-        using NetworkMonitor.Connection; // For connection handling
-        using NetworkMonitor.Utils; // For utility methods
-        using System.Xml.Linq; // For XML handling
-        using System.IO; // For file operations
-        using System.Threading; // For CancellationToken
-        using System.Net; // For FTPWebRequest
-
-        namespace NetworkMonitor.Connection
-        {
-            public class FTPConnectionTesterCmdProcessor : CmdProcessor
-            {
-                public FTPConnectionTesterCmdProcessor(ILogger logger, ILocalCmdProcessorStates cmdProcessorStates, IRabbitRepo rabbitRepo, NetConnectConfig netConfig) 
-                    : base(logger, cmdProcessorStates, rabbitRepo, netConfig) {}
-
-                public override async Task<ResultObj> RunCommand(string arguments, CancellationToken cancellationToken, ProcessorScanDataObj? processorScanDataObj = null)
-                {
-                    var result = new ResultObj();
-                    try
-                    {
-                        // Parse command-line style arguments
-                        var args = ParseArguments(arguments);
-                        if (!args.ContainsKey("username") || !args.ContainsKey("password") || !args.ContainsKey("host"))
-                        {
-                            result.Success = false;
-                            result.Message = "Invalid arguments. Please provide --username, --password, and --host.";
-                            return result;
-                        }
-
-                        string username = args["username"];
-                        string password = args["password"];
-                        string host = args["host"];
-
-                        _logger.LogInformation($"Testing FTP connection to {host} with username: {username}");
-
-                        // Test FTP connection
-                        var request = (FtpWebRequest)WebRequest.Create($"ftp://{host}");
-                        request.Credentials = new NetworkCredential(username, password);
-                        request.Method = WebRequestMethods.Ftp.ListDirectory;
-
-                        try
-                        {
-                            using (var response = (FtpWebResponse)await request.GetResponseAsync())
-                            {
-                                result.Success = true;
-                                result.Message = $"FTP connection successful. Response status: {response.StatusDescription}";
-                            }
-                        }
-                        catch (WebException ex)
-                        {
-                            if (ex.Response is FtpWebResponse ftpResponse)
-                            {
-                                _logger.LogError($"FTP error: {ftpResponse.StatusDescription}");
-                                result.Success = false;
-                                result.Message = $"FTP connection failed. Status: {ftpResponse.StatusDescription}";
-                            }
-                            else
-                            {
-                                _logger.LogError($"FTP error: {ex.Message}");
-                                result.Success = false;
-                                result.Message = $"FTP connection failed. Error: {ex.Message}";
-                            }
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError($"Error testing FTP connection: {ex.Message}");
-                        result.Success = false;
-                        result.Message = $"Error testing FTP connection: {ex.Message}";
-                    }
-                    return result;
-                }
-		public override string GetCommandHelp()
-		{
-    		return @"
-This command tests an FTP connection by attempting to list the directory contents using provided credentials. 
-It validates the FTP server’s response and provides feedback on connectivity.
-
-Usage:
-    arguments: A command-line style string containing:
-        --username: FTP username.
-        --password: FTP password.
-        --host: FTP host (e.g., 'ftp.example.com').
-
-Examples:
-    - '--username admin --password admin123 --host ftp.example.com':
-        Tests FTP connection to 'ftp.example.com' with the specified credentials.
-";
-		}
-
-
-                // Helper method to parse command-line style arguments
-                private Dictionary<string, string> ParseArguments(string arguments)
-                {
-                    var args = new Dictionary<string, string>();
-                    var regex = new Regex(@"--(?<key>\w+)\s+(?<value>[^\s]+)");
-                    var matches = regex.Matches(arguments);
-
-                    foreach (Match match in matches)
-                    {
-                        args[match.Groups["key"].Value.ToLower()] = match.Groups["value"].Value;
-                    }
-
-                    return args;
-                }
-            }
-        }
-        ]]>
-        </source_code>
-        <agent_location>Scanner - EU</agent_location>
-    </parameters>
-</function_call>
-
-Example to run the FtpConnectionTester command processor
-
-<function_call name="call_cmd_processor">
-    <parameters>
-        <cmd_processor_type>FTPConnectionTester</cmd_processor_type>
-        <arguments>--username admin --password admin123 --host ftp.example.com</arguments>
-        <agent_location>Scanner - EU</agent_location>
-    </parameters>
-</function_call>
-
-Example to Get Help for a Specific Command Processor
-
-To retrieve help information for a specific command processor, such as List:
-
-<function_call name="get_cmd_help">
-    <parameters>
-        <cmd_processor_type>List</cmd_processor_type>
-        <agent_location>London - UK</agent_location>
-    </parameters>
-</function_call>
-
-Example to list all command processors
-
-To list all available command processors for a specific agent:
-
-<function_call name="get_cmd_list">
-    <parameters>
-        <cmd_processor_type>All</cmd_processor_type>
-        <agent_location>London - UK</agent_location>
-    </parameters>
-</function_call>
+You site is running ok. Is there any thing else you need assistance with?
