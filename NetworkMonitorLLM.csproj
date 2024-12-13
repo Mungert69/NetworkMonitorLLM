@@ -29,7 +29,6 @@
     </None>
     <None Update="Examples/Example.cs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      <Link>Example.cs</Link>
     </None>
   </ItemGroup>
 

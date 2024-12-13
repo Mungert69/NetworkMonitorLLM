@@ -43,9 +43,9 @@ namespace NetworkMonitor.LLM.Services
                 .Build();
 
             // Define add_cmd_processor
-            fn_add_cmd_processor = new FunctionDefinitionBuilder("add_cmd_processor", "Add (register) a new cmd processor with provided source code to an agent.")
+            fn_add_cmd_processor = new FunctionDefinitionBuilder("add_cmd_processor", "Add or update a cmd processor with provided source code to an agent.")
                 .AddParameter("cmd_processor_type", PropertyDefinition.DefineString("The name of the cmd processor to add. Use this name when referencing the processor later."))
-                .AddParameter("source_code", PropertyDefinition.DefineString("The .NET source code implementing the cmd processor. Must extend CmdProcessor base class."))
+                .AddParameter("source_code", PropertyDefinition.DefineString("The .NET source code implementing the cmd processor. Must extend CmdProcessor base class. Make sure to include all using statements, methods and supporting classes. ENSURE that this fields value is accurately formatted and escaped according to JSON standards."))
                 .AddParameter("agent_location", PropertyDefinition.DefineString("The location of the agent to which this cmd processor will be added."))
                 .Validate()
                 .Build();
@@ -107,7 +107,7 @@ public abstract class CmdProcessor
             string tempContent;
             try
             {
-                tempContent = File.ReadAllText("Example.cs");
+                tempContent = File.ReadAllText(Path.Combine("Examples","Example.cs"));
                 if (string.IsNullOrWhiteSpace(tempContent))
                 {
                     contentPart2 = "";
@@ -123,8 +123,30 @@ public abstract class CmdProcessor
             }
 
             string contentPart3 = @"
-      
-If the user requests to add a cmd processor, produce a call to add_cmd_processor with the cmd_processor_type, the agent_location, and the .NET source code.
+    
+To aid compilation make sure to include all of these using statements in any source code you produce:
+using System; 
+using System.Text; 
+using System.Collections.Generic; 
+using System.Diagnostics; 
+using System.Threading.Tasks; 
+using System.Text.RegularExpressions; 
+using Microsoft.Extensions.Logging; 
+using System.Linq;
+using NetworkMonitor.Objects; 
+using NetworkMonitor.Objects.Repository; 
+using NetworkMonitor.Objects.ServiceMessage; 
+using NetworkMonitor.Connection; 
+using NetworkMonitor.Utils; 
+using System.Xml.Linq; 
+using System.IO;
+using System.Threading; 
+using System.Net; 
+
+Important: Ensure that the source_code parameter is accurately formatted and escaped according to JSON standards.
+Also make sure not to include word CmdProcessor in the cmd_processor_type. For example if you want to call the cmd processor HttpTest then cmd_processor_type is HttpTest and the class name is HttpTestCmdProcessor.
+
+If the user requests to add a cmd processor, produce a call to add_cmd_processor with the cmd_processor_type, the agent_location, and the .NET source code correctly escaped for json.
 
 If the user wants to run, delete, or get help from a cmd processor, use the corresponding tools with the correct parameters.
 
