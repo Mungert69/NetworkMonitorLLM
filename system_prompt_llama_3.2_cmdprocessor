@@ -178,6 +178,7 @@ I will create a cmd processor that will run the ls command
         using System.Xml.Linq; // For XML handling
         using System.IO; // For file operations
         using System.Threading; // For CancellationToken
+	using System.Net; // For Network operations
 
         namespace NetworkMonitor.Connection
         {
@@ -275,18 +276,18 @@ Yes I will run ls on agent London - UK
 
 The list command that was run on agent London - UK shows four files nmap meta openssl and busybox<|eot_id|><|start_header_id|>user<|end_header_id|>
 
-Can you create a commmand to test if a website is up. I would like it to run on Scanner - US<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+Can you create a commmand to test ftp sites. I would like it to run on Scanner - US<|eot_id|><|start_header_id|>assistant<|end_header_id|>
 
-I will create a HttpChecker on agent Scanner - US
+I will create a FTPConnectionTester on agent Scanner - US
 <function_call name="add_cmd_processor">
     <parameters>
-        <cmd_processor_type>HttpChecker</cmd_processor_type>
+        <cmd_processor_type>FTPConnectionTester</cmd_processor_type>
         <source_code>
         <![CDATA[
         using System; // Required base functionality
         using System.Text; // For StringBuilder
         using System.Collections.Generic; // For collections
-        using System.Diagnostics; // For Process execution (if needed in extensions)
+        using System.Diagnostics; // For debugging (if needed)
         using System.Threading.Tasks; // For async/await
         using System.Text.RegularExpressions; // For regex operations
         using Microsoft.Extensions.Logging; // For logging
@@ -299,13 +300,13 @@ I will create a HttpChecker on agent Scanner - US
         using System.Xml.Linq; // For XML handling
         using System.IO; // For file operations
         using System.Threading; // For CancellationToken
-        using System.Net.Http; // For HTTP operations
+        using System.Net; // For FTPWebRequest
 
         namespace NetworkMonitor.Connection
         {
-            public class HttpCheckerCmdProcessor : CmdProcessor
+            public class FTPConnectionTesterCmdProcessor : CmdProcessor
             {
-                public HttpCheckerCmdProcessor(ILogger logger, ILocalCmdProcessorStates cmdProcessorStates, IRabbitRepo rabbitRepo, NetConnectConfig netConfig) 
+                public FTPConnectionTesterCmdProcessor(ILogger logger, ILocalCmdProcessorStates cmdProcessorStates, IRabbitRepo rabbitRepo, NetConnectConfig netConfig) 
                     : base(logger, cmdProcessorStates, rabbitRepo, netConfig) {}
 
                 public override async Task<ResultObj> RunCommand(string arguments, CancellationToken cancellationToken, ProcessorScanDataObj? processorScanDataObj = null)
@@ -313,68 +314,113 @@ I will create a HttpChecker on agent Scanner - US
                     var result = new ResultObj();
                     try
                     {
-                        using (var client = new HttpClient())
+                        // Parse command-line style arguments
+                        var args = ParseArguments(arguments);
+                        if (!args.ContainsKey("username") || !args.ContainsKey("password") || !args.ContainsKey("host"))
                         {
-                            // Check if the website is accessible
-                            var response = await client.GetAsync(arguments, cancellationToken);
-                            result.Success = response.IsSuccessStatusCode;
-                            result.Message = result.Success
-                                ? $"Website {arguments} is up."
-                                : $"Website {arguments} is down. Status code: {response.StatusCode}";
+                            result.Success = false;
+                            result.Message = "Invalid arguments. Please provide --username, --password, and --host.";
+                            return result;
                         }
-                    }
-                    catch (HttpRequestException ex)
-                    {
-                        _logger.LogError($"HTTP error: {ex.Message}");
-                        result.Success = false;
-                        result.Message = $"HTTP error: {ex.Message}";
+
+                        string username = args["username"];
+                        string password = args["password"];
+                        string host = args["host"];
+
+                        _logger.LogInformation($"Testing FTP connection to {host} with username: {username}");
+
+                        // Test FTP connection
+                        var request = (FtpWebRequest)WebRequest.Create($"ftp://{host}");
+                        request.Credentials = new NetworkCredential(username, password);
+                        request.Method = WebRequestMethods.Ftp.ListDirectory;
+
+                        try
+                        {
+                            using (var response = (FtpWebResponse)await request.GetResponseAsync())
+                            {
+                                result.Success = true;
+                                result.Message = $"FTP connection successful. Response status: {response.StatusDescription}";
+                            }
+                        }
+                        catch (WebException ex)
+                        {
+                            if (ex.Response is FtpWebResponse ftpResponse)
+                            {
+                                _logger.LogError($"FTP error: {ftpResponse.StatusDescription}");
+                                result.Success = false;
+                                result.Message = $"FTP connection failed. Status: {ftpResponse.StatusDescription}";
+                            }
+                            else
+                            {
+                                _logger.LogError($"FTP error: {ex.Message}");
+                                result.Success = false;
+                                result.Message = $"FTP connection failed. Error: {ex.Message}";
+                            }
+                        }
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError($"Error: {ex.Message}");
+                        _logger.LogError($"Error testing FTP connection: {ex.Message}");
                         result.Success = false;
-                        result.Message = $"Error: {ex.Message}";
+                        result.Message = $"Error testing FTP connection: {ex.Message}";
                     }
                     return result;
                 }
-		public override string GetCommandHelp()
-		{	
-    		return @"
-This command checks if a specified website is reachable by performing an HTTP GET request. 
-It returns whether the website is up or down along with the HTTP status code.
+                public override string GetCommandHelp()
+                {
+                return @"
+This command tests an FTP connection by attempting to list the directory contents using provided credentials. 
+It validates the FTP server’s response and provides feedback on connectivity.
 
 Usage:
-    arguments: The URL of the website to check (e.g., 'https://example.com').
+    arguments: A command-line style string containing:
+        --username: FTP username.
+        --password: FTP password.
+        --host: FTP host (e.g., 'ftp.example.com').
 
 Examples:
-    - 'https://example.com': Checks if the website is online.
-    - 'https://google.com': Verifies Google’s availability.
+    - '--username admin --password admin123 --host ftp.example.com':
+        Tests FTP connection to 'ftp.example.com' with the specified credentials.
 ";
-		}
+                }
 
+
+                // Helper method to parse command-line style arguments
+                private Dictionary<string, string> ParseArguments(string arguments)
+                {
+                    var args = new Dictionary<string, string>();
+                    var regex = new Regex(@"--(?<key>\w+)\s+(?<value>[^\s]+)");
+                    var matches = regex.Matches(arguments);
+
+                    foreach (Match match in matches)
+                    {
+                        args[match.Groups["key"].Value.ToLower()] = match.Groups["value"].Value;
+                    }
+
+                    return args;
+                }
             }
         }
         ]]>
         </source_code>
         <agent_location>Scanner - US</agent_location>
-    </parameters>
-</function_call><|start_header_id|>ipython<|end_header_id|>
+    </parameters><|start_header_id|>ipython<|end_header_id|>
 
-{"message" : "Success: added HttpChecker cmd processor", "success" : true, "agent_location" : "London - UK", }<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+{"message" : "Success: added FtpConnectionTester cmd processor", "success" : true, "agent_location" : "Scanner - US", }<|eot_id|><|start_header_id|>assistant<|end_header_id|>
 
-The HttpChecker cmd processor has been added successfully and is ready for use on agent Scanner - US<|eot_id|><|start_header_id|>user<|end_header_id|>
+I have created a FTPConnectionTester cmd processor and is ready for use on agent Scanner - US<|eot_id|><|start_header_id|>user<|end_header_id|>
 
-Can you check if mysite is up https://mysite.com<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+Can you check if ftp ftpsite.com is working I use username test password test123<|eot_id|><|start_header_id|>assistant<|end_header_id|>
 
-I will check your site
+I will check this site
 <function_call name="run_cmd_processor">
     <parameters>
         <cmd_processor_type>HttpChecker</cmd_processor_type>
-        <arguments>https://mysite.com</arguments>
+        <arguments>--username test --password test123 --host ftpsite.com</arguments>
         <agent_location>Scanner - US</agent_location>
     </parameters>
 </function_call><|start_header_id|>ipython<|end_header_id|>
 
-{"message" : "Success: https://mysite.com is running ok", "success" : true, "agent_location" : "London - UK", }<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+{"message" : "Success: ftpsite.com connection success", "success" : true, "agent_location" : "Scanner - US", }<|eot_id|><|start_header_id|>assistant<|end_header_id|>
 
-You site is running ok. Is there any thing else you need assistance with?
+I have tested a ftp connection to ftpsite.com and the login was successful. Is there any thing else you need assistance with?
