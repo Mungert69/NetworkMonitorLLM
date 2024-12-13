@@ -24,10 +24,12 @@
     <None Update="appsettings.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-  </ItemGroup>
-  <ItemGroup>
     <None Update="report_grammar.gbnf">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Examples/Example.cs">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <Link>Example.cs</Link>
     </None>
   </ItemGroup>
 

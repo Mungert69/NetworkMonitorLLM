@@ -15,19 +15,7 @@ using System.Text.RegularExpressions;
 
 namespace NetworkMonitor.LLM.Services
 {
-    public static class XmlToJsonConverter
-    {
-        public static string ConvertXmlToJson(string xml)
-        {
-            // Load the XML string into an XmlDocument
-            var doc = new XmlDocument();
-            doc.LoadXml(xml);
-
-            // Convert XML to JSON and return it
-            string json = JsonConvert.SerializeXmlNode(doc, Newtonsoft.Json.Formatting.None, true);
-            return json;
-        }
-    }
+   
     public abstract class TokenBroadcasterBase : ITokenBroadcaster
     {
         protected readonly ILLMResponseProcessor _responseProcessor;
@@ -114,7 +102,7 @@ namespace NetworkMonitor.LLM.Services
 
 
 
-      protected virtual List<(string json, string functionName)> ParseInputForXml(string input)
+ protected virtual List<(string json, string functionName)> ParseInputForXml(string input)
 {
     var functionCalls = new List<(string json, string functionName)>();
 
@@ -129,7 +117,6 @@ namespace NetworkMonitor.LLM.Services
         var functionName = match.Groups["name"].Value;
         var parameters = match.Groups["parameters"].Value;
 
-     
         // Load the cleaned parameters XML into an XmlDocument
         var doc = new XmlDocument();
         doc.LoadXml($"<parameters>{parameters}</parameters>");
@@ -137,12 +124,29 @@ namespace NetworkMonitor.LLM.Services
         // Extract the <parameters> node and convert it to JSON
         string jsonParameters = JsonConvert.SerializeXmlNode(doc.DocumentElement, Newtonsoft.Json.Formatting.None, true);
 
-        // Add the function name and the converted JSON parameters to the result
-        functionCalls.Add((jsonParameters, functionName));
+        // Parse the JSON back into an object to manipulate the structure
+        var parsedParameters = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonParameters);
+
+        // Check for "source_code" with a "#cdata-section" field
+        if (parsedParameters.TryGetValue("source_code", out var sourceCodeNode) && sourceCodeNode is Newtonsoft.Json.Linq.JObject sourceCodeObj)
+        {
+            // If "#cdata-section" exists, replace "source_code" with its value
+            if (sourceCodeObj.TryGetValue("#cdata-section", out var cdataSection))
+            {
+                parsedParameters["source_code"] = cdataSection.ToString();
+            }
+        }
+
+        // Convert the updated parameters back to JSON
+        string adjustedJsonParameters = JsonConvert.SerializeObject(parsedParameters, Newtonsoft.Json.Formatting.None);
+
+        // Add the function name and the adjusted JSON parameters to the result
+        functionCalls.Add((adjustedJsonParameters, functionName));
     }
 
     return functionCalls;
 }
+
 
         protected virtual List<(string json, string functionName)> ParseInputForJson(string input)
         {
