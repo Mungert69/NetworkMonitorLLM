@@ -222,7 +222,7 @@ public class OpenAIRunner : ILLMRunner
                                 assistantMessage.Append($" Name {funcName} Arguments {funcArgs} : ");
                                 // Handle the function call asynchronously and remove the placeholder when complete
                                 await HandleFunctionCallAsync(serviceObj, fnCall, responseServiceObj, assistantChatMessage);
-
+                                await Task.Delay(500);
                             }
                         }
                         assistantMessage.Append($" using message_id {serviceObj.MessageID} . Please wait it may take some time to complete.");

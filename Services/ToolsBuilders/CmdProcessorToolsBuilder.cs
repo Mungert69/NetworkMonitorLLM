@@ -37,7 +37,14 @@ namespace NetworkMonitor.LLM.Services
 
             // Define get_cmd_processor_help
             fn_get_cmd_processor_help = new FunctionDefinitionBuilder("get_cmd_processor_help", "Get help information for a specific cmd processor type on a given agent.")
-                .AddParameter("cmd_processor_type", PropertyDefinition.DefineString("The name of the cmd processor. Case sensitive."))
+                .AddParameter("cmd_processor_type", PropertyDefinition.DefineString("The name of the cmd processor to get help for. Case sensitive."))
+                .AddParameter("agent_location", PropertyDefinition.DefineString("The agent location where the cmd processor resides."))
+                .Validate()
+                .Build();
+            
+             // Define get_cmd_processor_source_code
+            fn_get_cmd_processor_help = new FunctionDefinitionBuilder("get_cmd_processor_source_code", "Get the source code for a specific cmd processor type on a given agent.")
+                .AddParameter("cmd_processor_type", PropertyDefinition.DefineString("The name of the cmd processor to get the source code for. Case sensitive."))
                 .AddParameter("agent_location", PropertyDefinition.DefineString("The agent location where the cmd processor resides."))
                 .Validate()
                 .Build();
