@@ -153,6 +153,7 @@ using System.Net;
 
 Important: Ensure that the source_code parameter is accurately formatted and escaped according to JSON standards.
 Also make sure not to include word CmdProcessor in the cmd_processor_type. For example if you want to call the cmd processor HttpTest then cmd_processor_type is HttpTest and the class name is HttpTestCmdProcessor.
+Use _rootFolder for file operations as this has read write access.
 
 If the user requests to add a cmd processor, produce a call to add_cmd_processor with the cmd_processor_type, the agent_location, and the .NET source code correctly escaped for json.
 
