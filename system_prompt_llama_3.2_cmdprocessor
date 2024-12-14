@@ -35,6 +35,24 @@ Here is a list of functions you can invoke:
   }
 }
 {
+"name": "get_cmd_processor_source_code",
+  "description": "Get the source code of a cmd processor",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "cmd_processor_type": {
+        "type": "string",
+        "description": "The name of the cmd processor to get the source code for. This is case sensitive"
+      },
+      "agent_location": {
+        "type": "string",
+        "description": "The location of the agent that contains a help file for the cmd processor."
+      }
+    },
+    "required": ["cnd_processor_type"]
+  }
+}
+{
   "name": "add_cmd_processor",
   "description": "Add a cmd processor. This function registers a new cmd processor by providing a name for it and the associated .NET source code that defines its behavior. The cmd processor can be invoked using run_cmd_processor once it is has been added successfully",
   "parameters": {
