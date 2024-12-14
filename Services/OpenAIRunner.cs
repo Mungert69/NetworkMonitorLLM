@@ -133,7 +133,7 @@ public class OpenAIRunner : ILLMRunner
             throw new Exception($"No TurboLLM {_serviceID} Assistants found for session {serviceObj.SessionId}. Try reloading the Assistant or refreshing the page. If the problems persists contact support@freenetworkmontior.click");
         }
 
-        if (serviceObj.IsFunctionStillRunning)
+        if (serviceObj.IsFunctionStillRunning && serviceObj.IsFunctionCallResponse)
         {
             //TODO work out how to use function still running messages
             _logger.LogInformation("Ignoring FunctionStillRunning message.");
