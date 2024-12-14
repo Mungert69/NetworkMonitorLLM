@@ -97,6 +97,7 @@ public abstract class CmdProcessor
     protected ILocalCmdProcessorStates _cmdProcessorStates;
     protected IRabbitRepo _rabbitRepo;
     protected NetConnectConfig _netConfig;
+    protected string _rootFolder; // the folder to read and write files to.
 
     public CmdProcessor(ILogger logger, ILocalCmdProcessorStates cmdProcessorStates, IRabbitRepo rabbitRepo, NetConnectConfig netConfig)
     {

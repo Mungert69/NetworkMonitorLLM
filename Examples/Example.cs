@@ -70,6 +70,7 @@ namespace NetworkMonitor.Connection
                         result.Success = false;
                         result.Message = $"FTP connection failed. Error: {ex.Message}";
                     }
+                     LogErrorToFile(result.Message);
                 }
             }
             catch (Exception ex)
@@ -77,6 +78,7 @@ namespace NetworkMonitor.Connection
                 _logger.LogError($"Error testing FTP connection: {ex.Message}");
                 result.Success = false;
                 result.Message = $"Error testing FTP connection: {ex.Message}";
+                LogErrorToFile(result.Message);
             }
             return result;
         }
@@ -112,6 +114,30 @@ Examples:
             }
 
             return args;
+        }
+        private void LogErrorToFile(string errorMessage)
+        {
+            try
+            {
+                // Ensure the _rootFolder directory exists
+                if (string.IsNullOrEmpty(_rootFolder))
+                {
+                    _logger.LogError("Error: _rootFolder is not set.");
+                    return;
+                }
+
+                var logDirectory = Path.Combine(_rootFolder, "logs");
+                Directory.CreateDirectory(logDirectory); // Create directory if it doesn't exist
+
+                var logFilePath = Path.Combine(logDirectory, $"{GetType().Name}.log");
+                var logMessage = $"{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} - {errorMessage}\n";
+
+                File.AppendAllText(logFilePath, logMessage); // Append the error message to the log file
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Failed to write to error log file: {ex.Message}");
+            }
         }
     }
 }
