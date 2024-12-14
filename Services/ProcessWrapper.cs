@@ -31,6 +31,7 @@ public class ProcessWrapper
     public bool HasStarted => _hasStarted;
     public virtual void Kill() => _process.Kill();
     public virtual void Dispose() => _process.Dispose();
+    public virtual int Id => _process.Id;
     public virtual void Start()
     {
         _process.Start();
@@ -52,7 +53,16 @@ public class ProcessWrapper
     {
         return await _process.StandardOutput.BaseStream.ReadAsync(buffer, offset, count);
     }
-    // Add any other methods or properties you need to mock
+     // New WaitForExit wrapper
+    public virtual bool WaitForExit(int milliseconds)
+    {
+        return _process.WaitForExit(milliseconds);
+    }
+
+    public virtual void WaitForExit()
+    {
+        _process.WaitForExit();
+    }
 }
 public interface IStreamReader
 {

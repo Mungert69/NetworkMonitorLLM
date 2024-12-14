@@ -110,8 +110,8 @@ public class LLMProcessRunner : ILLMRunner
     }
     public async Task StartProcess(LLMServiceObj serviceObj, DateTime currentTime)
     {
-          if (_mlParams.StartOnlyOneFreeLLM && serviceObj.LlmChainStartName != "monitor" && !serviceObj.IsSystemLlm) return;// throw new Exception($"The advanced {serviceObj.LlmChainStartName} assistant is only available with TurboLLM. However the basic monitor assistant is still available");
-      
+        if (_mlParams.StartOnlyOneFreeLLM && serviceObj.LlmChainStartName != "monitor" && !serviceObj.IsSystemLlm) return;// throw new Exception($"The advanced {serviceObj.LlmChainStartName} assistant is only available with TurboLLM. However the basic monitor assistant is still available");
+
         _isStateStarting = true;
         _isStateReady = false;
         await _processRunnerSemaphore.WaitAsync(); // Wait to enter the semaphore
@@ -204,6 +204,7 @@ public class LLMProcessRunner : ILLMRunner
         _isStateReady = true;
         _isStateFailed = false;
     }
+
     public async Task RemoveProcess(string sessionId)
     {
         _isStateReady = false;
@@ -213,46 +214,83 @@ public class LLMProcessRunner : ILLMRunner
             _isStateReady = true;
             throw new Exception("Process is not running for this session");
         }
-        // Stop broadcaster if running.
-        ITokenBroadcaster? tokenBroadcaster;
-        if (_tokenBroadcasters.TryGetValue(sessionId, out tokenBroadcaster))
+
+        if (_tokenBroadcasters.TryRemove(sessionId, out var tokenBroadcaster))
         {
-            await tokenBroadcaster.ReInit(sessionId);
-            _tokenBroadcasters.TryRemove(sessionId, out _);
+            try
+            {
+                // Call ReInit to gracefully cancel any ongoing operations
+                await tokenBroadcaster.ReInit(sessionId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Failed to reinitialize token broadcaster for sessionId {sessionId}: {ex.Message}");
+            }
+            finally
+            {
+                // Dispose of the token broadcaster if it implements IDisposable
+                if (tokenBroadcaster is IDisposable disposableBroadcaster)
+                {
+                    disposableBroadcaster.Dispose();
+                }
+
+                // Nullify the reference to ensure cleanup
+                tokenBroadcaster = null;
+            }
         }
-        _logger.LogInformation($" LLM Service : Remove Process for sessionsId {sessionId}");
+
+
+        _logger.LogInformation($"LLM Service: Attempting to remove process for sessionId {sessionId}");
         try
         {
             if (process != null && !process.HasExited)
             {
+                // Send kill signal
                 process.Kill();
-                await Task.Delay(5000);
-                // Send second kill as it needs two ctrl-c to exit llama-cli
-                if (process != null && !process.HasExited)
+
+                // Wait for process to exit
+                if (!process.WaitForExit(5000)) // Wait 5 seconds
                 {
-                    process.Kill();
+                    _logger.LogWarning($"Process for sessionId {sessionId} did not exit after first Kill attempt. Retrying...");
+                    process.Kill(); // Retry kill
+                    if (!process.WaitForExit(3000)) // Wait additional 3 seconds
+                    {
+                        _logger.LogWarning($"Process did not exit gracefully for sessionId {sessionId}. Attempting forceful termination.");
+                        ProcessKiller.ForceKillProcess(process);
+                    }
                 }
             }
         }
+        catch (Exception ex)
+        {
+            _logger.LogError($"Error occurred while removing process for sessionId {sessionId}: {ex.Message}");
+            _logger.LogError($"Error while shutting down process for sessionId {sessionId}: {ex.Message}");
+            ProcessKiller.ForceKillProcess(process);
+        }
         finally
         {
-            _isStateFailed = true;
-            _isStateReady = true;
             if (process != null)
             {
                 process.Dispose();
                 _processes.TryRemove(sessionId, out _);
             }
+
             try
             {
                 _processRunnerSemaphore.Release();
             }
-            catch { }
+            catch
+            {
+                _logger.LogWarning("Semaphore release failed during RemoveProcess.");
+            }
 
+            _isStateFailed = true;
+            _isStateReady = true;
         }
 
-        _logger.LogInformation($"LLM process removed for session {sessionId}");
+        _logger.LogInformation($"LLM process successfully removed for sessionId {sessionId}");
     }
+
 
     public void SendCtrlC(string sessionId)
     {
@@ -276,7 +314,6 @@ public class LLMProcessRunner : ILLMRunner
         {
             _logger.LogInformation($"Failed to send CtrlC to session {sessionId}. Error was : {e.Message}");
         }
-
 
     }
     private async Task WaitForReadySignal(ProcessWrapper process)
