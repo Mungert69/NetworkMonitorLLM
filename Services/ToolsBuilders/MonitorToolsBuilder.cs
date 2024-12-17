@@ -43,6 +43,7 @@ public class MonitorToolsBuilder : IToolsBuilder
         fn_call_penetration_expert = BuildCallMetasploitFunction();
         fn_get_agents = BuildGetAgentsFunction();
         fn_call_search_expert=BuildCallSearchWebFunction();
+        fn_call_cmd_processor_expert = BuildCallCmdProcessorFunction();
 
 
         // Assuming these function references are defined in the current context
@@ -59,6 +60,7 @@ public class MonitorToolsBuilder : IToolsBuilder
             fn_call_security_expert,
             fn_call_penetration_expert,
             fn_call_search_expert,
+            fn_call_cmd_processor_expert,
             fn_run_busybox
         );
 
@@ -189,6 +191,15 @@ private FunctionDefinition BuildCallSearchWebFunction()
     return new FunctionDefinitionBuilder("call_search_expert", "Communicate a web search request to a remote search expert LLM. You will craft a detailed message describing the user's search query, which may involve general information retrieval, fact-checking, or finding specific data. The message should specify the search terms, any filters or constraints, and the type of information needed. If the search expert LLM requires additional information, present these queries to the user in simple terms and assist in formulating the appropriate responses based on your understanding")
         .AddParameter("message", PropertyDefinition.DefineString("The message to be sent to the search expert LLM, detailing the search request including the query, any specific requirements, and context for the search."))
         .AddParameter("agent_location", PropertyDefinition.DefineString("The agent location that will perform the web search. If no location is specified ask the user to choose from available agents to ensure the scan is executed from the correct network or geographic location."))
+        .Validate()
+        .Build();
+}
+
+private FunctionDefinition BuildCallCmdProcessorFunction()
+{
+    return new FunctionDefinitionBuilder("call_cmd_processor_expert", "Communicate a cmd processor management request to a remote cmd processor LLM expert. This expert can create, list, run, get help for, and delete custom .NET command processors on a specified agent. The user does not need to know the underlying details of .NET code or the cmd processor lifecycle; they only need to specify what they want done, and the expert will handle it. For example, the user might request to run a certain cmd processor with certain arguments, or create a new one with provided source code. The expert may ask for clarification or additional details if required.")
+        .AddParameter("message", PropertyDefinition.DefineString("A detailed message describing what you want the cmd processor expert to do. This can include requests such as 'list available cmd processors', 'add a new cmd processor named X', 'run the cmd processor with arguments Y', 'get help for a cmd processor', or 'delete a certain cmd processor'. The expert will parse this message and take the appropriate actions, possibly prompting for clarification if needed."))
+        .AddParameter("agent_location", PropertyDefinition.DefineString("The agent location on which the cmd processors should be managed. If no location is specified, the expert will ask the user to select an available agent."))
         .Validate()
         .Build();
 }
