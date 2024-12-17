@@ -115,8 +115,7 @@ public class OpenAIRunner : ILLMRunner
         return Task.CompletedTask;
     }
 
-
-
+  
     public async Task SendInputAndGetResponse(LLMServiceObj serviceObj)
     {
         _isStateReady = false;
@@ -137,7 +136,7 @@ public class OpenAIRunner : ILLMRunner
         {
             //TODO work out how to use function still running messages
             _logger.LogInformation("Ignoring FunctionStillRunning message.");
-             _isStateReady = true;
+            _isStateReady = true;
             return;
         }
 
@@ -385,14 +384,25 @@ public class OpenAIRunner : ILLMRunner
 
 
         _logger.LogInformation($"Function call detected: {functionName}");
-
-        var json = JsonSerializer.Serialize(fn!.ParseArguments());
+        string json="";
+        bool isValidJson=true;
+        try
+        {
+            json = JsonSerializer.Serialize(fn!.ParseArguments());
+        }
+        catch (Exception e)
+        {
+            isValidJson=false;
+            json =$"{{\"invalid_json_error\" : \"{e.Message}\"}}";
+        }
+       
         responseServiceObj.UserInput = serviceObj.UserInput;
         responseServiceObj.LlmMessage = "</functioncall>";
         if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
 
         var functionResponseServiceObj = new LLMServiceObj(serviceObj)
-        {
+        {   
+            IsFunctionCallError=!isValidJson,
             IsFunctionCall = true,
             JsonFunction = json,
             FunctionName = functionName
