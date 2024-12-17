@@ -27,6 +27,7 @@ public class MonitorToolsBuilder : IToolsBuilder
     private readonly FunctionDefinition fn_call_penetration_expert;
     private readonly FunctionDefinition fn_get_agents;
     private readonly FunctionDefinition fn_call_search_expert;
+     private readonly FunctionDefinition fn_call_cmd_processor_expert;
 
     public MonitorToolsBuilder(UserInfo userInfo)
     {
