@@ -167,7 +167,7 @@ public class MonitorToolsBuilder : IToolsBuilder
 {
     return new FunctionDefinitionBuilder("are_functions_running", "Check if functions have completed.")
         .AddParameter("message_id", PropertyDefinition.DefineString("The message_id that is associated with the function calls"))
-        .AddParameter("auto_check_interval_seconds", PropertyDefinition.DefineInteger("The interval in seconds for periodic checks. Use 0 for a single immediate status check, >0 to start or update periodic checks, and -1 to cancel periodic checks. Optional. Default is 0."))
+        .AddParameter("auto_check_interval_seconds", PropertyDefinition.DefineInteger("The interval in seconds for periodic checks. Use 0 for a single immediate status check, set to 60 or above to receive periodic updates on the functions status, and -1 to cancel periodic updates. Optional. Default is 0."))
         .Validate()
         .Build();
 }
