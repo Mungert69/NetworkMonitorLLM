@@ -116,7 +116,7 @@ public class OpenAIRunner : ILLMRunner
         return Task.CompletedTask;
     }
 
-  
+
     public async Task SendInputAndGetResponse(LLMServiceObj serviceObj)
     {
         _isStateReady = false;
@@ -154,109 +154,150 @@ public class OpenAIRunner : ILLMRunner
             var messageHistory = _messageHistories.GetOrAdd(serviceObj.MessageID, new List<ChatMessage>());
             ChatMessage chatMessage;
 
-            if (serviceObj.IsFunctionCallResponse)
+            if (serviceObj.IsFunctionCallStatus)
             {
-                canAddFuncMessage = HandleFunctionCallResponse(serviceObj, messageHistory, responseServiceObj);
+                canAddFuncMessage = true;
+                // Create a unique ID for the fake function call
+                var fakeFunctionCallId = Guid.NewGuid().ToString("N");
+
+                // Simulate a previous user message that would have triggered a function call
+                var fakeUserTriggerMessage = ChatMessage.FromUser($"Can you check the status the {serviceObj.FunctionName} call");
+                messageHistory.Add(fakeUserTriggerMessage);
+
+                // Create a fake assistant message that represents a function call
+                var fakeFunctionCallMessage = ChatMessage.FromAssistant("");
+                fakeFunctionCallMessage.ToolCalls = new List<ToolCall>()
+                    {
+                        new ToolCall
+                            {
+                                Type = "function", 
+                                Id = fakeFunctionCallId,
+                                FunctionCall = new FunctionCall
+                                {
+                                    Name = "are_functions_running",
+                                    Arguments = $"{{\"message_id\":\"{serviceObj.MessageID}\"}}"
+                                }
+                            }
+                    };
+
+            // Add the fake function call to the message history
+            messageHistory.Add(fakeFunctionCallMessage);
+
+            // Create a fake function response as if the tool returned a result
+            var fakeFunctionResponseMessage = ChatMessage.FromTool(serviceObj.UserInput, fakeFunctionCallId);
+            fakeFunctionResponseMessage.Name = "are_functions_running";
+
+            // Add the fake function response to the message history
+            messageHistory.Add(fakeFunctionResponseMessage);
+
+            // Now the conversation history looks like the assistant previously made a function call
+            // and the corresponding function response was provided by the tool.
+        }
+
+
+            else if (serviceObj.IsFunctionCallResponse)
+        {
+            canAddFuncMessage = HandleFunctionCallResponse(serviceObj, messageHistory, responseServiceObj);
+        }
+        else
+        {
+            chatMessage = ChatMessage.FromUser(serviceObj.UserInput);
+            responseServiceObj.LlmMessage = "<User:> " + serviceObj.UserInput + "\n\n";
+            if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+            messageHistory.Add(chatMessage);
+        }
+
+        if (!serviceObj.IsFunctionCallResponse || (serviceObj.IsFunctionCallResponse && canAddFuncMessage))
+        {
+            var currentHistory = new List<ChatMessage>(history.Concat(messageHistory));
+            ChatCompletionCreateResponse completionResult;
+            if (_toolsBuilder.Tools == null || _toolsBuilder.Tools.Count == 0)
+            {
+                completionResult = await _openAiService.ChatCompletion.CreateCompletion(new ChatCompletionCreateRequest
+                {
+                    Messages = currentHistory,
+                    MaxTokens = 10000,
+                    Model = _gptModel
+                });
             }
             else
             {
-                chatMessage = ChatMessage.FromUser(serviceObj.UserInput);
-                responseServiceObj.LlmMessage = "<User:> " + serviceObj.UserInput + "\n\n";
-                if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
-                messageHistory.Add(chatMessage);
+                completionResult = await _openAiService.ChatCompletion.CreateCompletion(new ChatCompletionCreateRequest
+                {
+                    Messages = currentHistory,
+                    Tools = _toolsBuilder.Tools, // Your pre-defined tools
+                    ToolChoice = ToolChoice.Auto,
+                    MaxTokens = 10000,
+                    Model = _gptModel
+                });
             }
 
-            if (!serviceObj.IsFunctionCallResponse || (serviceObj.IsFunctionCallResponse && canAddFuncMessage))
+
+            if (completionResult.Successful)
             {
-                var currentHistory = new List<ChatMessage>(history.Concat(messageHistory));
-                ChatCompletionCreateResponse completionResult;
-                if (_toolsBuilder.Tools == null || _toolsBuilder.Tools.Count == 0)
+
+                responseServiceObj.TokensUsed = completionResult.Usage.TotalTokens;
+                if (completionResult.Usage != null && completionResult.Usage.PromptTokensDetails != null)
                 {
-                    completionResult = await _openAiService.ChatCompletion.CreateCompletion(new ChatCompletionCreateRequest
-                    {
-                        Messages = currentHistory,
-                        MaxTokens = 10000,
-                        Model = _gptModel
-                    });
+                    _logger.LogInformation($"Cached Prompt Tokens {completionResult.Usage.PromptTokensDetails.CachedTokens}");
                 }
-                else
+                ChatChoiceResponse choice = completionResult.Choices.First();
+                var responseChoiceStr = choice.Message.Content ?? "";
+
+                if (choice.Message.ToolCalls != null && choice.Message.ToolCalls.Any())
                 {
-                    completionResult = await _openAiService.ChatCompletion.CreateCompletion(new ChatCompletionCreateRequest
+                    _pendingFunctionCalls.TryAdd(serviceObj.MessageID, choice.Message);
+                    // Create a unique placeholder ID for tracking
+
+                    // Add a lightweight placeholder to history indicating a tool call is in progress.
+                    // This avoids the OpenAI API error of having an incomplete response.
+                    var placeholderUser = ChatMessage.FromUser($"{serviceObj.UserInput} : us message_id <|{serviceObj.MessageID}|> to track the function calls");
+                    history.Add(placeholderUser);
+                    var assistantMessage = new StringBuilder($"I have called the following functions : ");
+                    foreach (ToolCall fnCall in choice.Message.ToolCalls)
                     {
-                        Messages = currentHistory,
-                        Tools = _toolsBuilder.Tools, // Your pre-defined tools
-                        ToolChoice = ToolChoice.Auto,
-                        MaxTokens = 10000,
-                        Model = _gptModel
-                    });
-                }
-
-
-                if (completionResult.Successful)
-                {
-
-                    responseServiceObj.TokensUsed = completionResult.Usage.TotalTokens;
-                    if (completionResult.Usage != null && completionResult.Usage.PromptTokensDetails != null)
-                    {
-                        _logger.LogInformation($"Cached Prompt Tokens {completionResult.Usage.PromptTokensDetails.CachedTokens}");
-                    }
-                    ChatChoiceResponse choice = completionResult.Choices.First();
-                    var responseChoiceStr = choice.Message.Content ?? "";
-
-                    if (choice.Message.ToolCalls != null && choice.Message.ToolCalls.Any())
-                    {
-                        _pendingFunctionCalls.TryAdd(serviceObj.MessageID, choice.Message);
-                        // Create a unique placeholder ID for tracking
-
-                        // Add a lightweight placeholder to history indicating a tool call is in progress.
-                        // This avoids the OpenAI API error of having an incomplete response.
-                        var placeholderUser = ChatMessage.FromUser($"{serviceObj.UserInput} : us message_id <|{serviceObj.MessageID}|> to track the function calls");
-                        history.Add(placeholderUser);
-                        var assistantMessage = new StringBuilder($"I have called the following functions : ");
-                        foreach (ToolCall fnCall in choice.Message.ToolCalls)
+                        if (fnCall.FunctionCall != null)
                         {
-                            if (fnCall.FunctionCall != null)
-                            {
-                                var funcName = fnCall.FunctionCall.Name;
-                                var funcArgs = fnCall.FunctionCall.Arguments;
-                                assistantMessage.Append($" Name {funcName} Arguments {funcArgs} : ");
-                                // Handle the function call asynchronously and remove the placeholder when complete
-                                await HandleFunctionCallAsync(serviceObj, fnCall, responseServiceObj, assistantChatMessage);
-                                await Task.Delay(500);
-                            }
+                            var funcName = fnCall.FunctionCall.Name;
+                            var funcArgs = fnCall.FunctionCall.Arguments;
+                            assistantMessage.Append($" Name {funcName} Arguments {funcArgs} : ");
+                            // Handle the function call asynchronously and remove the placeholder when complete
+                            await HandleFunctionCallAsync(serviceObj, fnCall, responseServiceObj, assistantChatMessage);
+                            await Task.Delay(500);
                         }
-                        assistantMessage.Append($" using message_id {serviceObj.MessageID} . Please wait it may take some time to complete.");
-                        var placeholderAssistant = ChatMessage.FromAssistant(assistantMessage.ToString());
-                        history.Add(placeholderAssistant);
-
                     }
-                    else
-                    {
-                        await ProcessAssistantMessageAsync(choice, responseServiceObj, assistantChatMessage, messageHistory, history, serviceObj);
-                    }
-
-
-
-                    if (!string.IsNullOrEmpty(assistantChatMessage.Content))
-                    {
-                        history.AddRange(messageHistory);
-                        history.Add(assistantChatMessage);
-                    }
-                    TruncateTokens(history, serviceObj);
+                    assistantMessage.Append($" using message_id {serviceObj.MessageID} . Please wait it may take some time to complete.");
+                    var placeholderAssistant = ChatMessage.FromAssistant(assistantMessage.ToString());
+                    history.Add(placeholderAssistant);
 
                 }
                 else
                 {
-                    if (completionResult.Error != null)
-                    {
-                        _logger.LogError($" {_serviceID} Assistant OpenAI Error : {completionResult.Error.Message}");
-                        throw new Exception($" {_serviceID} Assistant OpenAI Error : {completionResult.Error.Message}");
-                    }
+                    await ProcessAssistantMessageAsync(choice, responseServiceObj, assistantChatMessage, messageHistory, history, serviceObj);
                 }
-                await _responseProcessor.UpdateTokensUsed(responseServiceObj);
-            }
 
+
+
+                if (!string.IsNullOrEmpty(assistantChatMessage.Content))
+                {
+                    history.AddRange(messageHistory);
+                    history.Add(assistantChatMessage);
+                }
+                TruncateTokens(history, serviceObj);
+
+            }
+            else
+            {
+                if (completionResult.Error != null)
+                {
+                    _logger.LogError($" {_serviceID} Assistant OpenAI Error : {completionResult.Error.Message}");
+                    throw new Exception($" {_serviceID} Assistant OpenAI Error : {completionResult.Error.Message}");
+                }
+            }
+            await _responseProcessor.UpdateTokensUsed(responseServiceObj);
         }
+
+    }
         catch
         {
             throw;
@@ -269,259 +310,259 @@ public class OpenAIRunner : ILLMRunner
     }
 
     private bool HandleFunctionCallResponse(LLMServiceObj serviceObj, List<ChatMessage> messageHistory, LLMServiceObj responseServiceObj)
+{
+    ChatMessage funcResponseChatMessage;
+    // Check if there are any pending function calls associated with the current message
+    _pendingFunctionCalls.TryGetValue(serviceObj.MessageID, out var funcCallChatMessage);
+    if (funcCallChatMessage != null && funcCallChatMessage.ToolCalls != null)
     {
-        ChatMessage funcResponseChatMessage;
-        // Check if there are any pending function calls associated with the current message
-        _pendingFunctionCalls.TryGetValue(serviceObj.MessageID, out var funcCallChatMessage);
-        if (funcCallChatMessage != null && funcCallChatMessage.ToolCalls != null)
+        // Check if a response for the given FunctionCallId already exists in the dictionary
+        if (_pendingFunctionResponses.TryGetValue(serviceObj.FunctionCallId, out var existingFuncResponseChatMessage))
         {
-            // Check if a response for the given FunctionCallId already exists in the dictionary
-            if (_pendingFunctionResponses.TryGetValue(serviceObj.FunctionCallId, out var existingFuncResponseChatMessage))
-            {
-                // Update the existing response with the new content
-                funcResponseChatMessage = existingFuncResponseChatMessage;
-                funcResponseChatMessage.Content = serviceObj.UserInput;
-            }
-            else
-            {
-                // Create a new ChatMessage for the function response if it doesn't exist
-                funcResponseChatMessage = ChatMessage.FromTool("", serviceObj.FunctionCallId);
-                funcResponseChatMessage.Name = serviceObj.FunctionName;
-                funcResponseChatMessage.Content = serviceObj.UserInput;
-
-                // Add the new response to the dictionary
-                _pendingFunctionResponses.TryAdd(serviceObj.FunctionCallId, funcResponseChatMessage);
-            }
-
-            // Add the response content to the corresponding chat message
+            // Update the existing response with the new content
+            funcResponseChatMessage = existingFuncResponseChatMessage;
             funcResponseChatMessage.Content = serviceObj.UserInput;
-            responseServiceObj.LlmMessage = "<Function Response:> " + serviceObj.UserInput + "\n\n";
-
-            // Process the LLM output if it's the primary LLM
-            if (_isPrimaryLlm) _responseProcessor.ProcessLLMOutput(responseServiceObj);
-
-            bool allResponsesReceived = funcCallChatMessage.ToolCalls
-                .All(tc => _pendingFunctionResponses.ContainsKey(tc.Id!));
-
-
-            if (allResponsesReceived)
-            {
-                // Add the function call and responses to the message history
-                messageHistory.Add(funcCallChatMessage);
-
-                foreach (var toolCall in funcCallChatMessage.ToolCalls)
-                {
-                    if (_pendingFunctionResponses.TryGetValue(toolCall.Id!, out var response))
-                    {
-
-                        messageHistory.Add(response);
-                        _pendingFunctionResponses.TryRemove(toolCall.Id!, out _);
-                    }
-                }
-
-                // Clean up the pending function call
-                _pendingFunctionCalls.TryRemove(serviceObj.MessageID, out _);
-                // Mark the function call as complete
-                responseServiceObj.LlmMessage = "</functioncall-complete>";
-                if (_isPrimaryLlm) _responseProcessor.ProcessLLMOutput(responseServiceObj);
-
-
-                if (_sessionHistories.TryGetValue(serviceObj.SessionId, out var history))
-                {
-                    lock (history)
-                    {
-                        // Loop through the list from end to start to safely remove multiple items by index
-                        for (int i = history.Count - 1; i >= 0; i--)
-                        {
-                            if (history[i].Content != null && history[i].Content.Contains("<|" + serviceObj.MessageID + "|>"))
-                            {
-                                history.RemoveAt(i);
-                            }
-                        }
-                    }
-
-
-                    _logger.LogInformation($"Successfully removed all placeholder messages with ID {serviceObj.MessageID} from history for session {serviceObj.SessionId}.");
-                }
-                else
-                {
-                    var message = $"Function Error: Could not find history for SessionID {serviceObj.SessionId} to remove placeholders.";
-                    responseServiceObj.LlmMessage = message;
-                    if (_isPrimaryLlm || _isSystemLlm) _responseProcessor.ProcessLLMOutputError(responseServiceObj);
-                    _logger.LogError(message);
-                }
-
-                return true; // Indicates that the function call response was handled successfully
-
-            }
         }
         else
         {
-            responseServiceObj.LlmMessage = $"Function Error: No pending function call found for Message ID: {serviceObj.MessageID}\n\n";
+            // Create a new ChatMessage for the function response if it doesn't exist
+            funcResponseChatMessage = ChatMessage.FromTool("", serviceObj.FunctionCallId);
+            funcResponseChatMessage.Name = serviceObj.FunctionName;
+            funcResponseChatMessage.Content = serviceObj.UserInput;
 
-            // Process the LLM output if it's the primary LLM
-            if (_isPrimaryLlm || _isSystemLlm) _responseProcessor.ProcessLLMOutputError(responseServiceObj);
-
-            _logger.LogWarning($"No pending function call found for Message ID: {serviceObj.MessageID}");
+            // Add the new response to the dictionary
+            _pendingFunctionResponses.TryAdd(serviceObj.FunctionCallId, funcResponseChatMessage);
         }
 
+        // Add the response content to the corresponding chat message
+        funcResponseChatMessage.Content = serviceObj.UserInput;
+        responseServiceObj.LlmMessage = "<Function Response:> " + serviceObj.UserInput + "\n\n";
 
-        return false; // Indicates that the function call response could not be fully handled
-    }
+        // Process the LLM output if it's the primary LLM
+        if (_isPrimaryLlm) _responseProcessor.ProcessLLMOutput(responseServiceObj);
 
-    private async Task HandleFunctionCallAsync(LLMServiceObj serviceObj, ToolCall fnCall, LLMServiceObj responseServiceObj, ChatMessage assistantChatMessage)
-    {
-        var fn = fnCall.FunctionCall;
+        bool allResponsesReceived = funcCallChatMessage.ToolCalls
+            .All(tc => _pendingFunctionResponses.ContainsKey(tc.Id!));
 
-        if (fn == null || fnCall.Id == null)
+
+        if (allResponsesReceived)
         {
-            throw new Exception($" {_serviceID} Assistant OpenAI Error : Api call returned a Function with no Id");
-        }
-        string functionName = fn?.Name ?? "N/A";
+            // Add the function call and responses to the message history
+            messageHistory.Add(funcCallChatMessage);
 
-
-        serviceObj.FunctionCallId = fnCall.Id;
-        serviceObj.FunctionName = functionName;
-
-
-        _logger.LogInformation($"Function call detected: {functionName}");
-        string json="";
-        bool isValidJson=true;
-        try
-        {
-            json = JsonSerializer.Serialize(fn!.ParseArguments());
-        }
-        catch (Exception e)
-        {
-            isValidJson=false;
-            json =$"{{\"invalid_json_error\" : \"{e.Message}\"}}";
-        }
-       
-        responseServiceObj.UserInput = serviceObj.UserInput;
-        responseServiceObj.LlmMessage = "</functioncall>";
-        if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
-
-        var functionResponseServiceObj = new LLMServiceObj(serviceObj)
-        {   
-            IsFunctionCallError=!isValidJson,
-            IsFunctionCall = true,
-            JsonFunction = json,
-            FunctionName = functionName
-        };
-        _logger.LogInformation($" Sending json: {json}");
-
-        await _responseProcessor.ProcessFunctionCall(functionResponseServiceObj);
-
-        responseServiceObj.LlmMessage = "<Function Call:> " + functionName + " " + json + "\n";
-        if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
-        // This is disabled until I find out how to set this without confusing chatgpt
-        //assistantChatMessage.Content = $"Please wait I am calling the function {functionName}. Some functions take a long time to complete so please be patient...";
-    }
-
-    private async Task ProcessAssistantMessageAsync(ChatChoiceResponse choice, LLMServiceObj responseServiceObj, ChatMessage assistantChatMessage, List<ChatMessage> messageHistory, List<ChatMessage> history, LLMServiceObj serviceObj)
-    {
-        var responseChoiceStr = choice.Message.Content ?? "";
-        _logger.LogInformation($"Assistant output : {responseChoiceStr}");
-
-        if (choice.FinishReason == "stop")
-        {
-            assistantChatMessage.Content = responseChoiceStr;
-            responseServiceObj.IsFunctionCallResponse = false;
-            responseServiceObj.LlmMessage = "<Assistant:> " + responseChoiceStr + "\n\n";
-            if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOuputInChunks(responseServiceObj);
-            else
+            foreach (var toolCall in funcCallChatMessage.ToolCalls)
             {
-                if (!_isSystemLlm) responseServiceObj.IsFunctionCallResponse = true;
-                responseServiceObj.LlmMessage = responseChoiceStr;
-                await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+                if (_pendingFunctionResponses.TryGetValue(toolCall.Id!, out var response))
+                {
+
+                    messageHistory.Add(response);
+                    _pendingFunctionResponses.TryRemove(toolCall.Id!, out _);
+                }
             }
 
-            messageHistory.Add(assistantChatMessage);
-
-        }
-
-        responseServiceObj.LlmMessage = "<end-of-line>";
-        if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
-    }
+            // Clean up the pending function call
+            _pendingFunctionCalls.TryRemove(serviceObj.MessageID, out _);
+            // Mark the function call as complete
+            responseServiceObj.LlmMessage = "</functioncall-complete>";
+            if (_isPrimaryLlm) _responseProcessor.ProcessLLMOutput(responseServiceObj);
 
 
-    private void TruncateTokens(List<ChatMessage> history, LLMServiceObj serviceObj)
-    {
-        int tokenCount = CalculateTokens(history);
-        _logger.LogInformation($"History Token count: {tokenCount}");
-
-        if (tokenCount > _maxTokens)
-        {
-            _logger.LogInformation($"Token count ({tokenCount}) exceeded the limit, truncating history.");
-
-            // Keep the first system message intact
-            var systemMessage = history.First();
-            history = history.Skip(1).ToList();
-
-            // Remove messages until the token count is under the limit
-            while (tokenCount > _maxTokens)
+            if (_sessionHistories.TryGetValue(serviceObj.SessionId, out var history))
             {
-                var firstMessage = history[0];
-                if (firstMessage.Role == "user")
+                lock (history)
                 {
-                    // Remove the user message
-                    history.RemoveAt(0);
-
-                    // Remove the corresponding assistant response, which could be a regular response or a tool call
-                    if (history.Count > 0 && history[0].Role == "assistant")
+                    // Loop through the list from end to start to safely remove multiple items by index
+                    for (int i = history.Count - 1; i >= 0; i--)
                     {
-                        var assistantMessage = history[0];
-                        history.RemoveAt(0); // Remove the assistant response or tool call
-
-                        // If the assistant message is a tool call, remove all tool responses associated with it
-                        if (assistantMessage.ToolCalls != null && assistantMessage.ToolCalls.Any())
+                        if (history[i].Content != null && history[i].Content.Contains("<|" + serviceObj.MessageID + "|>"))
                         {
-                            foreach (var toolCall in assistantMessage.ToolCalls)
-                            {
-                                history.RemoveAll(m => m.ToolCallId == toolCall.Id);
-                            }
+                            history.RemoveAt(i);
                         }
                     }
                 }
-                else if (firstMessage.ToolCalls != null && firstMessage.ToolCalls.Any())
-                {
-                    // The first message is an assistant tool call, remove it and all associated responses
-                    history.RemoveAt(0); // Remove the assistant tool call itself
 
-                    foreach (var toolCall in firstMessage.ToolCalls)
-                    {
-                        history.RemoveAll(m => m.ToolCallId == toolCall.Id);
-                    }
-                }
-                else
-                {
-                    // If the first message is anything else (e.g., an orphaned assistant response), remove it to maintain consistency
-                    history.RemoveAt(0);
-                }
-                // Recalculate tokens after removal
-                tokenCount = CalculateTokens(history);
+
+                _logger.LogInformation($"Successfully removed all placeholder messages with ID {serviceObj.MessageID} from history for session {serviceObj.SessionId}.");
+            }
+            else
+            {
+                var message = $"Function Error: Could not find history for SessionID {serviceObj.SessionId} to remove placeholders.";
+                responseServiceObj.LlmMessage = message;
+                if (_isPrimaryLlm || _isSystemLlm) _responseProcessor.ProcessLLMOutputError(responseServiceObj);
+                _logger.LogError(message);
             }
 
-            // Re-add the system message to the beginning of the list
-            history.Insert(0, systemMessage);
+            return true; // Indicates that the function call response was handled successfully
 
-            // Update the session history
-            _sessionHistories[serviceObj.SessionId] = history;
-            _logger.LogInformation($"History truncated to {tokenCount} tokens.");
         }
     }
-
-    private int CalculateTokens(IEnumerable<ChatMessage> messages)
+    else if (serviceObj.IsFunctionCallStatus==false)
     {
-        int tokenCount = 0;
+        responseServiceObj.LlmMessage = $"Function Error: No pending function call found for Message ID: {serviceObj.MessageID}\n\n";
 
-        foreach (var message in messages)
+        // Process the LLM output if it's the primary LLM
+        if (_isPrimaryLlm || _isSystemLlm) _responseProcessor.ProcessLLMOutputError(responseServiceObj);
+
+        _logger.LogWarning($"No pending function call found for Message ID: {serviceObj.MessageID}");
+    }
+
+
+    return false; // Indicates that the function call response could not be fully handled
+}
+
+private async Task HandleFunctionCallAsync(LLMServiceObj serviceObj, ToolCall fnCall, LLMServiceObj responseServiceObj, ChatMessage assistantChatMessage)
+{
+    var fn = fnCall.FunctionCall;
+
+    if (fn == null || fnCall.Id == null)
+    {
+        throw new Exception($" {_serviceID} Assistant OpenAI Error : Api call returned a Function with no Id");
+    }
+    string functionName = fn?.Name ?? "N/A";
+
+
+    serviceObj.FunctionCallId = fnCall.Id;
+    serviceObj.FunctionName = functionName;
+
+
+    _logger.LogInformation($"Function call detected: {functionName}");
+    string json = "";
+    bool isValidJson = true;
+    try
+    {
+        json = JsonSerializer.Serialize(fn!.ParseArguments());
+    }
+    catch (Exception e)
+    {
+        isValidJson = false;
+        json = $"{{\"invalid_json_error\" : \"{e.Message}\"}}";
+    }
+
+    responseServiceObj.UserInput = serviceObj.UserInput;
+    responseServiceObj.LlmMessage = "</functioncall>";
+    if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+
+    var functionResponseServiceObj = new LLMServiceObj(serviceObj)
+    {
+        IsFunctionCallError = !isValidJson,
+        IsFunctionCall = true,
+        JsonFunction = json,
+        FunctionName = functionName
+    };
+    _logger.LogInformation($" Sending json: {json}");
+
+    await _responseProcessor.ProcessFunctionCall(functionResponseServiceObj);
+
+    responseServiceObj.LlmMessage = "<Function Call:> " + functionName + " " + json + "\n";
+    if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+    // This is disabled until I find out how to set this without confusing chatgpt
+    //assistantChatMessage.Content = $"Please wait I am calling the function {functionName}. Some functions take a long time to complete so please be patient...";
+}
+
+private async Task ProcessAssistantMessageAsync(ChatChoiceResponse choice, LLMServiceObj responseServiceObj, ChatMessage assistantChatMessage, List<ChatMessage> messageHistory, List<ChatMessage> history, LLMServiceObj serviceObj)
+{
+    var responseChoiceStr = choice.Message.Content ?? "";
+    _logger.LogInformation($"Assistant output : {responseChoiceStr}");
+
+    if (choice.FinishReason == "stop")
+    {
+        assistantChatMessage.Content = responseChoiceStr;
+        responseServiceObj.IsFunctionCallResponse = false;
+        responseServiceObj.LlmMessage = "<Assistant:> " + responseChoiceStr + "\n\n";
+        if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOuputInChunks(responseServiceObj);
+        else
         {
-            //_logger.LogInformation($"History: {message.Content}");
-            if (!String.IsNullOrEmpty(message.Content)) tokenCount += TokenizerGpt3.TokenCount(message.Content);
+            if (!_isSystemLlm) responseServiceObj.IsFunctionCallResponse = true;
+            responseServiceObj.LlmMessage = responseChoiceStr;
+            await _responseProcessor.ProcessLLMOutput(responseServiceObj);
         }
 
-        return tokenCount;
+        messageHistory.Add(assistantChatMessage);
+
     }
+
+    responseServiceObj.LlmMessage = "<end-of-line>";
+    if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+}
+
+
+private void TruncateTokens(List<ChatMessage> history, LLMServiceObj serviceObj)
+{
+    int tokenCount = CalculateTokens(history);
+    _logger.LogInformation($"History Token count: {tokenCount}");
+
+    if (tokenCount > _maxTokens)
+    {
+        _logger.LogInformation($"Token count ({tokenCount}) exceeded the limit, truncating history.");
+
+        // Keep the first system message intact
+        var systemMessage = history.First();
+        history = history.Skip(1).ToList();
+
+        // Remove messages until the token count is under the limit
+        while (tokenCount > _maxTokens)
+        {
+            var firstMessage = history[0];
+            if (firstMessage.Role == "user")
+            {
+                // Remove the user message
+                history.RemoveAt(0);
+
+                // Remove the corresponding assistant response, which could be a regular response or a tool call
+                if (history.Count > 0 && history[0].Role == "assistant")
+                {
+                    var assistantMessage = history[0];
+                    history.RemoveAt(0); // Remove the assistant response or tool call
+
+                    // If the assistant message is a tool call, remove all tool responses associated with it
+                    if (assistantMessage.ToolCalls != null && assistantMessage.ToolCalls.Any())
+                    {
+                        foreach (var toolCall in assistantMessage.ToolCalls)
+                        {
+                            history.RemoveAll(m => m.ToolCallId == toolCall.Id);
+                        }
+                    }
+                }
+            }
+            else if (firstMessage.ToolCalls != null && firstMessage.ToolCalls.Any())
+            {
+                // The first message is an assistant tool call, remove it and all associated responses
+                history.RemoveAt(0); // Remove the assistant tool call itself
+
+                foreach (var toolCall in firstMessage.ToolCalls)
+                {
+                    history.RemoveAll(m => m.ToolCallId == toolCall.Id);
+                }
+            }
+            else
+            {
+                // If the first message is anything else (e.g., an orphaned assistant response), remove it to maintain consistency
+                history.RemoveAt(0);
+            }
+            // Recalculate tokens after removal
+            tokenCount = CalculateTokens(history);
+        }
+
+        // Re-add the system message to the beginning of the list
+        history.Insert(0, systemMessage);
+
+        // Update the session history
+        _sessionHistories[serviceObj.SessionId] = history;
+        _logger.LogInformation($"History truncated to {tokenCount} tokens.");
+    }
+}
+
+private int CalculateTokens(IEnumerable<ChatMessage> messages)
+{
+    int tokenCount = 0;
+
+    foreach (var message in messages)
+    {
+        //_logger.LogInformation($"History: {message.Content}");
+        if (!String.IsNullOrEmpty(message.Content)) tokenCount += TokenizerGpt3.TokenCount(message.Content);
+    }
+
+    return tokenCount;
+}
 
 }
