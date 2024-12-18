@@ -25,6 +25,8 @@ public static class ProcessKiller
             {
                 // Fallback to .NET Kill if OS is not specifically handled
                 process.Kill();
+                process.Dispose();
+                process=null;
             }
         }
         catch (Exception ex)
