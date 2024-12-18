@@ -211,7 +211,7 @@ public class LLMService : ILLMService
                     await _rabbitRepo.PublishAsync<LLMServiceObj>("llmServiceMessage", llmServiceObj);
                 }
 
-                if (!session.Runner.IsStateReady && llmServiceObj.IsFunctionCallResponse==false)
+                /*if (!session.Runner.IsStateReady && llmServiceObj.IsFunctionCallResponse==false)
                 {
                     result.Message = " Please wait the assistant is processing the last message..." + llmServiceObj.UserInput;
                     result.Success = false;
@@ -219,7 +219,7 @@ public class LLMService : ILLMService
                     llmServiceObj.ResultSuccess = false;
                     llmServiceObj.LlmMessage = MessageHelper.WarningMessage(result.Message);
                     await _rabbitRepo.PublishAsync<LLMServiceObj>("llmServiceMessage", llmServiceObj);
-                }
+                }*/
                 if (session.Runner.IsStateFailed)
                 {
                     result.Message = " The Assistant is stopped try reloading or refresh the page";

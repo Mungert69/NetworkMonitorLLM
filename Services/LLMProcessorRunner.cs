@@ -269,11 +269,22 @@ public class LLMProcessRunner : ILLMRunner
         }
         finally
         {
-            if (process != null)
+            try
             {
-                process.Dispose();
+                if (process != null)
+                {
+                    process.Dispose();
+                    process = null;
+
+                }
+
+            }
+            catch { }
+            finally
+            {
                 _processes.TryRemove(sessionId, out _);
             }
+
 
             try
             {
