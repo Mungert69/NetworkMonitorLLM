@@ -22,6 +22,7 @@ namespace NetworkMonitor.LLM.Services
         private readonly FunctionDefinition fn_add_cmd_processor;
         private readonly FunctionDefinition fn_run_cmd_processor;
         private readonly FunctionDefinition fn_delete_cmd_processor;
+        private readonly FunctionDefinition fn_get_cmd_processor_source_code;
 
         private readonly List<ToolDefinition> _tools;
 
@@ -43,11 +44,13 @@ namespace NetworkMonitor.LLM.Services
                 .Build();
             
              // Define get_cmd_processor_source_code
-            fn_get_cmd_processor_help = new FunctionDefinitionBuilder("get_cmd_processor_source_code", "Get the source code for a specific cmd processor type on a given agent.")
+            fn_get_cmd_processor_source_code = new FunctionDefinitionBuilder("get_cmd_processor_source_code", "Get the source code for a specific cmd processor type on a given agent.")
                 .AddParameter("cmd_processor_type", PropertyDefinition.DefineString("The name of the cmd processor to get the source code for. Case sensitive."))
                 .AddParameter("agent_location", PropertyDefinition.DefineString("The agent location where the cmd processor resides."))
                 .Validate()
                 .Build();
+
+                
 
             // Define add_cmd_processor
             fn_add_cmd_processor = new FunctionDefinitionBuilder("add_cmd_processor", "Add or update a cmd processor with provided source code to an agent.")
@@ -76,6 +79,7 @@ namespace NetworkMonitor.LLM.Services
             {
                 new ToolDefinition() { Function = fn_get_cmd_processor_list, Type = "function" },
                 new ToolDefinition() { Function = fn_get_cmd_processor_help, Type = "function" },
+                new ToolDefinition() { Function = fn_get_cmd_processor_source_code, Type = "function" },
                 new ToolDefinition() { Function = fn_add_cmd_processor, Type = "function" },
                 new ToolDefinition() { Function = fn_run_cmd_processor, Type = "function" },
                 new ToolDefinition() { Function = fn_delete_cmd_processor, Type = "function" }
