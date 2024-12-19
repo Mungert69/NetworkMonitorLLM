@@ -497,24 +497,6 @@ Here is a list of functions in JSON format that you can invoke:
     },
     "required": ["message_id"]
   }
-}
-{
-  "name": "call_cmd_processor_expert",
-  "description": "Communicate a cmd processor management request to a remote cmd processor LLM expert. This expert is another large language model that you can call. Its role is to act as a proxy and orchestrator, allowing you to manage, create, and customize .NET cmd processors on your chosen agent. These cmd processors can be thought of as dynamically loadable .NET code modules capable of performing any task that .NET code allows, from network queries and file operations to complex data processing and beyond. You do not need deep .NET or cmd processor knowledge; simply describe what you want. For example, you might request to list all available cmd processors, create a new one by providing source code, run an existing cmd processor with specific arguments, view the source code of a cmd processor, obtain detailed help on a cmd processor’s commands and usage, or delete a cmd processor entirely. The cmd processor expert will handle the technical details, may ask for clarification if needed, and can also generate or modify source code for cmd processors on your behalf. By using this function, you delegate the entire cmd processor lifecycle management and execution tasks to the specialized LLM, effectively allowing you to extend and automate your capabilities without directly writing or understanding the underlying .NET code.",
-  "parameters": {
-    "type": "object",
-    "properties": {
-      "message": {
-        "type": "string",
-        "description": "A detailed message describing what you want the cmd processor expert to do. For instance, 'list all cmd processors on agent X', 'create a new cmd processor named Y with the provided source code', 'run cmd processor Z with these arguments', 'show me the source code of cmd processor W', or 'delete cmd processor Q'. The expert will parse your request, guide you if additional details are needed, and perform the requested operation."
-      },
-      "agent_location": {
-        "type": "string",
-        "description": "The location of the agent on which the cmd processors should be managed"
-      }
-    },
-    "required": ["message","agent_location"]
-  }
 }] <|eot_id|> <|start_header_id|>system<|end_header_id|>
 
  Think very carefully before calling functions.
