@@ -6,6 +6,6 @@ sudo ./publish-eu-nmap
 sudo ./publish-eu-meta
 sudo ./publish-eu-search
 sudo ./publish-eu-monitor
-sudo ./publish-eu-cmdprocessor
+#sudo ./publish-eu-cmdprocessor
 sudo ./publish-eu-reportdata
 sudo ./publish-eu-blogmonitor
