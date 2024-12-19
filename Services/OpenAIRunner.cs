@@ -175,7 +175,7 @@ public class OpenAIRunner : ILLMRunner
                                 FunctionCall = new FunctionCall
                                 {
                                     Name = "are_functions_running",
-                                    Arguments = $"{{\"message_id\":\"{serviceObj.MessageID}\"}}"
+                                    Arguments = $"{{\"message_id\":\"{serviceObj.RootMessageID}\"}}"
                                 }
                             }
                     };
