@@ -475,6 +475,10 @@ Here is a list of functions in JSON format that you can invoke:
       "message_id": {
         "type": "string",
         "description": "The message_id that is associated with the function calls. This ID is used to track the status of the functions."
+      },
+      "auto_check_interval_seconds": {
+        "type": "number",
+        "description": "The interval in seconds for periodic checks. Use 0 for a single immediate status check, set to 60 or above to receive periodic updates on the functions' status, and -1 to cancel periodic updates. Optional. Default is 0."
       }
     },
     "required": ["message_id"]

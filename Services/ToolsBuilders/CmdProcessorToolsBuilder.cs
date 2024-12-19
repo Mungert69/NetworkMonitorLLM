@@ -95,24 +95,27 @@ A Command Processor is a .NET class that runs on an agent and can be invoked via
 
 **.NET Source Code in add_cmd_processor**:
 When adding a cmd processor, supply its source code in the 'source_code' parameter. The code must inherit from:
-public abstract class CmdProcessor
-{
-    protected ILogger _logger;
-    protected ILocalCmdProcessorStates _cmdProcessorStates;
-    protected IRabbitRepo _rabbitRepo;
-    protected NetConnectConfig _netConfig;
-    protected string _rootFolder; // the folder to read and write files to.
 
-    public CmdProcessor(ILogger logger, ILocalCmdProcessorStates cmdProcessorStates, IRabbitRepo rabbitRepo, NetConnectConfig netConfig)
+namespace NetworkMonitor.Connection {
+    public abstract class CmdProcessor
     {
-        _logger = logger;
-        _cmdProcessorStates = cmdProcessorStates;
-        _rabbitRepo = rabbitRepo;
-        _netConfig = netConfig;
-    }
+        protected ILogger _logger;
+        protected ILocalCmdProcessorStates _cmdProcessorStates;
+        protected IRabbitRepo _rabbitRepo;
+        protected NetConnectConfig _netConfig;
+        protected string _rootFolder; // the folder to read and write files to.
 
-    public abstract Task<ResultObj> RunCommand(string arguments, CancellationToken cancellationToken, ProcessorScanDataObj? processorScanDataObj = null);
-    public abstract string GetCommandHelp();
+        public CmdProcessor(ILogger logger, ILocalCmdProcessorStates cmdProcessorStates, IRabbitRepo rabbitRepo, NetConnectConfig netConfig)
+        {
+            _logger = logger;
+            _cmdProcessorStates = cmdProcessorStates;
+            _rabbitRepo = rabbitRepo;
+            _netConfig = netConfig;
+        }
+
+        public abstract Task<ResultObj> RunCommand(string arguments, CancellationToken cancellationToken, ProcessorScanDataObj? processorScanDataObj = null);
+        public abstract string GetCommandHelp();
+    }
 }
 ";
             string contentPart2;
@@ -155,9 +158,13 @@ using System.IO;
 using System.Threading; 
 using System.Net; 
 
+namespace NetworkMonitor.Connection {
+ // The source code here ...
+}
+
 Important: Ensure that the source_code parameter is accurately formatted and escaped according to JSON standards.
 Also make sure not to include word CmdProcessor in the cmd_processor_type. For example if you want to call the cmd processor HttpTest then cmd_processor_type is HttpTest and the class name is HttpTestCmdProcessor.
-Use _rootFolder for file operations as this has read write access.
+Use _rootFolder for file operations as this has read write access. Try and implement the CancellationToken cancellationToken to make sure the command can be cancelled.
 
 If the user requests to add a cmd processor, produce a call to add_cmd_processor with the cmd_processor_type, the agent_location, and the .NET source code correctly escaped for json.
 

@@ -153,24 +153,26 @@ If the user requests a command processor, produce the add_cmd_processor function
 
 Base Class Definition:
 The code must inherit from the following base class:
-public abstract class CmdProcessor
-{
-    protected ILogger _logger;
-    protected ILocalCmdProcessorStates _cmdProcessorStates;
-    protected IRabbitRepo _rabbitRepo;
-    protected NetConnectConfig _netConfig;
-    protected string _rootFolder; // the folder to read and write files to.
+namespace NetworkMonitor.Connection {
+	public abstract class CmdProcessor
+	{
+    		protected ILogger _logger;
+    		protected ILocalCmdProcessorStates _cmdProcessorStates;
+    		protected IRabbitRepo _rabbitRepo;
+    		protected NetConnectConfig _netConfig;
+    		protected string _rootFolder; // the folder to read and write files to.
     
-    public CmdProcessor(ILogger logger, ILocalCmdProcessorStates cmdProcessorStates, IRabbitRepo rabbitRepo, NetConnectConfig netConfig)
-    {
-        _logger = logger;
-        _cmdProcessorStates = cmdProcessorStates;
-        _rabbitRepo = rabbitRepo;
-        _netConfig = netConfig;
-    }
+    		public CmdProcessor(ILogger logger, ILocalCmdProcessorStates cmdProcessorStates, IRabbitRepo rabbitRepo, NetConnectConfig netConfig)
+    		{
+        		_logger = logger;
+        		_cmdProcessorStates = cmdProcessorStates;
+        		_rabbitRepo = rabbitRepo;
+        		_netConfig = netConfig;
+    		}
 
-    public abstract Task<ResultObj> RunCommand(string arguments, CancellationToken cancellationToken, ProcessorScanDataObj? processorScanDataObj = null);
-    public abstract string GetCommandHelp();
+    		public abstract Task<ResultObj> RunCommand(string arguments, CancellationToken cancellationToken, ProcessorScanDataObj? processorScanDataObj = null);
+    		public abstract string GetCommandHelp();
+	}
 }<|eot_id|><|start_header_id|>user<|end_header_id|>
 
 Please can you create a cmd processor to run the ls command on my agent<|eot_id|><|start_header_id|>assistant<|end_header_id|>
@@ -337,91 +339,119 @@ I will create a FTPConnectionTester on agent Scanner - US
         <cmd_processor_type>FTPConnectionTester</cmd_processor_type>
         <source_code>
         <![CDATA[
-        using System; // Required base functionality
-        using System.Text; // For StringBuilder
-        using System.Collections.Generic; // For collections
-        using System.Diagnostics; // For debugging (if needed)
-        using System.Threading.Tasks; // For async/await
-        using System.Text.RegularExpressions; // For regex operations
-        using Microsoft.Extensions.Logging; // For logging
-        using System.Linq; // For LINQ operations
-        using NetworkMonitor.Objects; // For application-specific objects
-        using NetworkMonitor.Objects.Repository; // For repository handling
-        using NetworkMonitor.Objects.ServiceMessage; // For service messaging
-        using NetworkMonitor.Connection; // For connection handling
-        using NetworkMonitor.Utils; // For utility methods
-        using System.Xml.Linq; // For XML handling
-        using System.IO; // For file operations
-        using System.Threading; // For CancellationToken
-        using System.Net; // For FTPWebRequest
+using System; // Required base functionality
+using System.Text; // For StringBuilder
+using System.Collections.Generic; // For collections
+using System.Diagnostics; // For debugging (if needed)
+using System.Threading.Tasks; // For async/await
+using System.Text.RegularExpressions; // For regex operations
+using Microsoft.Extensions.Logging; // For logging
+using System.Linq; // For LINQ operations
+using NetworkMonitor.Objects; // For application-specific objects
+using NetworkMonitor.Objects.Repository; // For repository handling
+using NetworkMonitor.Objects.ServiceMessage; // For service messaging
+using NetworkMonitor.Connection; // For connection handling
+using NetworkMonitor.Utils; // For utility methods
+using System.Xml.Linq; // For XML handling
+using System.IO; // For file operations
+using System.Threading; // For CancellationToken
+using System.Net; // For FTPWebRequest
 
-        namespace NetworkMonitor.Connection
+namespace NetworkMonitor.Connection
+{
+    public class FTPConnectionTesterCmdProcessor : CmdProcessor
+    {
+        public FTPConnectionTesterCmdProcessor(ILogger logger, ILocalCmdProcessorStates cmdProcessorStates, IRabbitRepo rabbitRepo, NetConnectConfig netConfig)
+            : base(logger, cmdProcessorStates, rabbitRepo, netConfig) { }
+
+        public override async Task<ResultObj> RunCommand(string arguments, CancellationToken cancellationToken, ProcessorScanDataObj? processorScanDataObj = null)
         {
-            public class FTPConnectionTesterCmdProcessor : CmdProcessor
+            var result = new ResultObj();
+            try
             {
-                public FTPConnectionTesterCmdProcessor(ILogger logger, ILocalCmdProcessorStates cmdProcessorStates, IRabbitRepo rabbitRepo, NetConnectConfig netConfig) 
-                    : base(logger, cmdProcessorStates, rabbitRepo, netConfig) {}
+                // Check if cancellation has already been requested
+                cancellationToken.ThrowIfCancellationRequested();
 
-                public override async Task<ResultObj> RunCommand(string arguments, CancellationToken cancellationToken, ProcessorScanDataObj? processorScanDataObj = null)
+                // Parse command-line style arguments
+                var args = ParseArguments(arguments);
+                if (!args.ContainsKey("username") || !args.ContainsKey("password") || !args.ContainsKey("host"))
                 {
-                    var result = new ResultObj();
-                    try
-                    {
-                        // Parse command-line style arguments
-                        var args = ParseArguments(arguments);
-                        if (!args.ContainsKey("username") || !args.ContainsKey("password") || !args.ContainsKey("host"))
-                        {
-                            result.Success = false;
-                            result.Message = "Invalid arguments. Please provide --username, --password, and --host.";
-                            return result;
-                        }
-
-                        string username = args["username"];
-                        string password = args["password"];
-                        string host = args["host"];
-
-                        _logger.LogInformation($"Testing FTP connection to {host} with username: {username}");
-
-                        // Test FTP connection
-                        var request = (FtpWebRequest)WebRequest.Create($"ftp://{host}");
-                        request.Credentials = new NetworkCredential(username, password);
-                        request.Method = WebRequestMethods.Ftp.ListDirectory;
-
-                        try
-                        {
-                            using (var response = (FtpWebResponse)await request.GetResponseAsync())
-                            {
-                                result.Success = true;
-                                result.Message = $"FTP connection successful. Response status: {response.StatusDescription}";
-                            }
-                        }
-                        catch (WebException ex)
-                        {
-                            if (ex.Response is FtpWebResponse ftpResponse)
-                            {
-                                _logger.LogError($"FTP error: {ftpResponse.StatusDescription}");
-                                result.Success = false;
-                                result.Message = $"FTP connection failed. Status: {ftpResponse.StatusDescription}";
-                            }
-                            else
-                            {
-                                _logger.LogError($"FTP error: {ex.Message}");
-                                result.Success = false;
-                                result.Message = $"FTP connection failed. Error: {ex.Message}";
-                            }
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError($"Error testing FTP connection: {ex.Message}");
-                        result.Success = false;
-                        result.Message = $"Error testing FTP connection: {ex.Message}";
-                    }
+                    result.Success = false;
+                    result.Message = "Invalid arguments. Please provide --username, --password, and --host.";
                     return result;
                 }
-                public override string GetCommandHelp()
+
+                string username = args["username"];
+                string password = args["password"];
+                string host = args["host"];
+
+                _logger.LogInformation($"Testing FTP connection to {host} with username: {username}");
+
+                // Test FTP connection
+                var request = (FtpWebRequest)WebRequest.Create($"ftp://{host}");
+                request.Credentials = new NetworkCredential(username, password);
+                request.Method = WebRequestMethods.Ftp.ListDirectory;
+
+                // Register a callback so that if the token is cancelled, we abort the request.
+                using (cancellationToken.Register(() => request.Abort()))
                 {
-                return @"
+                    try
+                    {
+                        // The cancellationToken can be checked before awaiting any I/O
+                        cancellationToken.ThrowIfCancellationRequested();
+
+                        using (var response = (FtpWebResponse)await request.GetResponseAsync())
+                        {
+                            result.Success = true;
+                            result.Message = $"FTP connection successful. Response status: {response.StatusDescription}";
+                        }
+                    }
+                    catch (WebException ex) when (ex.Status == WebExceptionStatus.RequestCanceled)
+                    {
+                        // This occurs if request.Abort() was called due to cancellation.
+                        _logger.LogInformation("FTP request was canceled.");
+                        result.Success = false;
+                        result.Message = "Operation canceled by user.";
+                    }
+                    catch (WebException ex)
+                    {
+                        if (ex.Response is FtpWebResponse ftpResponse)
+                        {
+                            _logger.LogError($"FTP error: {ftpResponse.StatusDescription}");
+                            result.Success = false;
+                            result.Message = $"FTP connection failed. Status: {ftpResponse.StatusDescription}";
+                        }
+                        else
+                        {
+                            _logger.LogError($"FTP error: {ex.Message}");
+                            result.Success = false;
+                            result.Message = $"FTP connection failed. Error: {ex.Message}";
+                        }
+                        LogErrorToFile(result.Message);
+                    }
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // If the token was canceled before or during the operation
+                _logger.LogInformation("FTP connection operation was canceled by the user.");
+                result.Success = false;
+                result.Message = "Operation canceled by user.";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error testing FTP connection: {ex.Message}");
+                result.Success = false;
+                result.Message = $"Error testing FTP connection: {ex.Message}";
+                LogErrorToFile(result.Message);
+            }
+
+            return result;
+        }
+
+        public override string GetCommandHelp()
+        {
+            return @"
 This command tests an FTP connection by attempting to list the directory contents using provided credentials. 
 It validates the FTP server’s response and provides feedback on connectivity.
 
@@ -435,25 +465,49 @@ Examples:
     - '--username admin --password admin123 --host ftp.example.com':
         Tests FTP connection to 'ftp.example.com' with the specified credentials.
 ";
-                }
+        }
 
 
-                // Helper method to parse command-line style arguments
-                private Dictionary<string, string> ParseArguments(string arguments)
+        // Helper method to parse command-line style arguments
+        private Dictionary<string, string> ParseArguments(string arguments)
+        {
+            var args = new Dictionary<string, string>();
+            var regex = new Regex(@"--(?<key>\w+)\s+(?<value>[^\s]+)");
+            var matches = regex.Matches(arguments);
+
+            foreach (Match match in matches)
+            {
+                args[match.Groups["key"].Value.ToLower()] = match.Groups["value"].Value;
+            }
+
+            return args;
+        }
+        private void LogErrorToFile(string errorMessage)
+        {
+            try
+            {
+                // Ensure the _rootFolder directory exists
+                if (string.IsNullOrEmpty(_rootFolder))
                 {
-                    var args = new Dictionary<string, string>();
-                    var regex = new Regex(@"--(?<key>\w+)\s+(?<value>[^\s]+)");
-                    var matches = regex.Matches(arguments);
-
-                    foreach (Match match in matches)
-                    {
-                        args[match.Groups["key"].Value.ToLower()] = match.Groups["value"].Value;
-                    }
-
-                    return args;
+                    _logger.LogError("Error: _rootFolder is not set.");
+                    return;
                 }
+
+                var logDirectory = Path.Combine(_rootFolder, "logs");
+                Directory.CreateDirectory(logDirectory); // Create directory if it doesn't exist
+
+                var logFilePath = Path.Combine(logDirectory, $"{GetType().Name}.log");
+                var logMessage = $"{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} - {errorMessage}\n";
+
+                File.AppendAllText(logFilePath, logMessage); // Append the error message to the log file
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Failed to write to error log file: {ex.Message}");
             }
         }
+    }
+}
         ]]>
         </source_code>
         <agent_location>Scanner - US</agent_location>

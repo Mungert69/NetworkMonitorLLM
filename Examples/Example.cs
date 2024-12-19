@@ -28,6 +28,9 @@ namespace NetworkMonitor.Connection
             var result = new ResultObj();
             try
             {
+                // Check if cancellation has already been requested
+                cancellationToken.ThrowIfCancellationRequested();
+
                 // Parse command-line style arguments
                 var args = ParseArguments(arguments);
                 if (!args.ContainsKey("username") || !args.ContainsKey("password") || !args.ContainsKey("host"))
@@ -48,30 +51,51 @@ namespace NetworkMonitor.Connection
                 request.Credentials = new NetworkCredential(username, password);
                 request.Method = WebRequestMethods.Ftp.ListDirectory;
 
-                try
+                // Register a callback so that if the token is cancelled, we abort the request.
+                using (cancellationToken.Register(() => request.Abort()))
                 {
-                    using (var response = (FtpWebResponse)await request.GetResponseAsync())
+                    try
                     {
-                        result.Success = true;
-                        result.Message = $"FTP connection successful. Response status: {response.StatusDescription}";
+                        // The cancellationToken can be checked before awaiting any I/O
+                        cancellationToken.ThrowIfCancellationRequested();
+
+                        using (var response = (FtpWebResponse)await request.GetResponseAsync())
+                        {
+                            result.Success = true;
+                            result.Message = $"FTP connection successful. Response status: {response.StatusDescription}";
+                        }
+                    }
+                    catch (WebException ex) when (ex.Status == WebExceptionStatus.RequestCanceled)
+                    {
+                        // This occurs if request.Abort() was called due to cancellation.
+                        _logger.LogInformation("FTP request was canceled.");
+                        result.Success = false;
+                        result.Message = "Operation canceled by user.";
+                    }
+                    catch (WebException ex)
+                    {
+                        if (ex.Response is FtpWebResponse ftpResponse)
+                        {
+                            _logger.LogError($"FTP error: {ftpResponse.StatusDescription}");
+                            result.Success = false;
+                            result.Message = $"FTP connection failed. Status: {ftpResponse.StatusDescription}";
+                        }
+                        else
+                        {
+                            _logger.LogError($"FTP error: {ex.Message}");
+                            result.Success = false;
+                            result.Message = $"FTP connection failed. Error: {ex.Message}";
+                        }
+                        LogErrorToFile(result.Message);
                     }
                 }
-                catch (WebException ex)
-                {
-                    if (ex.Response is FtpWebResponse ftpResponse)
-                    {
-                        _logger.LogError($"FTP error: {ftpResponse.StatusDescription}");
-                        result.Success = false;
-                        result.Message = $"FTP connection failed. Status: {ftpResponse.StatusDescription}";
-                    }
-                    else
-                    {
-                        _logger.LogError($"FTP error: {ex.Message}");
-                        result.Success = false;
-                        result.Message = $"FTP connection failed. Error: {ex.Message}";
-                    }
-                     LogErrorToFile(result.Message);
-                }
+            }
+            catch (OperationCanceledException)
+            {
+                // If the token was canceled before or during the operation
+                _logger.LogInformation("FTP connection operation was canceled by the user.");
+                result.Success = false;
+                result.Message = "Operation canceled by user.";
             }
             catch (Exception ex)
             {
@@ -80,8 +104,10 @@ namespace NetworkMonitor.Connection
                 result.Message = $"Error testing FTP connection: {ex.Message}";
                 LogErrorToFile(result.Message);
             }
+
             return result;
         }
+
         public override string GetCommandHelp()
         {
             return @"
