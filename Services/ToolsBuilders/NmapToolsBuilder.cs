@@ -14,17 +14,11 @@ namespace NetworkMonitor.LLM.Services
 {
     public class NmapToolsBuilder : IToolsBuilder
     {
-        private readonly FunctionDefinition fn_get_user_info;
         private readonly FunctionDefinition fn_run_nmap;
         private readonly FunctionDefinition fn_run_openssl;
-        private readonly FunctionDefinition fn_run_busybox;
 
         public NmapToolsBuilder()
         {
-            fn_get_user_info = new FunctionDefinitionBuilder("get_user_info", "Get information about the user")
-                .AddParameter("detail_response", PropertyDefinition.DefineBoolean("If true, retrieve all available user details. If false, provide only basic user information."))
-                .Validate()
-                .Build();
 
             fn_run_nmap = new FunctionDefinitionBuilder("run_nmap", "This function calls nmap. Create the parameters based upon the user's request. The response from the function will contain a result with the output of running nmap on the remote agent. Give the user a summary of the output that answers their query.")
                 .AddParameter("scan_options", PropertyDefinition.DefineString("The nmap scan options. Must reflect the user's desired scan goal, e.g., ping scan, vulnerability scan, etc."))
@@ -43,22 +37,11 @@ namespace NetworkMonitor.LLM.Services
                 .AddParameter("page", PropertyDefinition.DefineInteger("The page of lines to return. Use to paginate through many lines of data."))
                 .Validate()
                 .Build();
-
-            fn_run_busybox = new FunctionDefinitionBuilder("run_busybox_command", "Run a BusyBox command. Use BusyBox utilities to assist with other functions of the assistant as well as user requests. For instance, you might use BusyBox to gather network diagnostics, troubleshoot connectivity issues, monitor system performance, or perform basic file operations in response to a user's request.")
-    .AddParameter("command", PropertyDefinition.DefineString("The BusyBox command to be executed. Example commands: 'ls /tmp' to list files in the /tmp directory, 'ping -c 4 8.8.8.8' to ping Google's DNS server 4 times, or 'ifconfig' to display network interface configurations."))
-    .AddParameter("agent_location", PropertyDefinition.DefineString("The agent location that will execute the command, optional. Specify which agent will perform the operation if relevant."))
-    .AddParameter("number_lines", PropertyDefinition.DefineInteger("Number of lines to return from the command output. Use this parameter to limit the output. Larger values may return extensive data, so use higher limits cautiously."))
-    .AddParameter("page", PropertyDefinition.DefineInteger("The page of lines to return. Use this to paginate through multiple lines of output if the command returns more data than the specified number of lines."))
-    .Validate()
-    .Build();
               
             _tools = new List<ToolDefinition>()
             {
-                new ToolDefinition() { Function = fn_get_user_info, Type = "function" },
                 new ToolDefinition() { Function = fn_run_nmap, Type = "function" },
                 new ToolDefinition() { Function = fn_run_openssl, Type = "function" },
-                 new ToolDefinition() { Function = fn_run_busybox, Type = "function" }
-
             };
         }
 

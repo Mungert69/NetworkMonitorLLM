@@ -60,28 +60,12 @@ namespace NetworkMonitor.LLM.Services
                 .Build();
          
 
-            // Define the get_user_info function
-            fn_get_user_info = new FunctionDefinitionBuilder("get_user_info", "Get information about the user")
-                .AddParameter("detail_response", PropertyDefinition.DefineBoolean("Will this function return all user details. Set to false if only basic info is required"))
-                .Validate()
-                .Build();
-            fn_run_busybox = new FunctionDefinitionBuilder("run_busybox_command", "Run a BusyBox command. Use BusyBox utilities to assist with other functions of the assistant as well as user requests. For instance, you might use BusyBox to gather network diagnostics, troubleshoot connectivity issues, monitor system performance, or perform basic file operations in response to a user's request.")
-    .AddParameter("command", PropertyDefinition.DefineString("The BusyBox command to be executed. Example commands: 'ls /tmp' to list files in the /tmp directory, 'ping -c 4 8.8.8.8' to ping Google's DNS server 4 times, or 'ifconfig' to display network interface configurations."))
-    .AddParameter("agent_location", PropertyDefinition.DefineString("The agent location that will execute the command, optional. Specify which agent will perform the operation if relevant."))
-    .AddParameter("number_lines", PropertyDefinition.DefineInteger("Number of lines to return from the command output. Use this parameter to limit the output. Larger values may return extensive data, so use higher limits cautiously."))
-    .AddParameter("page", PropertyDefinition.DefineInteger("The page of lines to return. Use this to paginate through multiple lines of output if the command returns more data than the specified number of lines."))
-    .Validate()
-    .Build();
-
-
             // Define the tools list
             _tools = new List<ToolDefinition>()
 {
-    new ToolDefinition() { Function = fn_get_user_info, Type = "function" },
     new ToolDefinition() { Function = fn_run_metasploit, Type = "function" },
     new ToolDefinition() { Function = fn_search_metasploit_modules, Type = "function" },
     new ToolDefinition() { Function = fn_get_metasploit_module_info, Type = "function" },
-    new ToolDefinition() { Function = fn_run_busybox, Type = "function" }
 };
 
         }
