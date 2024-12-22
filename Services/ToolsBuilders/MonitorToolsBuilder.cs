@@ -81,8 +81,8 @@ public class MonitorToolsBuilder : IToolsBuilder
     .AddParameter("detail_response", PropertyDefinition.DefineBoolean("Will this function echo all the values set or just necessary fields. The default is false for a faster response"))
     .AddParameter("address", PropertyDefinition.DefineString("The host address, required"))
     .AddParameter("endpoint", PropertyDefinition.DefineEnum(
-        new List<string> { "quantum", "http", "https", "httphtml", "icmp", "dns", "smtp", "rawconnect" },
-        "The endpoint type, optional. Endpoint types are: quantum is a quantum safe encryption test, http is a website ping, https is an SSL certificate check, httphtml is a website HTML load, icmp is a host ping, dns is a DNS lookup, smtp is an email server helo message confirmation, and rawconnect is a low-level raw socket connection"))
+        new List<string> { "quantum", "http", "https", "httphtml", "icmp", "dns", "smtp", "rawconnect","nmapvuln","nmap","crawlsite" },
+        "The endpoint type, optional. Endpoint types are: quantum is a quantum safe encryption test, http is a website ping, https is an SSL certificate check, httphtml is a website HTML load, icmp is a host ping, dns is a DNS lookup, smtp is an email server helo message confirmation, rawconnect is a low-level raw socket connection, nmap is a nmap service scan of the host, nmapvuln is a nmap vulnerability scan of the host and crawlsite performs a simulated user crawl of the site that generates site traffic using chrome browser."))
     .AddParameter("port", PropertyDefinition.DefineNumber("The port of the service being monitored, optional. It will be zero if it is the standard port for the host endpoint type. Note the standard port for endpoint type http is 443"))
     .AddParameter("timeout", PropertyDefinition.DefineNumber("The time to wait for a timeout in milliseconds, optional. Default is 59000"))
     .AddParameter("email", PropertyDefinition.DefineString("Do not use this field if the user IS LOGGED IN. Their login email will be used and this field will be ignored. If the user is NOT LOGGED IN then ask for an email. Alerts are sent to the user's email"))
@@ -99,10 +99,10 @@ public class MonitorToolsBuilder : IToolsBuilder
     .AddParameter("id", PropertyDefinition.DefineNumber("This is the host ID used for identifying the host, optional. It is obtained when adding a host"))
     .AddParameter("enabled", PropertyDefinition.DefineBoolean("Host enabled, optional"))
     .AddParameter("address", PropertyDefinition.DefineString("Host address, optional"))
-    .AddParameter("endpoint", PropertyDefinition.DefineEnum(
-        new List<string> { "quantum", "http", "https", "httphtml", "icmp", "dns", "smtp", "rawconnect" },
-        "The endpoint type, optional"))
-    .AddParameter("port", PropertyDefinition.DefineNumber("The port, optional"))
+     .AddParameter("endpoint", PropertyDefinition.DefineEnum(
+        new List<string> { "quantum", "http", "https", "httphtml", "icmp", "dns", "smtp", "rawconnect","nmapvuln","nmap","crawlsite" },
+        "The endpoint type, optional. Endpoint types are: quantum is a quantum safe encryption test, http is a website ping, https is an SSL certificate check, httphtml is a website HTML load, icmp is a host ping, dns is a DNS lookup, smtp is an email server helo message confirmation, rawconnect is a low-level raw socket connection, nmap is a nmap service scan of the host, nmapvuln is a nmap vulnerability scan of the host and crawlsite performs a simulated user crawl of the site that generates site traffic using chrome browser."))
+   .AddParameter("port", PropertyDefinition.DefineNumber("The port, optional"))
     .AddParameter("timeout", PropertyDefinition.DefineNumber("Time to wait for a timeout in milliseconds, optional"))
     .AddParameter("hidden", PropertyDefinition.DefineBoolean("Is the host hidden, optional. Setting this to true effectively deletes the host from future monitoring"))
     .AddParameter("agent_location", PropertyDefinition.DefineString("The location of the agent monitoring this host, optional"))
@@ -112,20 +112,20 @@ public class MonitorToolsBuilder : IToolsBuilder
 
     private FunctionDefinition BuildGetHostDataFunction()
     {
-        return new FunctionDefinitionBuilder("get_host_data", "Retrieve monitoring data for a host")
-            .AddParameter("detail_response", PropertyDefinition.DefineBoolean("Will this function provide all monitoring data for hosts. Only set to true if extra response statistics are required or agent location is required. Setting it to true will slow down the processing speed of the assistant, this can affect the user's experience"))
-            .AddParameter("dataset_id", PropertyDefinition.DefineNumber("Return a set of statistical data. Data is arranged in 6-hour data sets. Set dataset_id to zero for the latest data. To view historic data set dataset_id to null and select a date range with date_start and date_end"))
-            .AddParameter("id", PropertyDefinition.DefineNumber("Return host with ID, optional"))
-            .AddParameter("address", PropertyDefinition.DefineString("Return host with address, optional"))
-            .AddParameter("email", PropertyDefinition.DefineString("Return hosts with this email associated, optional"))
-            .AddParameter("enabled", PropertyDefinition.DefineBoolean("Return hosts with enabled, optional"))
-            .AddParameter("port", PropertyDefinition.DefineNumber("Return host with port, optional"))
-            .AddParameter("endpoint", PropertyDefinition.DefineString("Return hosts with endpoint type, optional"))
-            .AddParameter("alert_sent", PropertyDefinition.DefineBoolean("Return hosts that have a host down alert sent, optional"))
-            .AddParameter("alert_flag", PropertyDefinition.DefineBoolean("Return hosts that have a host down alert flag set, optional. This can be used to get hosts that are up or down"))
-            .AddParameter("date_start", PropertyDefinition.DefineString("The start time to query from, optional. When used with date_end this gives a range of times to filter on"))
-            .AddParameter("date_end", PropertyDefinition.DefineString("The end time to query to, optional"))
-            .AddParameter("page_number", PropertyDefinition.DefineNumber("If not all data is returned then page the data, Page Number"))
+        return new FunctionDefinitionBuilder("get_host_data", "Retrieve collected monitoring data for a host. The parameters that are added act as filters so only lnclude them if the filter is required.")
+            .AddParameter("detail_response", PropertyDefinition.DefineBoolean("Will this function provide full detail, or a brief summary, for each hosts monitoring data."))
+            .AddParameter("dataset_id", PropertyDefinition.DefineNumber("Return a set of statistical data. Data is arranged in 6-hour data sets. Set dataset_id to zero for the latest/current data. To view data older than the current dataset; set dataset_id to null and select a date range with date_start and date_end"))
+            .AddParameter("id", PropertyDefinition.DefineNumber("Return only hosts with ID, optional"))
+            .AddParameter("address", PropertyDefinition.DefineString("Return only host with address, optional"))
+            .AddParameter("email", PropertyDefinition.DefineString("Return only hosts with this email associated, optional"))
+            .AddParameter("enabled", PropertyDefinition.DefineBoolean("Return only hosts that are enabled, optional"))
+            .AddParameter("port", PropertyDefinition.DefineNumber("Return only hosts that are using this port, optional"))
+            .AddParameter("endpoint", PropertyDefinition.DefineString("Return only hosts that are using this endpoint type, optional"))
+            .AddParameter("alert_sent", PropertyDefinition.DefineBoolean("Return only hosts that have a host down alert sent, optional"))
+            .AddParameter("alert_flag", PropertyDefinition.DefineBoolean("Return only hosts that have a host down alert flag set, optional. This can be used to get hosts that are up or down"))
+            .AddParameter("date_start", PropertyDefinition.DefineString("Return only host data that Start from this date, optional. When used with date_end this gives a range of times to filter on"))
+            .AddParameter("date_end", PropertyDefinition.DefineString("Return only host data that ends on this date, optional"))
+            .AddParameter("page_number", PropertyDefinition.DefineNumber("If not all data is returned then page the data with this page_number, optional"))
             .AddParameter("agent_location", PropertyDefinition.DefineString("The location of the agent monitoring this host, optional"))
             .Validate()
             .Build();
@@ -140,7 +140,7 @@ public class MonitorToolsBuilder : IToolsBuilder
     .AddParameter("enabled", PropertyDefinition.DefineBoolean("Return hosts with enabled, optional"))
     .AddParameter("port", PropertyDefinition.DefineNumber("Return hosts with port, optional"))
     .AddParameter("endpoint", PropertyDefinition.DefineString("Return hosts with endpoint type, optional"))
-    .AddParameter("page_number", PropertyDefinition.DefineNumber("If not all data is returned then page the data, Page Number"))
+    .AddParameter("page_number", PropertyDefinition.DefineNumber("If not all data is returned then page the data, optional"))
     .AddParameter("agent_location", PropertyDefinition.DefineString("The location of the agent monitoring this host, optional"))
     .Validate()
     .Build();
