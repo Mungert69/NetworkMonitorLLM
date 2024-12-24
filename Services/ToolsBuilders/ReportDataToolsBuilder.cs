@@ -79,7 +79,8 @@ Output Requirements:
 
 Performance Assessment: Provide a concise summary of critical performance metrics, highlighting any spikes, patterns, timeouts, or stability over the reporting period.
 
-Expert Recommendations: Offer actionable recommendations based on the observed data trends, such as measures to address high response times or timeouts, or suggestions for optimizing server performance and alert configuration.
+Expert Recommendations: Offer actionable recommendations based on the observed data trends, such as measures to address high response times or timeouts, or suggestions for optimizing server performance.
+**Important Context**: This report is generated from a network monitoring system that is already in place. The system provides detailed insights into response times, timeouts, and performance trends. Therefore, your expert recommendations should focus on actionable measures to improve performance, optimize resource allocation, and address detected issues, rather than suggesting the implementation of monitoring itself.
 
 Reminder: Focus on summarizing key trends without listing individual data points. Each field in the JSON output should provide essential insights to ensure an informative, concise summary.
 ";
