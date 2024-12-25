@@ -290,8 +290,7 @@ public class OpenAIRunner : ILLMRunner
             {
                 if (completionResult.Error != null)
                 {
-                    _logger.LogError($" {_serviceID} Assistant OpenAI Error : {completionResult.Error.Message}");
-                    throw new Exception($" {_serviceID} Assistant OpenAI Error : {completionResult.Error.Message}");
+                    await HandleOpenAIError(serviceObj, completionResult.Error.Message);
                 }
             }
             await _responseProcessor.UpdateTokensUsed(responseServiceObj);
@@ -564,5 +563,79 @@ private int CalculateTokens(IEnumerable<ChatMessage> messages)
 
     return tokenCount;
 }
+private async Task HandleOpenAIError(LLMServiceObj serviceObj, string errorMessage)
+{
+    string extraMessage="";
+     // Check if it’s the known “tool_calls did not have response messages” error
+    if (errorMessage.Contains("did not have response messages"))
+    {
+        // Attempt to remove the incomplete tool call from memory
+        RemoveUnansweredToolCalls(serviceObj.SessionId);
+        extraMessage=" A tool call was removed. ";
+    }
+
+    // Optionally send user a friendly error
+    var responseObj = new LLMServiceObj(serviceObj)
+    {
+        LlmMessage = $"I encountered an error when calling TurboLLM.{extraMessage}\nError detail: {errorMessage}",
+        IsFunctionCallResponse = true
+    };
+    // If this is the “primary” or “system” LLM, do
+    _responseProcessor.ProcessLLMOutputError(responseObj);
+    _logger.LogError($" {_serviceID} {responseObj.LlmMessage}");
+    await Task.CompletedTask;
+}
+private void RemoveUnansweredToolCalls(string sessionId)
+{
+    if (!_sessionHistories.TryGetValue(sessionId, out var sessionHistory))
+    {
+        _logger.LogWarning($"No history found for session {sessionId} to remove unanswered tool calls.");
+        return;
+    }
+
+    lock (sessionHistory)
+    {
+        // 2) Find assistant messages that contain tool calls
+        //    Note: Make a *copy* because we’ll potentially remove from the original
+        var toolCallMessages = sessionHistory
+            .Where(m => m.Role == "assistant" 
+                        && m.ToolCalls != null 
+                        && m.ToolCalls.Any())
+            .ToList();
+
+        // 3) For each assistant message with tool calls,
+        //    check if *all* tool calls have a matching tool response
+        foreach (var assistantMsg in toolCallMessages)
+        {
+            bool anyCallUnanswered = false;
+
+            foreach (var tCall in assistantMsg.ToolCalls!)
+            {
+                // Does any "tool" role message with the same tool_call_id exist?
+                var matchingToolResponse = sessionHistory.FirstOrDefault(
+                    m => m.Role == "tool" && m.ToolCallId == tCall.Id
+                );
+                if (matchingToolResponse == null)
+                {
+                    // We found a tool call with no corresponding response
+                    anyCallUnanswered = true;
+                    break;
+                }
+            }
+
+            // 4) If there’s at least one missing tool response,
+            //    remove this entire assistant message from the history
+            //    Optionally remove placeholders or user messages referencing it
+            if (anyCallUnanswered)
+            {
+                // Remove the assistant message from the history
+                sessionHistory.Remove(assistantMsg);
+                _logger.LogError($" Error : having to remove an Assistant Message due to missing tool reponse : {assistantMsg.Content}");
+
+            }
+        }
+    }
+}
+
 
 }
