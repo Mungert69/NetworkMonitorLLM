@@ -467,6 +467,24 @@ Here is a list of functions in JSON format that you can invoke:
   }
 }
 {
+  "name": "call_cmd_processor_expert",
+  "description": "Communicate a cmd processor management request to a remote cmd processor LLM expert. This expert can create, list, run, provide help for, show source code, and delete custom .NET command processors on a specified agent. Users do not need detailed .NET knowledge; they can simply request operations or even ask to view or modify the source code. For example, they might say 'list available cmd processors', 'add a new cmd processor named X', 'run the cmd processor with arguments Y', 'get help for a cmd processor', 'show me the source code of cmd processor X', or 'update cmd processor X with this new source code'. The expert can guide the user in formatting their requests and will handle the underlying details. If more information or clarification is needed, the expert will ask.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "message": {
+        "type": "string",
+        "description": "A detailed message describing what you want the cmd processor expert to do. This can include requests to list available cmd processors, create or update cmd processors with given source code, run a cmd processor with certain arguments, retrieve or display its source code, show help information, or delete a cmd processor. The expert will parse this request and respond accordingly, prompting for further details if needed."
+      },
+      "agent_location": {
+        "type": "string",
+        "description": "The agent location on which the cmd processors should be managed. If not provided, the expert may ask the user to select an available agent."
+      }
+    },
+    "required": ["message"]
+  }
+}
+{
   "name": "are_functions_running",
   "description": "Check if functions have completed. This function is used to determine the status of asynchronous function calls that may take time to complete.",
   "parameters": {
