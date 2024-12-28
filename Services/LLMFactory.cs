@@ -24,6 +24,7 @@ public interface ILLMRunner
     bool IsStateReady { get; }
      bool IsStateStarting { get; }
      bool IsStateFailed { get; }
+     bool IsEnabled {get;}
 
 }
 

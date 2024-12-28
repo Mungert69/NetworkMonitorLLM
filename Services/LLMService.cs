@@ -95,6 +95,11 @@ public class LLMService : ILLMService
                     default:
                         throw new ArgumentException($"Invalid runner type: {llmServiceObj.LLMRunnerType}");
                 }
+                if (!runner.IsEnabled){
+                llmServiceObj.ResultMessage =$"{llmServiceObj.LLMRunnerType} {_serviceID} not started as it is disabled.";
+                llmServiceObj.ResultSuccess = true;
+                return llmServiceObj;
+                }
                 string extraMesage = "";
                 if (llmServiceObj.LLMRunnerType == "FreeLLM") extraMesage = $" , this can take up to {_mlParams.LlmSystemPromptTimeout} seconds. If the session is not used for {_mlParams.LlmSessionIdleTimeout} minutes it will be closed";
                 llmServiceObj.LlmMessage = MessageHelper.InfoMessage($" Starting {llmServiceObj.LLMRunnerType} {_serviceID} Assistant {extraMesage}");

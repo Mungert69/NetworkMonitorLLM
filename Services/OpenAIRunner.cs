@@ -46,6 +46,7 @@ public class OpenAIRunner : ILLMRunner
     private bool _isStateFailed = false;
     private bool _isPrimaryLlm;
     private bool _isSystemLlm;
+    private bool _isEnabled=true;
     //private bool _isFuncCalled;
     private string _serviceID;
     private int _maxTokens = 2000;
@@ -54,6 +55,7 @@ public class OpenAIRunner : ILLMRunner
     public bool IsStateReady { get => _isStateReady; }
     public bool IsStateStarting { get => _isStateStarting; }
     public bool IsStateFailed { get => _isStateFailed; }
+      public bool IsEnabled {get => _isEnabled;}
 #pragma warning disable CS8618
     public OpenAIRunner(ILogger<OpenAIRunner> logger, ILLMResponseProcessor responseProcessor, OpenAIService openAiService, ISystemParamsHelper systemParamsHelper, LLMServiceObj serviceObj, SemaphoreSlim openAIRunnerSemaphore)
     {
