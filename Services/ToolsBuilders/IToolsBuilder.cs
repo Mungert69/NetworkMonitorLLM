@@ -1,11 +1,11 @@
 using NetworkMonitor.Objects.ServiceMessage;
 using NetworkMonitor.Utils;
-using OpenAI;
-using OpenAI.Builders;
-using OpenAI.Managers;
-using OpenAI.ObjectModels;
-using OpenAI.ObjectModels.RequestModels;
-using OpenAI.ObjectModels.SharedModels;
+using Betalgo.Ranul.OpenAI;
+using Betalgo.Ranul.OpenAI.Builders;
+using Betalgo.Ranul.OpenAI.Managers;
+using Betalgo.Ranul.OpenAI.ObjectModels;
+using Betalgo.Ranul.OpenAI.ObjectModels.RequestModels;
+using Betalgo.Ranul.OpenAI.ObjectModels.SharedModels;
 using System;
 using System.Collections.Generic;
 using System.Net.Mime;

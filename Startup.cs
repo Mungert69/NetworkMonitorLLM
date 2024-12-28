@@ -19,12 +19,12 @@ using HostInitActions;
 using Microsoft.Extensions.Logging;
 using NetworkMonitor.Utils.Helpers;
 using NetworkMonitor.Objects.ServiceMessage;
-using OpenAI;
-using OpenAI.Builders;
-using OpenAI.Managers;
-using OpenAI.ObjectModels;
-using OpenAI.ObjectModels.RequestModels;
-using OpenAI.ObjectModels.SharedModels;
+using Betalgo.Ranul.OpenAI;
+using Betalgo.Ranul.OpenAI.Builders;
+using Betalgo.Ranul.OpenAI.Managers;
+using Betalgo.Ranul.OpenAI.ObjectModels;
+using Betalgo.Ranul.OpenAI.ObjectModels.RequestModels;
+using Betalgo.Ranul.OpenAI.ObjectModels.SharedModels;
 namespace NetworkMonitor.LLM
 {
     public class Startup
@@ -54,7 +54,7 @@ namespace NetworkMonitor.LLM
                         });
 
                           });
-            var openAiService = new OpenAIService(new OpenAiOptions()
+            var openAiService = new OpenAIService(new OpenAIOptions()
             {
                 ApiKey = Configuration["OpenAIApiKey"] ?? "Api Key Missing"
             });

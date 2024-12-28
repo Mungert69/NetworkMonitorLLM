@@ -9,7 +9,7 @@ using NetworkMonitor.Objects;
 using NetworkMonitor.Utils.Helpers;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
-using OpenAI.Managers;
+using Betalgo.Ranul.OpenAI.Managers;
 
 
 namespace NetworkMonitor.LLM.Services;
