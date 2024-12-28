@@ -81,7 +81,7 @@ public class LLMProcessRunner : ILLMRunner
         string permissionSuffix = "";
         // Old way of doing permission is to load different context. new way is to let the api deal with it
         /*string permissionSuffix = "_free";
-        if (!_mlParams.StartOnlyOneFreeLLM) permissionSuffix = AccountTypeFactory.GetPermissionSuffix(
+        if (!_mlParams.StartThisFreeLLM) permissionSuffix = AccountTypeFactory.GetPermissionSuffix(
             _startServiceoObj.UserInfo.AccountType,
             _startServiceoObj.LlmSessionStartName,
             _startServiceoObj.LlmChainStartName
@@ -110,7 +110,7 @@ public class LLMProcessRunner : ILLMRunner
     }
     public async Task StartProcess(LLMServiceObj serviceObj, DateTime currentTime)
     {
-        if (_mlParams.StartOnlyOneFreeLLM && serviceObj.LlmChainStartName != "monitor" && !serviceObj.IsSystemLlm) return;// throw new Exception($"The advanced {serviceObj.LlmChainStartName} assistant is only available with TurboLLM. However the basic monitor assistant is still available");
+        if (!_mlParams.StartThisFreeLLM ) return;
 
         _isStateStarting = true;
         _isStateReady = false;
