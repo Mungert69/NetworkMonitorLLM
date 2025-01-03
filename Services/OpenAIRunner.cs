@@ -1,7 +1,5 @@
-using Betalgo.Ranul.OpenAI;
-using Betalgo.Ranul.OpenAI.Builders;
+
 using Betalgo.Ranul.OpenAI.Managers;
-using Betalgo.Ranul.OpenAI.ObjectModels;
 using Betalgo.Ranul.OpenAI.ObjectModels.RequestModels;
 using Betalgo.Ranul.OpenAI.Tokenizer.GPT3;
 using Betalgo.Ranul.OpenAI.ObjectModels.SharedModels;
