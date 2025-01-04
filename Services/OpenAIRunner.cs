@@ -19,6 +19,7 @@ using NetworkMonitor.Objects.ServiceMessage;
 using NetworkMonitor.Objects;
 using NetworkMonitor.Utils.Helpers;
 using NetworkMonitor.Objects.Factory;
+using NetworkMonitor.Utils;
 
 namespace NetworkMonitor.LLM.Services;
 
@@ -158,7 +159,7 @@ public class OpenAIRunner : ILLMRunner
             {
                 canAddFuncMessage = true;
                 // Create a unique ID for the fake function call
-                var fakeFunctionCallId = Guid.NewGuid().ToString("N");
+                var fakeFunctionCallId = "call_"+StringUtils.GetNanoid();
 
                 // Simulate a previous user message that would have triggered a function call
                 var fakeUserTriggerMessage = ChatMessage.FromUser($"Can you check the status the {serviceObj.FunctionName} call");
@@ -278,11 +279,10 @@ public class OpenAIRunner : ILLMRunner
 
 
 
-                if (!string.IsNullOrEmpty(assistantChatMessage.Content))
-                {
-                    history.AddRange(messageHistory);
-                    history.Add(assistantChatMessage);
-                }
+               
+                history.AddRange(messageHistory);
+                history.Add(assistantChatMessage);
+              
                 TruncateTokens(history, serviceObj);
 
             }
