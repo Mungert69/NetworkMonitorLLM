@@ -383,7 +383,7 @@ public class LLMProcessRunner : ILLMRunner
             process.LastActivity = DateTime.UtcNow;
             ITokenBroadcaster? tokenBroadcaster;
             // Check if all function calls for this MessageID have been processed
-            if (serviceObj.IsFunctionCallResponse)
+            if (serviceObj.IsFunctionCallResponse && !serviceObj.IsFunctionCallStatus)
             {
                 if (!serviceObj.IsFunctionStillRunning)
                 {
