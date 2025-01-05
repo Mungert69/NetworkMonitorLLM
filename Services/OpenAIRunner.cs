@@ -162,8 +162,8 @@ public class OpenAIRunner : ILLMRunner
                 var fakeFunctionCallId = "call_"+StringUtils.GetNanoid();
 
                 // Simulate a previous user message that would have triggered a function call
-                var fakeUserTriggerMessage = ChatMessage.FromUser($"Can you check the status the {serviceObj.FunctionName} call");
-                messageHistory.Add(fakeUserTriggerMessage);
+               // var fakeUserTriggerMessage = ChatMessage.FromUser($"Can you check the status the {serviceObj.FunctionName} call");
+               // messageHistory.Add(fakeUserTriggerMessage);
 
                 // Create a fake assistant message that represents a function call
                 var fakeFunctionCallMessage = ChatMessage.FromAssistant("");
@@ -247,9 +247,9 @@ public class OpenAIRunner : ILLMRunner
 
                 if (choice.Message.ToolCalls != null && choice.Message.ToolCalls.Any())
                 {
+                    choice.Message.Content=$"The user previously requested \"{serviceObj.UserInput}\" . The function calls needed to answer this query have now completed. ";
                     _pendingFunctionCalls.TryAdd(serviceObj.MessageID, choice.Message);
-                    // Create a unique placeholder ID for tracking
-
+                   
                     // Add a lightweight placeholder to history indicating a tool call is in progress.
                     // This avoids the OpenAI API error of having an incomplete response.
                     var placeholderUser = ChatMessage.FromUser($"{serviceObj.UserInput} : us message_id <|{serviceObj.MessageID}|> to track the function calls");
@@ -365,8 +365,8 @@ public class OpenAIRunner : ILLMRunner
             responseServiceObj.LlmMessage = "</functioncall-complete>";
             if (_isPrimaryLlm) _responseProcessor.ProcessLLMOutput(responseServiceObj);
 
-
-            if (_sessionHistories.TryGetValue(serviceObj.SessionId, out var history))
+            // Not sure we need this code as it only removes the user message that created the function call.
+           /* if (_sessionHistories.TryGetValue(serviceObj.SessionId, out var history))
             {
                 lock (history)
                 {
@@ -389,7 +389,7 @@ public class OpenAIRunner : ILLMRunner
                 responseServiceObj.LlmMessage = message;
                 if (_isPrimaryLlm || _isSystemLlm) _responseProcessor.ProcessLLMOutputError(responseServiceObj);
                 _logger.LogError(message);
-            }
+            }*/
 
             return true; // Indicates that the function call response was handled successfully
 
