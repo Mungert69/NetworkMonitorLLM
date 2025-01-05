@@ -483,6 +483,33 @@ Use the function 'run_search_web' to 'Perform a web search and retrieve a list o
     "required": ["search_term"]
   }
 }
+Use the function 'run_crawl_page' to 'Extract content and hyperlinks from a webpage for detailed analysis or further research.'
+{
+  "name": "run_crawl_page",
+  "description": "Website crawler to extract information from a webpage. Use this function to read the text and hyperlinks on a given webpage. When URLs are returned from 'run_search_web', call this function on relevant URLs to gather content. If necessary, you can follow additional links on the page to perform further research.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "url": {
+        "type": "string",
+        "description": "The URL of the page to crawl."
+      },
+      "agent_location": {
+        "type": "string",
+        "description": "The agent location that will execute the command, optional. Specify which agent will perform the operation if relevant."
+      },
+      "number_lines": {
+        "type": "number",
+        "description": "Number of lines to return from the command output. Limit this to manage the amount of content returned."
+      },
+      "page": {
+        "type": "number",
+        "description": "The page of content to return, allowing pagination through large pages of data."
+      }
+    },
+    "required": ["url"]
+  }
+}
 Use the function 'are_functions_running' to 'Check the completion status of long running function calls.'
 {
   "name": "are_functions_running",
