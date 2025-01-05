@@ -353,6 +353,44 @@ public class LLMProcessRunner : ILLMRunner
         }
         _logger.LogInformation($" LLMService Process Started ");
     }
+
+    private string FunctionResponseBuilder(LLMServiceObj pendingServiceObj)
+    {
+        string userInput = pendingServiceObj.UserInput;
+        userInput = userInput.Replace("\r\n", " ").Replace("\n", " ");
+        switch (_mlParams.LlmVersion)
+        {
+            case "func_2.4":
+                userInput = "<|from|> " + pendingServiceObj.FunctionName + "\\\n<|recipient|> all\\\n<|content|>" + userInput;
+                break;
+
+            case "func_2.5":
+                userInput = "<|start_header_id|>tool<|end_header_id|>\\\n\\\nname=" + pendingServiceObj.FunctionName + " " + userInput;
+                break;
+
+            case "func_3.1":
+            case "llama_3.2":
+                userInput = "<|start_header_id|>ipython<|end_header_id|>\\\n\\\n" + userInput;
+                break;
+
+            case "func_3.2":
+                userInput = "<|start_header_id|>tool<|end_header_id|>\\\n\\\n" + userInput;
+                break;
+
+            case "qwen_2.5":
+                userInput = "<|im_start|>user\\\n<tool_response>\\\n" + userInput + "\\\n</tool_response>";
+                break;
+
+            case "standard":
+                userInput = "FUNCTION RESPONSE: " + userInput;
+                break;
+
+            default:
+                // Optionally handle unexpected LlmVersion values
+                break;
+        }
+        return userInput;
+    }
     public async Task SendInputAndGetResponse(LLMServiceObj serviceObj)
     {
         _isStateReady = false;
@@ -516,45 +554,12 @@ public class LLMProcessRunner : ILLMRunner
                     _assistantMessages.Clear();
 
                 }
-                else
+                else if (!serviceObj.IsFunctionCallStatus)
                 {
                     var processedFunctionCalls = _responseProcessor.GetProcessedFunctionCalls(serviceObj.MessageID);
                     var constructedInputs = processedFunctionCalls.Select((pendingServiceObj, index) =>
                         {
-                            // Construct userInput for each response
-                            string userInput = pendingServiceObj.UserInput;
-                            userInput = userInput.Replace("\r\n", " ").Replace("\n", " ");
-                            switch (_mlParams.LlmVersion)
-                            {
-                                case "func_2.4":
-                                    userInput = "<|from|> " + pendingServiceObj.FunctionName + "\\\n<|recipient|> all\\\n<|content|>" + userInput;
-                                    break;
-
-                                case "func_2.5":
-                                    userInput = "<|start_header_id|>tool<|end_header_id|>\\\n\\\nname=" + pendingServiceObj.FunctionName + " " + userInput;
-                                    break;
-
-                                case "func_3.1":
-                                case "llama_3.2":
-                                    userInput = "<|start_header_id|>ipython<|end_header_id|>\\\n\\\n" + userInput;
-                                    break;
-
-                                case "func_3.2":
-                                    userInput = "<|start_header_id|>tool<|end_header_id|>\\\n\\\n" + userInput;
-                                    break;
-
-                                case "qwen_2.5":
-                                    userInput = "<|im_start|>user\\\n<tool_response>\\\n" + userInput + "\\\n</tool_response>";
-                                    break;
-
-                                case "standard":
-                                    userInput = "FUNCTION RESPONSE: " + userInput;
-                                    break;
-
-                                default:
-                                    // Optionally handle unexpected LlmVersion values
-                                    break;
-                            }
+                            userInput = FunctionResponseBuilder(pendingServiceObj);
                             // Add "<|eot_id|>" etc. if it's not the last item
                             if (index < processedFunctionCalls.Count - 1)
                             {
@@ -586,6 +591,10 @@ public class LLMProcessRunner : ILLMRunner
                     tokenBroadcasterMessage = userInput;
                     _responseProcessor.ClearFunctionCallTracker(serviceObj.MessageID);
 
+                }
+                else
+                {
+                    userInput = FunctionResponseBuilder(serviceObj);
                 }
             }
             if (string.IsNullOrEmpty(userInput))
