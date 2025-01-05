@@ -34,14 +34,14 @@ public class LLMProcessRunner : ILLMRunner
     private bool _isStateReady = false;
     private bool _isStateStarting = false;
     private bool _isStateFailed = false;
-    private bool _isEnabled=false;
+    private bool _isEnabled = false;
     private string _serviceID;
     private LLMServiceObj _startServiceoObj;
 
     public bool IsStateReady { get => _isStateReady; }
     public bool IsStateStarting { get => _isStateStarting; }
     public bool IsStateFailed { get => _isStateFailed; }
-    public bool IsEnabled {get => _isEnabled;}
+    public bool IsEnabled { get => _isEnabled; }
     private ConcurrentDictionary<string, StringBuilder?> _assistantMessages = new ConcurrentDictionary<string, StringBuilder?>();
 
     public LLMProcessRunner(ILogger<LLMProcessRunner> logger, ILLMResponseProcessor responseProcessor, ISystemParamsHelper systemParamsHelper, LLMServiceObj startServiceObj, SemaphoreSlim processRunnerSemaphore)
@@ -53,7 +53,7 @@ public class LLMProcessRunner : ILLMRunner
         _serviceID = systemParamsHelper.GetSystemParams().ServiceID!;
         _processRunnerSemaphore = processRunnerSemaphore;
         _idleCheckTimer = new Timer(async _ => await CheckAndTerminateIdleProcesses(), null, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
-        _isEnabled=_mlParams.StartThisFreeLLM;
+        _isEnabled = _mlParams.StartThisFreeLLM;
     }
     private async Task CheckAndTerminateIdleProcesses()
     {
@@ -113,7 +113,7 @@ public class LLMProcessRunner : ILLMRunner
     }
     public async Task StartProcess(LLMServiceObj serviceObj, DateTime currentTime)
     {
-        if (!_mlParams.StartThisFreeLLM ) return;
+        if (!_mlParams.StartThisFreeLLM) return;
 
         _isStateStarting = true;
         _isStateReady = false;
@@ -587,6 +587,14 @@ public class LLMProcessRunner : ILLMRunner
                     _responseProcessor.ClearFunctionCallTracker(serviceObj.MessageID);
 
                 }
+            }
+            if (string.IsNullOrEmpty(userInput))
+            {
+                _processRunnerSemaphore.Release(); // Release the semaphore
+                _isStateReady = true;
+                _logger.LogWarning(" Warning : User Input is empty");
+
+                return;
             }
 
 
