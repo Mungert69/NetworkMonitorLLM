@@ -511,8 +511,7 @@ private void TruncateTokens(List<ChatMessage> history, LLMServiceObj serviceObj)
                 if (history.Count > 0 && history[0].Role == "assistant")
                 {
                     var assistantMessage = history[0];
-                    history.RemoveAt(0); // Remove the assistant response or tool call
-
+                 
                     // If the assistant message is a tool call, remove all tool responses associated with it
                     if (assistantMessage.ToolCalls != null && assistantMessage.ToolCalls.Any())
                     {
@@ -521,17 +520,20 @@ private void TruncateTokens(List<ChatMessage> history, LLMServiceObj serviceObj)
                             history.RemoveAll(m => m.ToolCallId == toolCall.Id);
                         }
                     }
+                    history.RemoveAt(0); // Remove the assistant response or tool call
+
                 }
             }
             else if (firstMessage.ToolCalls != null && firstMessage.ToolCalls.Any())
             {
                 // The first message is an assistant tool call, remove it and all associated responses
-                history.RemoveAt(0); // Remove the assistant tool call itself
-
+               
                 foreach (var toolCall in firstMessage.ToolCalls)
                 {
                     history.RemoveAll(m => m.ToolCallId == toolCall.Id);
                 }
+                history.RemoveAt(0); // Remove the assistant tool call itself
+
             }
             else
             {
@@ -541,6 +543,8 @@ private void TruncateTokens(List<ChatMessage> history, LLMServiceObj serviceObj)
             // Recalculate tokens after removal
             tokenCount = CalculateTokens(history);
         }
+        // Tidy up in case any tool calls have missing tool responses
+        RemoveUnansweredToolCalls(serviceObj.SessionId);
 
         // Re-add the system message to the beginning of the list
         history.Insert(0, systemMessage);
