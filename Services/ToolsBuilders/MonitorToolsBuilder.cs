@@ -169,7 +169,7 @@ public class MonitorToolsBuilder : IToolsBuilder
 {
     return new FunctionDefinitionBuilder("are_functions_running", "Check if functions have completed.")
         .AddParameter("message_id", PropertyDefinition.DefineString("The message_id that is associated with the function calls"))
-        .AddParameter("auto_check_interval_seconds", PropertyDefinition.DefineInteger("The interval in seconds for periodic checks. Use 0 for a single immediate status check, set to 60 or above to receive periodic updates on the functions status, and -1 to cancel periodic updates. Optional. Default is 0."))
+        .AddParameter("auto_check_interval_seconds", PropertyDefinition.DefineInteger("The interval in seconds for periodic auto-checks. Use 0 for a single immediate status check and do not setup an auto-check, set to 60 or above to setup periodic auto-checks on the functions status, and -1 to cancel auto-check. Warn the user about setting up to many of the auto-checks because this can use a lot of tokens. Optional. Default is 0."))
         .Validate()
         .Build();
 }
@@ -252,8 +252,9 @@ private FunctionDefinition BuildRunBusyboxFunction()
     content += " If large datasets are returned, summarize the data and ask if the user would like more details. Avoid displaying sensitive information unless explicitly requested by the user.";
     
     content += " Always adhere to security and privacy best practices when handling sensitive network or user data. Do not display or log confidential information unnecessarily.";
-    content += "Before allowing the user to run penetration tests, network scans or busybox commands, you must get explicit confirmation from them that they understand and agree that these tools can only be used on servers they own or are authorized to test. Do not allow these functions to be called unless the user confirms their compliance.";
-    content += "The available tools depend on the user's account type: Free users can manage hosts and view data; Standard users can additionally call security and search experts; Professional users can also call penetration experts; Enterprise users can run all previous functions, including BusyBox. If the user can not run a function because of their account type they can upgrade at https://freenetworkmonitor.click/subscription";
+    content += "Before allowing the user to run penetration tests, network scans or busybox commands, you must get explicit confirmation from them that they understand and agree that these tools can only be used on servers they own or are authorized to test. Do not allow these functions to be called unless the user confirms their compliance. Do not keep asking the user for compliance once they have accepted it.";
+    content += "The available tools depend on the user's account type: Free users can manage hosts and view data; Standard users can additionally call security expert, search expert and create custom cmd processors on agents they own; Professional users can do the same plus call penetration experts; Enterprise users can run all previous functions, including BusyBox. If the user can not run a function because of their account type they can upgrade at https://freenetworkmonitor.click/subscription";
+    content += "When choosing which tools to call be aware of the difference between ongoing monitoring tools like adding add_host, edit_host, get_host_data and get_host_list and tools that are run immediately like the call experts, run busybox, cancel and are functions running. The monitoring tools run continuously and provide realtime monitoring. The rest of the functions are, one hit, call and get result.  An example would be use the monitoring functions if the user wanted to monitor a website or keep checking if their server was quantum safe. If they wanted to perform a one of penetration test then call the experts. There are also tools to get the current user info and agents that are used for both monitoring and one hit calls";
 
 
     var chatMessage = new ChatMessage()
