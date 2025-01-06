@@ -457,19 +457,19 @@ public class LLMProcessRunner : ILLMRunner
                 switch (_mlParams.LlmVersion)
                 {
                     case "func_2.4":
-                        tokenBroadcaster = new TokenBroadcasterFunc_2_4(_responseProcessor, _logger);
+                        tokenBroadcaster = new TokenBroadcasterFunc_2_4(_responseProcessor, _logger, _mlParams.XmlFunctionParsing);
                         break;
 
                     case "func_2.5":
-                        tokenBroadcaster = new TokenBroadcasterFunc_2_5(_responseProcessor, _logger);
+                        tokenBroadcaster = new TokenBroadcasterFunc_2_5(_responseProcessor, _logger, _mlParams.XmlFunctionParsing);
                         break;
 
                     case "func_3.1":
-                        tokenBroadcaster = new TokenBroadcasterFunc_3_1(_responseProcessor, _logger);
+                        tokenBroadcaster = new TokenBroadcasterFunc_3_1(_responseProcessor, _logger, _mlParams.XmlFunctionParsing);
                         break;
 
                     case "func_3.2":
-                        tokenBroadcaster = new TokenBroadcasterFunc_3_2(_responseProcessor, _logger);
+                        tokenBroadcaster = new TokenBroadcasterFunc_3_2(_responseProcessor, _logger, _mlParams.XmlFunctionParsing);
                         break;
 
                     case "llama_3.2":
@@ -477,11 +477,11 @@ public class LLMProcessRunner : ILLMRunner
                         break;
 
                     case "qwen_2.5":
-                        tokenBroadcaster = new TokenBroadcasterQwen_2_5(_responseProcessor, _logger);
+                        tokenBroadcaster = new TokenBroadcasterQwen_2_5(_responseProcessor, _logger, _mlParams.XmlFunctionParsing);
                         break;
 
                     case "standard":
-                        tokenBroadcaster = new TokenBroadcasterStandard(_responseProcessor, _logger);
+                        tokenBroadcaster = new TokenBroadcasterStandard(_responseProcessor, _logger, _mlParams.XmlFunctionParsing);
                         break;
 
                     default:
