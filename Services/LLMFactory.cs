@@ -19,6 +19,7 @@ public interface ILLMRunner
     Task StartProcess(LLMServiceObj serviceObj, DateTime currentTime);
     Task SendInputAndGetResponse(LLMServiceObj serviceObj);
      Task RemoveProcess(string sessionId);
+     void StopRequest(string sessionId);
 
     string Type { get; }
     bool IsStateReady { get; }

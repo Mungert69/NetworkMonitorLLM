@@ -306,7 +306,7 @@ public class LLMProcessRunner : ILLMRunner
     }
 
 
-    public void SendCtrlC(string sessionId)
+    public void StopRequest(string sessionId)
     {
         _isStateReady = false;
 
