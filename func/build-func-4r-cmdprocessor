@@ -1,0 +1,1 @@
+~/code/models/llama.cpp/llama-cli -c 12000  -m ~/code/models/functionary-v4r-small-preview-q4_k.gguf   --prompt-cache context-func-4r-cmdprocessor.gguf  -r "<|eot_id|>"  -f system_prompt_func_4r_cmdprocessor  --temp 0  -sp 

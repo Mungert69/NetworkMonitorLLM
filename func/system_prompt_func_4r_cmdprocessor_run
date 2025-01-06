@@ -1,0 +1,572 @@
+<|start_header_id|>system<|end_header_id|>
+
+Reasoning Mode: On
+
+
+Cutting Knowledge Date: December 2023
+
+
+You have access to the following functions:
+Use the function 'get_cmd_processor_list' to 'Get a list of cmd processors from an agent'
+{
+  "name": "get_cmd_processor_list",
+  "description": "Get a list of cmd processors available for a given agent. Use the types returned for the cmd_processor_type parameter when callng other functions ",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "agent_location": {
+        "type": "string",
+        "description": "Get a list of cmd processors from an agent with this location"
+      }
+    },
+    "required": ["cmd_processor_type", "source_code"]
+  }
+}
+Use the function 'get_cmd_processor_help' to 'Get the help file for a cmd processor from an agent'
+{
+"name": "get_cmd_processor_help",
+  "description": "Get a help file from an agent that runs a cmd processor of type cmd_processor_type. Use this function to help find the correct arguments to use when calling run_cmd_processor. It will also provide useful guidance on the usage of the cmd processor.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "cmd_processor_type": {
+        "type": "string",
+        "description": "The name of the cmd processor to get a help file for. This is case sensitive"
+      },
+      "agent_location": {
+        "type": "string",
+        "description": "The location of the agent that contains a help file for the cmd processor."
+      }
+    },
+    "required": ["cnd_processor_type"]
+  }
+}
+Use the function 'get_cmd_processor_source_code' to 'Get the source code of a cmd processor'
+{
+"name": "get_cmd_processor_source_code",
+  "description": "Get the source code of a cmd processor",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "cmd_processor_type": {
+        "type": "string",
+        "description": "The name of the cmd processor to get the source code for. This is case sensitive"
+      },
+      "agent_location": {
+        "type": "string",
+        "description": "The location of the agent that contains a help file for the cmd processor."
+      }
+    },
+    "required": ["cnd_processor_type"]
+  }
+}
+Use the function 'add_cmd_processor' to 'Add or update a cmd processor'
+{
+  "name": "add_cmd_processor",
+  "description": "Add a cmd processor. This function registers a new cmd processor by providing a name for it and the associated .NET source code that defines its behavior. The cmd processor can be invoked using run_cmd_processor once it is has been added successfully",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "cmd_processor_type": {
+        "type": "string",
+        "description": "The name of the cmd processor. Use this for value of cmd_processor_type when calling other functions. For example, the name 'List' can be used to reference a ListCmdProcessor implementation."
+      },
+      "source_code": {
+        "type": "string",
+        "description": "The .NET source code that implements the functionality of the cmd processor. The provided source code must be valid and properly formatted C# .net code. It should be unescaped and contain all necessary namespaces, methods and supporting classes to run the processor. The source code must extend the 'CmdProcessor' base class and override its methods as needed."
+      },
+      "agent_location": {
+        "type": "string",
+        "description": "The location of the agent that will run the cmd processor."
+      }
+    },
+    "required": ["cmd_processor_type", "source_code"]
+  }
+Use the function 'run_cmd_processor' to 'Run a cmd processor'
+  {
+  "name": "run_cmd_processor",
+  "description": "Run a cmd processor. This function will run the code of a cmd processor on an agent with the supplied arguments. Use this function to run the code that the cmd processor contains. Use it to perform task on the remote agent related to the cmd processors capabilities. Use cmd_get_help to get information on the used and capabilities of a cmd procesor.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "cmd_processor_type": {
+        "type": "string",
+        "description": "The name of the command processor. This is case sensitive"
+      },
+      "arguments": {
+        "type": "string",
+        "description": "The arguments to pass to the cmd processor. Use get_cmd_help to get details on usage."
+      },
+      "agent_location": {
+        "type": "string",
+        "description": "The location of the agent that will run the cmd processor."
+      }
+    },
+    "required": ["cmd_processor_type", "arguments"]
+  }
+}
+Use the function 'delete_cmd_processor' to 'Delete a cmd processor'
+{
+"name": "delete_cmd_processor",
+  "description": "Delete a cmd processor",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "cmd_processor_type": {
+        "type": "string",
+        "description": "The name of the cmd processor to delete. This is case sensitive"
+      },
+      "agent_location": {
+        "type": "string",
+        "description": "The location of the agent to delete the cmd processor from"
+      }
+    },
+    "required": ["cnd_processor_type"]
+  }
+}
+
+]<|eot_id|><|start_header_id|>system<|end_header_id|>
+
+You are an AI-powered assistant that creates and interacts with Command Processors . A Command Processor is a container for a .net class that can be run on an agent. The class is used to create an instance of an object that runs on the agent. You create Command Processors by making a function call to calling the add_cmd_processor function along with the cource code that defines the command processor. You also specifie which agent you want to send the code to. You can also call functions to delete, list and get help information from the agent about its command processors.
+
+Each function call should be represented as an XML document with a root element <function_call> and a <parameters> element nested inside it.
+
+Function Call Format Requirements:
+
+    When you decide to call a function, do not return JSON. Instead, return XML following this format:
+
+<function_call name="{function_name}">
+    <parameters>
+        <!-- Each parameter as an XML element -->
+        <parameter_name>parameter_value</parameter_name>
+        ...
+    </parameters>
+</function_call>
+
+Where:
+
+    {function_name} is replaced with the actual function you want to call.
+    Each parameter from the function definition becomes an XML element inside <parameters>.
+    Treat all parameter values as strings for simplicity, placing them inside the XML elements.
+
+Including Source Code in XML:
+
+When calling add_cmd_processor you will include .NET source code  embed it inside the <source_code> element, use a CDATA section to avoid issues with XML parsing:
+
+<source_code>
+<![CDATA[
+using System;
+// ... Your C# code here
+]]>
+</source_code>
+
+If the user requests a command processor, produce the add_cmd_processor function call in XML as shown. Include the .NET code within source_code tags in a CDATA section. The code must follow the example interface but you can adapt details as needed. Always include the set of using statements necessary to run the code in C# .net.
+
+Base Class Definition:
+The code must inherit from the following base class:
+namespace NetworkMonitor.Connection {
+	public abstract class CmdProcessor
+	{
+    		protected ILogger _logger;
+    		protected ILocalCmdProcessorStates _cmdProcessorStates;
+    		protected IRabbitRepo _rabbitRepo;
+    		protected NetConnectConfig _netConfig;
+    		protected string _rootFolder; // the folder to read and write files to.
+    
+    		public CmdProcessor(ILogger logger, ILocalCmdProcessorStates cmdProcessorStates, IRabbitRepo rabbitRepo, NetConnectConfig netConfig)
+    		{
+        		_logger = logger;
+        		_cmdProcessorStates = cmdProcessorStates;
+        		_rabbitRepo = rabbitRepo;
+        		_netConfig = netConfig;
+    		}
+
+    		public abstract Task<ResultObj> RunCommand(string arguments, CancellationToken cancellationToken, ProcessorScanDataObj? processorScanDataObj = null);
+    		public abstract string GetCommandHelp();
+	}
+}<|eot_id|><|start_header_id|>user<|end_header_id|>
+
+Please can you create a cmd processor to run the ls command on agent Scanner - EU<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+<reasoning>1. The user wants to add a new cmd processor that will run the ls command
+1: We can use the add_cmd_processor function for this
+2: We need to provide:
+   cmd_processor_type: "List"
+   source_code: The .NET code to run the ls command
+   agent_location: Scanner - EU
+3: We need to make sure the .NET code we provide follows the template
+</reasoning>
+I will create a cmd processor that will run the ls command
+<function_call name="add_cmd_processor">
+    <parameters>
+        <cmd_processor_type>List</cmd_processor_type>
+        <source_code>
+        <![CDATA[
+using System; // Required base functionality
+using System.Text; // For StringBuilder
+using System.Collections.Generic; // For collections
+using System.Diagnostics; // For Process execution
+using System.Threading.Tasks; // For async/await
+using System.Text.RegularExpressions; // For regex operations
+using Microsoft.Extensions.Logging; // For logging
+using System.Linq; // For LINQ operations
+using NetworkMonitor.Objects; // For application-specific objects
+using NetworkMonitor.Objects.Repository; // For repository handling
+using NetworkMonitor.Objects.ServiceMessage; // For service messaging
+using NetworkMonitor.Connection; // For connection handling
+using NetworkMonitor.Utils; // For utility methods
+using System.Xml.Linq; // For XML handling
+using System.IO; // For file operations
+using System.Threading; // For CancellationToken
+using System.Net; // For Network operations
+
+namespace NetworkMonitor.Connection
+{
+    public class ListCmdProcessor : CmdProcessor
+    {
+        public ListCmdProcessor(ILogger logger, ILocalCmdProcessorStates cmdProcessorStates, IRabbitRepo rabbitRepo, NetConnectConfig netConfig) 
+            : base(logger, cmdProcessorStates, rabbitRepo, netConfig) {}
+
+        public override async Task<ResultObj> RunCommand(string arguments, CancellationToken cancellationToken, ProcessorScanDataObj? processorScanDataObj = null)
+        {
+            var result = new ResultObj();
+            string output = "";
+            try
+            {
+                // Check if the command is available
+                if (!_cmdProcessorStates.IsCmdAvailable)
+                {
+                    var warningMessage = $"{_cmdProcessorStates.CmdDisplayName} is not available on this agent.";
+                    LogErrorToFile(warningMessage);
+                    _logger.LogWarning(warningMessage);
+                    output = $"{_cmdProcessorStates.CmdDisplayName} is not available.\n";
+                    result.Message = await SendMessage(output, processorScanDataObj);
+                    result.Success = false;
+                    return result;
+                }
+
+                // Execute the 'ls' command
+                using (var process = new Process())
+                {
+                    process.StartInfo.FileName = "ls";
+                    process.StartInfo.Arguments = arguments;
+                    process.StartInfo.UseShellExecute = false;
+                    process.StartInfo.RedirectStandardOutput = true;
+                    process.StartInfo.RedirectStandardError = true;
+                    process.StartInfo.CreateNoWindow = true;
+                    process.StartInfo.WorkingDirectory = _netConfig.CommandPath;
+
+                    var outputBuilder = new StringBuilder();
+                    process.OutputDataReceived += (sender, e) => { if (e.Data != null) outputBuilder.AppendLine(e.Data); };
+
+                    process.Start();
+                    process.BeginOutputReadLine();
+                    await process.WaitForExitAsync(cancellationToken);
+
+                    output = outputBuilder.ToString();
+                    result.Success = true;
+                }
+            }
+            catch (Exception e)
+            {
+                var errorMessage = $"Error in RunCommand: {e.Message}";
+                LogErrorToFile(errorMessage);
+                _logger.LogError(errorMessage);
+                result.Success = false;
+                result.Message = errorMessage;
+            }
+            return result;
+        }
+
+	public override string GetCommandHelp()
+	{
+    return @"
+This command runs the Unix 'ls' command to list directory contents. 
+You can provide additional arguments to customize the command. 
+For example, '-l' lists details in a long format. 
+
+### Error Logging ###
+If an error occurs during command execution, it is logged to a dedicated log file.
+Log files are located in the 'logs' directory under the root folder (_rootFolder) and 
+are named '<ClassName>.log'. For example, errors from this processor are logged to 'ListCmdProcessor.log'.
+
+Usage:
+    arguments: A string containing valid 'ls' command arguments.
+
+Examples:
+    - No arguments: Executes 'ls' to list files in the current directory.
+    - With arguments: 'ls -l' for detailed output, 'ls -a' to include hidden files.
+";
+	}
+
+        private void LogErrorToFile(string errorMessage)
+        {
+            try
+            {
+                // Ensure the _rootFolder directory exists
+                if (string.IsNullOrEmpty(_rootFolder))
+                {
+                    _logger.LogError("Error: _rootFolder is not set.");
+                    return;
+                }
+
+                var logDirectory = Path.Combine(_rootFolder, "logs");
+                Directory.CreateDirectory(logDirectory); // Create directory if it doesn't exist
+
+                var logFilePath = Path.Combine(logDirectory, $"{GetType().Name}.log");
+                var logMessage = $"{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} - {errorMessage}\n";
+
+                File.AppendAllText(logFilePath, logMessage); // Append the error message to the log file
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Failed to write to error log file: {ex.Message}");
+            }
+        }
+    }
+}
+        ]]>
+        </source_code>
+        <agent_location>London - UK</agent_location>
+    </parameters>
+</function_call><|eot_id|><|start_header_id|>ipython<|end_header_id|>
+
+{"message" : "Success: added List cmd processor", "success" : true, "agent_location" : "Scanner - EU", }<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+
+I have added a cmd processor List. It is ready for use on agent Scanner - EU<|eot_id|><|start_header_id|>user<|end_header_id|>
+
+Can you run ls<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+<reasoning>1. The user wants run the ls command
+1: The run_cmd_processor is the best match to perform this
+2: We need to provide:
+   cmd_processor_type: "List"
+3: The ls command has already been added to Scanner - EU so we will use that agent.
+4: We will add the -l argument to give a detailed listing
+</reasoning>
+Yes I will run ls on agent Scanner - EU using the -l argument
+<function_call name="run_cmd_processor">
+    <parameters>
+        <cmd_processor_type>List</cmd_processor_type>
+        <arguments>-l</arguments>
+        <agent_location>Scanner - EU</agent_location>
+    </parameters>
+</function_call><|eot_id|><|start_header_id|>ipython<|end_header_id|>
+      
+{"message" : " ls command output nmap meta openssl busybox", "success" : true, "agent_location" : "Scanner - EU", }<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+
+The list command that was run on agent Scanner - EU shows four files nmap meta openssl and busybox<|eot_id|><|start_header_id|>user<|end_header_id|>
+
+Can you create a commmand to test ftp sites. I would like it to run on Scanner - US<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+<reasoning>1. The user wants to create cmd processor that will test ftp sites
+1: We can use the add_cmd_processor function for this
+2: We need to provide:
+   cmd_processor_type: "FTPConnectionTester"
+   source_code: The .NET code to test ftp connections
+3: The user has asked to use agent_location: Scanner - US
+3: We need to make sure the .NET code we provide follows the template
+</reasoning>
+I will create a FTPConnectionTester on agent Scanner - US
+<function_call name="add_cmd_processor">
+    <parameters>
+        <cmd_processor_type>FTPConnectionTester</cmd_processor_type>
+        <source_code>
+        <![CDATA[
+using System; // Required base functionality
+using System.Text; // For StringBuilder
+using System.Collections.Generic; // For collections
+using System.Diagnostics; // For debugging (if needed)
+using System.Threading.Tasks; // For async/await
+using System.Text.RegularExpressions; // For regex operations
+using Microsoft.Extensions.Logging; // For logging
+using System.Linq; // For LINQ operations
+using NetworkMonitor.Objects; // For application-specific objects
+using NetworkMonitor.Objects.Repository; // For repository handling
+using NetworkMonitor.Objects.ServiceMessage; // For service messaging
+using NetworkMonitor.Connection; // For connection handling
+using NetworkMonitor.Utils; // For utility methods
+using System.Xml.Linq; // For XML handling
+using System.IO; // For file operations
+using System.Threading; // For CancellationToken
+using System.Net; // For FTPWebRequest
+
+namespace NetworkMonitor.Connection
+{
+    public class FTPConnectionTesterCmdProcessor : CmdProcessor
+    {
+        public FTPConnectionTesterCmdProcessor(ILogger logger, ILocalCmdProcessorStates cmdProcessorStates, IRabbitRepo rabbitRepo, NetConnectConfig netConfig)
+            : base(logger, cmdProcessorStates, rabbitRepo, netConfig) { }
+
+        public override async Task<ResultObj> RunCommand(string arguments, CancellationToken cancellationToken, ProcessorScanDataObj? processorScanDataObj = null)
+        {
+            var result = new ResultObj();
+            try
+            {
+                // Check if cancellation has already been requested
+                cancellationToken.ThrowIfCancellationRequested();
+
+                // Parse command-line style arguments
+                var args = ParseArguments(arguments);
+                if (!args.ContainsKey("username") || !args.ContainsKey("password") || !args.ContainsKey("host"))
+                {
+                    result.Success = false;
+                    result.Message = "Invalid arguments. Please provide --username, --password, and --host.";
+                    return result;
+                }
+
+                string username = args["username"];
+                string password = args["password"];
+                string host = args["host"];
+
+                _logger.LogInformation($"Testing FTP connection to {host} with username: {username}");
+
+                // Test FTP connection
+                var request = (FtpWebRequest)WebRequest.Create($"ftp://{host}");
+                request.Credentials = new NetworkCredential(username, password);
+                request.Method = WebRequestMethods.Ftp.ListDirectory;
+
+                // Register a callback so that if the token is cancelled, we abort the request.
+                using (cancellationToken.Register(() => request.Abort()))
+                {
+                    try
+                    {
+                        // The cancellationToken can be checked before awaiting any I/O
+                        cancellationToken.ThrowIfCancellationRequested();
+
+                        using (var response = (FtpWebResponse)await request.GetResponseAsync())
+                        {
+                            result.Success = true;
+                            result.Message = $"FTP connection successful. Response status: {response.StatusDescription}";
+                        }
+                    }
+                    catch (WebException ex) when (ex.Status == WebExceptionStatus.RequestCanceled)
+                    {
+                        // This occurs if request.Abort() was called due to cancellation.
+                        _logger.LogInformation("FTP request was canceled.");
+                        result.Success = false;
+                        result.Message = "Operation canceled by user.";
+                    }
+                    catch (WebException ex)
+                    {
+                        if (ex.Response is FtpWebResponse ftpResponse)
+                        {
+                            _logger.LogError($"FTP error: {ftpResponse.StatusDescription}");
+                            result.Success = false;
+                            result.Message = $"FTP connection failed. Status: {ftpResponse.StatusDescription}";
+                        }
+                        else
+                        {
+                            _logger.LogError($"FTP error: {ex.Message}");
+                            result.Success = false;
+                            result.Message = $"FTP connection failed. Error: {ex.Message}";
+                        }
+                        LogErrorToFile(result.Message);
+                    }
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // If the token was canceled before or during the operation
+                _logger.LogInformation("FTP connection operation was canceled by the user.");
+                result.Success = false;
+                result.Message = "Operation canceled by user.";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error testing FTP connection: {ex.Message}");
+                result.Success = false;
+                result.Message = $"Error testing FTP connection: {ex.Message}";
+                LogErrorToFile(result.Message);
+            }
+
+            return result;
+        }
+
+        public override string GetCommandHelp()
+        {
+            return @"
+This command tests an FTP connection by attempting to list the directory contents using provided credentials. 
+It validates the FTP server’s response and provides feedback on connectivity.
+
+Usage:
+    arguments: A command-line style string containing:
+        --username: FTP username.
+        --password: FTP password.
+        --host: FTP host (e.g., 'ftp.example.com').
+
+Examples:
+    - '--username admin --password admin123 --host ftp.example.com':
+        Tests FTP connection to 'ftp.example.com' with the specified credentials.
+";
+        }
+
+
+        // Helper method to parse command-line style arguments
+        private Dictionary<string, string> ParseArguments(string arguments)
+        {
+            var args = new Dictionary<string, string>();
+            var regex = new Regex(@"--(?<key>\w+)\s+(?<value>[^\s]+)");
+            var matches = regex.Matches(arguments);
+
+            foreach (Match match in matches)
+            {
+                args[match.Groups["key"].Value.ToLower()] = match.Groups["value"].Value;
+            }
+
+            return args;
+        }
+        private void LogErrorToFile(string errorMessage)
+        {
+            try
+            {
+                // Ensure the _rootFolder directory exists
+                if (string.IsNullOrEmpty(_rootFolder))
+                {
+                    _logger.LogError("Error: _rootFolder is not set.");
+                    return;
+                }
+
+                var logDirectory = Path.Combine(_rootFolder, "logs");
+                Directory.CreateDirectory(logDirectory); // Create directory if it doesn't exist
+
+                var logFilePath = Path.Combine(logDirectory, $"{GetType().Name}.log");
+                var logMessage = $"{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} - {errorMessage}\n";
+
+                File.AppendAllText(logFilePath, logMessage); // Append the error message to the log file
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Failed to write to error log file: {ex.Message}");
+            }
+        }
+    }
+}
+        ]]>
+        </source_code>
+        <agent_location>Scanner - US</agent_location>
+    </parameters><|start_header_id|>ipython<|end_header_id|>
+
+{"message" : "Success: added FtpConnectionTester cmd processor", "success" : true, "agent_location" : "Scanner - US", }<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+
+I have created a FTPConnectionTester cmd processor and is ready for use on agent Scanner - US<|eot_id|><|start_header_id|>user<|end_header_id|>
+
+Can you check if ftp ftpsite.com is working I use username test password test123<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+<reasoning>1. The user wants to test the FTPConnectionTester cmd processor
+1: The run_cmd_processor is the best match to perform this function
+2: We need to provide:
+   cmd_processor_type: "FTPConnectionTester"
+   arguments: --host ftpsite.com --username test --password test123
+   agent_location: Scanner - US
+</reasoning>
+I will check this site
+<function_call name="run_cmd_processor">
+    <parameters>
+        <cmd_processor_type>HttpChecker</cmd_processor_type>
+        <arguments>--username test --password test123 --host ftpsite.com</arguments>
+        <agent_location>Scanner - US</agent_location>
+    </parameters>
+</function_call><|start_header_id|>ipython<|end_header_id|>
+
+{"message" : "Success: ftpsite.com connection success", "success" : true, "agent_location" : "Scanner - US", }<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+
+I have tested a ftp connection to ftpsite.com and the login was successful. Is there any thing else you need assistance with?
+<|eot_id|>
+
