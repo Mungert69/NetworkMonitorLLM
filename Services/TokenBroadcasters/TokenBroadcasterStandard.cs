@@ -15,8 +15,10 @@ public class TokenBroadcasterStandard : TokenBroadcasterBase
 
     private readonly string _defaultEOT="<|eot_id|>";
 
-    public TokenBroadcasterStandard(ILLMResponseProcessor responseProcessor, ILogger logger)
-         : base(responseProcessor, logger) { }
+    public TokenBroadcasterStandard(ILLMResponseProcessor responseProcessor, ILogger logger,bool xmlFunctionParsing=false)
+         : base(responseProcessor, logger) {
+            _xmlFunctionParsing=xmlFunctionParsing;
+          }
 
     public override async Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput,int countEOT, bool sendOutput = true)
     {

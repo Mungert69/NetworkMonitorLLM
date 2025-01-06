@@ -13,8 +13,10 @@ namespace NetworkMonitor.LLM.Services;
 public class TokenBroadcasterFunc_2_5 : TokenBroadcasterBase
 {
 
-   public TokenBroadcasterFunc_2_5(ILLMResponseProcessor responseProcessor, ILogger logger) 
-        : base(responseProcessor, logger) { }
+   public TokenBroadcasterFunc_2_5(ILLMResponseProcessor responseProcessor, ILogger logger,bool xmlFunctionParsing=false) 
+        : base(responseProcessor, logger) {
+            _xmlFunctionParsing=xmlFunctionParsing;
+         }
   
     public override async Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput, int countEOT, bool sendOutput = true)
     {
