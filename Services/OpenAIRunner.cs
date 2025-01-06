@@ -611,5 +611,11 @@ public class OpenAIRunner : ILLMRunner
 
     }
 
+     public void StopRequest(string sessionId)
+    {
+     // TODO implement stop 
+    }
+   
+
 
 }
