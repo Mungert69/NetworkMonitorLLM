@@ -43,11 +43,10 @@ public class TokenBroadcasterQwen_2_5 : TokenBroadcasterBase
         var lineBuilder = new StringBuilder();
         var llmOutFull = new StringBuilder();
         _isFuncCalled = false;
-        var cancellationToken = _cancellationTokenSource.Token;
         int stopCount = 0;
 
 
-        while (!cancellationToken.IsCancellationRequested)
+        while (!_cancellationTokenSource.IsCancellationRequested)
         {
             byte[] buffer = new byte[1024];
             int charRead = await process.StandardOutput.ReadAsync(buffer, 0, buffer.Length);

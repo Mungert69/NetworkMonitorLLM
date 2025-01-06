@@ -67,7 +67,7 @@ public class LLMService : ILLMService
 
             bool exists = _sessions.TryGetValue(llmServiceObj.SessionId, out var checkSession);
             bool isSessionRemoved = false;
-            if (checkSession != null && checkSession.Runner != null && checkSession.Runner.Type! == llmServiceObj.LLMRunnerType && checkSession.Runner.IsStateFailed)
+            if (checkSession != null && checkSession.Runner != null && checkSession.Runner.Type!=null && checkSession.Runner.Type== llmServiceObj.LLMRunnerType && checkSession.Runner.IsStateFailed)
             {
                 try
                 {
@@ -79,7 +79,7 @@ public class LLMService : ILLMService
 
                 }
             }
-            if (isSessionRemoved || checkSession == null || (checkSession != null && checkSession.Runner != null && checkSession.Runner.Type! != llmServiceObj.LLMRunnerType))
+            if (isSessionRemoved || checkSession == null || (checkSession != null && checkSession.Runner != null && checkSession.Runner.Type!=null && checkSession.Runner.Type!= llmServiceObj.LLMRunnerType))
             {
                 ILLMRunner runner;
                 switch (llmServiceObj.LLMRunnerType)
@@ -146,6 +146,7 @@ public class LLMService : ILLMService
                 if (session.Runner != null)
                 {
                     await session.Runner.RemoveProcess(llmServiceObj.SessionId);
+                    session.Runner=null;
                     _sessions.TryRemove(llmServiceObj.SessionId, out _);
                     await _rabbitRepo.PublishAsync<LLMServiceObj>("llmSessionEnded", llmServiceObj);
 

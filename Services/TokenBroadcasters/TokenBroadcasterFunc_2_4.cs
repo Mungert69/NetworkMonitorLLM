@@ -25,15 +25,14 @@ public class TokenBroadcasterFunc_2_4 : TokenBroadcasterBase
     {
         _logger.LogWarning($" Start BroadcastAsync() DestinationLlm {serviceObj.DestinationLlm} SourceLlm {serviceObj.SourceLlm} ");
         _responseProcessor.SendOutput = sendOutput;
-        var cancellationToken = _cancellationTokenSource.Token;
-        var llmOutFull = new StringBuilder();
+       var llmOutFull = new StringBuilder();
         var tokenBuilder = new StringBuilder();
         _isPrimaryLlm = serviceObj.IsPrimaryLlm;
         _isFuncCalled = false;
         var forwardSegments = new List<MessageSegment>();
 
         bool isStopEncountered = false;
-        while (!cancellationToken.IsCancellationRequested)
+        while (!_cancellationTokenSource.IsCancellationRequested)
         {
             byte[] buffer = new byte[50];
             int charRead = await process.StandardOutput.ReadAsync(buffer, 0, buffer.Length);
