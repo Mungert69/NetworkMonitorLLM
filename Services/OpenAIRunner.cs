@@ -611,11 +611,12 @@ public class OpenAIRunner : ILLMRunner
 
     }
 
-     public void StopRequest(string sessionId)
-    {
-     // TODO implement stop 
-    }
-   
+   public Task StopRequest(string sessionId)
+{
+    // TODO: Implement stop logic
+    return Task.CompletedTask;
+}
+
 
 
 }

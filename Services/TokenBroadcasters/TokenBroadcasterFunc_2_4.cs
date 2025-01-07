@@ -12,6 +12,7 @@ using NetworkMonitor.LLM.Services.Objects;
 using System.Text.RegularExpressions;
 using System.Security.Cryptography;
 using System.Linq;
+using NetworkMonitor.Objects;
 namespace NetworkMonitor.LLM.Services;
 public class TokenBroadcasterFunc_2_4 : TokenBroadcasterBase
 {

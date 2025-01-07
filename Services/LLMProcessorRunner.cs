@@ -306,7 +306,7 @@ public class LLMProcessRunner : ILLMRunner
     }
 
 
-    public void StopRequest(string sessionId)
+    public async Task StopRequest(string sessionId)
     {
         _isStateReady = false;
 
@@ -315,21 +315,40 @@ public class LLMProcessRunner : ILLMRunner
             _isStateReady = true;
             throw new Exception("Process is not running for this session");
         }
-
-        _logger.LogInformation($" LLM Service : Send CtrlC to sessionsId {sessionId}");
+ 
         try
         {
             if (process != null && !process.HasExited)
             {
-                process.Kill();
+                ProcessSignalHelper.SendCtrlCSignal(process.UnderlyingProcess);
+                _logger.LogInformation($" Success : sent Ctrl-C for sessionId {sessionId}");
+
             }
         }
         catch (Exception e)
         {
-            _logger.LogInformation($"Failed to send CtrlC to session {sessionId}. Error was : {e.Message}");
+            _logger.LogError($" Error : Failed to send Ctrl+C to session {sessionId}. Error: {e.Message}");
         }
+      
 
+        if (_tokenBroadcasters.TryGetValue(sessionId, out var tokenBroadcaster))
+        {
+            try
+            {
+                await tokenBroadcaster.ReInit(sessionId);
+                 _logger.LogInformation($" Success : Stop tokenBroadCaster for sessionId {sessionId}");
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($" Error : failed to reinitialize token broadcaster for sessionId {sessionId}: {ex.Message}");
+            }
+        }
+         
+        _isStateReady = true;
+        
     }
+
     private async Task WaitForReadySignal(ProcessWrapper process)
     {
         bool isReady = false;
