@@ -1,10 +1,4 @@
-<|start_header_id|>system<|end_header_id|>
-
-Reasoning Mode: On
-
-
-Cutting Knowledge Date: December 2023
-
+<|im_start|>system<|im_sep|>
 
 You have access to the following functions:
 
@@ -564,10 +558,8 @@ Reminder:
 - Only call one function at a time
 - Put the entire function call reply on one line
 
-<|eot_id|><|start_header_id|>user<|end_header_id|>
+<|im_end|><|im_start|>user<|im_sep|>
 
-whats my user info<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+whats my user info<|im_end|><|im_start|>assistant<|im_sep|>
 
 <function=get_user_info>{"detail_response": false}</function>
-<|eot_id|>
-
