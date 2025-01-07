@@ -17,89 +17,104 @@ namespace NetworkMonitor.LLM.Services;
 public class TokenBroadcasterFunc_2_4 : TokenBroadcasterBase
 {
 
-   public TokenBroadcasterFunc_2_4(ILLMResponseProcessor responseProcessor, ILogger logger,bool xmlFunctionParsing=false) 
-        : base(responseProcessor, logger) { 
-            _xmlFunctionParsing=xmlFunctionParsing;
-        }
-  
+    public TokenBroadcasterFunc_2_4(ILLMResponseProcessor responseProcessor, ILogger logger, bool xmlFunctionParsing = false)
+         : base(responseProcessor, logger)
+    {
+        _xmlFunctionParsing = xmlFunctionParsing;
+    }
+
     public override async Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput, int countEOT, bool sendOutput)
     {
         _logger.LogWarning($" Start BroadcastAsync() DestinationLlm {serviceObj.DestinationLlm} SourceLlm {serviceObj.SourceLlm} ");
         _responseProcessor.SendOutput = sendOutput;
-       var llmOutFull = new StringBuilder();
+        var llmOutFull = new StringBuilder();
         var tokenBuilder = new StringBuilder();
         _isPrimaryLlm = serviceObj.IsPrimaryLlm;
         _isFuncCalled = false;
         var forwardSegments = new List<MessageSegment>();
 
         bool isStopEncountered = false;
-        while (!_cancellationTokenSource.IsCancellationRequested)
+        try
         {
-            byte[] buffer = new byte[50];
-            int charRead = await process.StandardOutput.ReadAsync(buffer, 0, buffer.Length);
-            string textChunk = Encoding.UTF8.GetString(buffer, 0, charRead);
-            var chunkServiceObj = new LLMServiceObj(serviceObj);
-            chunkServiceObj.LlmMessage = textChunk;
-            if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(chunkServiceObj);
-            llmOutFull.Append(textChunk);
-            tokenBuilder.Append(textChunk);
-            //Console.WriteLine(textChunk);
-            if (IsTokenComplete(tokenBuilder))
+            while (!_cancellationTokenSource.Token.IsCancellationRequested)
             {
-                string token = tokenBuilder.ToString();
-                tokenBuilder.Clear();
-                token = token.Replace("/\b", "");
-                //Console.WriteLine(token);
-            }
-            //var (messageSegment, isWithinContent, isMessageSegmentComplete) = ParseLLMOutput(llmOutFull.ToString());
-            var (messageSegments, isMessageSegmentsComplete) = ParseLLMOutputMulti(llmOutFull.ToString());
-            if (isMessageSegmentsComplete && messageSegments != null && messageSegments.Count > 0)
-            {
-                foreach (var messageSegment in messageSegments)
+                byte[] buffer = new byte[50];
+                int charRead = await process.StandardOutput.ReadAsync(buffer, 0, buffer.Length, _cancellationTokenSource.Token);
+                string textChunk = Encoding.UTF8.GetString(buffer, 0, charRead);
+                var chunkServiceObj = new LLMServiceObj(serviceObj);
+                chunkServiceObj.LlmMessage = textChunk;
+                if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(chunkServiceObj);
+                llmOutFull.Append(textChunk);
+                tokenBuilder.Append(textChunk);
+                //Console.WriteLine(textChunk);
+                if (IsTokenComplete(tokenBuilder))
                 {
-
-                    LLMServiceObj responseServiceObj = new LLMServiceObj(serviceObj);
-                    if (serviceObj.IsFunctionCallResponse)
+                    string token = tokenBuilder.ToString();
+                    tokenBuilder.Clear();
+                    token = token.Replace("/\b", "");
+                    //Console.WriteLine(token);
+                }
+                //var (messageSegment, isWithinContent, isMessageSegmentComplete) = ParseLLMOutput(llmOutFull.ToString());
+                var (messageSegments, isMessageSegmentsComplete) = ParseLLMOutputMulti(llmOutFull.ToString());
+                if (isMessageSegmentsComplete && messageSegments != null && messageSegments.Count > 0)
+                {
+                    foreach (var messageSegment in messageSegments)
                     {
-                        responseServiceObj.LlmMessage = "</functioncall-complete>";
-                        if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+
+                        LLMServiceObj responseServiceObj = new LLMServiceObj(serviceObj);
+                        if (serviceObj.IsFunctionCallResponse)
+                        {
+                            responseServiceObj.LlmMessage = "</functioncall-complete>";
+                            if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+                        }
+                        await ProcessMessageSegment(messageSegment, serviceObj);
                     }
-                    await ProcessMessageSegment(messageSegment, serviceObj);
+                    if (!_isPrimaryLlm) forwardSegments = messageSegments;
+                    _cancellationTokenSource.Cancel();
+                    isStopEncountered = true;
                 }
-                if (!_isPrimaryLlm) forwardSegments = messageSegments;
-                _cancellationTokenSource.Cancel();
-                isStopEncountered = true;
+                if (isStopEncountered)
+                    break;
             }
-            if (isStopEncountered)
-                break;
-        }
-        if (!_isPrimaryLlm && !_isFuncCalled)
-        {
-            string llmOutput = "Message to sent from Remote LLM format corrupt.";
-            //string test = llmOutFull.ToString();
-            try
+            if (!_isPrimaryLlm && !_isFuncCalled)
             {
-                if (forwardSegments.Count > 0)
+                string llmOutput = "Message to sent from Remote LLM format corrupt.";
+                //string test = llmOutFull.ToString();
+                try
                 {
-                    var assistantSegment = forwardSegments.Where(a => a.From.Contains("assistant")).FirstOrDefault();
-                    if (assistantSegment != null) llmOutput = assistantSegment.Content.Replace("\n", "").Replace("<|stop|>", "");
+                    if (forwardSegments.Count > 0)
+                    {
+                        var assistantSegment = forwardSegments.Where(a => a.From.Contains("assistant")).FirstOrDefault();
+                        if (assistantSegment != null) llmOutput = assistantSegment.Content.Replace("\n", "").Replace("<|stop|>", "");
+                    }
                 }
-            }
-            catch { }
+                catch { }
 
-            var finalServiceObj = new LLMServiceObj(serviceObj);
-            finalServiceObj.LlmMessage = llmOutput;
-            finalServiceObj.IsFunctionCall = false;
-            finalServiceObj.IsFunctionCallResponse = true;
-            await _responseProcessor.ProcessLLMOutput(finalServiceObj);
-            _logger.LogInformation($" --> Sent redirected LLM Output {finalServiceObj.LlmMessage}");
+                var finalServiceObj = new LLMServiceObj(serviceObj);
+                finalServiceObj.LlmMessage = llmOutput;
+                finalServiceObj.IsFunctionCall = false;
+                finalServiceObj.IsFunctionCallResponse = true;
+                await _responseProcessor.ProcessLLMOutput(finalServiceObj);
+                _logger.LogInformation($" --> Sent redirected LLM Output {finalServiceObj.LlmMessage}");
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogInformation("Read operation canceled due to CancellationToken.");
+
+            // Send a tidy-up message
+            var finalChunkServiceObj = new LLMServiceObj(serviceObj)
+            {
+                LlmMessage = "\n"
+            };
+            if (_isPrimaryLlm)
+                await _responseProcessor.ProcessLLMOutput(finalChunkServiceObj);
         }
 
-        _logger.LogInformation(" --> LLM Output --> " + llmOutFull.ToString());
         _logger.LogInformation(" --> Finished LLM Interaction ");
     }
 
-   
+
     public static (MessageSegment, bool, bool) ParseLLMOutput(string output)
     {
         var regex = new Regex(@"<\|(?<tag>\w+)\|>(?<value>.+?(?=<\|))");
@@ -223,9 +238,9 @@ public class TokenBroadcasterFunc_2_4 : TokenBroadcasterBase
                     forwardFuncServiceObj.IsFunctionCall = false;
                     forwardFuncServiceObj.IsFunctionCallResponse = true;
                     forwardFuncServiceObj.FunctionName = messageSegment.Recipient;
-                   // await _responseProcessor.ProcessLLMOutput(forwardFuncServiceObj);
-                   // _logger.LogInformation($" --> Sent redirected LLM Function Output {forwardFuncServiceObj.LlmMessage}");
-                    
+                    // await _responseProcessor.ProcessLLMOutput(forwardFuncServiceObj);
+                    // _logger.LogInformation($" --> Sent redirected LLM Function Output {forwardFuncServiceObj.LlmMessage}");
+
                 }
                 responseServiceObj.LlmMessage = "";
                 responseServiceObj.IsFunctionCall = true;
@@ -253,7 +268,7 @@ public class TokenBroadcasterFunc_2_4 : TokenBroadcasterBase
         callFuncJson = "{ \"name\" : \"" + funcName + "\" \"arguments\" : \"" + json + "\"}";
         return callFuncJson;
     }
-    private   (bool, string) ParseSegmentInputForJson(string input)
+    private (bool, string) ParseSegmentInputForJson(string input)
     {
         string newLine = string.Empty;
         // bool foundStart = false;

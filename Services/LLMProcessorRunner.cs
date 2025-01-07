@@ -315,7 +315,27 @@ public class LLMProcessRunner : ILLMRunner
             _isStateReady = true;
             throw new Exception("Process is not running for this session");
         }
- 
+        if (_tokenBroadcasters.TryGetValue(sessionId, out var tokenBroadcaster))
+        {
+            try
+            {
+                await tokenBroadcaster.ReInit(sessionId);
+                _logger.LogInformation($" Success : Stop tokenBroadCaster for sessionId {sessionId}");
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($" Error : failed to reinitialize token broadcaster for sessionId {sessionId}: {ex.Message}");
+            }
+        }
+        else
+        {
+            _logger.LogWarning($" Warning : No tokenBroadCasters found for sessionId {sessionId}");
+
+        }
+
+
+
         try
         {
             if (process != null && !process.HasExited)
@@ -329,24 +349,18 @@ public class LLMProcessRunner : ILLMRunner
         {
             _logger.LogError($" Error : Failed to send Ctrl+C to session {sessionId}. Error: {e.Message}");
         }
-      
 
-        if (_tokenBroadcasters.TryGetValue(sessionId, out var tokenBroadcaster))
-        {
-            try
+       /* try
             {
-                await tokenBroadcaster.ReInit(sessionId);
-                 _logger.LogInformation($" Success : Stop tokenBroadCaster for sessionId {sessionId}");
+                _processRunnerSemaphore.Release();
+            }
+            catch
+            {
+                _logger.LogWarning("Semaphore release failed during RemoveProcess.");
+            }*/
 
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($" Error : failed to reinitialize token broadcaster for sessionId {sessionId}: {ex.Message}");
-            }
-        }
-         
         _isStateReady = true;
-        
+
     }
 
     private async Task WaitForReadySignal(ProcessWrapper process)
@@ -506,7 +520,12 @@ public class LLMProcessRunner : ILLMRunner
                     default:
                         throw new InvalidOperationException($" Error there is no Token Broadcaster for LLM Version {_mlParams.LlmVersion}");
 
-                        break;
+                }
+
+                if (!_tokenBroadcasters.TryAdd(serviceObj.SessionId, tokenBroadcaster))
+                {
+                    _logger.LogError($"Failed to add TokenBroadcaster for sessionId {serviceObj.SessionId}");
+                    throw new InvalidOperationException($"Failed to add TokenBroadcaster for sessionId {serviceObj.SessionId}");
                 }
 
             }
@@ -654,6 +673,7 @@ public class LLMProcessRunner : ILLMRunner
         }
         finally
         {
+           
             _processRunnerSemaphore.Release(); // Release the semaphore
             _isStateReady = true;
         }
