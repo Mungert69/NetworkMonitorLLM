@@ -510,6 +510,7 @@ public class LLMProcessRunner : ILLMRunner
                         break;
 
                     case "qwen_2.5":
+                    case "phi_4":
                         tokenBroadcaster = new TokenBroadcasterQwen_2_5(_responseProcessor, _logger, _mlParams.XmlFunctionParsing);
                         break;
 
@@ -551,6 +552,7 @@ public class LLMProcessRunner : ILLMRunner
                             break;
 
                         case "qwen_2.5":
+                        case "phi_4":
                             userInput = "<|im_start|>user\\\n" + userInput;
                             break;
 
@@ -579,6 +581,7 @@ public class LLMProcessRunner : ILLMRunner
                                     break;
 
                                 case "qwen_2.5":
+                                case "phi_4":
                                     userInput = "<|im_start|>assistant\\\n" + userInput + "<|im_end|>" + userInput;
                                     break;
 
@@ -611,6 +614,7 @@ public class LLMProcessRunner : ILLMRunner
                                         break;
 
                                     case "qwen_2.5":
+                                    case "phi_4":
                                         userInput += "<|im_end|>";
                                         break;
 
