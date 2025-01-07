@@ -169,10 +169,10 @@ Use the function 'get_host_data' to 'Retrieve monitoring data for specific hosts
     "required": []
   }
 }
-Use the function 'get_host_list' to 'Obtain a list of monitored hosts and their configurations, with optional filtering by attributes like address, endpoint, and enabled status.'
+Use the function 'get_host_list' to 'Obtain a list host configurations'
 {
   "name": "get_host_list",
-  "description": "Retrieve a list of monitored hosts and their configurations. This function allows you to obtain information about the hosts being monitored. For example, to filter hosts by address containing '.com', you would specify {'address': '.com'}. To filter hosts with a 'dns' endpoint, you would specify {'endpoint': 'dns'}.",
+  "description": "Retrieve a list of monitored host configurations. This function allows you to obtain information about the configuration of hosts being monitored. For example, to view host confurations filtering  by address containing '.com', you would specify {'address': '.com'}. To filter hosts with a 'dns' endpoint, you would specify {'endpoint': 'dns'}. Note: this does not return monitoring data use get_host_data for that.",
   "parameters": {
     "type": "object",
     "properties": {
