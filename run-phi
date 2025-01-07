@@ -1,0 +1,2 @@
+~/code/models/llama.cpp/llama-cli -c 12000  -m ~/code/models/microsoft_phi-4-q6_k.gguf  --prompt-cache context-phi.gguf --prompt-cache-ro  -f system_prompt_phi_run   -r "<|im_end|>"  -sp -if --keep -1 --temp 0 --color --simple-io -sp --in-suffix "<|im_end|><|im_start|>assistant<|im_sep|>\n"
+

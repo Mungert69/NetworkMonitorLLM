@@ -66,3 +66,5 @@ Instructions:
     During Step 1, your job is to ask the system to fetch the webpage using the format provided.
     Once the system gives you the webpage content, summarize it concisely in JSON format for Step 3.
 
+<|im_end|>
+
