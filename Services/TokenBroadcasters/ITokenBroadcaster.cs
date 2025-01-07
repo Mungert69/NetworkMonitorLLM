@@ -2,6 +2,7 @@ using System;
 using System.Text;
 using NetworkMonitor.Objects.ServiceMessage;
 using System.Threading.Tasks;
+using NetworkMonitor.Objects;
 namespace NetworkMonitor.LLM.Services;
  public interface ITokenBroadcaster
     {

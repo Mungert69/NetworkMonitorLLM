@@ -14,10 +14,11 @@ namespace NetworkMonitor.LLM.Services
     public class TokenBroadcasterFunc_3_1 : TokenBroadcasterBase
     {
 
-        public TokenBroadcasterFunc_3_1(ILLMResponseProcessor responseProcessor, ILogger logger,bool xmlFunctionParsing=false)
-             : base(responseProcessor, logger) {
-                _xmlFunctionParsing=xmlFunctionParsing;
-              }
+        public TokenBroadcasterFunc_3_1(ILLMResponseProcessor responseProcessor, ILogger logger, bool xmlFunctionParsing = false)
+             : base(responseProcessor, logger)
+        {
+            _xmlFunctionParsing = xmlFunctionParsing;
+        }
 
 
         public override async Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput, int countEOT, bool sendOutput = true)
@@ -38,46 +39,61 @@ namespace NetworkMonitor.LLM.Services
             _isFuncCalled = false;
             int stopCount = 0;
 
-
-            while (!_cancellationTokenSource.IsCancellationRequested)
+            try
             {
-                byte[] buffer = new byte[1024];
-                int charRead = await process.StandardOutput.ReadAsync(buffer, 0, buffer.Length);
-                string textChunk = Encoding.UTF8.GetString(buffer, 0, charRead);
-                //tokenBuilder.Append(textChunk);
-                llmOutFull.Append(textChunk);
-                chunkServiceObj = new LLMServiceObj(serviceObj);
-                chunkServiceObj.LlmMessage = textChunk;
-                if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(chunkServiceObj);
-                string llmOutStr = llmOutFull.ToString();
-                int eotIdCount = CountOccurrences(llmOutStr, "<|eot_id|>");
-                eotIdCount += CountOccurrences(llmOutStr, "<|eom_id|>");
-                if (eotIdCount > stopCount)
+                while (!_cancellationTokenSource.Token.IsCancellationRequested)
                 {
-                    stopCount++;
-                    _logger.LogInformation($" Stop count {stopCount} output is {llmOutStr}");
+                    byte[] buffer = new byte[1024];
+                    int charRead = await process.StandardOutput.ReadAsync(buffer, 0, buffer.Length, _cancellationTokenSource.Token);
+                    string textChunk = Encoding.UTF8.GetString(buffer, 0, charRead);
+                    //tokenBuilder.Append(textChunk);
+                    llmOutFull.Append(textChunk);
+                    chunkServiceObj = new LLMServiceObj(serviceObj);
+                    chunkServiceObj.LlmMessage = textChunk;
+                    if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(chunkServiceObj);
+                    string llmOutStr = llmOutFull.ToString();
+                    int eotIdCount = CountOccurrences(llmOutStr, "<|eot_id|>");
+                    eotIdCount += CountOccurrences(llmOutStr, "<|eom_id|>");
+                    if (eotIdCount > stopCount)
+                    {
+                        stopCount++;
+                        _logger.LogInformation($" Stop count {stopCount} output is {llmOutStr}");
 
+                    }
+                    if (stopCount == stopAfter)
+                    {
+                        await ProcessLine(llmOutStr, serviceObj);
+                        _logger.LogInformation($" Cancel due to {stopCount} <|eot_id|> detected ");
+                        _cancellationTokenSource.Cancel(); // Cancel after second <|eot_id|>}
+
+                    }
                 }
-                if (stopCount == stopAfter)
-                {
-                    await ProcessLine(llmOutStr, serviceObj);
-                    _logger.LogInformation($" Cancel due to {stopCount} <|eot_id|> detected ");
-                    _cancellationTokenSource.Cancel(); // Cancel after second <|eot_id|>}
+                
 
+                if (!_isPrimaryLlm && !_isFuncCalled)
+                {
+                    string llmOutput = llmOutFull.ToString().Replace("\n", " ");
+                    llmOutput = llmOutput.Replace("<|start_header_id|>assistant<|end_header_id|>", "")
+                                                                 .Replace("<|eot_id|>", ""); // Additional replacement
+
+                    var finalServiceObj = new LLMServiceObj(serviceObj);
+                    finalServiceObj.LlmMessage = llmOutput;
+                    finalServiceObj.IsFunctionCallResponse = true;
+                    await _responseProcessor.ProcessLLMOutput(finalServiceObj);
+                    _logger.LogInformation($" --> Sent redirected LLM Output {finalServiceObj.LlmMessage}");
                 }
             }
-
-            if (!_isPrimaryLlm && !_isFuncCalled)
+            catch (OperationCanceledException)
             {
-                string llmOutput = llmOutFull.ToString().Replace("\n", " ");
-                llmOutput = llmOutput.Replace("<|start_header_id|>assistant<|end_header_id|>", "")
-                                                             .Replace("<|eot_id|>", ""); // Additional replacement
+                _logger.LogInformation("Read operation canceled due to CancellationToken.");
 
-                var finalServiceObj = new LLMServiceObj(serviceObj);
-                finalServiceObj.LlmMessage = llmOutput;
-                finalServiceObj.IsFunctionCallResponse = true;
-                await _responseProcessor.ProcessLLMOutput(finalServiceObj);
-                _logger.LogInformation($" --> Sent redirected LLM Output {finalServiceObj.LlmMessage}");
+                // Send a tidy-up message
+                var finalChunkServiceObj = new LLMServiceObj(serviceObj)
+                {
+                    LlmMessage = "\n"
+                };
+                if (_isPrimaryLlm)
+                    await _responseProcessor.ProcessLLMOutput(finalChunkServiceObj);
             }
             _logger.LogInformation(" --> Finished LLM Interaction ");
         }

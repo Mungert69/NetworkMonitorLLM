@@ -20,7 +20,8 @@ namespace NetworkMonitor.LLM.Services;
 public interface ILLMService
 {
     Task<LLMServiceObj> StartProcess(LLMServiceObj llmServiceObj);
-    Task<LLMServiceObj> RemoveProcess(LLMServiceObj llmServiceObj);
+    Task<ResultObj> RemoveProcess(LLMServiceObj llmServiceObj);
+    Task<ResultObj> StopRequest(LLMServiceObj llmServiceObj);
     Task<ResultObj> SendInputAndGetResponse(LLMServiceObj serviceObj);
 }
 
@@ -137,8 +138,9 @@ public class LLMService : ILLMService
         return llmServiceObj;
     }
 
-    public async Task<LLMServiceObj> RemoveProcess(LLMServiceObj llmServiceObj)
+    public async Task<ResultObj> RemoveProcess(LLMServiceObj llmServiceObj)
     {
+        var result=new ResultObj();
         try
         {
             if (_sessions.TryGetValue(llmServiceObj.SessionId, out var session))
@@ -150,32 +152,71 @@ public class LLMService : ILLMService
                     _sessions.TryRemove(llmServiceObj.SessionId, out _);
                     await _rabbitRepo.PublishAsync<LLMServiceObj>("llmSessionEnded", llmServiceObj);
 
-                    llmServiceObj.ResultMessage = $" Success : LLMService Removed Session and sent LLM Session Ended message for sessionId {llmServiceObj.SessionId}.";
-                    llmServiceObj.ResultSuccess = true;
+                    result.Message = $" Success : LLMService Removed Session and sent LLM Session Ended message for sessionId {llmServiceObj.SessionId}.";
+                    result.Success = true;
                 }
                 else
                 {
-                    llmServiceObj.ResultMessage = $" Error : LLMService trying to remove process the runner is already null for sessionId {llmServiceObj.SessionId}.";
-                    llmServiceObj.ResultSuccess = false;
+                    result.Message = $" Error : LLMService trying to remove process the runner is already null for sessionId {llmServiceObj.SessionId}.";
+                    result.Success = false;
                 }
             }
             else
             {
-                llmServiceObj.ResultMessage = $" Error : Could not find session {llmServiceObj.SessionId} to remove the process .";
-                llmServiceObj.ResultSuccess = false;
+                result.Message = $" Error : Could not find session {llmServiceObj.SessionId} to remove the process .";
+                result.Success = false;
             }
 
 
         }
         catch (Exception e)
         {
-            llmServiceObj.ResultMessage = e.Message;
-            llmServiceObj.ResultSuccess = false;
+            result.Message = e.Message;
+            result.Success = false;
         }
 
 
-        return llmServiceObj;
+        return result;
     }
+
+     public async Task<ResultObj> StopRequest(LLMServiceObj llmServiceObj)
+    {
+        var result=new ResultObj();
+        try
+        {
+            if (_sessions.TryGetValue(llmServiceObj.SessionId, out var session))
+            {
+                if (session.Runner != null)
+                {
+                    session.Runner.StopRequest(llmServiceObj.SessionId);
+                   
+                    result.Message = $" Success : LLMService Stop Request for sessionId {llmServiceObj.SessionId}.";
+                    result.Success = true;
+                }
+                else
+                {
+                   result.Message = $" Error : LLMService Step Request failed for sessionId {llmServiceObj.SessionId} The Runner is null.";
+                   result.Success = false;
+                }
+            }
+            else
+            {
+              result.Message = $" Error : Could not find session {llmServiceObj.SessionId} to send stop request .";
+              result.Success = false;
+            }
+
+
+        }
+        catch (Exception e)
+        {
+           result.Message = e.Message;
+           result.Success = false;
+        }
+
+
+        return result;
+    }
+
 
 
     public async Task<ResultObj> SendInputAndGetResponse(LLMServiceObj llmServiceObj)

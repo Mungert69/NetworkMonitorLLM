@@ -15,8 +15,8 @@ using System.Text.RegularExpressions;
 
 namespace NetworkMonitor.LLM.Services
 {
-   
-    public abstract class TokenBroadcasterBase : ITokenBroadcaster
+
+    public abstract class TokenBroadcasterBase : ITokenBroadcaster, IDisposable
     {
         protected readonly ILLMResponseProcessor _responseProcessor;
         protected readonly ILogger _logger;
@@ -25,6 +25,8 @@ namespace NetworkMonitor.LLM.Services
         protected bool _isFuncCalled;
         StringBuilder? _assistantMessage = null;
         protected bool _xmlFunctionParsing = false;
+        private bool _disposed = false; // To detect redundant calls to Dispose
+
 
         public StringBuilder AssistantMessage { get => _assistantMessage; }
 
@@ -38,7 +40,17 @@ namespace NetworkMonitor.LLM.Services
         public async Task ReInit(string sessionId)
         {
             _logger.LogInformation("Cancel due to ReInit called");
-            await _cancellationTokenSource.CancelAsync();
+            try
+            {
+                 _cancellationTokenSource.Cancel();
+            }
+            catch (ObjectDisposedException ex)
+            {
+                _logger.LogWarning($"CancellationTokenSource was already disposed: {ex.Message}");
+            }
+
+            _cancellationTokenSource.Dispose();
+            _cancellationTokenSource = new CancellationTokenSource();
         }
 
         public abstract Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput, int countEOT, bool sendOutput = true);
@@ -102,50 +114,50 @@ namespace NetworkMonitor.LLM.Services
 
 
 
- protected virtual List<(string json, string functionName)> ParseInputForXml(string input)
-{
-    var functionCalls = new List<(string json, string functionName)>();
-
-    // Define a regex pattern to match XML function calls in the mixed input
-    var pattern = @"<function_call\s+name=""(?<name>[^""]+)"">.*?<parameters>(?<parameters>.*?)</parameters>.*?</function_call>";
-
-    // Find all matches (XML blocks)
-    var matches = Regex.Matches(input, pattern, RegexOptions.Singleline);
-
-    foreach (Match match in matches)
-    {
-        var functionName = match.Groups["name"].Value;
-        var parameters = match.Groups["parameters"].Value;
-
-        // Load the cleaned parameters XML into an XmlDocument
-        var doc = new XmlDocument();
-        doc.LoadXml($"<parameters>{parameters}</parameters>");
-
-        // Extract the <parameters> node and convert it to JSON
-        string jsonParameters = JsonConvert.SerializeXmlNode(doc.DocumentElement, Newtonsoft.Json.Formatting.None, true);
-
-        // Parse the JSON back into an object to manipulate the structure
-        var parsedParameters = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonParameters);
-
-        // Check for "source_code" with a "#cdata-section" field
-        if (parsedParameters.TryGetValue("source_code", out var sourceCodeNode) && sourceCodeNode is Newtonsoft.Json.Linq.JObject sourceCodeObj)
+        protected virtual List<(string json, string functionName)> ParseInputForXml(string input)
         {
-            // If "#cdata-section" exists, replace "source_code" with its value
-            if (sourceCodeObj.TryGetValue("#cdata-section", out var cdataSection))
+            var functionCalls = new List<(string json, string functionName)>();
+
+            // Define a regex pattern to match XML function calls in the mixed input
+            var pattern = @"<function_call\s+name=""(?<name>[^""]+)"">.*?<parameters>(?<parameters>.*?)</parameters>.*?</function_call>";
+
+            // Find all matches (XML blocks)
+            var matches = Regex.Matches(input, pattern, RegexOptions.Singleline);
+
+            foreach (Match match in matches)
             {
-                parsedParameters["source_code"] = cdataSection.ToString();
+                var functionName = match.Groups["name"].Value;
+                var parameters = match.Groups["parameters"].Value;
+
+                // Load the cleaned parameters XML into an XmlDocument
+                var doc = new XmlDocument();
+                doc.LoadXml($"<parameters>{parameters}</parameters>");
+
+                // Extract the <parameters> node and convert it to JSON
+                string jsonParameters = JsonConvert.SerializeXmlNode(doc.DocumentElement, Newtonsoft.Json.Formatting.None, true);
+
+                // Parse the JSON back into an object to manipulate the structure
+                var parsedParameters = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonParameters);
+
+                // Check for "source_code" with a "#cdata-section" field
+                if (parsedParameters.TryGetValue("source_code", out var sourceCodeNode) && sourceCodeNode is Newtonsoft.Json.Linq.JObject sourceCodeObj)
+                {
+                    // If "#cdata-section" exists, replace "source_code" with its value
+                    if (sourceCodeObj.TryGetValue("#cdata-section", out var cdataSection))
+                    {
+                        parsedParameters["source_code"] = cdataSection.ToString();
+                    }
+                }
+
+                // Convert the updated parameters back to JSON
+                string adjustedJsonParameters = JsonConvert.SerializeObject(parsedParameters, Newtonsoft.Json.Formatting.None);
+
+                // Add the function name and the adjusted JSON parameters to the result
+                functionCalls.Add((adjustedJsonParameters, functionName));
             }
+
+            return functionCalls;
         }
-
-        // Convert the updated parameters back to JSON
-        string adjustedJsonParameters = JsonConvert.SerializeObject(parsedParameters, Newtonsoft.Json.Formatting.None);
-
-        // Add the function name and the adjusted JSON parameters to the result
-        functionCalls.Add((adjustedJsonParameters, functionName));
-    }
-
-    return functionCalls;
-}
 
 
         protected virtual List<(string json, string functionName)> ParseInputForJson(string input)
@@ -185,5 +197,29 @@ namespace NetworkMonitor.LLM.Services
             }
         }
 
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_disposed) return;
+
+            if (disposing)
+            {
+                // Dispose managed resources
+                _cancellationTokenSource?.Dispose();
+            }
+
+            // Set fields to null
+            _disposed = true;
+        }
+
+        public void Dispose()
+        {
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
+        }
+
+        ~TokenBroadcasterBase()
+        {
+            Dispose(disposing: false);
+        }
     }
 }

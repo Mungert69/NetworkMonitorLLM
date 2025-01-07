@@ -68,7 +68,13 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
         {
             ExchangeName = "llmRemoveSession"+_serviceID,
             FuncName = "llmRemoveSession",
-            MessageTimeout = 600000
+            MessageTimeout = 60000
+        });
+        _rabbitMQObjs.Add(new RabbitMQObj()
+        {
+            ExchangeName = "llmStopRequest"+_serviceID,
+            FuncName = "llmStopRequest",
+            MessageTimeout = 60000
         });
 
 
@@ -115,6 +121,21 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
                     }
                 };
                     break;
+                    case "llmStopRequest":
+                    await rabbitMQObj.ConnectChannel.BasicQosAsync(prefetchSize: 0, prefetchCount: 1, global: false);
+                    rabbitMQObj.Consumer.ReceivedAsync += async (model, ea) =>
+                {
+                    try
+                    {
+                        result = await StopRequest(ConvertToObject<LLMServiceObj>(model, ea));
+                        await rabbitMQObj.ConnectChannel.BasicAckAsync(ea.DeliveryTag, false);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(" Error : RabbitListener.DeclareConsumers.llmStopRequest " + ex.Message);
+                    }
+                };
+                break;
                 case "llmRemoveSession":
                     await rabbitMQObj.ConnectChannel.BasicQosAsync(prefetchSize: 0, prefetchCount: 1, global: false);
                     rabbitMQObj.Consumer.ReceivedAsync += async (model, ea) =>
@@ -203,10 +224,7 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
 
         try
         {
-            llmServiceObj = await _llmService.RemoveProcess(llmServiceObj);
-            result.Message = llmServiceObj.ResultMessage;
-            result.Success = llmServiceObj.ResultSuccess;
-
+            result = await _llmService.RemoveProcess(llmServiceObj);
 
         }
         catch (Exception e)
@@ -254,6 +272,43 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
             var resultService = await _llmService.SendInputAndGetResponse(serviceObj);
             result.Message += resultService.Message;
             result.Success = resultService.Success;
+        }
+        catch (Exception e)
+        {
+            result.Message = e.Message;
+            result.Success = false;
+
+        }
+        if (!result.Success) _logger.LogError(result.Message);
+        return result;
+    }
+
+ public async Task<ResultObj> StopRequest(LLMServiceObj? serviceObj)
+    {
+        var result = new ResultObj();
+        result.Success = false;
+        result.Message = "MessageAPI : StopRequest : ";
+       if (serviceObj == null )
+        {
+            result.Message += " Error : serviceObj is null.";
+            _logger.LogError(result.Message);
+            result.Success = false;
+            return result;
+        }
+         if (serviceObj.UserInput == null )
+        {
+            result.Message += " Error : serviceObj.UserInput is null";
+            _logger.LogError(result.Message);
+            result.Success = false;
+            return result;
+        }
+          
+         //_logger.LogInformation($" Start User Input {serviceObj.UserInput}");
+        try
+        {
+           
+            result = await _llmService.StopRequest(serviceObj);
+        
         }
         catch (Exception e)
         {
