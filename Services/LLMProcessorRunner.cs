@@ -567,6 +567,7 @@ public class LLMProcessRunner : ILLMRunner
             string userInput = serviceObj.UserInput;
             int countEOT = 0;
             var preAssistantMessage = "";
+            var functionStatusMessage="";
             if (_sendOutput)
             {
 
@@ -658,13 +659,13 @@ public class LLMProcessRunner : ILLMRunner
                 }
                 else
                 {
-                    userInput = FunctionResponseBuilder(serviceObj)+EOFToken();
+                    functionStatusMessage = FunctionResponseBuilder(serviceObj)+EOFToken();
                     
                 }
             }
 
 
-            string llmInput = preAssistantMessage + userInput;
+            string llmInput = preAssistantMessage+functionStatusMessage + userInput;
             if (string.IsNullOrEmpty(llmInput))
             {
                 _processRunnerSemaphore.Release(); // Release the semaphore
