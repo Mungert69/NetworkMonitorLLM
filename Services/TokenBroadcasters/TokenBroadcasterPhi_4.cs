@@ -23,9 +23,11 @@ public class TokenBroadcasterPhi_4 : TokenBroadcasterBase
     public override async Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput, int countEOT, bool sendOutput = true)
     {
         _logger.LogWarning(" Start BroadcastAsyc() ");
+           _isPrimaryLlm = serviceObj.IsPrimaryLlm;
+      
+        await SendLLMPrimaryChunk(serviceObj, "</llm_busy>");  
         _responseProcessor.SendOutput = sendOutput;
-        _isPrimaryLlm = serviceObj.IsPrimaryLlm;
-        var chunkServiceObj = new LLMServiceObj(serviceObj);
+       var chunkServiceObj = new LLMServiceObj(serviceObj);
         if (serviceObj.IsFunctionCallResponse)
         {
             string funcChunk = userInput.Replace("<|im_start|>user<|im_sep|>\\\n<tool_response>\\\n", "<Function Response:> ");
@@ -35,7 +37,7 @@ public class TokenBroadcasterPhi_4 : TokenBroadcasterBase
         }
         else chunkServiceObj.LlmMessage = userInput.Replace("<|im_start|>user<|im_sep|>\\\n", "<User:> ");
 
-        if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(chunkServiceObj);
+        await SendLLMPrimary(chunkServiceObj);
 
         int stopAfter = 2 + countEOT;
         if (sendOutput) stopAfter = 2 + countEOT;
@@ -55,9 +57,7 @@ public class TokenBroadcasterPhi_4 : TokenBroadcasterBase
                 string textChunk = Encoding.UTF8.GetString(buffer, 0, charRead);
                 //tokenBuilder.Append(textChunk);
                 llmOutFull.Append(textChunk);
-                chunkServiceObj = new LLMServiceObj(serviceObj);
-                chunkServiceObj.LlmMessage = textChunk;
-                if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(chunkServiceObj);
+               await SendLLMPrimaryChunk(serviceObj,textChunk);
                 string llmOutStr = llmOutFull.ToString();
                 int eotIdCount = CountOccurrences(llmOutStr, "<|im_end|>");
 
@@ -85,21 +85,19 @@ public class TokenBroadcasterPhi_4 : TokenBroadcasterBase
                 var finalServiceObj = new LLMServiceObj(serviceObj);
                 finalServiceObj.LlmMessage = llmOutput;
                 finalServiceObj.IsFunctionCallResponse = true;
-                await _responseProcessor.ProcessLLMOutput(finalServiceObj);
+                await SendLLM(finalServiceObj);
                 _logger.LogInformation($" --> Sent redirected LLM Output {finalServiceObj.LlmMessage}");
             }
         }
         catch (OperationCanceledException)
         {
             _logger.LogInformation("Read operation canceled due to CancellationToken.");
-
-            // Send a tidy-up message
-            var finalChunkServiceObj = new LLMServiceObj(serviceObj)
-            {
-                LlmMessage = "\n"
-            };
-            if (_isPrimaryLlm)
-                await _responseProcessor.ProcessLLMOutput(finalChunkServiceObj);
+            await SendLLMPrimaryChunk(serviceObj,"\n");
+           
+        }
+        finally
+        {
+          await SendLLMPrimaryChunk(serviceObj, "</llm_ready>");    
         }
         _logger.LogInformation(" --> Finished LLM Interaction ");
     }

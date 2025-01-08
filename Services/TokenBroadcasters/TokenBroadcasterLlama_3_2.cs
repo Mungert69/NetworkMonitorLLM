@@ -18,18 +18,16 @@ public class TokenBroadcasterLlama_3_2 : TokenBroadcasterBase
          : base(responseProcessor, logger)
     {
         _xmlFunctionParsing = xmlFunctionParsing;
+           _userReplace="<|start_header_id|>user<|end_header_id|>\\\n\\\n";
+        _functionReplace="<|start_header_id|>ipython<|end_header_id|>\\\n\\\n";
     }
     public override async Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput, int countEOT, bool sendOutput = true)
     {
         _logger.LogWarning(" Start BroadcastAsyc() ");
-        _responseProcessor.SendOutput = sendOutput;
-        _isPrimaryLlm = serviceObj.IsPrimaryLlm;
-        var chunkServiceObj = new LLMServiceObj(serviceObj);
-        if (serviceObj.IsFunctionCallResponse) chunkServiceObj.LlmMessage = userInput.Replace("<|start_header_id|>ipython<|end_header_id|>\\\n\\\n", "<Function Response:>");
-        else chunkServiceObj.LlmMessage = userInput.Replace("<|start_header_id|>user<|end_header_id|>\\\n\\\n", "<User:>");
-        if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(chunkServiceObj);
-        string copyUserInput = userInput;
-        //int startIndex = userInput.IndexOf('/');
+           _isPrimaryLlm = serviceObj.IsPrimaryLlm;
+     
+      await SendHeader(serviceObj,sendOutput, userInput);
+     
         int stopAfter = 2;
         if (sendOutput) stopAfter = 2;
         sendOutput = true;
@@ -48,9 +46,7 @@ public class TokenBroadcasterLlama_3_2 : TokenBroadcasterBase
                 string textChunk = Encoding.UTF8.GetString(buffer, 0, charRead);
                 //tokenBuilder.Append(textChunk);
                 llmOutFull.Append(textChunk);
-                chunkServiceObj = new LLMServiceObj(serviceObj);
-                chunkServiceObj.LlmMessage = textChunk;
-                if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(chunkServiceObj);
+             await  SendLLMPrimaryChunk(serviceObj,textChunk);
                 string llmOutStr = llmOutFull.ToString();
                 int eotIdCount = CountOccurrences(llmOutStr, "<|eot_id|>");
                 eotIdCount += CountOccurrences(llmOutStr, "<|eom_id|>");
@@ -84,17 +80,15 @@ public class TokenBroadcasterLlama_3_2 : TokenBroadcasterBase
                 _logger.LogInformation($" --> Sent redirected LLM Output {finalServiceObj.LlmMessage}");
             }
         }
-        catch (OperationCanceledException)
+       catch (OperationCanceledException)
         {
             _logger.LogInformation("Read operation canceled due to CancellationToken.");
-
-            // Send a tidy-up message
-            var finalChunkServiceObj = new LLMServiceObj(serviceObj)
-            {
-                LlmMessage = "\n"
-            };
-            if (_isPrimaryLlm)
-                await _responseProcessor.ProcessLLMOutput(finalChunkServiceObj);
+            await SendLLMPrimaryChunk(serviceObj,"\n");
+           
+        }
+        finally
+        {
+          await SendLLMPrimaryChunk(serviceObj, "</llm_ready>");    
         }
         _logger.LogInformation(" --> Finished LLM Interaction ");
     }

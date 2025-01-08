@@ -27,9 +27,10 @@ namespace NetworkMonitor.LLM.Services
         StringBuilder? _assistantMessage = null;
         protected bool _xmlFunctionParsing = false;
         private bool _disposed = false; // To detect redundant calls to Dispose
+        protected string _userReplace = "";
+        protected string _functionReplace = "";
 
-
-        public StringBuilder AssistantMessage { get => _assistantMessage; set => _assistantMessage=value;}
+        public StringBuilder AssistantMessage { get => _assistantMessage; set => _assistantMessage = value; }
 
         protected TokenBroadcasterBase(ILLMResponseProcessor responseProcessor, ILogger logger)
         {
@@ -43,7 +44,7 @@ namespace NetworkMonitor.LLM.Services
             _logger.LogInformation("Cancel due to ReInit called");
             try
             {
-                 _cancellationTokenSource.Cancel();
+                _cancellationTokenSource.Cancel();
             }
             catch (ObjectDisposedException ex)
             {
@@ -52,6 +53,44 @@ namespace NetworkMonitor.LLM.Services
 
             _cancellationTokenSource.Dispose();
             _cancellationTokenSource = new CancellationTokenSource();
+        }
+
+        public async Task SendLLMPrimaryChunk(LLMServiceObj serviceObj, string chunk)
+        {
+            var chunkServiceObj = new LLMServiceObj(serviceObj)
+            {
+                LlmMessage = chunk
+            };
+            if (_isPrimaryLlm)
+                await _responseProcessor.ProcessLLMOutput(chunkServiceObj);
+        }
+
+        public async Task SendLLMPrimary(LLMServiceObj serviceObj)
+        {
+
+            if (_isPrimaryLlm)
+                await _responseProcessor.ProcessLLMOutput(serviceObj);
+        }
+        public async Task SendLLM(LLMServiceObj serviceObj)
+        {
+            await _responseProcessor.ProcessLLMOutput(serviceObj);
+        }
+        public async Task SendFunctionCall(LLMServiceObj serviceObj)
+        {
+            await _responseProcessor.ProcessFunctionCall(serviceObj);
+        }
+
+        public async Task SendHeader(LLMServiceObj serviceObj, bool sendOutput, string userInput)
+        {
+            _isPrimaryLlm = serviceObj.IsPrimaryLlm;
+            _responseProcessor.SendOutput = sendOutput;
+         
+            await SendLLMPrimaryChunk(serviceObj, "</llm_busy>");
+            var chunkServiceObj = new LLMServiceObj(serviceObj);
+            if (serviceObj.IsFunctionCallResponse) chunkServiceObj.LlmMessage = userInput.Replace(_functionReplace, "<Function Response:> ");
+            else chunkServiceObj.LlmMessage = userInput.Replace(_userReplace, "<User:> ") + "\n";
+            await SendLLMPrimary(chunkServiceObj);
+
         }
 
         public abstract Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput, int countEOT, bool sendOutput = true);
@@ -74,19 +113,16 @@ namespace NetworkMonitor.LLM.Services
 
         protected virtual async Task ProcessLine(string line, LLMServiceObj serviceObj)
         {
-            // Default implementation of ProcessLine. Can be overridden by subclasses.
             var responseServiceObj = new LLMServiceObj(serviceObj);
-            if (serviceObj.IsFunctionCallResponse)
-            {
-                responseServiceObj.LlmMessage = "</functioncall-complete>";
-                if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
-            }
+            if (serviceObj.IsFunctionCallResponse) await SendLLMPrimaryChunk(responseServiceObj, "</functioncall-complete>");
+
             List<(string json, string functionName)> functionCalls = new();
             if (_xmlFunctionParsing) functionCalls = ParseInputForXml(line);
             else functionCalls = ParseInputForJson(line);
-            bool makeAssistantMessage=false;
-             if (functionCalls != null && functionCalls.Count > 0 && !functionCalls.Any(f => f.functionName=="are_functions_running")) makeAssistantMessage=true;
-            
+
+            bool makeAssistantMessage = false;
+            if (functionCalls != null && functionCalls.Count > 0 && !functionCalls.Any(f => f.functionName == "are_functions_running")) makeAssistantMessage = true;
+
             if (makeAssistantMessage) _assistantMessage = new StringBuilder($"I have called the following functions : ");
 
             foreach (var (jsonArguments, functionName) in functionCalls)
@@ -97,22 +133,22 @@ namespace NetworkMonitor.LLM.Services
 
                     _logger.LogInformation($"ProcessLLMOutput(call_func) -> {jsonArguments}");
                     responseServiceObj.LlmMessage = "</functioncall>";
-                    if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+                    await SendLLMPrimary(responseServiceObj);
                     responseServiceObj.LlmMessage = "";
                     responseServiceObj.IsFunctionCall = true;
                     responseServiceObj.IsFunctionCallResponse = false;
                     responseServiceObj.JsonFunction = jsonArguments;
                     responseServiceObj.FunctionName = functionName;
                     responseServiceObj.IsProcessed = false;
-                    await _responseProcessor.ProcessFunctionCall(responseServiceObj);
+                    await SendFunctionCall(responseServiceObj);
                     _isFuncCalled = true;
 
                 }
             }
-             if (makeAssistantMessage) _assistantMessage.Append($" using message_id {serviceObj.MessageID} . Please wait it may take some time to complete.");
+            if (makeAssistantMessage) _assistantMessage.Append($" using message_id {serviceObj.MessageID} . Please wait it may take some time to complete.");
 
             responseServiceObj.LlmMessage = "<end-of-line>";
-            if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+            await SendLLMPrimary(responseServiceObj);
         }
 
 

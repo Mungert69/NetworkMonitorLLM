@@ -23,13 +23,18 @@ public class TokenBroadcasterFunc_2_4 : TokenBroadcasterBase
         _xmlFunctionParsing = xmlFunctionParsing;
     }
 
+  
+
     public override async Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput, int countEOT, bool sendOutput)
     {
         _logger.LogWarning($" Start BroadcastAsync() DestinationLlm {serviceObj.DestinationLlm} SourceLlm {serviceObj.SourceLlm} ");
-        _responseProcessor.SendOutput = sendOutput;
+        _isPrimaryLlm = serviceObj.IsPrimaryLlm;
+      _responseProcessor.SendOutput = sendOutput;
+      
+        await SendLLMPrimaryChunk(serviceObj, "</llm_busy>");
+
         var llmOutFull = new StringBuilder();
         var tokenBuilder = new StringBuilder();
-        _isPrimaryLlm = serviceObj.IsPrimaryLlm;
         _isFuncCalled = false;
         var forwardSegments = new List<MessageSegment>();
 
@@ -41,9 +46,7 @@ public class TokenBroadcasterFunc_2_4 : TokenBroadcasterBase
                 byte[] buffer = new byte[50];
                 int charRead = await process.StandardOutput.ReadAsync(buffer, 0, buffer.Length, _cancellationTokenSource.Token);
                 string textChunk = Encoding.UTF8.GetString(buffer, 0, charRead);
-                var chunkServiceObj = new LLMServiceObj(serviceObj);
-                chunkServiceObj.LlmMessage = textChunk;
-                if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(chunkServiceObj);
+                await SendLLMPrimaryChunk(serviceObj,textChunk);
                 llmOutFull.Append(textChunk);
                 tokenBuilder.Append(textChunk);
                 //Console.WriteLine(textChunk);
@@ -60,13 +63,7 @@ public class TokenBroadcasterFunc_2_4 : TokenBroadcasterBase
                 {
                     foreach (var messageSegment in messageSegments)
                     {
-
-                        LLMServiceObj responseServiceObj = new LLMServiceObj(serviceObj);
-                        if (serviceObj.IsFunctionCallResponse)
-                        {
-                            responseServiceObj.LlmMessage = "</functioncall-complete>";
-                            if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
-                        }
+                        if (serviceObj.IsFunctionCallResponse) await SendLLMPrimaryChunk( serviceObj,"</functioncall-complete>");
                         await ProcessMessageSegment(messageSegment, serviceObj);
                     }
                     if (!_isPrimaryLlm) forwardSegments = messageSegments;
@@ -94,21 +91,19 @@ public class TokenBroadcasterFunc_2_4 : TokenBroadcasterBase
                 finalServiceObj.LlmMessage = llmOutput;
                 finalServiceObj.IsFunctionCall = false;
                 finalServiceObj.IsFunctionCallResponse = true;
-                await _responseProcessor.ProcessLLMOutput(finalServiceObj);
+                await SendLLM(finalServiceObj);
                 _logger.LogInformation($" --> Sent redirected LLM Output {finalServiceObj.LlmMessage}");
             }
         }
         catch (OperationCanceledException)
         {
             _logger.LogInformation("Read operation canceled due to CancellationToken.");
-
-            // Send a tidy-up message
-            var finalChunkServiceObj = new LLMServiceObj(serviceObj)
-            {
-                LlmMessage = "\n"
-            };
-            if (_isPrimaryLlm)
-                await _responseProcessor.ProcessLLMOutput(finalChunkServiceObj);
+            await SendLLMPrimaryChunk(serviceObj,"\n");
+           
+        }
+        finally
+        {
+          await SendLLMPrimaryChunk(serviceObj, "</llm_ready>");    
         }
 
         _logger.LogInformation(" --> Finished LLM Interaction ");
@@ -175,7 +170,8 @@ public class TokenBroadcasterFunc_2_4 : TokenBroadcasterBase
                 switch (tag)
                 {
                     case "from":
-                        if (currentSegment == null)
+                    
+                        if (currentSegment == null);
                         {
                             currentSegment = new MessageSegment();
                         }

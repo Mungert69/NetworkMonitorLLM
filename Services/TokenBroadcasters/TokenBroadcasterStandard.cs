@@ -24,8 +24,10 @@ public class TokenBroadcasterStandard : TokenBroadcasterBase
     public override async Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput, int countEOT, bool sendOutput = true)
     {
         _logger.LogWarning(" Start BroadcastAsyc() ");
-        _responseProcessor.SendOutput = sendOutput;
         _isPrimaryLlm = serviceObj.IsPrimaryLlm;
+        _responseProcessor.SendOutput = sendOutput;
+        await SendLLMPrimaryChunk(serviceObj, "</llm_busy>");  
+  
         var chunkServiceObj = new LLMServiceObj(serviceObj);
         int stopAfter = 2 + countEOT;
         if (sendOutput) stopAfter = 2 + countEOT;
@@ -45,9 +47,7 @@ public class TokenBroadcasterStandard : TokenBroadcasterBase
                 string textChunk = Encoding.UTF8.GetString(buffer, 0, charRead);
                 //tokenBuilder.Append(textChunk);
                 llmOutFull.Append(textChunk);
-                chunkServiceObj = new LLMServiceObj(serviceObj);
-                chunkServiceObj.LlmMessage = textChunk;
-                if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(chunkServiceObj);
+               await SendLLMPrimaryChunk(serviceObj,textChunk);
                 string llmOutStr = llmOutFull.ToString();
                 int eotIdCount = CountOccurrences(llmOutStr, _defaultEOT);
 
@@ -81,15 +81,14 @@ public class TokenBroadcasterStandard : TokenBroadcasterBase
         catch (OperationCanceledException)
         {
             _logger.LogInformation("Read operation canceled due to CancellationToken.");
-
-            // Send a tidy-up message
-            var finalChunkServiceObj = new LLMServiceObj(serviceObj)
-            {
-                LlmMessage = "\n"
-            };
-            if (_isPrimaryLlm)
-                await _responseProcessor.ProcessLLMOutput(finalChunkServiceObj);
+            await SendLLMPrimaryChunk(serviceObj,"\n");
+           
         }
+        finally
+        {
+          await SendLLMPrimaryChunk(serviceObj, "</llm_ready>");    
+        }
+         _logger.LogInformation(" --> Finished LLM Interaction ");
     }
 
 
