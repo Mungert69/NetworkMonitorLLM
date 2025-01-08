@@ -8,6 +8,6 @@ namespace NetworkMonitor.LLM.Services;
     {
         //event Func<object, string, Task> LineReceived;
         Task ReInit(string sessionId);
-        StringBuilder AssistantMessage { get ;  }
+        StringBuilder AssistantMessage { get ; set; }
         Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput, int countEOT,bool sendOutput);
     }

@@ -29,7 +29,7 @@ namespace NetworkMonitor.LLM.Services
         private bool _disposed = false; // To detect redundant calls to Dispose
 
 
-        public StringBuilder AssistantMessage { get => _assistantMessage; }
+        public StringBuilder AssistantMessage { get => _assistantMessage; set => _assistantMessage=value;}
 
         protected TokenBroadcasterBase(ILLMResponseProcessor responseProcessor, ILogger logger)
         {

@@ -473,7 +473,10 @@ public class LLMProcessRunner : ILLMRunner
                         _logger.LogInformation("Waiting for additional function calls to complete.");
                         return;
                     }
-                    else _assistantMessages.TryRemove(serviceObj.MessageID, out _);
+                    else {_assistantMessages.TryRemove(serviceObj.MessageID, out _);
+                      //_logger.LogInformation($"Removing Assistant Message {serviceObj.MessageID}");
+                    
+                    }
 
                 }
                 else
@@ -550,6 +553,7 @@ public class LLMProcessRunner : ILLMRunner
                         if (assistantMessageBuilder != null)
                         {
                             string assistantMessage = assistantMessageBuilder.ToString();
+                           
                             switch (_mlParams.LlmVersion)
                             {
                                 case "func_2.4":
@@ -665,14 +669,17 @@ public class LLMProcessRunner : ILLMRunner
 
             await process.StandardInput.WriteLineAsync(userInput);
             await process.StandardInput.FlushAsync();
-            _logger.LogInformation($" ProcessLLMOutput(user input) -> {userInput}");
+            _logger.LogInformation($" LLM INPUT -> {preAssistantMessage+tokenBroadcasterMessage}");
             // Wait for a response or a timeout
             Task broadcastTask = tokenBroadcaster.BroadcastAsync(process, serviceObj,preAssistantMessage+tokenBroadcasterMessage, countEOT, _sendOutput);
             if (await Task.WhenAny(broadcastTask, Task.Delay(Timeout.Infinite, cts.Token)) == broadcastTask)
             {
                 // Task completed within timeout
                 await broadcastTask;
-                if (tokenBroadcaster.AssistantMessage != null) _assistantMessages.TryAdd(serviceObj.MessageID, tokenBroadcaster.AssistantMessage);
+                if (tokenBroadcaster.AssistantMessage != null) {_assistantMessages.TryAdd(serviceObj.MessageID, tokenBroadcaster.AssistantMessage);
+                tokenBroadcaster.AssistantMessage=null;
+                    
+                }
             }
             else
             {
