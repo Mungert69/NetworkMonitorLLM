@@ -667,7 +667,7 @@ public class LLMProcessRunner : ILLMRunner
                 return;
             }
 
-            string llmInput=preAssistantMessage+tokenBroadcasterMessage
+            string llmInput=preAssistantMessage+tokenBroadcasterMessage;
             await process.StandardInput.WriteLineAsync(llmInput);
             await process.StandardInput.FlushAsync();
             _logger.LogInformation($" LLM INPUT -> {llmInput}");
