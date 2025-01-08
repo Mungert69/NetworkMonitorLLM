@@ -83,13 +83,16 @@ namespace NetworkMonitor.LLM.Services
             List<(string json, string functionName)> functionCalls = new();
             if (_xmlFunctionParsing) functionCalls = ParseInputForXml(line);
             else functionCalls = ParseInputForJson(line);
-            if (functionCalls != null && functionCalls.Count > 0) _assistantMessage = new StringBuilder($"I have called the following functions : ");
+            bool makeAssistantMessage=false;
+             if (functionCalls != null && functionCalls.Count > 0 && !functionCalls.Any(f => f.functionName=="are_functions_running")) makeAssistantMessage=true;
+            
+            if (makeAssistantMessage) _assistantMessage = new StringBuilder($"I have called the following functions : ");
 
             foreach (var (jsonArguments, functionName) in functionCalls)
             {
                 if (!string.IsNullOrWhiteSpace(jsonArguments))
                 {
-                    _assistantMessage.Append($" Name {functionName} Arguments {jsonArguments} : ");
+                    if (makeAssistantMessage) _assistantMessage.Append($" Name {functionName} Arguments {jsonArguments} : ");
 
                     _logger.LogInformation($"ProcessLLMOutput(call_func) -> {jsonArguments}");
                     responseServiceObj.LlmMessage = "</functioncall>";
@@ -105,7 +108,7 @@ namespace NetworkMonitor.LLM.Services
 
                 }
             }
-            if (functionCalls != null && functionCalls.Count > 0) _assistantMessage.Append($" using message_id {serviceObj.MessageID} . Please wait it may take some time to complete.");
+             if (makeAssistantMessage) _assistantMessage.Append($" using message_id {serviceObj.MessageID} . Please wait it may take some time to complete.");
 
             responseServiceObj.LlmMessage = "<end-of-line>";
             if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
