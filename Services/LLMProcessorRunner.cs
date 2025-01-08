@@ -610,8 +610,7 @@ public class LLMProcessRunner : ILLMRunner
                             // Optionally handle unexpected LlmVersion values
                             break;
                     }
-                    tokenBroadcasterMessage = userInput;
-                   
+                        
                 }
                 else if (!serviceObj.IsFunctionCallStatus)
                 {
@@ -648,7 +647,6 @@ public class LLMProcessRunner : ILLMRunner
 
                     // Combine the constructed inputs for all responses
                     userInput = string.Join("", constructedInputs);
-                    tokenBroadcasterMessage = userInput;
                     _responseProcessor.ClearFunctionCallTracker(serviceObj.MessageID);
 
                 }
@@ -658,21 +656,21 @@ public class LLMProcessRunner : ILLMRunner
                 }
             }
             
-            if (string.IsNullOrEmpty(userInput))
+           
+            string llmInput=preAssistantMessage+userInput;
+             if (string.IsNullOrEmpty(llmInput))
             {
                 _processRunnerSemaphore.Release(); // Release the semaphore
                 _isStateReady = true;
-                _logger.LogWarning(" Warning : User Input is empty");
+                _logger.LogWarning(" Warning : LLM Input is empty");
 
                 return;
             }
-
-            string llmInput=preAssistantMessage+tokenBroadcasterMessage;
             await process.StandardInput.WriteLineAsync(llmInput);
             await process.StandardInput.FlushAsync();
             _logger.LogInformation($" LLM INPUT -> {llmInput}");
             // Wait for a response or a timeout
-            Task broadcastTask = tokenBroadcaster.BroadcastAsync(process, serviceObj,tokenBroadcasterMessage, countEOT, _sendOutput);
+            Task broadcastTask = tokenBroadcaster.BroadcastAsync(process, serviceObj,userInput, countEOT, _sendOutput);
             if (await Task.WhenAny(broadcastTask, Task.Delay(Timeout.Infinite, cts.Token)) == broadcastTask)
             {
                 // Task completed within timeout
