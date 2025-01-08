@@ -167,6 +167,9 @@ public class LLMProcessRunner : ILLMRunner
             case "qwen_2.5":
                 userInput = $"<|im_start|>user\\\n<tool_response>\\\n";
                 break;
+            case "phi_4":
+                userInput = $"<|im_start|>user<|im_sep|>\\\n<tool_response>\\\n";
+                break;
 
             case "standard":
                 userInput = "Function Call : ";
@@ -194,7 +197,7 @@ public class LLMProcessRunner : ILLMRunner
         }
         serviceObj.UserInput = userInput + input;
 
-        if (_mlParams.LlmVersion == "qwen_2.5") serviceObj.UserInput += $"\\\n</tool_response>";
+        if (_mlParams.LlmVersion == "qwen_2.5" || _mlParams.LlmVersion == "phi_4") serviceObj.UserInput += $"\\\n</tool_response>";
 
 
         serviceObj.IsFunctionCallResponse = false;
@@ -413,6 +416,9 @@ public class LLMProcessRunner : ILLMRunner
             case "qwen_2.5":
                 userInput = "<|im_start|>user\\\n<tool_response>\\\n" + userInput + "\\\n</tool_response>";
                 break;
+            case "phi_4":
+                userInput = "<|im_start|>user<|im_sep|>\\\n<tool_response>\\\n" + userInput + "\\\n</tool_response>";
+                break;
 
             case "standard":
                 userInput = "FUNCTION RESPONSE: " + userInput;
@@ -510,8 +516,10 @@ public class LLMProcessRunner : ILLMRunner
                         break;
 
                     case "qwen_2.5":
-                    case "phi_4":
                         tokenBroadcaster = new TokenBroadcasterQwen_2_5(_responseProcessor, _logger, _mlParams.XmlFunctionParsing);
+                        break;
+                    case "phi_4":
+                        tokenBroadcaster = new TokenBroadcasterPhi_4(_responseProcessor, _logger, _mlParams.XmlFunctionParsing);
                         break;
 
                     case "standard":
@@ -534,7 +542,42 @@ public class LLMProcessRunner : ILLMRunner
             int countEOT = 0;
             if (_sendOutput)
             {
-                userInput = userInput.Replace("\r\n", " ").Replace("\n", " ");
+                var preAssistantMessage="";
+                 foreach (var assistantMessageEntry in _assistantMessages.ToList())
+                    {
+                        var assistantMessageBuilder = assistantMessageEntry.Value;
+                        if (assistantMessageBuilder != null)
+                        {
+                            string assistantMessage = assistantMessageBuilder.ToString();
+                            switch (_mlParams.LlmVersion)
+                            {
+                                case "func_2.4":
+                                    preAssistantMessage += "<|from|> assistant\\\n<|recipient|> all\\\n<|content|>" + assistantMessage + "\\\n";
+                                    break;
+
+                                case "func_2.5":
+                                case "func_3.1":
+                                case "func_3.2":
+                                case "llama_3.2":
+                                    preAssistantMessage += "<|start_header_id|>assistant<|end_header_id|>\\\n\\\n" + assistantMessage + "<|eot_id|>" ;
+                                    break;
+                                case "qwen_2.5":
+                                    preAssistantMessage += "<|im_start|>assistant\\\n" + assistantMessage + "<|im_end|>" ;
+                                    break;
+                                case "phi_4":
+                                    preAssistantMessage += "<|im_start|>assistant<|im_sep|>\\\n" + assistantMessage + "<|im_end|>" ;
+                                    break;
+
+                                default:
+                                    // Optionally handle unexpected LlmVersion values
+                                    break;
+                            }
+                        }
+
+                    }
+                    _assistantMessages.Clear();
+                  userInput = userInput.Replace("\r\n", " ").Replace("\n", " ");
+              
                 //userInput = userInput.Replace("\r\n", "\\\n").Replace("\n", "\\\n");
                 if (!serviceObj.IsFunctionCallResponse)
                 {
@@ -552,8 +595,10 @@ public class LLMProcessRunner : ILLMRunner
                             break;
 
                         case "qwen_2.5":
-                        case "phi_4":
                             userInput = "<|im_start|>user\\\n" + userInput;
+                            break;
+                        case "phi_4":
+                            userInput = "<|im_start|>user<|im_sep|>\\\n" + userInput;
                             break;
 
                         default:
@@ -561,39 +606,7 @@ public class LLMProcessRunner : ILLMRunner
                             break;
                     }
                     tokenBroadcasterMessage = userInput;
-                    foreach (var assistantMessageEntry in _assistantMessages.ToList())
-                    {
-                        var assistantMessageBuilder = assistantMessageEntry.Value;
-                        if (assistantMessageBuilder != null)
-                        {
-                            string assistantMessage = assistantMessageBuilder.ToString();
-                            switch (_mlParams.LlmVersion)
-                            {
-                                case "func_2.4":
-                                    userInput = "<|from|> assistant\\\n<|recipient|> all\\\n<|content|>" + assistantMessage + "\\\n" + userInput;
-                                    break;
-
-                                case "func_2.5":
-                                case "func_3.1":
-                                case "func_3.2":
-                                case "llama_3.2":
-                                    userInput = "<|start_header_id|>assistant<|end_header_id|>\\\n\\\n" + assistantMessage + "<|eot_id|>" + userInput;
-                                    break;
-
-                                case "qwen_2.5":
-                                case "phi_4":
-                                    userInput = "<|im_start|>assistant\\\n" + userInput + "<|im_end|>" + userInput;
-                                    break;
-
-                                default:
-                                    // Optionally handle unexpected LlmVersion values
-                                    break;
-                            }
-                        }
-
-                    }
-                    _assistantMessages.Clear();
-
+                   
                 }
                 else if (!serviceObj.IsFunctionCallStatus)
                 {
