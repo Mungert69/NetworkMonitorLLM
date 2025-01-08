@@ -25,7 +25,7 @@ public class TokenBroadcasterQwen_2_5 : TokenBroadcasterBase
         _logger.LogWarning(" Start BroadcastAsyc() ");
         _isPrimaryLlm = serviceObj.IsPrimaryLlm;
       
-        await SendLLMPrimaryChunk(serviceObj, "</llm_busy>");  
+        await SendLLMPrimaryChunk(serviceObj, "</llm-busy>");  
         _responseProcessor.SendOutput = sendOutput;
         var chunkServiceObj = new LLMServiceObj(serviceObj);
         if (serviceObj.IsFunctionCallResponse)
@@ -97,7 +97,7 @@ public class TokenBroadcasterQwen_2_5 : TokenBroadcasterBase
         }
         finally
         {
-          await SendLLMPrimaryChunk(serviceObj, "</llm_ready>");    
+          await SendLLMPrimaryChunk(serviceObj, "</llm-listening>");    
         }
         _logger.LogInformation(" --> Finished LLM Interaction ");
     }

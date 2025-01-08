@@ -87,7 +87,7 @@ namespace NetworkMonitor.LLM.Services
             }
             finally
             {
-                await SendLLMPrimaryChunk(serviceObj, "</llm_ready>");
+                await SendLLMPrimaryChunk(serviceObj, "</llm-listening>");
             }
             _logger.LogInformation(" --> Finished LLM Interaction ");
         }

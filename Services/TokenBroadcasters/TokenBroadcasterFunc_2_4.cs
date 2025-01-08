@@ -31,7 +31,7 @@ public class TokenBroadcasterFunc_2_4 : TokenBroadcasterBase
         _isPrimaryLlm = serviceObj.IsPrimaryLlm;
       _responseProcessor.SendOutput = sendOutput;
       
-        await SendLLMPrimaryChunk(serviceObj, "</llm_busy>");
+        await SendLLMPrimaryChunk(serviceObj, "</llm-busy>");
 
         var llmOutFull = new StringBuilder();
         var tokenBuilder = new StringBuilder();
@@ -103,7 +103,7 @@ public class TokenBroadcasterFunc_2_4 : TokenBroadcasterBase
         }
         finally
         {
-          await SendLLMPrimaryChunk(serviceObj, "</llm_ready>");    
+          await SendLLMPrimaryChunk(serviceObj, "</llm-listening>");    
         }
 
         _logger.LogInformation(" --> Finished LLM Interaction ");

@@ -85,7 +85,7 @@ namespace NetworkMonitor.LLM.Services
             _isPrimaryLlm = serviceObj.IsPrimaryLlm;
             _responseProcessor.SendOutput = sendOutput;
          
-            await SendLLMPrimaryChunk(serviceObj, "</llm_busy>");
+            await SendLLMPrimaryChunk(serviceObj, "</llm-busy>");
             var chunkServiceObj = new LLMServiceObj(serviceObj);
             if (serviceObj.IsFunctionCallResponse) chunkServiceObj.LlmMessage = userInput.Replace(_functionReplace, "<Function Response:> ");
             else chunkServiceObj.LlmMessage = userInput.Replace(_userReplace, "<User:> ") + "\n";

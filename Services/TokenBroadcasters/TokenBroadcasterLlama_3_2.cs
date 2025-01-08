@@ -88,7 +88,7 @@ public class TokenBroadcasterLlama_3_2 : TokenBroadcasterBase
         }
         finally
         {
-          await SendLLMPrimaryChunk(serviceObj, "</llm_ready>");    
+          await SendLLMPrimaryChunk(serviceObj, "</llm-listening>");    
         }
         _logger.LogInformation(" --> Finished LLM Interaction ");
     }
