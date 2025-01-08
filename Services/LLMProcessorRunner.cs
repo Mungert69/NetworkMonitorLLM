@@ -407,7 +407,7 @@ public class LLMProcessRunner : ILLMRunner
                 break;
 
             default:
-                // Handle any other LlmVersion cases
+                return "";
                 break;
         }
     }
