@@ -667,11 +667,12 @@ public class LLMProcessRunner : ILLMRunner
                 return;
             }
 
-            await process.StandardInput.WriteLineAsync(userInput);
+            string llmInput=preAssistantMessage+tokenBroadcasterMessage
+            await process.StandardInput.WriteLineAsync(llmInput);
             await process.StandardInput.FlushAsync();
-            _logger.LogInformation($" LLM INPUT -> {preAssistantMessage+tokenBroadcasterMessage}");
+            _logger.LogInformation($" LLM INPUT -> {llmInput}");
             // Wait for a response or a timeout
-            Task broadcastTask = tokenBroadcaster.BroadcastAsync(process, serviceObj,preAssistantMessage+tokenBroadcasterMessage, countEOT, _sendOutput);
+            Task broadcastTask = tokenBroadcaster.BroadcastAsync(process, serviceObj,tokenBroadcasterMessage, countEOT, _sendOutput);
             if (await Task.WhenAny(broadcastTask, Task.Delay(Timeout.Infinite, cts.Token)) == broadcastTask)
             {
                 // Task completed within timeout
