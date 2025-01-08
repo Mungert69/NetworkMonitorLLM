@@ -553,20 +553,20 @@ public class LLMProcessRunner : ILLMRunner
                             switch (_mlParams.LlmVersion)
                             {
                                 case "func_2.4":
-                                    preAssistantMessage += "<|from|> assistant\\\n<|recipient|> all\\\n<|content|>" + assistantMessage + "\\\n";
+                                    preAssistantMessage = "<|from|> assistant\\\n<|recipient|> all\\\n<|content|>" + assistantMessage + "\\\n"+preAssistantMessage;
                                     break;
 
                                 case "func_2.5":
                                 case "func_3.1":
                                 case "func_3.2":
                                 case "llama_3.2":
-                                    preAssistantMessage += "<|start_header_id|>assistant<|end_header_id|>\\\n\\\n" + assistantMessage + "<|eot_id|>" ;
+                                    preAssistantMessage = "<|start_header_id|>assistant<|end_header_id|>\\\n\\\n" + assistantMessage + "<|eot_id|>"+preAssistantMessage ;
                                     break;
                                 case "qwen_2.5":
-                                    preAssistantMessage += "<|im_start|>assistant\\\n" + assistantMessage + "<|im_end|>" ;
+                                    preAssistantMessage = "<|im_start|>assistant\\\n" + assistantMessage + "<|im_end|>"+preAssistantMessage ;
                                     break;
                                 case "phi_4":
-                                    preAssistantMessage += "<|im_start|>assistant<|im_sep|>\\\n" + assistantMessage + "<|im_end|>" ;
+                                    preAssistantMessage = "<|im_start|>assistant<|im_sep|>\\\n" + assistantMessage + "<|im_end|>"+preAssistantMessage ;
                                     break;
 
                                 default:
@@ -576,8 +576,8 @@ public class LLMProcessRunner : ILLMRunner
                         }
 
                     }
-                    _assistantMessages.Clear();
-                  userInput = userInput.Replace("\r\n", " ").Replace("\n", " ");
+                _assistantMessages.Clear();
+                userInput = userInput.Replace("\r\n", " ").Replace("\n", " ");
               
                 //userInput = userInput.Replace("\r\n", "\\\n").Replace("\n", "\\\n");
                 if (!serviceObj.IsFunctionCallResponse)
