@@ -540,9 +540,10 @@ public class LLMProcessRunner : ILLMRunner
             }
             string userInput = serviceObj.UserInput;
             int countEOT = 0;
+            var preAssistantMessage="";
             if (_sendOutput)
             {
-                var preAssistantMessage="";
+                
                  foreach (var assistantMessageEntry in _assistantMessages.ToList())
                     {
                         var assistantMessageBuilder = assistantMessageEntry.Value;
@@ -652,6 +653,7 @@ public class LLMProcessRunner : ILLMRunner
                     userInput = FunctionResponseBuilder(serviceObj);
                 }
             }
+            
             if (string.IsNullOrEmpty(userInput))
             {
                 _processRunnerSemaphore.Release(); // Release the semaphore
@@ -661,12 +663,11 @@ public class LLMProcessRunner : ILLMRunner
                 return;
             }
 
-
             await process.StandardInput.WriteLineAsync(userInput);
             await process.StandardInput.FlushAsync();
             _logger.LogInformation($" ProcessLLMOutput(user input) -> {userInput}");
             // Wait for a response or a timeout
-            Task broadcastTask = tokenBroadcaster.BroadcastAsync(process, serviceObj, tokenBroadcasterMessage, countEOT, _sendOutput);
+            Task broadcastTask = tokenBroadcaster.BroadcastAsync(process, serviceObj,preAssistantMessage+tokenBroadcasterMessage, countEOT, _sendOutput);
             if (await Task.WhenAny(broadcastTask, Task.Delay(Timeout.Infinite, cts.Token)) == broadcastTask)
             {
                 // Task completed within timeout
