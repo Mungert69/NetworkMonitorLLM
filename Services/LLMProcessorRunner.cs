@@ -684,7 +684,7 @@ public class LLMProcessRunner : ILLMRunner
                 await broadcastTask;
                 if (tokenBroadcaster.AssistantMessage != null)
                 {
-                    _assistantMessages.TryAdd(serviceObj.MessageID, tokenBroadcaster.AssistantMessage);
+                    if (tokenBroadcaster.AssistantMessage!=null) _assistantMessages.TryAdd(serviceObj.MessageID, tokenBroadcaster.AssistantMessage);
                     tokenBroadcaster.AssistantMessage = null;
 
                 }
