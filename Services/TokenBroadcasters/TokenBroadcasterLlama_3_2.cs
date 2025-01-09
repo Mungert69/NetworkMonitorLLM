@@ -48,7 +48,7 @@ public class TokenBroadcasterLlama_3_2 : TokenBroadcasterBase
                 {
                     stopCount++;
                     if (llmOutStr.Contains("<|start_header_id|>assistant<|eot_id|>")) _stopAfter = 2;
-                    _logger.LogInformation($" Stop count {stopCount} output is {llmOutStr} countEOT {countEOT}");
+                    _logger.LogInformation($" Stop count {stopCount} output is {llmOutStr} ");
 
                 }
                 if (stopCount == _stopAfter)
