@@ -30,8 +30,7 @@ namespace NetworkMonitor.LLM.Services
 
             var lineBuilder = new StringBuilder();
             var llmOutFull = new StringBuilder();
-            _isFuncCalled = false;
-            int stopCount = 0;
+                int stopCount = 0;
 
             try
             {

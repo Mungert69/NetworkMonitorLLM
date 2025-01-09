@@ -85,6 +85,8 @@ namespace NetworkMonitor.LLM.Services
         {
             _isPrimaryLlm = serviceObj.IsPrimaryLlm;
              _responseProcessor.SendOutput = sendOutput;
+              _isFuncCalled = false;
+       
             await SendLLMPrimaryChunk(serviceObj, "</llm-busy>");
         }
 

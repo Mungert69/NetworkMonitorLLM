@@ -38,7 +38,6 @@ public class TokenBroadcasterPhi_4 : TokenBroadcasterBase
 
         var lineBuilder = new StringBuilder();
         var llmOutFull = new StringBuilder();
-        _isFuncCalled = false;
         int stopCount = 0;
 
         try

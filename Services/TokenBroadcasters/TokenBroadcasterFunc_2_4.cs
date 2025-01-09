@@ -31,7 +31,6 @@ public class TokenBroadcasterFunc_2_4 : TokenBroadcasterBase
 
         var llmOutFull = new StringBuilder();
         var tokenBuilder = new StringBuilder();
-        _isFuncCalled = false;
         var forwardSegments = new List<MessageSegment>();
 
         bool isStopEncountered = false;
