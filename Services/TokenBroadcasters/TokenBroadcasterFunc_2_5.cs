@@ -17,21 +17,16 @@ public class TokenBroadcasterFunc_2_5 : TokenBroadcasterBase
          : base(responseProcessor, logger)
     {
         _xmlFunctionParsing = xmlFunctionParsing;
-        _userReplace="<|start_header_id|>user<|end_header_id|>\\\n\\\n";
-        _functionReplace="<|start_header_id|>tool<|end_header_id|>\\\n\\\n";
+        _userReplace = "<|start_header_id|>user<|end_header_id|>\\\n\\\n";
+        _functionReplace = "<|start_header_id|>tool<|end_header_id|>\\\n\\\n";
     }
 
 
 
-    public override async Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput, int countEOT, bool sendOutput = true)
+    public override async Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput)
     {
         _logger.LogWarning(" Start BroadcastAsyc() ");
-      
-        await SendHeader(serviceObj,sendOutput, userInput);
-
-        int stopAfter = 2 + countEOT;
-        if (sendOutput) stopAfter = 2 + countEOT;
-        sendOutput = true;
+        await SendHeader(serviceObj, userInput);
 
         var lineBuilder = new StringBuilder();
         var llmOutFull = new StringBuilder();
@@ -58,7 +53,7 @@ public class TokenBroadcasterFunc_2_5 : TokenBroadcasterBase
                     // Process the full output only after the stopCount occurrence of <|eot_id|>
                     _logger.LogInformation($" Stop count {stopCount} output is {llmOutStr}");
                 }
-                if (stopCount == stopAfter)
+                if (stopCount == _stopAfter)
                 {
                     await ProcessLine(llmOutStr, serviceObj);
                     _logger.LogInformation($" Cancel due to {stopCount} <|eot_id|> detected ");

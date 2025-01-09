@@ -18,19 +18,15 @@ namespace NetworkMonitor.LLM.Services
              : base(responseProcessor, logger)
         {
             _xmlFunctionParsing = xmlFunctionParsing;
-            _userReplace="<|start_header_id|>user<|end_header_id|>\\\n\\\n";
-        _functionReplace="<|start_header_id|>ipython<|end_header_id|>\\\n\\\n";
+            _userReplace = "<|start_header_id|>user<|end_header_id|>\\\n\\\n";
+            _functionReplace = "<|start_header_id|>ipython<|end_header_id|>\\\n\\\n";
         }
 
 
-        public override async Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput, int countEOT, bool sendOutput = true)
+        public override async Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput)
         {
             _logger.LogWarning(" Start BroadcastAsyc() ");
-           await SendHeader(serviceObj,sendOutput, userInput);
-           
-             int stopAfter = 2 + countEOT;
-            if (sendOutput) stopAfter = 2 + countEOT;
-            sendOutput = true;
+            await SendHeader(serviceObj, userInput);
 
             var lineBuilder = new StringBuilder();
             var llmOutFull = new StringBuilder();
@@ -46,7 +42,7 @@ namespace NetworkMonitor.LLM.Services
                     string textChunk = Encoding.UTF8.GetString(buffer, 0, charRead);
                     //tokenBuilder.Append(textChunk);
                     llmOutFull.Append(textChunk);
-                    await SendLLMPrimaryChunk(serviceObj,textChunk);
+                    await SendLLMPrimaryChunk(serviceObj, textChunk);
                     string llmOutStr = llmOutFull.ToString();
                     int eotIdCount = CountOccurrences(llmOutStr, "<|eot_id|>");
                     eotIdCount += CountOccurrences(llmOutStr, "<|eom_id|>");
@@ -56,7 +52,7 @@ namespace NetworkMonitor.LLM.Services
                         _logger.LogInformation($" Stop count {stopCount} output is {llmOutStr}");
 
                     }
-                    if (stopCount == stopAfter)
+                    if (stopCount == _stopAfter)
                     {
                         await ProcessLine(llmOutStr, serviceObj);
                         _logger.LogInformation($" Cancel due to {stopCount} <|eot_id|> detected ");

@@ -25,13 +25,9 @@ public class TokenBroadcasterFunc_2_4 : TokenBroadcasterBase
 
   
 
-    public override async Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput, int countEOT, bool sendOutput)
+    public override async Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput)
     {
         _logger.LogWarning($" Start BroadcastAsync() DestinationLlm {serviceObj.DestinationLlm} SourceLlm {serviceObj.SourceLlm} ");
-        _isPrimaryLlm = serviceObj.IsPrimaryLlm;
-      _responseProcessor.SendOutput = sendOutput;
-      
-        await SendLLMPrimaryChunk(serviceObj, "</llm-busy>");
 
         var llmOutFull = new StringBuilder();
         var tokenBuilder = new StringBuilder();

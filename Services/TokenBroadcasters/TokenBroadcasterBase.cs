@@ -29,6 +29,7 @@ namespace NetworkMonitor.LLM.Services
         private bool _disposed = false; // To detect redundant calls to Dispose
         protected string _userReplace = "";
         protected string _functionReplace = "";
+        protected int _stopAfter=2;
 
         public StringBuilder AssistantMessage { get => _assistantMessage; set => _assistantMessage = value; }
 
@@ -80,12 +81,15 @@ namespace NetworkMonitor.LLM.Services
             await _responseProcessor.ProcessFunctionCall(serviceObj);
         }
 
-        public async Task SendHeader(LLMServiceObj serviceObj, bool sendOutput, string userInput)
+        public async Task SetUp(LLMServiceObj serviceObj, bool sendOutput)
         {
             _isPrimaryLlm = serviceObj.IsPrimaryLlm;
-            _responseProcessor.SendOutput = sendOutput;
-         
+             _responseProcessor.SendOutput = sendOutput;
             await SendLLMPrimaryChunk(serviceObj, "</llm-busy>");
+        }
+
+        public async Task SendHeader(LLMServiceObj serviceObj, string userInput)
+        {
             var chunkServiceObj = new LLMServiceObj(serviceObj);
             if (serviceObj.IsFunctionCallResponse) chunkServiceObj.LlmMessage = userInput.Replace(_functionReplace, "<Function Response:> ");
             else chunkServiceObj.LlmMessage = userInput.Replace(_userReplace, "<User:> ") + "\n";
@@ -93,7 +97,7 @@ namespace NetworkMonitor.LLM.Services
 
         }
 
-        public abstract Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput, int countEOT, bool sendOutput = true);
+        public abstract Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput);
 
         protected int CountOccurrences(string source, string substring)
         {

@@ -565,7 +565,6 @@ public class LLMProcessRunner : ILLMRunner
 
             }
             string userInput = serviceObj.UserInput;
-            int countEOT = 0;
             var preAssistantMessage = "";
             var functionStatusMessage="";
             if (_sendOutput)
@@ -646,7 +645,6 @@ public class LLMProcessRunner : ILLMRunner
                             if (index < processedFunctionCalls.Count - 1)
                             {
                                userInput=userInput+EOFToken();
-                                //countEOT++;
                             }
 
                             return userInput;
@@ -674,11 +672,12 @@ public class LLMProcessRunner : ILLMRunner
 
                 return;
             }
+            await tokenBroadcaster.SetUp(serviceObj, _sendOutput);
             await process.StandardInput.WriteLineAsync(llmInput);
             await process.StandardInput.FlushAsync();
             _logger.LogInformation($" LLM INPUT -> {llmInput}");
             // Wait for a response or a timeout
-            Task broadcastTask = tokenBroadcaster.BroadcastAsync(process, serviceObj, userInput, countEOT, _sendOutput);
+            Task broadcastTask = tokenBroadcaster.BroadcastAsync(process, serviceObj, userInput);
             if (await Task.WhenAny(broadcastTask, Task.Delay(Timeout.Infinite, cts.Token)) == broadcastTask)
             {
                 // Task completed within timeout

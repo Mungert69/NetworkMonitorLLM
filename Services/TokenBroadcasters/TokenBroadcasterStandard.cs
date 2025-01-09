@@ -21,17 +21,12 @@ public class TokenBroadcasterStandard : TokenBroadcasterBase
         _xmlFunctionParsing = xmlFunctionParsing;
     }
 
-    public override async Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput, int countEOT, bool sendOutput = true)
+    public override async Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput)
     {
         _logger.LogWarning(" Start BroadcastAsyc() ");
-        _isPrimaryLlm = serviceObj.IsPrimaryLlm;
-        _responseProcessor.SendOutput = sendOutput;
-        await SendLLMPrimaryChunk(serviceObj, "</llm-busy>");  
-  
+        await SendHeader(serviceObj, userInput);
+
         var chunkServiceObj = new LLMServiceObj(serviceObj);
-        int stopAfter = 2 + countEOT;
-        if (sendOutput) stopAfter = 2 + countEOT;
-        sendOutput = true;
 
         var lineBuilder = new StringBuilder();
         var llmOutFull = new StringBuilder();
@@ -47,7 +42,7 @@ public class TokenBroadcasterStandard : TokenBroadcasterBase
                 string textChunk = Encoding.UTF8.GetString(buffer, 0, charRead);
                 //tokenBuilder.Append(textChunk);
                 llmOutFull.Append(textChunk);
-               await SendLLMPrimaryChunk(serviceObj,textChunk);
+                await SendLLMPrimaryChunk(serviceObj, textChunk);
                 string llmOutStr = llmOutFull.ToString();
                 int eotIdCount = CountOccurrences(llmOutStr, _defaultEOT);
 
@@ -57,7 +52,7 @@ public class TokenBroadcasterStandard : TokenBroadcasterBase
                     _logger.LogInformation($" Stop count {stopCount} output is {llmOutStr}");
 
                 }
-                if (stopCount == stopAfter)
+                if (stopCount == _stopAfter)
                 {
                     await ProcessLine(llmOutStr, serviceObj);
                     _logger.LogInformation($" Cancel due to {stopCount} {_defaultEOT} detected ");
@@ -81,14 +76,14 @@ public class TokenBroadcasterStandard : TokenBroadcasterBase
         catch (OperationCanceledException)
         {
             _logger.LogInformation("Read operation canceled due to CancellationToken.");
-            await SendLLMPrimaryChunk(serviceObj,"\n");
-           
+            await SendLLMPrimaryChunk(serviceObj, "\n");
+
         }
         finally
         {
-          await SendLLMPrimaryChunk(serviceObj, "</llm-listening>");    
+            await SendLLMPrimaryChunk(serviceObj, "</llm-listening>");
         }
-         _logger.LogInformation(" --> Finished LLM Interaction ");
+        _logger.LogInformation(" --> Finished LLM Interaction ");
     }
 
 
