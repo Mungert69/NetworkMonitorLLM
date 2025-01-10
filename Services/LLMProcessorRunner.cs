@@ -55,6 +55,8 @@ public class LLMProcessRunner : ILLMRunner
         _idleCheckTimer = new Timer(async _ => await CheckAndTerminateIdleProcesses(), null, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
         _isEnabled = _mlParams.StartThisFreeLLM;
     }
+
+
     private async Task CheckAndTerminateIdleProcesses()
     {
         var idleDuration = TimeSpan.FromMinutes(_mlParams.LlmSessionIdleTimeout);
@@ -142,64 +144,26 @@ public class LLMProcessRunner : ILLMRunner
         {
             _processRunnerSemaphore.Release(); // Release the semaphore
         }
-        string input = "";
-        string userInput = "";
-        switch (_mlParams.LlmVersion)
-        {
-            case "func_2.4":
-                userInput = $"<|from|> get_login_info\\\n<|recipient|> all\\\n<|content|>User info ";
-                break;
-
-            case "func_2.5":
-                userInput = $"<|start_header_id|>tool<|end_header_id|>\\\n\\\nname=get_user_info";
-                break;
-
-            case "func_3.1":
-            case "llama_3.2":
-                userInput = "<|start_header_id|>ipython<|end_header_id|>\\\n\\\n";
-                break;
-
-            case "func_3.2":
-                userInput = $"<|start_header_id|>tool<|end_header_id|>\\\n\\\n";
-                break;
 
 
-            case "qwen_2.5":
-                userInput = $"<|im_start|>user\\\n<tool_response>\\\n";
-                break;
-            case "phi_4":
-                userInput = $"<|im_start|>user<|im_sep|>\\\n<tool_response>\\\n";
-                break;
+        var config = LLMConfigFactory.GetConfig(_mlParams.LlmVersion);
 
-            case "standard":
-                userInput = "Function Call : ";
-                break;
+        var userInfo = serviceObj.IsUserLoggedIn
+            ? new UserInfo { Email = serviceObj.UserInfo.Email }
+            : new UserInfo();
 
-            default:
-                // Optionally handle unexpected LlmVersion values
-                break;
-        }
+        string functionResponse = string.Format(
+            config.FunctionResponseTemplate,
+            "get_user_info",
+            PrintPropertiesAsJson.PrintUserInfoPropertiesWithDate(
+                userInfo,
+                serviceObj.IsUserLoggedIn,
+                currentTime.ToString("yyyy-MM-ddTHH:mm:ss"),
+                false
+            )
+        );
 
-        if (serviceObj.IsUserLoggedIn)
-        {
-            var user = new UserInfo()
-            {
-                Email = serviceObj.UserInfo.Email,
-            };
-
-            input += PrintPropertiesAsJson.PrintUserInfoPropertiesWithDate(user, serviceObj.IsUserLoggedIn, currentTime.ToString("yyyy-MM-ddTHH:mm:ss"), false);
-
-        }
-        else
-        {
-            var user = new UserInfo();
-            input = PrintPropertiesAsJson.PrintUserInfoPropertiesWithDate(user, serviceObj.IsUserLoggedIn, currentTime.ToString("yyyy-MM-ddTHH:mm:ss"), false);
-        }
-        serviceObj.UserInput = userInput + input;
-
-        if (_mlParams.LlmVersion == "qwen_2.5" || _mlParams.LlmVersion == "phi_4") serviceObj.UserInput += $"\\\n</tool_response>";
-
-
+        serviceObj.UserInput = functionResponse;
         serviceObj.IsFunctionCallResponse = false;
         _sendOutput = false;
         if (!_mlParams.LlmNoInitMessage) await SendInputAndGetResponse(serviceObj);
@@ -353,15 +317,6 @@ public class LLMProcessRunner : ILLMRunner
             _logger.LogError($" Error : Failed to send Ctrl+C to session {sessionId}. Error: {e.Message}");
         }
 
-        /* try
-             {
-                 _processRunnerSemaphore.Release();
-             }
-             catch
-             {
-                 _logger.LogWarning("Semaphore release failed during RemoveProcess.");
-             }*/
-
         _isStateReady = true;
 
     }
@@ -389,29 +344,23 @@ public class LLMProcessRunner : ILLMRunner
         }
         _logger.LogInformation($" LLMService Process Started ");
     }
-
     private string EOFToken()
     {
-        switch (_mlParams.LlmVersion)
-        {
-            case "func_2.5":
-            case "func_3.1":
-            case "func_3.2":
-            case "llama_3.2":
-                return "<|eot_id|>";
-                break;
-
-            case "qwen_2.5":
-            case "phi_4":
-                return "<|im_end|>";
-                break;
-
-            default:
-                return "";
-                break;
-        }
+        var config = LLMConfigFactory.GetConfig(_mlParams.LlmVersion);
+        return config.EOFToken ?? string.Empty;
     }
+
+
+
     private string FunctionResponseBuilder(LLMServiceObj pendingServiceObj)
+    {
+        var config = LLMConfigFactory.GetConfig(_mlParams.LlmVersion);
+        string userInput = pendingServiceObj.UserInput.Replace("\r\n", " ").Replace("\n", " ");
+
+        return string.Format(config.FunctionResponseTemplate, pendingServiceObj.FunctionName, userInput);
+    }
+
+    private string FunctionResponseBuilderOld(LLMServiceObj pendingServiceObj)
     {
         string userInput = pendingServiceObj.UserInput;
         userInput = userInput.Replace("\r\n", " ").Replace("\n", " ");
@@ -497,8 +446,6 @@ public class LLMProcessRunner : ILLMRunner
                     else
                     {
                         _assistantMessages.TryRemove(serviceObj.MessageID, out _);
-                        //_logger.LogInformation($"Removing Assistant Message {serviceObj.MessageID}");
-
                     }
 
                 }
@@ -512,50 +459,16 @@ public class LLMProcessRunner : ILLMRunner
 
 
             }
+            var config = LLMConfigFactory.GetConfig(_mlParams.LlmVersion);
 
+           
             if (_tokenBroadcasters.TryGetValue(serviceObj.SessionId, out tokenBroadcaster))
             {
                 await tokenBroadcaster.ReInit(serviceObj.SessionId);
             }
             else
             {
-                switch (_mlParams.LlmVersion)
-                {
-                    case "func_2.4":
-                        tokenBroadcaster = new TokenBroadcasterFunc_2_4(_responseProcessor, _logger, _mlParams.XmlFunctionParsing);
-                        break;
-
-                    case "func_2.5":
-                        tokenBroadcaster = new TokenBroadcasterFunc_2_5(_responseProcessor, _logger, _mlParams.XmlFunctionParsing);
-                        break;
-
-                    case "func_3.1":
-                        tokenBroadcaster = new TokenBroadcasterFunc_3_1(_responseProcessor, _logger, _mlParams.XmlFunctionParsing);
-                        break;
-
-                    case "func_3.2":
-                        tokenBroadcaster = new TokenBroadcasterFunc_3_2(_responseProcessor, _logger, _mlParams.XmlFunctionParsing);
-                        break;
-
-                    case "llama_3.2":
-                        tokenBroadcaster = new TokenBroadcasterLlama_3_2(_responseProcessor, _logger, _mlParams.XmlFunctionParsing);
-                        break;
-
-                    case "qwen_2.5":
-                        tokenBroadcaster = new TokenBroadcasterQwen_2_5(_responseProcessor, _logger, _mlParams.XmlFunctionParsing);
-                        break;
-                    case "phi_4":
-                        tokenBroadcaster = new TokenBroadcasterPhi_4(_responseProcessor, _logger, _mlParams.XmlFunctionParsing);
-                        break;
-
-                    case "standard":
-                        tokenBroadcaster = new TokenBroadcasterStandard(_responseProcessor, _logger, _mlParams.XmlFunctionParsing);
-                        break;
-
-                    default:
-                        throw new InvalidOperationException($" Error there is no Token Broadcaster for LLM Version {_mlParams.LlmVersion}");
-
-                }
+                  tokenBroadcaster = config.CreateBroadcaster(_responseProcessor, _logger, _mlParams.XmlFunctionParsing);
 
                 if (!_tokenBroadcasters.TryAdd(serviceObj.SessionId, tokenBroadcaster))
                 {
@@ -566,73 +479,24 @@ public class LLMProcessRunner : ILLMRunner
             }
             string userInput = serviceObj.UserInput;
             var preAssistantMessage = "";
-            var functionStatusMessage="";
+            var functionStatusMessage = "";
             if (_sendOutput)
             {
+                preAssistantMessage = string.Join("", _assistantMessages.Select(entry =>
+              {
+                  var assistantMessage = entry.Value?.ToString() ?? string.Empty;
+                  return string.Format(config.AssistantMessageTemplate, assistantMessage);
+              }));
 
-                foreach (var assistantMessageEntry in _assistantMessages.ToList())
-                {
-                    var assistantMessageBuilder = assistantMessageEntry.Value;
-                    if (assistantMessageBuilder != null)
-                    {
-                        string assistantMessage = assistantMessageBuilder.ToString();
 
-                        switch (_mlParams.LlmVersion)
-                        {
-                            case "func_2.4":
-                                preAssistantMessage = "<|from|> assistant\\\n<|recipient|> all\\\n<|content|>" + assistantMessage + "\\\n" + preAssistantMessage;
-                                break;
-
-                            case "func_2.5":
-                            case "func_3.1":
-                            case "func_3.2":
-                            case "llama_3.2":
-                                preAssistantMessage = "<|start_header_id|>assistant<|end_header_id|>\\\n\\\n" + assistantMessage + "<|eot_id|>" + preAssistantMessage;
-                                break;
-                            case "qwen_2.5":
-                                preAssistantMessage = "<|im_start|>assistant\\\n" + assistantMessage + "<|im_end|>" + preAssistantMessage;
-                                break;
-                            case "phi_4":
-                                preAssistantMessage = "<|im_start|>assistant<|im_sep|>\\\n" + assistantMessage + "<|im_end|>" + preAssistantMessage;
-                                break;
-
-                            default:
-                                // Optionally handle unexpected LlmVersion values
-                                break;
-                        }
-                    }
-
-                }
                 _assistantMessages.Clear();
                 userInput = userInput.Replace("\r\n", " ").Replace("\n", " ");
 
                 //userInput = userInput.Replace("\r\n", "\\\n").Replace("\n", "\\\n");
                 if (!serviceObj.IsFunctionCallResponse)
                 {
-                    switch (_mlParams.LlmVersion)
-                    {
-                        case "func_2.4":
-                            userInput = "<|from|> user\\\n<|recipient|> all\\\n<|content|>" + userInput;
-                            break;
 
-                        case "func_2.5":
-                        case "func_3.1":
-                        case "func_3.2":
-                        case "llama_3.2":
-                            userInput = "<|start_header_id|>user<|end_header_id|>\\\n\\\n" + userInput;
-                            break;
-
-                        case "qwen_2.5":
-                            userInput = "<|im_start|>user\\\n" + userInput;
-                            break;
-                        case "phi_4":
-                            userInput = "<|im_start|>user<|im_sep|>\\\n" + userInput;
-                            break;
-
-                        default:
-                            // Optionally handle unexpected LlmVersion values
-                            break;
-                    }
+                    userInput = string.Format(config.UserInputTemplate, userInput);
 
                 }
                 else if (!serviceObj.IsFunctionCallStatus)
@@ -644,7 +508,7 @@ public class LLMProcessRunner : ILLMRunner
                             // Add "<|eot_id|>" etc. if it's not the last item
                             if (index < processedFunctionCalls.Count - 1)
                             {
-                               userInput=userInput+EOFToken();
+                                userInput = userInput + EOFToken();
                             }
 
                             return userInput;
@@ -657,13 +521,13 @@ public class LLMProcessRunner : ILLMRunner
                 }
                 else
                 {
-                    functionStatusMessage = FunctionResponseBuilder(serviceObj)+EOFToken();
-                    
+                    functionStatusMessage = FunctionResponseBuilder(serviceObj) + EOFToken();
+
                 }
             }
 
 
-            string llmInput = preAssistantMessage+functionStatusMessage + userInput;
+            string llmInput = preAssistantMessage + functionStatusMessage + userInput;
             if (string.IsNullOrEmpty(llmInput))
             {
                 _processRunnerSemaphore.Release(); // Release the semaphore
@@ -684,7 +548,7 @@ public class LLMProcessRunner : ILLMRunner
                 await broadcastTask;
                 if (tokenBroadcaster.AssistantMessage != null)
                 {
-                    if (tokenBroadcaster.AssistantMessage!=null) _assistantMessages.TryAdd(serviceObj.MessageID, tokenBroadcaster.AssistantMessage);
+                    if (tokenBroadcaster.AssistantMessage != null) _assistantMessages.TryAdd(serviceObj.MessageID, tokenBroadcaster.AssistantMessage);
                     tokenBroadcaster.AssistantMessage = null;
 
                 }

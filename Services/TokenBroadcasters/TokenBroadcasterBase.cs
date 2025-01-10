@@ -29,7 +29,9 @@ namespace NetworkMonitor.LLM.Services
         private bool _disposed = false; // To detect redundant calls to Dispose
         protected string _userReplace = "";
         protected string _functionReplace = "";
+        protected string _assistantHeader="";
         protected int _stopAfter=2;
+        protected List<string> _endTokens=new List<string>();
 
         public StringBuilder AssistantMessage { get => _assistantMessage; set => _assistantMessage = value; }
 
@@ -99,18 +101,85 @@ namespace NetworkMonitor.LLM.Services
 
         }
 
-        public abstract Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput);
+        public virtual async Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput)
+    {
+        _logger.LogWarning(" Start BroadcastAsyc() ");
+        await SendHeader(serviceObj, userInput);
+      
+        var lineBuilder = new StringBuilder();
+        var llmOutFull = new StringBuilder();
+        int stopCount = 0;
 
-        protected int CountOccurrences(string source, string substring)
+        try
         {
-            int count = 0, index = 0;
-            while ((index = source.IndexOf(substring, index)) != -1)
+            while (!_cancellationTokenSource.Token.IsCancellationRequested)
             {
-                count++;
-                index += substring.Length;
+                byte[] buffer = new byte[255];
+                int charRead = await process.StandardOutput.ReadAsync(buffer, 0, buffer.Length, _cancellationTokenSource.Token);
+                string textChunk = Encoding.UTF8.GetString(buffer, 0, charRead);
+               llmOutFull.Append(textChunk);
+                await SendLLMPrimaryChunk(serviceObj, textChunk);
+                string llmOutStr = llmOutFull.ToString();
+                 int eotIdCount = CountOccurrences(llmOutStr, _endTokens);
+
+                if (eotIdCount > stopCount)
+                {
+                    stopCount++;
+                    _logger.LogInformation($" Stop count {stopCount} output is {llmOutStr} ");
+
+                }
+                if (stopCount == _stopAfter)
+                {
+                    await ProcessLine(llmOutStr, serviceObj);
+                    _logger.LogInformation($" Cancel due to {stopCount} end tokens detected ");
+                    _cancellationTokenSource.Cancel(); // Cancel after second <|eot_id|>}
+
+                }
+            }
+
+            if (!_isPrimaryLlm && !_isFuncCalled)
+            {
+                string llmOutput = llmOutFull.ToString().Replace("\n", " ");
+                foreach (var token in _endTokens)
+                {
+                    llmOutput = llmOutput.Replace(token, "");
+                }
+                llmOutput = llmOutput.Replace(_assistantHeader, "");
+                 var finalServiceObj = new LLMServiceObj(serviceObj);
+                finalServiceObj.LlmMessage = llmOutput;
+                finalServiceObj.IsFunctionCallResponse = true;
+                await _responseProcessor.ProcessLLMOutput(finalServiceObj);
+                _logger.LogInformation($" --> Sent redirected LLM Output {finalServiceObj.LlmMessage}");
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogInformation("Read operation canceled due to CancellationToken.");
+            await SendLLMPrimaryChunk(serviceObj, "\n");
+
+        }
+        finally
+        {
+            await SendLLMPrimaryChunk(serviceObj, "</llm-listening>");
+        }
+        _logger.LogInformation(" --> Finished LLM Interaction ");
+    }
+
+        protected int CountOccurrences(string source, List<string> substrings)
+        {
+            int count = 0;
+            foreach (var substring in substrings)
+            {
+                int index = 0;
+                while ((index = source.IndexOf(substring, index)) != -1)
+                {
+                    count++;
+                    index += substring.Length;
+                }
             }
             return count;
         }
+
 
         protected bool IsTokenComplete(StringBuilder tokenBuilder)
         {

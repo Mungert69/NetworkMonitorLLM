@@ -19,6 +19,7 @@ public class TokenBroadcasterStandard : TokenBroadcasterBase
          : base(responseProcessor, logger)
     {
         _xmlFunctionParsing = xmlFunctionParsing;
+                _endTokens.Add("<|im_end|>");
     }
 
     public override async Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput)
@@ -43,7 +44,7 @@ public class TokenBroadcasterStandard : TokenBroadcasterBase
                 llmOutFull.Append(textChunk);
                 await SendLLMPrimaryChunk(serviceObj, textChunk);
                 string llmOutStr = llmOutFull.ToString();
-                int eotIdCount = CountOccurrences(llmOutStr, _defaultEOT);
+                int eotIdCount = CountOccurrences(llmOutStr, _endTokens);
 
                 if (eotIdCount > stopCount)
                 {

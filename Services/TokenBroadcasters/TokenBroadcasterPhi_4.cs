@@ -17,6 +17,7 @@ public class TokenBroadcasterPhi_4 : TokenBroadcasterBase
         : base(responseProcessor, logger)
     {
         _xmlFunctionParsing = xmlFunctionParsing;
+        _endTokens.Add("<|im_end|>");
     }
 
 
@@ -51,7 +52,8 @@ public class TokenBroadcasterPhi_4 : TokenBroadcasterBase
                 llmOutFull.Append(textChunk);
                 await SendLLMPrimaryChunk(serviceObj, textChunk);
                 string llmOutStr = llmOutFull.ToString();
-                int eotIdCount = CountOccurrences(llmOutStr, "<|im_end|>");
+              int eotIdCount = CountOccurrences(llmOutStr, _endTokens);
+
 
                 if (eotIdCount > stopCount)
                 {
