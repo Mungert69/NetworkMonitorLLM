@@ -543,8 +543,8 @@ Notes:
     Strings are enclosed in quotes (e.g., "example").
     Refer to the function definitions to ensure all parameters of the correct types.
 
-Important: After calling a function, use the function call response to provide helpful feedback to the user based on their request and the function call response. Only call functions when necessary to provide the user with assistance.
-Important: Do not give examples to the user that contain json as this will be interpreted as a function call request. You will only provide json in your output when you intend to call a function<|eot_id|> <|start_header_id|>user<|end_header_id|>
+Important: You will call functions only when necessary. Checking with the user before calling more functions. 
+Important! All json in your respones will be interpreted as a function call. You will only provide json in your responses when you intend to call a function<|eot_id|> <|start_header_id|>user<|end_header_id|>
 
 What's my user info? <|eot_id|><|start_header_id|>assistant<|end_header_id|>
 {"name" : "get_user_info", "parameters" : {"detail_response" : false}}
