@@ -36,6 +36,7 @@ public class LLMProcessRunner : ILLMRunner
     private bool _isStateFailed = false;
     private bool _isEnabled = false;
     private string _serviceID;
+    private LLMConfig _config;
     private LLMServiceObj _startServiceoObj;
 
     public bool IsStateReady { get => _isStateReady; }
@@ -146,14 +147,14 @@ public class LLMProcessRunner : ILLMRunner
         }
 
 
-        var config = LLMConfigFactory.GetConfig(_mlParams.LlmVersion);
+        _config = LLMConfigFactory.GetConfig(_mlParams.LlmVersion);
 
         var userInfo = serviceObj.IsUserLoggedIn
             ? new UserInfo { Email = serviceObj.UserInfo.Email }
             : new UserInfo();
 
         string functionResponse = string.Format(
-            config.FunctionResponseTemplate,
+            _config.FunctionResponseTemplate,
             "get_user_info",
             PrintPropertiesAsJson.PrintUserInfoPropertiesWithDate(
                 userInfo,
@@ -346,60 +347,16 @@ public class LLMProcessRunner : ILLMRunner
     }
     private string EOFToken()
     {
-        var config = LLMConfigFactory.GetConfig(_mlParams.LlmVersion);
-        return config.EOFToken ?? string.Empty;
+         return _config.EOFToken ?? string.Empty;
     }
-
-
 
     private string FunctionResponseBuilder(LLMServiceObj pendingServiceObj)
     {
-        var config = LLMConfigFactory.GetConfig(_mlParams.LlmVersion);
         string userInput = pendingServiceObj.UserInput.Replace("\r\n", " ").Replace("\n", " ");
 
-        return string.Format(config.FunctionResponseTemplate, pendingServiceObj.FunctionName, userInput);
+        return string.Format(_config.FunctionResponseTemplate, pendingServiceObj.FunctionName, userInput);
     }
 
-    private string FunctionResponseBuilderOld(LLMServiceObj pendingServiceObj)
-    {
-        string userInput = pendingServiceObj.UserInput;
-        userInput = userInput.Replace("\r\n", " ").Replace("\n", " ");
-        switch (_mlParams.LlmVersion)
-        {
-            case "func_2.4":
-                userInput = "<|from|> " + pendingServiceObj.FunctionName + "\\\n<|recipient|> all\\\n<|content|>" + userInput;
-                break;
-
-            case "func_2.5":
-                userInput = "<|start_header_id|>tool<|end_header_id|>\\\n\\\nname=" + pendingServiceObj.FunctionName + " " + userInput;
-                break;
-
-            case "func_3.1":
-            case "llama_3.2":
-                userInput = "<|start_header_id|>ipython<|end_header_id|>\\\n\\\n" + userInput;
-                break;
-
-            case "func_3.2":
-                userInput = "<|start_header_id|>tool<|end_header_id|>\\\n\\\n" + userInput;
-                break;
-
-            case "qwen_2.5":
-                userInput = "<|im_start|>user\\\n<tool_response>\\\n" + userInput + "\\\n</tool_response>";
-                break;
-            case "phi_4":
-                userInput = "<|im_start|>user<|im_sep|>\\\n<tool_response>\\\n" + userInput + "\\\n</tool_response>";
-                break;
-
-            case "standard":
-                userInput = "FUNCTION RESPONSE: " + userInput;
-                break;
-
-            default:
-                // Optionally handle unexpected LlmVersion values
-                break;
-        }
-        return userInput;
-    }
     public async Task SendInputAndGetResponse(LLMServiceObj serviceObj)
     {
         _isStateReady = false;
@@ -459,16 +416,14 @@ public class LLMProcessRunner : ILLMRunner
 
 
             }
-            var config = LLMConfigFactory.GetConfig(_mlParams.LlmVersion);
 
-           
             if (_tokenBroadcasters.TryGetValue(serviceObj.SessionId, out tokenBroadcaster))
             {
                 await tokenBroadcaster.ReInit(serviceObj.SessionId);
             }
             else
             {
-                  tokenBroadcaster = config.CreateBroadcaster(_responseProcessor, _logger, _mlParams.XmlFunctionParsing);
+                tokenBroadcaster = _config.CreateBroadcaster(_responseProcessor, _logger, _mlParams.XmlFunctionParsing);
 
                 if (!_tokenBroadcasters.TryAdd(serviceObj.SessionId, tokenBroadcaster))
                 {
@@ -485,7 +440,7 @@ public class LLMProcessRunner : ILLMRunner
                 preAssistantMessage = string.Join("", _assistantMessages.Select(entry =>
               {
                   var assistantMessage = entry.Value?.ToString() ?? string.Empty;
-                  return string.Format(config.AssistantMessageTemplate, assistantMessage);
+                  return string.Format(_config.AssistantMessageTemplate, assistantMessage);
               }));
 
 
@@ -496,7 +451,7 @@ public class LLMProcessRunner : ILLMRunner
                 if (!serviceObj.IsFunctionCallResponse)
                 {
 
-                    userInput = string.Format(config.UserInputTemplate, userInput);
+                    userInput = string.Format(_config.UserInputTemplate, userInput);
 
                 }
                 else if (!serviceObj.IsFunctionCallStatus)
@@ -517,12 +472,10 @@ public class LLMProcessRunner : ILLMRunner
                     // Combine the constructed inputs for all responses
                     userInput = string.Join("", constructedInputs);
                     _responseProcessor.ClearFunctionCallTracker(serviceObj.MessageID);
-
                 }
                 else
                 {
                     functionStatusMessage = FunctionResponseBuilder(serviceObj) + EOFToken();
-
                 }
             }
 
@@ -550,7 +503,6 @@ public class LLMProcessRunner : ILLMRunner
                 {
                     if (tokenBroadcaster.AssistantMessage != null) _assistantMessages.TryAdd(serviceObj.MessageID, tokenBroadcaster.AssistantMessage);
                     tokenBroadcaster.AssistantMessage = null;
-
                 }
             }
             else
