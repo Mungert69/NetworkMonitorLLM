@@ -136,7 +136,6 @@ public class LLMService : ILLMService
         {
             session.Runner.LoadChanged -= OnRunnerLoadChanged;
             await session.Runner.RemoveProcess(llmServiceObj.SessionId);
-            session.Runner = null;
             _sessions.TryRemove(llmServiceObj.SessionId, out _);
 
             return await SetResultMessageAsync(

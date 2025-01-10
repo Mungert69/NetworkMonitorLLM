@@ -120,10 +120,10 @@ public class LLMProcessRunner : ILLMRunner
     }
     public async Task StartProcess(LLMServiceObj serviceObj, DateTime currentTime)
     {
-        if (!_mlParams.StartThisFreeLLM) return;
-
+        if (!_mlParams.StartThisFreeLLM || _isStateStarting) return;
         _isStateStarting = true;
         _isStateReady = false;
+        _isStateFailed = false;
         if (_llmLoad > 0)
         {
             var chunkServiceObj = new LLMServiceObj(serviceObj)
@@ -136,7 +136,6 @@ public class LLMProcessRunner : ILLMRunner
 
         LoadChanged?.Invoke(1, Type);
         await _processRunnerSemaphore.WaitAsync();
-
         try
         {
             _responseProcessor.IsManagedMultiFunc = false;
@@ -150,15 +149,14 @@ public class LLMProcessRunner : ILLMRunner
             await WaitForReadySignal(process);
             _processes[serviceObj.SessionId] = process;
         }
-        catch
-        {
-            _isStateStarting = false;
-            _isStateReady = true;
+        catch {
             _isStateFailed = true;
             throw;
         }
         finally
         {
+            _isStateStarting = false;
+            _isStateReady = true;         
             _processRunnerSemaphore.Release();
             LoadChanged?.Invoke(-1, Type); // Increment load for this type
 
@@ -377,6 +375,7 @@ public class LLMProcessRunner : ILLMRunner
 
     public async Task SendInputAndGetResponse(LLMServiceObj serviceObj)
     {
+
         _isStateReady = false;
         string tokenBroadcasterMessage = "";
         int sendLlmLoad = 0;
@@ -385,10 +384,8 @@ public class LLMProcessRunner : ILLMRunner
             sendLlmLoad = _llmLoad;
         }
         LoadChanged?.Invoke(1, Type);
-        await _processRunnerSemaphore.WaitAsync();
-
         CancellationTokenSource cts = new CancellationTokenSource(TimeSpan.FromSeconds(_mlParams.LlmUserPromptTimeout)); // Default timeout is 30 seconds, can be adjusted
-
+        await _processRunnerSemaphore.WaitAsync();
         try
         {
             _logger.LogInformation($"  LLMService : SendInputAndGetResponse() :");
@@ -540,10 +537,6 @@ public class LLMProcessRunner : ILLMRunner
                 throw new Exception("FreeLLM Assistant is currently handling a high volume of requests. Please try again later or consider switching to TurboLLM Assistant for a super fast uninterrupted service.");
 
             }
-        }
-        catch
-        {
-            throw;
         }
         finally
         {
