@@ -33,7 +33,7 @@ public class LLMService : ILLMService
     private readonly IOpenAIRunnerFactory _openAIRunnerFactory;
     private IServiceProvider _serviceProvider;
     private IRabbitRepo _rabbitRepo;
-    private SemaphoreSlim _processRunnerSemaphore = new SemaphoreSlim(1);
+    private SemaphoreSlim _processRunnerSemaphore = new SemaphoreSlim(1,1);
 
     private MLParams _mlParams;
     private string _serviceID;
