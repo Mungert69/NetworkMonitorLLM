@@ -50,11 +50,15 @@ public class OpenAIRunner : ILLMRunner
     private string _serviceID;
     private int _maxTokens = 2000;
     private string _gptModel = "gpt-4o-mini";
+    private int _llmLoad;
 
     public bool IsStateReady { get => _isStateReady; }
     public bool IsStateStarting { get => _isStateStarting; }
     public bool IsStateFailed { get => _isStateFailed; }
     public bool IsEnabled { get => _isEnabled; }
+    public event Action<int, string> LoadChanged;
+        public int LlmLoad { get => _llmLoad; set => _llmLoad = value; }
+
 #pragma warning disable CS8618
     public OpenAIRunner(ILogger<OpenAIRunner> logger, ILLMResponseProcessor responseProcessor, OpenAIService openAiService, ISystemParamsHelper systemParamsHelper, LLMServiceObj serviceObj, SemaphoreSlim openAIRunnerSemaphore)
     {
@@ -148,8 +152,9 @@ public class OpenAIRunner : ILLMRunner
 
         try
         {
-            await _openAIRunnerSemaphore.WaitAsync(); // Wait to enter the semaphore
-
+         LoadChanged?.Invoke(1, Type); 
+        await _openAIRunnerSemaphore.WaitAsync(); 
+       
             // Retrieve or initialize the conversation history
             var history = _sessionHistories[serviceObj.SessionId];
             var messageHistory = _messageHistories.GetOrAdd(serviceObj.MessageID, new List<ChatMessage>());
@@ -305,6 +310,8 @@ public class OpenAIRunner : ILLMRunner
         {
             _openAIRunnerSemaphore.Release(); // Release the semaphore
             _isStateReady = true;
+              LoadChanged?.Invoke(-1, Type); // Increment load for this type
+
         }
     }
 

@@ -22,12 +22,12 @@ public class LLMProcessRunner : ILLMRunner
     private readonly ConcurrentDictionary<string, ProcessWrapper> _processes = new ConcurrentDictionary<string, ProcessWrapper>();
     private readonly ConcurrentDictionary<string, ITokenBroadcaster> _tokenBroadcasters = new ConcurrentDictionary<string, ITokenBroadcaster>();
     private readonly ConcurrentDictionary<string, List<LLMServiceObj>> _pendingResponses = new();
-
     private bool _sendOutput = false;
     private ILogger _logger;
     private ILLMResponseProcessor _responseProcessor;
     private MLParams _mlParams;
     private Timer _idleCheckTimer;
+    private int _llmLoad;
     private SemaphoreSlim _processRunnerSemaphore;
 
     public string Type { get => "FreeLLM"; }
@@ -43,6 +43,10 @@ public class LLMProcessRunner : ILLMRunner
     public bool IsStateStarting { get => _isStateStarting; }
     public bool IsStateFailed { get => _isStateFailed; }
     public bool IsEnabled { get => _isEnabled; }
+    public int LlmLoad { get => _llmLoad; set => _llmLoad = value; }
+
+    public event Action<int, string> LoadChanged;
+
     private ConcurrentDictionary<string, StringBuilder?> _assistantMessages = new ConcurrentDictionary<string, StringBuilder?>();
 
     public LLMProcessRunner(ILogger<LLMProcessRunner> logger, ILLMResponseProcessor responseProcessor, ISystemParamsHelper systemParamsHelper, LLMServiceObj startServiceObj, SemaphoreSlim processRunnerSemaphore)
@@ -120,7 +124,19 @@ public class LLMProcessRunner : ILLMRunner
 
         _isStateStarting = true;
         _isStateReady = false;
-        await _processRunnerSemaphore.WaitAsync(); // Wait to enter the semaphore
+        if (_llmLoad > 0)
+        {
+            var chunkServiceObj = new LLMServiceObj(serviceObj)
+            {
+                LlmMessage = $"<load-count>{_llmLoad}</load-count>"
+            };
+            if (serviceObj.IsPrimaryLlm)
+                await _responseProcessor.ProcessLLMOutput(chunkServiceObj);
+        }
+
+        LoadChanged?.Invoke(1, Type);
+        await _processRunnerSemaphore.WaitAsync();
+
         try
         {
             _responseProcessor.IsManagedMultiFunc = false;
@@ -143,7 +159,9 @@ public class LLMProcessRunner : ILLMRunner
         }
         finally
         {
-            _processRunnerSemaphore.Release(); // Release the semaphore
+            _processRunnerSemaphore.Release();
+            LoadChanged?.Invoke(-1, Type); // Increment load for this type
+
         }
 
 
@@ -347,7 +365,7 @@ public class LLMProcessRunner : ILLMRunner
     }
     private string EOFToken()
     {
-         return _config.EOFToken ?? string.Empty;
+        return _config.EOFToken ?? string.Empty;
     }
 
     private string FunctionResponseBuilder(LLMServiceObj pendingServiceObj)
@@ -361,7 +379,14 @@ public class LLMProcessRunner : ILLMRunner
     {
         _isStateReady = false;
         string tokenBroadcasterMessage = "";
+        int sendLlmLoad = 0;
+        if (_llmLoad > 0)
+        {
+            sendLlmLoad = _llmLoad;
+        }
+        LoadChanged?.Invoke(1, Type);
         await _processRunnerSemaphore.WaitAsync();
+
         CancellationTokenSource cts = new CancellationTokenSource(TimeSpan.FromSeconds(_mlParams.LlmUserPromptTimeout)); // Default timeout is 30 seconds, can be adjusted
 
         try
@@ -489,7 +514,7 @@ public class LLMProcessRunner : ILLMRunner
 
                 return;
             }
-            await tokenBroadcaster.SetUp(serviceObj, _sendOutput);
+            await tokenBroadcaster.SetUp(serviceObj, _sendOutput, sendLlmLoad);
             await process.StandardInput.WriteLineAsync(llmInput);
             await process.StandardInput.FlushAsync();
             _logger.LogInformation($" LLM INPUT -> {llmInput}");
@@ -525,6 +550,8 @@ public class LLMProcessRunner : ILLMRunner
 
             _processRunnerSemaphore.Release(); // Release the semaphore
             _isStateReady = true;
+            LoadChanged?.Invoke(-1, Type); // Increment load for this type
+
         }
     }
 }

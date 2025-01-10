@@ -18,42 +18,56 @@ public interface ILLMRunner
 {
     Task StartProcess(LLMServiceObj serviceObj, DateTime currentTime);
     Task SendInputAndGetResponse(LLMServiceObj serviceObj);
-     Task RemoveProcess(string sessionId);
-     Task StopRequest(string sessionId);
+    Task RemoveProcess(string sessionId);
+    Task StopRequest(string sessionId);
 
     string Type { get; }
     bool IsStateReady { get; }
-     bool IsStateStarting { get; }
-     bool IsStateFailed { get; }
-     bool IsEnabled {get;}
+    bool IsStateStarting { get; }
+    bool IsStateFailed { get; }
+    bool IsEnabled { get; }
+    int LlmLoad {get;set;}
+    event Action<int,string> LoadChanged;
 
 }
 
-
-
-public interface ILLMProcessRunnerFactory
+public abstract class LLMRunnerFactoryBase : ILLMRunnerFactory
 {
-    ILLMRunner CreateRunner(IServiceProvider serviceProvider, LLMServiceObj serviceObj, SemaphoreSlim? _runnerSemaphore=null);
-}
+    private int _loadCount;
 
-public interface IOpenAIRunnerFactory
-{
-    ILLMRunner CreateRunner(IServiceProvider serviceProvider,LLMServiceObj serviceObj, SemaphoreSlim? _runnerSemaphore=null);
-}
-public class LLMProcessRunnerFactory : ILLMProcessRunnerFactory
-{
-    
-    public ILLMRunner CreateRunner(IServiceProvider serviceProvider,LLMServiceObj serviceObj, SemaphoreSlim? _runnerSemaphore)
+    public int LoadCount
     {
-        return new LLMProcessRunner(serviceProvider.GetRequiredService<ILogger<LLMProcessRunner>>(),serviceProvider.GetRequiredService<ILLMResponseProcessor>(),serviceProvider.GetRequiredService<ISystemParamsHelper >(),serviceObj,_runnerSemaphore!);
+        get => _loadCount;
+        set
+        {
+            _loadCount = value < 0 ? 0 : value;
+        }
+    }
+    public abstract ILLMRunner CreateRunner(IServiceProvider serviceProvider, LLMServiceObj serviceObj, SemaphoreSlim? runnerSemaphore);
+}
+
+
+public interface ILLMRunnerFactory
+{
+     public int LoadCount{get;set;}
+    ILLMRunner CreateRunner(IServiceProvider serviceProvider, LLMServiceObj serviceObj, SemaphoreSlim? _runnerSemaphore = null);
+}
+
+
+public class LLMProcessRunnerFactory : LLMRunnerFactoryBase
+{
+
+    public override ILLMRunner CreateRunner(IServiceProvider serviceProvider, LLMServiceObj serviceObj, SemaphoreSlim? _runnerSemaphore)
+    {
+        return new LLMProcessRunner(serviceProvider.GetRequiredService<ILogger<LLMProcessRunner>>(), serviceProvider.GetRequiredService<ILLMResponseProcessor>(), serviceProvider.GetRequiredService<ISystemParamsHelper>(), serviceObj, _runnerSemaphore!);
     }
 }
 
-public class OpenAIRunnerFactory : IOpenAIRunnerFactory
+public class OpenAIRunnerFactory : LLMRunnerFactoryBase
 {
-   
-    public ILLMRunner CreateRunner(IServiceProvider serviceProvider,LLMServiceObj serviceObj, SemaphoreSlim? _runnerSemaphore)
+
+    public override ILLMRunner CreateRunner(IServiceProvider serviceProvider, LLMServiceObj serviceObj, SemaphoreSlim? _runnerSemaphore)
     {
-         return new OpenAIRunner(serviceProvider.GetRequiredService<ILogger<OpenAIRunner>>(),serviceProvider.GetRequiredService<ILLMResponseProcessor >(),serviceProvider.GetRequiredService<OpenAIService>(),serviceProvider.GetRequiredService<ISystemParamsHelper >(),serviceObj,_runnerSemaphore!);
+        return new OpenAIRunner(serviceProvider.GetRequiredService<ILogger<OpenAIRunner>>(), serviceProvider.GetRequiredService<ILLMResponseProcessor>(), serviceProvider.GetRequiredService<OpenAIService>(), serviceProvider.GetRequiredService<ISystemParamsHelper>(), serviceObj, _runnerSemaphore!);
     }
 }

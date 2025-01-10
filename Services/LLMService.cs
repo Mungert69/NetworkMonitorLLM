@@ -29,11 +29,11 @@ public class LLMService : ILLMService
 {
     private ILogger _logger;
 
-    private readonly ILLMProcessRunnerFactory _processRunnerFactory;
-    private readonly IOpenAIRunnerFactory _openAIRunnerFactory;
+    private readonly ILLMRunnerFactory _processRunnerFactory;
+    private readonly ILLMRunnerFactory _openAIRunnerFactory;
     private IServiceProvider _serviceProvider;
     private IRabbitRepo _rabbitRepo;
-    private SemaphoreSlim _processRunnerSemaphore = new SemaphoreSlim(1,1);
+    private SemaphoreSlim _processRunnerSemaphore = new SemaphoreSlim(1, 1);
 
     private MLParams _mlParams;
     private string _serviceID;
@@ -134,7 +134,9 @@ public class LLMService : ILLMService
 
         try
         {
+            session.Runner.LoadChanged -= OnRunnerLoadChanged;
             await session.Runner.RemoveProcess(llmServiceObj.SessionId);
+            session.Runner = null;
             _sessions.TryRemove(llmServiceObj.SessionId, out _);
 
             return await SetResultMessageAsync(
@@ -321,13 +323,60 @@ public class LLMService : ILLMService
 
     private ILLMRunner CreateRunner(string runnerType, LLMServiceObj obj)
     {
-        return runnerType switch
+        ILLMRunner runner = runnerType switch
         {
             "TurboLLM" => _openAIRunnerFactory.CreateRunner(_serviceProvider, obj, new SemaphoreSlim(1)),
             "FreeLLM" => _processRunnerFactory.CreateRunner(_serviceProvider, obj, _processRunnerSemaphore),
             _ => throw new ArgumentException($"Invalid runner type: {runnerType}")
         };
+
+        runner.LoadChanged += OnRunnerLoadChanged;
+
+        return runner;
     }
+    private void OnRunnerLoadChanged(int delta, string llmType)
+    {
+        // Update the load count for the respective runner type
+        if (llmType == "TurboLLM")
+        {
+            _openAIRunnerFactory.LoadCount += delta;
+        }
+        else if (llmType == "FreeLLM")
+        {
+            _processRunnerFactory.LoadCount += delta;
+        }
+        else
+        {
+            _logger.LogWarning($"Unknown LLM type: {llmType}. Load update ignored.");
+            return;
+        }
+
+        // Broadcast the updated load counts to the relevant sessions
+        foreach (var session in _sessions.Values)
+        {
+            if (session.Runner != null)
+            {
+                if (session.Runner.Type == llmType)
+                {
+                    // Update the session's runner with the specific load for its type
+                    session.Runner.LlmLoad = llmType switch
+                    {
+                        "TurboLLM" => _openAIRunnerFactory.LoadCount,
+                        "FreeLLM" => _processRunnerFactory.LoadCount,
+                        _ => 0 // Fallback case (shouldn't occur due to earlier check)
+                    };
+                }
+                // Optionally log the updated load counts
+                _logger.LogInformation($"Sent Load Update to {llmType} LLM : {session.Runner.LlmLoad} ");
+
+            }
+        }
+
+    }
+
+    private int _load; // Tracks the total load across all sessions
+
+
     private async Task SafeRemoveRunnerProcess(Session? checkSession, string sessionId)
     {
         try { await checkSession?.Runner?.RemoveProcess(sessionId); }

@@ -83,13 +83,18 @@ namespace NetworkMonitor.LLM.Services
             await _responseProcessor.ProcessFunctionCall(serviceObj);
         }
 
-        public async Task SetUp(LLMServiceObj serviceObj, bool sendOutput)
+        public async Task SetUp(LLMServiceObj serviceObj, bool sendOutput, int llmLoad)
         {
             _isPrimaryLlm = serviceObj.IsPrimaryLlm;
              _responseProcessor.SendOutput = sendOutput;
               _isFuncCalled = false;
        
             await SendLLMPrimaryChunk(serviceObj, "</llm-busy>");
+            if (llmLoad>0) {
+                SendLLMPrimaryChunk(serviceObj, $"<load-count>{llmLoad}</load-count>");
+                _logger.LogInformation($"<load-count>{llmLoad}</load-count>");
+                }
+
         }
 
         public async Task SendHeader(LLMServiceObj serviceObj, string userInput)
