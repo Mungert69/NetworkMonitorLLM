@@ -134,7 +134,6 @@ public class OpenAIRunner : ILLMRunner
         if (!_activeSessions.ContainsKey(serviceObj.SessionId))
         {
             _isStateFailed = true;
-            _isStateReady = true;
             throw new Exception($"No TurboLLM {_serviceID} Assistants found for session {serviceObj.SessionId}. Try reloading the Assistant or refreshing the page. If the problems persists contact support@freenetworkmontior.click");
         }
 
@@ -142,7 +141,6 @@ public class OpenAIRunner : ILLMRunner
         {
             //TODO work out how to use function still running messages
             _logger.LogInformation("Ignoring FunctionStillRunning message.");
-            _isStateReady = true;
             return;
         }
 

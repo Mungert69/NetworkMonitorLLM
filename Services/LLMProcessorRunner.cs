@@ -272,16 +272,6 @@ public class LLMProcessRunner : ILLMRunner
                 _processes.TryRemove(sessionId, out _);
             }
 
-
-            try
-            {
-                _processRunnerSemaphore.Release();
-            }
-            catch
-            {
-                _logger.LogWarning("Semaphore release failed during RemoveProcess.");
-            }
-
             _isStateFailed = true;
             _isStateReady = true;
         }
@@ -392,18 +382,15 @@ public class LLMProcessRunner : ILLMRunner
             if (!_processes.TryGetValue(serviceObj.SessionId, out var process))
             {
                 _isStateFailed = true;
-                _isStateReady = true;
                 throw new Exception($"No Assistant found for sessionId= {serviceObj.SessionId}. Try reloading the Assistant or refreshing the page. If the problems persists contact support@freenetworkmontior.click");
             }
             if (process == null || process.HasExited)
             {
                 _isStateFailed = true;
-                _isStateReady = true;
-                throw new InvalidOperationException("FreeLLM Assistant is not running.  Try reloading the Assistant or refreshing the page. If the problems persists contact support@freenetworkmontior.click");
+               throw new InvalidOperationException("FreeLLM Assistant is not running.  Try reloading the Assistant or refreshing the page. If the problems persists contact support@freenetworkmontior.click");
             }
             if (_isStateFailed)
             {
-                _isStateReady = true;
                 throw new InvalidOperationException("FreeLLM Assistant is in a failed state.  Try reloading the Assistant or refreshing the page. If the problems persists contact support@freenetworkmontior.click");
             }
             process.LastActivity = DateTime.UtcNow;
@@ -417,8 +404,6 @@ public class LLMProcessRunner : ILLMRunner
                     bool allResponsesReady = _responseProcessor.AreAllFunctionsProcessed(serviceObj.MessageID);
                     if (!allResponsesReady)
                     {
-
-                        _isStateReady = true;
                         _logger.LogInformation("Waiting for additional function calls to complete.");
                         return;
                     }
@@ -432,7 +417,6 @@ public class LLMProcessRunner : ILLMRunner
                 {
                     //TODO work out how to use function still running messages
                     _logger.LogInformation("Ignoring FunctionStillRunning message.");
-                    _isStateReady = true;
                     return;
                 }
 
@@ -505,10 +489,7 @@ public class LLMProcessRunner : ILLMRunner
             string llmInput = preAssistantMessage + functionStatusMessage + userInput;
             if (string.IsNullOrEmpty(llmInput))
             {
-                _processRunnerSemaphore.Release(); // Release the semaphore
-                _isStateReady = true;
                 _logger.LogWarning(" Warning : LLM Input is empty");
-
                 return;
             }
             await tokenBroadcaster.SetUp(serviceObj, _sendOutput, sendLlmLoad);
@@ -541,9 +522,9 @@ public class LLMProcessRunner : ILLMRunner
         finally
         {
 
-            _processRunnerSemaphore.Release(); // Release the semaphore
+            _processRunnerSemaphore.Release(); 
             _isStateReady = true;
-            LoadChanged?.Invoke(-1, Type); // Increment load for this type
+            LoadChanged?.Invoke(-1, Type); 
 
         }
     }
