@@ -51,19 +51,19 @@ public class LLMService : ILLMService
     }
     public async Task<LLMServiceObj> StartProcess(LLMServiceObj llmServiceObj)
     {
-        llmServiceObj.SessionId = llmServiceObj.RequestSessionId;
+        llmServiceObj.SessionId = llmServiceObj.RequestSessionId+"-"+llmServiceObj.LLMRunnerType;
         try
         {
 
             DateTime usersCurrentTime = GetClientTime(llmServiceObj.TimeZone);
             bool exists = _sessions.TryGetValue(llmServiceObj.SessionId, out var checkSession);
-            bool isSwapLLMType = false;
+            //bool isSwapLLMType = false;
             bool isRunnerNull = checkSession == null || checkSession.Runner == null || string.IsNullOrEmpty(checkSession?.Runner?.Type);
 
-            if (!isRunnerNull && checkSession.Runner.Type != llmServiceObj.LLMRunnerType) isSwapLLMType = true;
+            //if (!isRunnerNull && checkSession.Runner.Type != llmServiceObj.LLMRunnerType) isSwapLLMType = true;
 
             // Create a new runner is there is not one . Or the RunnerType needs to be swapped. Or is the type is the same but its is a failed State
-            bool isCreateNewRunner = isRunnerNull || (isSwapLLMType) || (!isSwapLLMType && checkSession?.Runner?.IsStateFailed == true);
+            bool isCreateNewRunner = isRunnerNull ||  checkSession?.Runner?.IsStateFailed == true;
 
             if (isCreateNewRunner)
             {

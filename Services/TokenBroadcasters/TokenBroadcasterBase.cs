@@ -203,13 +203,13 @@ namespace NetworkMonitor.LLM.Services
             bool makeAssistantMessage = false;
             if (functionCalls != null && functionCalls.Count > 0 && !functionCalls.Any(f => f.functionName == "are_functions_running")) makeAssistantMessage = true;
 
-            if (makeAssistantMessage) _assistantMessage = new StringBuilder($"I have called the following functions : ");
+            if (makeAssistantMessage) _assistantMessage = new StringBuilder($"I have called the following functions ");
 
             foreach (var (jsonArguments, functionName) in functionCalls)
             {
                 if (!string.IsNullOrWhiteSpace(jsonArguments))
                 {
-                    if (makeAssistantMessage) _assistantMessage.Append($" Name {functionName} Arguments {jsonArguments} : ");
+                    if (makeAssistantMessage) _assistantMessage.Append($" {functionName} ");
 
                     _logger.LogInformation($"ProcessLLMOutput(call_func) -> {jsonArguments}");
                     responseServiceObj.LlmMessage = "</functioncall>";
@@ -225,7 +225,7 @@ namespace NetworkMonitor.LLM.Services
 
                 }
             }
-            if (makeAssistantMessage) _assistantMessage.Append($" using message_id {serviceObj.MessageID} . Please wait it may take some time to complete.");
+            if (makeAssistantMessage) _assistantMessage.Append($" using message_id {serviceObj.MessageID}");
 
             responseServiceObj.LlmMessage = "<end-of-line>";
             await SendLLMPrimary(responseServiceObj);

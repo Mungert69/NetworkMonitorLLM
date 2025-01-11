@@ -356,12 +356,24 @@ public class LLMProcessRunner : ILLMRunner
         return _config.EOFToken ?? string.Empty;
     }
 
-    private string FunctionResponseBuilder(LLMServiceObj pendingServiceObj)
-    {
-        string userInput = pendingServiceObj.UserInput.Replace("\r\n", " ").Replace("\n", " ");
+   private string FunctionResponseBuilder(LLMServiceObj pendingServiceObj)
+{
+    // Replace line breaks with spaces
+    string userInput = pendingServiceObj.UserInput.Replace("\r\n", " ").Replace("\n", " ");
 
-        return string.Format(_config.FunctionResponseTemplate, pendingServiceObj.FunctionName, userInput);
+    // Find the index of the first '{'
+    int firstBraceIndex = userInput.IndexOf('{');
+    if (firstBraceIndex != -1)
+    {
+        // Insert the new field after the first '{'
+        string messageIdField = $"\"message_id\" : \"{pendingServiceObj.MessageID}\", ";
+        userInput = userInput.Insert(firstBraceIndex + 1, messageIdField);
     }
+
+    // Return the formatted response
+    return string.Format(_config.FunctionResponseTemplate, pendingServiceObj.FunctionName, userInput);
+}
+
 
     public async Task SendInputAndGetResponse(LLMServiceObj serviceObj)
     {
