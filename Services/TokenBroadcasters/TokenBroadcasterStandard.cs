@@ -16,10 +16,10 @@ public class TokenBroadcasterStandard : TokenBroadcasterBase
     private readonly string _defaultEOT = "<|eot_id|>";
 
     public TokenBroadcasterStandard(ILLMResponseProcessor responseProcessor, ILogger logger, bool xmlFunctionParsing = false)
-         : base(responseProcessor, logger)
+         : base(responseProcessor, logger,xmlFunctionParsing)
     {
-        _xmlFunctionParsing = xmlFunctionParsing;
-                _endTokens.Add("<|im_end|>");
+
+
     }
 
     public override async Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput)

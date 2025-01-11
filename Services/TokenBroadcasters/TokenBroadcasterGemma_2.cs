@@ -11,13 +11,13 @@ using NetworkMonitor.Objects.ServiceMessage;
 using NetworkMonitor.Objects;
 using System.Text.RegularExpressions;
 namespace NetworkMonitor.LLM.Services;
-public class TokenBroadcasterLlama_3_2 : TokenBroadcasterBase
+public class TokenBroadcasterGemma_2 : TokenBroadcasterBase
 {
 
-    public TokenBroadcasterLlama_3_2(ILLMResponseProcessor responseProcessor, ILogger logger, bool xmlFunctionParsing = false)
-         : base(responseProcessor, logger.xmlFunctionParsing)
+    public TokenBroadcasterGemma_2(ILLMResponseProcessor responseProcessor, ILogger logger, bool xmlFunctionParsing = false)
+         : base(responseProcessor, logger,xmlFunctionParsing)
     {
-       
+
     }
    
 

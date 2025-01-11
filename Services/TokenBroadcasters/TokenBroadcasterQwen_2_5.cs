@@ -14,10 +14,9 @@ public class TokenBroadcasterQwen_2_5 : TokenBroadcasterBase
 {
 
     public TokenBroadcasterQwen_2_5(ILLMResponseProcessor responseProcessor, ILogger logger, bool xmlFunctionParsing = false)
-        : base(responseProcessor, logger)
+        : base(responseProcessor, logger,xmlFunctionParsing)
     {
-        _xmlFunctionParsing = xmlFunctionParsing;
-        _endTokens.Add("<|im_end|>");
+
     }
 
 

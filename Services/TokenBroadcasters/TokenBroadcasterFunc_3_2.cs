@@ -14,13 +14,9 @@ public class TokenBroadcasterFunc_3_2 : TokenBroadcasterBase
 {
 
     public TokenBroadcasterFunc_3_2(ILLMResponseProcessor responseProcessor, ILogger logger, bool xmlFunctionParsing = false)
-         : base(responseProcessor, logger)
+         : base(responseProcessor, logger,xmlFunctionParsing)
     {
-        _xmlFunctionParsing = xmlFunctionParsing;
-        _userReplace = "<|start_header_id|>user<|end_header_id|>\\\n\\\n";
-        _functionReplace = "<|start_header_id|>tool<|end_header_id|>\\\n\\\n";
-        _assistantHeader="<|start_header_id|>assistant<|end_header_id|>";
-        _endTokens.Add("<|eot_id|>");
+
     }
 
    

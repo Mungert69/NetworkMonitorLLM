@@ -17,10 +17,10 @@ namespace NetworkMonitor.LLM.Services;
 public class TokenBroadcasterFunc_2_4 : TokenBroadcasterBase
 {
 
-    public TokenBroadcasterFunc_2_4(ILLMResponseProcessor responseProcessor, ILogger logger, bool xmlFunctionParsing = false)
-         : base(responseProcessor, logger)
+    public TokenBroadcasterFunc_2_4(ILLMResponseProcessor responseProcessor, ILogger logger,bool xmlFunctionParsing = false)
+         : base(responseProcessor, logger,xmlFunctionParsing)
     {
-        _xmlFunctionParsing = xmlFunctionParsing;
+      
     }
 
   

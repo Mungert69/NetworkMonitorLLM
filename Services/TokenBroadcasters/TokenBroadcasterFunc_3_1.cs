@@ -15,14 +15,9 @@ namespace NetworkMonitor.LLM.Services
     {
 
         public TokenBroadcasterFunc_3_1(ILLMResponseProcessor responseProcessor, ILogger logger, bool xmlFunctionParsing = false)
-             : base(responseProcessor, logger)
+             : base(responseProcessor, logger,xmlFunctionParsing)
         {
-            _xmlFunctionParsing = xmlFunctionParsing;
-            _userReplace = "<|start_header_id|>user<|end_header_id|>\\\n\\\n";
-            _functionReplace = "<|start_header_id|>ipython<|end_header_id|>\\\n\\\n";
-            _assistantHeader="<|start_header_id|>assistant<|end_header_id|>";
-            _endTokens.Add("<|eot_id|>");
-            _endTokens.Add("<|eom_id|>");
+            
         }
 
 
