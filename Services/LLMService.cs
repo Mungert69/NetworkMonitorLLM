@@ -73,7 +73,7 @@ public class LLMService : ILLMService
                 ILLMRunner runner = CreateRunner(llmServiceObj.LLMRunnerType, llmServiceObj);
                 if (!runner.IsEnabled)
                 {
-                    await SetResultMessageAsync(llmServiceObj, $"{llmServiceObj.LLMRunnerType} {_serviceID} not started as it is disabled.", true, "llmServiceMessage");
+                    //await SetResultMessageAsync(llmServiceObj, $"{llmServiceObj.LLMRunnerType} {_serviceID} not started as it is disabled.", true, "llmServiceMessage");
                     return llmServiceObj;
                 }
 
