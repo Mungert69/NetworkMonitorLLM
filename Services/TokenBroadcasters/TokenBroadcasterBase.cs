@@ -16,6 +16,14 @@ using System.Text.RegularExpressions;
 
 namespace NetworkMonitor.LLM.Services
 {
+     public interface ITokenBroadcaster
+    {
+        //event Func<object, string, Task> LineReceived;
+        Task ReInit(string sessionId);
+        Task SetUp(LLMConfig config, LLMServiceObj serviceObj, bool sendOutput, int llmLoad);
+        StringBuilder AssistantMessage { get ; set; }
+        Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput);
+    }
 
     public abstract class TokenBroadcasterBase : ITokenBroadcaster, IDisposable
     {
@@ -32,15 +40,14 @@ namespace NetworkMonitor.LLM.Services
         protected string _assistantHeader = "";
         protected int _stopAfter = 2;
         protected List<string> _endTokens = new List<string>();
-        protected LLMConfig _config,
+        protected LLMConfig _config;
 
         public StringBuilder AssistantMessage { get => _assistantMessage; set => _assistantMessage = value; }
 
-        protected TokenBroadcasterBase(ILLMResponseProcessor responseProcessor, ILogger logger)
+        protected TokenBroadcasterBase(ILLMResponseProcessor responseProcessor, ILogger logger, bool xmlFunctionParsing)
         {
             _responseProcessor = responseProcessor;
-             _xmlFunctionParsing = xmlFunctionParsing;
-            
+             _xmlFunctionParsing = xmlFunctionParsing;      
             _logger = logger;
             _cancellationTokenSource = new CancellationTokenSource();
         }

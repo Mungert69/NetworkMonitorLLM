@@ -21,25 +21,41 @@ public class TokenBroadcasterGemma_2 : TokenBroadcasterBase
     }
    
 
-    protected override List<(string json, string functionName)> ParseInputForJson(string input)
-    {
-        var functionCalls = new List<(string json, string functionName)>();
-
-        // Define regex pattern to capture the function name and parameters JSON block
-        var pattern = @"{""name"":\s*""(?<name>[^""]+)"",\s*""parameters"":\s*(?<parameters>{.*?})}";
-        var matches = Regex.Matches(input, pattern);
-
-        foreach (Match match in matches)
+       protected override List<(string json, string functionName)> ParseInputForJson(string input)
         {
-            // Get function name and JSON parameters block
-            var functionName = match.Groups["name"].Value;
-            var jsonContent = match.Groups["parameters"].Value;
-
-            // Optionally sanitize the JSON content
-            functionCalls.Add((JsonSanitizer.SanitizeJson(jsonContent), functionName));
+            var functionsCalls = new List<(string json, string functionName)>();
+            if (input.Contains("Funtion response:"))
+            {
+                functionsCalls.Add((input, ""));
+                return functionsCalls;
+            }
+            string newLine = string.Empty;
+            // bool foundStart = false;
+            bool foundEnd = false;
+            int startIndex = input.IndexOf('{');
+            // If '{' is not found or is too far into the input, return the original input
+            if (startIndex == -1)
+            {
+                functionsCalls.Add((input, ""));
+                return functionsCalls;
+            }
+            newLine = input.Substring(startIndex);
+            int lastClosingBraceIndex = newLine.LastIndexOf('}');
+            if (lastClosingBraceIndex != -1)
+            {
+                newLine = newLine.Substring(0, lastClosingBraceIndex + 1);
+                foundEnd = true;
+            }
+            if (foundEnd)
+            {
+                functionsCalls.Add((JsonSanitizer.SanitizeJson(newLine), ""));
+                return functionsCalls;
+            }
+            else
+            {
+                functionsCalls.Add((input, ""));
+                return functionsCalls;
+            }
         }
-
-        return functionCalls;
-    }
 
 }

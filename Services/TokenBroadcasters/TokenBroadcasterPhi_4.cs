@@ -13,7 +13,7 @@ namespace NetworkMonitor.LLM.Services;
 public class TokenBroadcasterPhi_4 : TokenBroadcasterBase
 {
 
-    public TokenBroadcasterPhi_4(ILLMResponseProcessor responseProcessor, ILogger logger,, bool xmlFunctionParsing = false)
+    public TokenBroadcasterPhi_4(ILLMResponseProcessor responseProcessor, ILogger logger, bool xmlFunctionParsing = false)
         : base(responseProcessor, logger,xmlFunctionParsing)
     {
         

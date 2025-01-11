@@ -352,9 +352,9 @@ public class LLMProcessRunner : ILLMRunner
         }
         _logger.LogInformation($" LLMService Process Started ");
     }
-    private string EOFToken()
+    private string EOTToken()
     {
-        return _config.EOFToken ?? string.Empty;
+        return _config.EOTToken ?? string.Empty;
     }
 
     private string FunctionResponseBuilder(LLMServiceObj pendingServiceObj)
@@ -484,7 +484,7 @@ public class LLMProcessRunner : ILLMRunner
                             // Add "<|eot_id|>" etc. if it's not the last item
                             if (index < processedFunctionCalls.Count - 1)
                             {
-                                userInput = userInput + EOFToken();
+                                userInput = userInput + EOTToken();
                             }
 
                             return userInput;
@@ -496,7 +496,7 @@ public class LLMProcessRunner : ILLMRunner
                 }
                 else
                 {
-                    functionStatusMessage = FunctionResponseBuilder(serviceObj) + EOFToken();
+                    functionStatusMessage = FunctionResponseBuilder(serviceObj) + EOTToken();
                 }
             }
 
@@ -507,7 +507,7 @@ public class LLMProcessRunner : ILLMRunner
                 _logger.LogWarning(" Warning : LLM Input is empty");
                 return;
             }
-            await tokenBroadcaster.SetUp(serviceObj, _sendOutput, sendLlmLoad);
+            await tokenBroadcaster.SetUp(_config, serviceObj, _sendOutput, sendLlmLoad);
             await process.StandardInput.WriteLineAsync(llmInput);
             await process.StandardInput.FlushAsync();
             _logger.LogInformation($" LLM INPUT -> {llmInput}");

@@ -15,7 +15,7 @@ public class TokenBroadcasterLlama_3_2 : TokenBroadcasterBase
 {
 
     public TokenBroadcasterLlama_3_2(ILLMResponseProcessor responseProcessor, ILogger logger, bool xmlFunctionParsing = false)
-         : base(responseProcessor, logger.xmlFunctionParsing)
+         : base(responseProcessor, logger,xmlFunctionParsing)
     {
        
     }
