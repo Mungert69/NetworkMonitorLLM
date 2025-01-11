@@ -46,7 +46,6 @@ public static class LLMConfigFactory
             FunctionResponseTemplate = "<|start_header_id|>ipython<|end_header_id|>\\\n\\\n{1}",
             CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
                    new TokenBroadcasterFunc_3_1(responseProcessor, logger, xmlFunctionParsing)
-
         },
 
         // Configuration for func_3.2

@@ -18,9 +18,9 @@ namespace NetworkMonitor.LLM.Services
 {
      public interface ITokenBroadcaster
     {
-        //event Func<object, string, Task> LineReceived;
+        void Init(LLMConfig config);
         Task ReInit(string sessionId);
-        Task SetUp(LLMConfig config, LLMServiceObj serviceObj, bool sendOutput, int llmLoad);
+        Task SetUp(LLMServiceObj serviceObj, bool sendOutput, int llmLoad);
         StringBuilder AssistantMessage { get ; set; }
         Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput);
     }
@@ -93,14 +93,22 @@ namespace NetworkMonitor.LLM.Services
             await _responseProcessor.ProcessFunctionCall(serviceObj);
         }
 
-        public async Task SetUp(LLMConfig config, LLMServiceObj serviceObj, bool sendOutput, int llmLoad)
+         public void Init(LLMConfig config)
         {
            _userReplace = config.UserReplace;
             _functionReplace = config.FunctionReplace;
             _assistantHeader = config.AssistantHeader;
+            _endTokens=new List<string>();
             _endTokens.Add(config.EOTToken);
             if (!string.IsNullOrEmpty(config.EOMToken)) _endTokens.Add(config.EOMToken);
 
+          
+
+        }
+
+
+        public async Task SetUp(LLMServiceObj serviceObj, bool sendOutput, int llmLoad)
+        {
             _isPrimaryLlm = serviceObj.IsPrimaryLlm;
             _responseProcessor.SendOutput = sendOutput;
             _isFuncCalled = false;

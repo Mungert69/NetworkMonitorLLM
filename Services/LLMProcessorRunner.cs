@@ -451,6 +451,7 @@ public class LLMProcessRunner : ILLMRunner
                     _logger.LogError($"Failed to add TokenBroadcaster for sessionId {serviceObj.SessionId}");
                     throw new InvalidOperationException($"Failed to add TokenBroadcaster for sessionId {serviceObj.SessionId}");
                 }
+                tokenBroadcaster.Init(_config);
 
             }
             string userInput = serviceObj.UserInput;
@@ -507,7 +508,7 @@ public class LLMProcessRunner : ILLMRunner
                 _logger.LogWarning(" Warning : LLM Input is empty");
                 return;
             }
-            await tokenBroadcaster.SetUp(_config, serviceObj, _sendOutput, sendLlmLoad);
+            await tokenBroadcaster.SetUp( serviceObj, _sendOutput, sendLlmLoad);
             await process.StandardInput.WriteLineAsync(llmInput);
             await process.StandardInput.FlushAsync();
             _logger.LogInformation($" LLM INPUT -> {llmInput}");
