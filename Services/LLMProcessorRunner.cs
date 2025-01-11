@@ -149,14 +149,15 @@ public class LLMProcessRunner : ILLMRunner
             await WaitForReadySignal(process);
             _processes[serviceObj.SessionId] = process;
         }
-        catch {
+        catch
+        {
             _isStateFailed = true;
             throw;
         }
         finally
         {
             _isStateStarting = false;
-            _isStateReady = true;         
+            _isStateReady = true;
             _processRunnerSemaphore.Release();
             LoadChanged?.Invoke(-1, Type); // Increment load for this type
 
@@ -356,23 +357,25 @@ public class LLMProcessRunner : ILLMRunner
         return _config.EOFToken ?? string.Empty;
     }
 
-   private string FunctionResponseBuilder(LLMServiceObj pendingServiceObj)
-{
-    // Replace line breaks with spaces
-    string userInput = pendingServiceObj.UserInput.Replace("\r\n", " ").Replace("\n", " ");
-
-    // Find the index of the first '{'
-    int firstBraceIndex = userInput.IndexOf('{');
-    if (firstBraceIndex != -1)
+    private string FunctionResponseBuilder(LLMServiceObj pendingServiceObj)
     {
-        // Insert the new field after the first '{'
-        string messageIdField = $"\"message_id\" : \"{pendingServiceObj.MessageID}\", ";
-        userInput = userInput.Insert(firstBraceIndex + 1, messageIdField);
-    }
+        // Replace line breaks with spaces
+        string userInput = pendingServiceObj.UserInput.Replace("\r\n", " ").Replace("\n", " ");
 
-    // Return the formatted response
-    return string.Format(_config.FunctionResponseTemplate, pendingServiceObj.FunctionName, userInput);
-}
+        if (pendingServiceObj.FunctionName != "are_functions_running")
+        {
+            int firstBraceIndex = userInput.IndexOf('{');
+            if (firstBraceIndex != -1)
+            {
+                // Insert the new field after the first '{'
+                string messageIdField = $"\"message_id\" : \"{pendingServiceObj.MessageID}\", ";
+                userInput = userInput.Insert(firstBraceIndex + 1, messageIdField);
+            }
+        }
+
+        // Return the formatted response
+        return string.Format(_config.FunctionResponseTemplate, pendingServiceObj.FunctionName, userInput);
+    }
 
 
     public async Task SendInputAndGetResponse(LLMServiceObj serviceObj)
@@ -399,7 +402,7 @@ public class LLMProcessRunner : ILLMRunner
             if (process == null || process.HasExited)
             {
                 _isStateFailed = true;
-               throw new InvalidOperationException("FreeLLM Assistant is not running.  Try reloading the Assistant or refreshing the page. If the problems persists contact support@freenetworkmontior.click");
+                throw new InvalidOperationException("FreeLLM Assistant is not running.  Try reloading the Assistant or refreshing the page. If the problems persists contact support@freenetworkmontior.click");
             }
             if (_isStateFailed)
             {
@@ -534,9 +537,9 @@ public class LLMProcessRunner : ILLMRunner
         finally
         {
 
-            _processRunnerSemaphore.Release(); 
+            _processRunnerSemaphore.Release();
             _isStateReady = true;
-            LoadChanged?.Invoke(-1, Type); 
+            LoadChanged?.Invoke(-1, Type);
 
         }
     }
