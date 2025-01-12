@@ -183,7 +183,7 @@ namespace NetworkMonitor.LLM.Services
                     {
                         extraMessage += " From System LLM ";
                     }
-                    else llmOutput = llmOutFull.ToString().Replace("\n", " ");
+                    else llmOutput = llmOutput.Replace("\n", " ");
                     var finalServiceObj = new LLMServiceObj(serviceObj);
                     finalServiceObj.LlmMessage = llmOutput;
                     finalServiceObj.IsFunctionCallResponse = true;
