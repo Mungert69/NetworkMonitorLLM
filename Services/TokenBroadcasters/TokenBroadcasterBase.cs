@@ -187,7 +187,7 @@ namespace NetworkMonitor.LLM.Services
                     finalServiceObj.LlmMessage = llmOutput;
                     finalServiceObj.IsFunctionCallResponse = true;
                     await _responseProcessor.ProcessLLMOutput(finalServiceObj);
-                    _logger.LogInformation($" --> Sent redirected LLM Output {}{finalServiceObj.LlmMessage}");
+                    _logger.LogInformation($" --> Sent redirected LLM Output {extraMessage}{finalServiceObj.LlmMessage}");
                 }
             }
             catch (OperationCanceledException)
