@@ -24,7 +24,7 @@ public static class LLMConfigFactory
         {
             UserReplace = "<|start_header_id|>user<|end_header_id|>\\\n\\\n",
             FunctionReplace = "<|start_header_id|>tool<|end_header_id|>\\\n\\\n",
-            AssistantHeader = "<|start_header_id|>assistant<|end_header_id|>\\\n\\\n",
+            AssistantHeader = "<|start_header_id|>assistant<|end_header_id|>\n\n",
             UserInputTemplate = "<|start_header_id|>user<|end_header_id|>\\\n\\\n{0}",
             AssistantMessageTemplate = "<|start_header_id|>assistant<|end_header_id|>\\\n\\\n{0}<|eot_id|>",
             EOTToken = "<|eot_id|>",
@@ -38,7 +38,7 @@ public static class LLMConfigFactory
         {
             UserReplace = "<|start_header_id|>user<|end_header_id|>\\\n\\\n",
             FunctionReplace = "<|start_header_id|>ipython<|end_header_id|>\\\n\\\n",
-            AssistantHeader = "<|start_header_id|>assistant<|end_header_id|>\\\n\\\n",
+            AssistantHeader = "<|start_header_id|>assistant<|end_header_id|>\n\n",
             UserInputTemplate = "<|start_header_id|>user<|end_header_id|>\\\n\\\n{0}",
             AssistantMessageTemplate = "<|start_header_id|>assistant<|end_header_id|>\\\n\\\n{0}<|eot_id|>",
             EOTToken = "<|eot_id|>",
@@ -53,7 +53,7 @@ public static class LLMConfigFactory
         {
             UserReplace = "<|start_header_id|>user<|end_header_id|>\\\n\\\n",
             FunctionReplace = "<|start_header_id|>tool<|end_header_id|>\\\n\\\n",
-            AssistantHeader = "<|start_header_id|>assistant<|end_header_id|>\\\n\\\n",
+            AssistantHeader = "<|start_header_id|>assistant<|end_header_id|>\n\n",
             UserInputTemplate = "<|start_header_id|>user<|end_header_id|>\\\n\\\n{0}",
             AssistantMessageTemplate = "<|start_header_id|>assistant<|end_header_id|>\\\n\\\n{0}<|eot_id|>",
             EOTToken = "<|eot_id|>",
@@ -66,7 +66,7 @@ public static class LLMConfigFactory
         {
             UserReplace = "<|start_header_id|>user<|end_header_id|>\\\n\\\n",
             FunctionReplace = "<|start_header_id|>ipython<|end_header_id|>\\\n\\\n",
-            AssistantHeader = "<|start_header_id|>assistant<|end_header_id|>\\\n\\\n",
+            AssistantHeader = "<|start_header_id|>assistant<|end_header_id|>\n\n",
             UserInputTemplate = "<|start_header_id|>user<|end_header_id|>\\\n\\\n{0}",
             AssistantMessageTemplate = "<|start_header_id|>assistant<|end_header_id|>\\\n\\\n{0}<|eot_id|>",
             EOTToken = "<|eot_id|>",
@@ -82,7 +82,7 @@ public static class LLMConfigFactory
         {
             UserReplace = "<|im_start|>user<|im_sep|>\\\n",
             FunctionReplace = "<|im_start|>user<|im_sep|>\\\n<tool_response>\\\n",
-            AssistantHeader = "<|im_start|>assistant<|im_sep|>\\\n",
+            AssistantHeader = "<|im_start|>assistant<|im_sep|>\n",
             UserInputTemplate = "<|im_start|>user<|im_sep|>\\\n{0}",
             AssistantMessageTemplate = "<|im_start|>assistant<|im_sep|>\\\n{0}<|im_end|>",
             EOTToken = "<|im_end|>",
@@ -110,7 +110,7 @@ public static class LLMConfigFactory
         {
             UserReplace = "<start_of_turn>user\\\n",
             FunctionReplace = "<start_of_turn>user\\\nFunction response:",
-            AssistantHeader = "<start_of_turn>model\\\n",
+            AssistantHeader = "<start_of_turn>model\n",
             UserInputTemplate = "<start_of_turn>user\\\n{0}",
             AssistantMessageTemplate = "<start_of_turn>model\\\n{0}<end_of_turn>",
             EOTToken = "<end_of_turn>",
