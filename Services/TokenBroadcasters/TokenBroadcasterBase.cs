@@ -171,22 +171,23 @@ namespace NetworkMonitor.LLM.Services
 
                 if (!_isPrimaryLlm && !_isFuncCalled)
                 {
+                    foreach (var token in _endTokens)
+                    {
+                        llmOutput = llmOutput.Replace(token, "");
+                    }
+                    llmOutput = llmOutput.Replace(_assistantHeader, "");
+
                     string extraMessage ="";
                     if (_isSystemLlm)  {
                         llmOutput = llmOutFull.ToString();
                         extraMessage+=" From System LLM "
                         }
                     else llmOutput = llmOutFull.ToString().Replace("\n", " ");
-                    foreach (var token in _endTokens)
-                    {
-                        llmOutput = llmOutput.Replace(token, "");
-                    }
-                    llmOutput = llmOutput.Replace(_assistantHeader, "");
                     var finalServiceObj = new LLMServiceObj(serviceObj);
                     finalServiceObj.LlmMessage = llmOutput;
                     finalServiceObj.IsFunctionCallResponse = true;
                     await _responseProcessor.ProcessLLMOutput(finalServiceObj);
-                    _logger.LogInformation($" --> Sent redirected LLM Output {extraMessage}{finalServiceObj.LlmMessage}");
+                    _logger.LogInformation($" --> Sent redirected LLM Output {}{finalServiceObj.LlmMessage}");
                 }
             }
             catch (OperationCanceledException)
