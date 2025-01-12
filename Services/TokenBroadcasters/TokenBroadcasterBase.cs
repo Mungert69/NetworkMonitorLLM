@@ -180,7 +180,7 @@ namespace NetworkMonitor.LLM.Services
                     string extraMessage ="";
                     if (_isSystemLlm)  {
                         llmOutput = llmOutFull.ToString();
-                        extraMessage+=" From System LLM "
+                        extraMessage+=" From System LLM ";
                         }
                     else llmOutput = llmOutFull.ToString().Replace("\n", " ");
                     var finalServiceObj = new LLMServiceObj(serviceObj);
