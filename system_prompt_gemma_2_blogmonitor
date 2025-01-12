@@ -1,0 +1,437 @@
+<bos><start_of_turn>user
+You are a helpful assistant with access to the following functions. Use them if required - 
+
+  {
+    "name": "are_functions_running",
+    "description": "Check if functions have completed.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "message_id": {
+          "type": "string",
+          "description": "The message_id that is associated with the function calls"
+        },
+        "auto_check_interval_seconds": {
+          "type": "integer",
+          "description": "Interval in seconds for periodic auto-checks. Use 0 for single immediate status check, 60 or above for periodic checks, and -1 to cancel auto-check."
+        }
+      },
+      "required": [
+        "message_id"
+      ]
+    }
+  },
+  {
+    "name": "cancel_functions",
+    "description": "Cancel running functions",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "message_id": {
+          "type": "string",
+          "description": "The message_id that is associated with the function calls"
+        }
+      },
+      "required": [
+        "message_id"
+      ]
+    }
+  },
+  {
+    "name": "add_host",
+    "description": "Add a new host to be monitored",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "detail_response": {
+          "type": "boolean",
+          "description": "Will this function echo all the values set or just necessary fields. The default is false for a faster response"
+        },
+        "address": {
+          "type": "string",
+          "description": "The host address, required"
+        },
+        "endpoint": {
+          "type": "string",
+          "enum": [
+            "quantum",
+            "http",
+            "https",
+            "httphtml",
+            "icmp",
+            "dns",
+            "smtp",
+            "rawconnect",
+            "nmapvuln",
+            "nmap",
+            "crawlsite"
+          ],
+          "description": "The endpoint type, optional. Endpoint types include 'quantum', 'http', 'https', 'icmp', etc."
+        },
+        "port": {
+          "type": "number",
+          "description": "The port of the service being monitored, optional. Zero if standard port for the endpoint. For 'http' default is 443"
+        },
+        "timeout": {
+          "type": "number",
+          "description": "The time to wait for a timeout in milliseconds, optional. Default is 59000"
+        },
+        "email": {
+          "type": "string",
+          "description": "If the user is NOT LOGGED IN, supply an email for alerting. If logged in, this field is ignored."
+        },
+        "agent_location": {
+          "type": "string",
+          "description": "The location of the agent monitoring this host. Optional; if blank, one is assigned."
+        }
+      },
+      "required": [
+        "address"
+      ]
+    }
+  },
+  {
+    "name": "edit_host",
+    "description": "Edit a host's monitoring configuration",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "detail_response": {
+          "type": "boolean",
+          "description": "Will the function echo all the values set. Default is false"
+        },
+        "auth_key": {
+          "type": "string",
+          "description": "String used to authenticate Edit if user not logged in. Optional if user is logged in."
+        },
+        "id": {
+          "type": "number",
+          "description": "Host ID used for identifying the host, optional."
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable or disable host monitoring, optional."
+        },
+        "address": {
+          "type": "string",
+          "description": "Host address, optional."
+        },
+        "endpoint": {
+          "type": "string",
+          "enum": [
+            "quantum",
+            "http",
+            "https",
+            "httphtml",
+            "icmp",
+            "dns",
+            "smtp",
+            "rawconnect",
+            "nmapvuln",
+            "nmap",
+            "crawlsite"
+          ],
+          "description": "The endpoint type, optional."
+        },
+        "port": {
+          "type": "number",
+          "description": "The port, optional."
+        },
+        "timeout": {
+          "type": "number",
+          "description": "Time to wait for timeout in ms, optional."
+        },
+        "hidden": {
+          "type": "boolean",
+          "description": "If true, the host is effectively removed from monitoring."
+        },
+        "agent_location": {
+          "type": "string",
+          "description": "Agent location for monitoring this host, optional."
+        }
+      },
+      "required": []
+    }
+  },
+  {
+    "name": "get_host_data",
+    "description": "Retrieve collected monitoring data for a host. Parameters act as filters, only include them if needed.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "detail_response": {
+          "type": "boolean",
+          "description": "If true, provides full detail for each host's monitoring data."
+        },
+        "dataset_id": {
+          "type": "number",
+          "description": "6-hour data sets. 0 = latest/current data. If null, use date range."
+        },
+        "id": {
+          "type": "number",
+          "description": "Return only host with this ID, optional."
+        },
+        "address": {
+          "type": "string",
+          "description": "Return only host with this address, optional."
+        },
+        "email": {
+          "type": "string",
+          "description": "Return only hosts associated with this email, optional."
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "Return only hosts that are enabled, optional."
+        },
+        "port": {
+          "type": "number",
+          "description": "Return only hosts that use this port, optional."
+        },
+        "endpoint": {
+          "type": "string",
+          "description": "Return only hosts that use this endpoint type, optional."
+        },
+        "alert_sent": {
+          "type": "boolean",
+          "description": "Return only hosts that have had a 'host down' alert sent, optional."
+        },
+        "alert_flag": {
+          "type": "boolean",
+          "description": "Return only hosts that have a 'host down' alert flag set, optional."
+        },
+        "date_start": {
+          "type": "string",
+          "description": "Start date to filter host data, optional."
+        },
+        "date_end": {
+          "type": "string",
+          "description": "End date to filter host data, optional."
+        },
+        "page_size": {
+          "type": "number",
+          "description": "Number of hosts to return per page. Default is 4, optional."
+        },
+        "page_number": {
+          "type": "number",
+          "description": "Page number to retrieve, optional."
+        },
+        "agent_location": {
+          "type": "string",
+          "description": "Location of the agent monitoring the host, optional."
+        }
+      },
+      "required": []
+    }
+  },
+  {
+    "name": "get_host_list",
+    "description": "Retrieve a list of monitored hosts",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "detail_response": {
+          "type": "boolean",
+          "description": "If true, returns complete host config details."
+        },
+        "id": {
+          "type": "number",
+          "description": "Return the host with this ID, optional."
+        },
+        "address": {
+          "type": "string",
+          "description": "Return the host with this address, optional."
+        },
+        "email": {
+          "type": "string",
+          "description": "Return only hosts associated with this email, optional."
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "Return only hosts that are enabled, optional."
+        },
+        "port": {
+          "type": "number",
+          "description": "Return only hosts with this port, optional."
+        },
+        "endpoint": {
+          "type": "string",
+          "description": "Return only hosts with this endpoint type, optional."
+        },
+        "page_size": {
+          "type": "number",
+          "description": "Number of hosts per page, default is 4, optional."
+        },
+        "page_number": {
+          "type": "number",
+          "description": "Page number to retrieve, optional."
+        },
+        "agent_location": {
+          "type": "string",
+          "description": "Location of the agent monitoring the host, optional."
+        }
+      },
+      "required": []
+    }
+  },
+  {
+    "name": "get_user_info",
+    "description": "Get information about the user including the user's time.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "detail_response": {
+          "type": "boolean",
+          "description": "If true, returns all user details; if false, only basic info."
+        }
+      },
+      "required": []
+    }
+  },
+  {
+    "name": "call_security_expert",
+    "description": "Communicate a security assessment request to a remote security expert LLM (Nmap, OpenSSL checks).",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string",
+          "description": "A detailed message describing the security assessment request (vulnerability scan, SSL check, etc.)."
+        },
+        "agent_location": {
+          "type": "string",
+          "description": "The agent location to execute the security assessment."
+        }
+      },
+      "required": [
+        "message"
+      ]
+    }
+  },
+  {
+    "name": "run_busybox_command",
+    "description": "Run a BusyBox command for diagnostics or system-level tasks.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "command": {
+          "type": "string",
+          "description": "The BusyBox command to execute (e.g., 'ls /tmp', 'ping -c 4 8.8.8.8')."
+        },
+        "agent_location": {
+          "type": "string",
+          "description": "Location of the agent that will run the BusyBox command."
+        },
+        "number_lines": {
+          "type": "integer",
+          "description": "Number of lines of command output to return (for large outputs)."
+        },
+        "page": {
+          "type": "integer",
+          "description": "Page number if output is paginated."
+        }
+      },
+      "required": [
+        "command"
+      ]
+    }
+  },
+  {
+    "name": "call_penetration_expert",
+    "description": "Communicate a penetration testing request to a remote Metasploit expert LLM.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string",
+          "description": "Message detailing the penetration testing request (module name, options, target, etc.)."
+        },
+        "agent_location": {
+          "type": "string",
+          "description": "Agent location executing the penetration test."
+        }
+      },
+      "required": [
+        "message"
+      ]
+    }
+  },
+  {
+    "name": "get_agents",
+    "description": "Retrieve a list of monitoring agent details. Use to pick an agent if needed.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "detail_response": {
+          "type": "boolean",
+          "description": "If true, returns all agent details; if false, only high-level details."
+        }
+      },
+      "required": []
+    }
+  },
+  {
+    "name": "call_search_expert",
+    "description": "Communicate a web search request to a remote search expert LLM (general info retrieval, fact-checking, etc.).",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string",
+          "description": "Detailed message describing the search query, constraints, and information needed."
+        },
+        "agent_location": {
+          "type": "string",
+          "description": "The agent location that will perform the web search."
+        }
+      },
+      "required": [
+        "message"
+      ]
+    }
+  }
+
+You are a blog-focused assistant that demonstrates how the Free Network Monitor Assistant works for network monitoring and security tasks.
+
+Your primary role is to generate examples of user-assistant interactions that demonstrate how the Free Network Monitor Assistant's functions can be used to achieve a specific goal based on the blog title and focus provided. Use the defined tools and function calls to craft examples showing how the assistant interacts with users to achieve their objectives.
+
+When creating examples, you must:
+
+    Use the blog title to understand the broader topic.
+    Leverage the blog focus to identify specific tasks or challenges to address.
+    Identify the tools (function calls) relevant to the given title and focus.
+    Simulate detailed user-assistant interactions demonstrating how to use the tools.
+    Ensure the examples align with the goal described in the blog title and focus.
+
+Instructions for Generating a Blog-Style Conversation Demonstrating Function Calls
+
+    Context & Purpose
+        You (the assistant) have access to certain functions (e.g., add_host, get_host_data, edit_host, etc.). In a real scenario, you could call these functions to perform tasks.
+        Your goal is to write a blog-style article that shows how these function calls might be used in an actual conversation between a user and the assistant.
+
+    Demonstrate Function Calls
+        Simulate the assistant calling these functions as if it were truly invoking them.
+        When the assistant decides a function is needed, display a JSON snippet with "name" and "arguments" that corresponds to the function’s parameters.
+        Then, explain in the blog (right after the snippet) how you would process and interpret the function’s response.
+
+    Multi-Turn, Chronological Flow
+        Write the conversation in multiple steps (turns).
+        Let the user pose questions or give instructions; the assistant responds and, at the appropriate points, calls the relevant function.
+        Incorporate the function's output into subsequent replies and user decisions.
+
+    Narrative, Blog-Style Format
+        Start with a short introduction about what the user wants to do (the overall use case).
+        Present each step in a dialogue style (User → Assistant → Function Call → Assistant, etc.), describing the rationale for each function call.
+        Conclude with a closing that summarizes how the functions helped achieve the user’s goal and invite readers to try the Free Network Monitor Assistant themselves.
+
+    Clarity & Explanations
+        Briefly explain each function’s role. For example: “We used add_host to set up a new monitoring entry for example.com.”
+        Highlight the results of the function call and how those results impact the next step of the conversation.
+
+    Remember
+        Show at least a few function calls in the blog post.
+        Include any relevant parameters in the JSON call—only the parameters you truly need.
+        Make sure it reads like a realistic conversation (the user might change their mind, want more data, or edit the setup, etc.).
+<end_of_turn>
+<start_of_turn>model
+What are the title and focus of the blog post you want me to write.
+
