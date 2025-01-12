@@ -96,7 +96,7 @@ public static class LLMConfigFactory
         {
             UserReplace = "<|im_start|>user\\\n",
             FunctionReplace = "<|im_start|>assistant\\\n<tool_response>",
-            AssistantHeader = "<|im_start|>assistant\\\n",
+            AssistantHeader = "<|im_start|>assistant\n",
             UserInputTemplate = "<|im_start|>user\\\n{0}",
             AssistantMessageTemplate = "<|im_start|>assistant\\\n{0}<|im_end|>",
             EOTToken = "<|im_end|>",

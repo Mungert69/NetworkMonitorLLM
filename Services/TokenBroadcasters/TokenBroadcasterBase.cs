@@ -128,16 +128,27 @@ namespace NetworkMonitor.LLM.Services
         public async Task SendHeader(LLMServiceObj serviceObj, string userInput)
         {
             var chunkServiceObj = new LLMServiceObj(serviceObj);
-            if (serviceObj.IsFunctionCallResponse) chunkServiceObj.LlmMessage = userInput.Replace(_functionReplace, "<Function Response:> ");
+            if (serviceObj.IsFunctionCallResponse)
+            {
+                userInput= userInput.Replace(_functionReplace, "<Function Response:> ");
+                userInput= StripExtraFuncHeader(userInput);
+                userInput= userInput.Replace("\n", "");
+                chunkServiceObj.LlmMessage = userInput;
+            }
             else chunkServiceObj.LlmMessage = userInput.Replace(_userReplace, "<User:> ") + "\n";
             await SendLLMPrimary(chunkServiceObj);
 
+        }
+        protected virtual string StripExtraFuncHeader(string input)
+        {
+            return input;
         }
 
         public virtual async Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput)
         {
             _logger.LogWarning(" Start BroadcastAsyc() ");
             await SendHeader(serviceObj, userInput);
+
 
             var lineBuilder = new StringBuilder();
             var llmOutFull = new StringBuilder();
