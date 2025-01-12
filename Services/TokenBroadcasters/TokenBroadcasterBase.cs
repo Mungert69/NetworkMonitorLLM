@@ -169,7 +169,9 @@ namespace NetworkMonitor.LLM.Services
 
                 if (!_isPrimaryLlm && !_isFuncCalled)
                 {
-                    string llmOutput = llmOutFull.ToString().Replace("\n", " ");
+                    string llmOutput ="";
+                    if (serviceObj.IsSystemLlm)  llmOutput = llmOutFull.ToString();
+                    else llmOutput = llmOutFull.ToString().Replace("\n", " ");
                     foreach (var token in _endTokens)
                     {
                         llmOutput = llmOutput.Replace(token, "");
