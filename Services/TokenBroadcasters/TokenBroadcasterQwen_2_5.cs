@@ -14,7 +14,7 @@ public class TokenBroadcasterQwen_2_5 : TokenBroadcasterBase
 {
 
     public TokenBroadcasterQwen_2_5(ILLMResponseProcessor responseProcessor, ILogger logger, bool xmlFunctionParsing = false)
-        : base(responseProcessor, logger,xmlFunctionParsing)
+        : base(responseProcessor, logger, xmlFunctionParsing)
     {
 
     }
@@ -23,7 +23,7 @@ public class TokenBroadcasterQwen_2_5 : TokenBroadcasterBase
     public override async Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput)
     {
         _logger.LogWarning(" Start BroadcastAsyc() ");
-        
+
         var chunkServiceObj = new LLMServiceObj(serviceObj);
         if (serviceObj.IsFunctionCallResponse)
         {
@@ -71,15 +71,24 @@ public class TokenBroadcasterQwen_2_5 : TokenBroadcasterBase
 
             if (!_isPrimaryLlm && !_isFuncCalled)
             {
-                string llmOutput = llmOutFull.ToString().Replace("\n", " ");
-                llmOutput = llmOutput.Replace("<|im_start|>assistant", "")
-                                                             .Replace("<|im_end|>", ""); // Additional replacement
+                string llmOutput = llmOutFull.ToString();
+                foreach (var token in _endTokens)
+                {
+                    llmOutput = llmOutput.Replace(token, "");
+                }
+                llmOutput = llmOutput.Replace(_assistantHeader, "");
 
+                string extraMessage = "";
+                if (_isSystemLlm)
+                {
+                    extraMessage += " From System LLM ";
+                }
+                else llmOutput = llmOutput.Replace("\n", " ");
                 var finalServiceObj = new LLMServiceObj(serviceObj);
                 finalServiceObj.LlmMessage = llmOutput;
                 finalServiceObj.IsFunctionCallResponse = true;
-                await SendLLM(finalServiceObj);
-                _logger.LogInformation($" --> Sent redirected LLM Output {finalServiceObj.LlmMessage}");
+                await _responseProcessor.ProcessLLMOutput(finalServiceObj);
+                _logger.LogInformation($" --> Sent redirected LLM Output {extraMessage}{finalServiceObj.LlmMessage}");
             }
         }
         catch (OperationCanceledException)

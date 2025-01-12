@@ -77,7 +77,10 @@ public class TokenBroadcasterFunc_2_4 : TokenBroadcasterBase
                     if (forwardSegments.Count > 0)
                     {
                         var assistantSegment = forwardSegments.Where(a => a.From.Contains("assistant")).FirstOrDefault();
-                        if (assistantSegment != null) llmOutput = assistantSegment.Content.Replace("\n", "").Replace("<|stop|>", "");
+                        if (assistantSegment != null) {
+                            llmOutput = assistantSegment.Content.Replace("<|stop|>", "");
+                            if (!isSystemLlm) llmOutput = assistantSegment.Content.Replace("\n", "") ;   
+                        }
                     }
                 }
                 catch { }

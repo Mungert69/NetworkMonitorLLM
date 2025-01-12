@@ -71,16 +71,25 @@ public class TokenBroadcasterPhi_4 : TokenBroadcasterBase
 
             if (!_isPrimaryLlm && !_isFuncCalled)
             {
-                string llmOutput = llmOutFull.ToString().Replace("\n", " ");
-                llmOutput = llmOutput.Replace("<|im_start|>assistant<|im_sep|>", "")
-                                                             .Replace("<|im_end|>", ""); // Additional replacement
+                string llmOutput = llmOutFull.ToString();
+                    foreach (var token in _endTokens)
+                    {
+                        llmOutput = llmOutput.Replace(token, "");
+                    }
+                    llmOutput = llmOutput.Replace(_assistantHeader, "");
 
-                var finalServiceObj = new LLMServiceObj(serviceObj);
-                finalServiceObj.LlmMessage = llmOutput;
-                finalServiceObj.IsFunctionCallResponse = true;
-                await SendLLM(finalServiceObj);
-                _logger.LogInformation($" --> Sent redirected LLM Output {finalServiceObj.LlmMessage}");
-            }
+                    string extraMessage = "";
+                    if (_isSystemLlm)
+                    {
+                        extraMessage += " From System LLM ";
+                    }
+                    else llmOutput = llmOutput.Replace("\n", " ");
+                    var finalServiceObj = new LLMServiceObj(serviceObj);
+                    finalServiceObj.LlmMessage = llmOutput;
+                    finalServiceObj.IsFunctionCallResponse = true;
+                    await _responseProcessor.ProcessLLMOutput(finalServiceObj);
+                    _logger.LogInformation($" --> Sent redirected LLM Output {extraMessage}{finalServiceObj.LlmMessage}");
+                     }
         }
         catch (OperationCanceledException)
         {
