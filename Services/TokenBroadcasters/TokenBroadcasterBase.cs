@@ -16,12 +16,12 @@ using System.Text.RegularExpressions;
 
 namespace NetworkMonitor.LLM.Services
 {
-     public interface ITokenBroadcaster
+    public interface ITokenBroadcaster
     {
         void Init(LLMConfig config);
         Task ReInit(string sessionId);
         Task SetUp(LLMServiceObj serviceObj, bool sendOutput, int llmLoad);
-        StringBuilder AssistantMessage { get ; set; }
+        StringBuilder AssistantMessage { get; set; }
         Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput);
     }
 
@@ -48,7 +48,7 @@ namespace NetworkMonitor.LLM.Services
         protected TokenBroadcasterBase(ILLMResponseProcessor responseProcessor, ILogger logger, bool xmlFunctionParsing)
         {
             _responseProcessor = responseProcessor;
-             _xmlFunctionParsing = xmlFunctionParsing;      
+            _xmlFunctionParsing = xmlFunctionParsing;
             _logger = logger;
             _cancellationTokenSource = new CancellationTokenSource();
         }
@@ -94,16 +94,16 @@ namespace NetworkMonitor.LLM.Services
             await _responseProcessor.ProcessFunctionCall(serviceObj);
         }
 
-         public void Init(LLMConfig config)
+        public void Init(LLMConfig config)
         {
-           _userReplace = config.UserReplace;
+            _userReplace = config.UserReplace;
             _functionReplace = config.FunctionReplace;
             _assistantHeader = config.AssistantHeader;
-            _endTokens=new List<string>();
+            _endTokens = new List<string>();
             _endTokens.Add(config.EOTToken);
             if (!string.IsNullOrEmpty(config.EOMToken)) _endTokens.Add(config.EOMToken);
 
-          
+
 
         }
 
@@ -111,7 +111,7 @@ namespace NetworkMonitor.LLM.Services
         public async Task SetUp(LLMServiceObj serviceObj, bool sendOutput, int llmLoad)
         {
             _isPrimaryLlm = serviceObj.IsPrimaryLlm;
-            _isSystemLlm=serviceObj.IsSystemLlm;
+            _isSystemLlm = serviceObj.IsSystemLlm;
             _responseProcessor.SendOutput = sendOutput;
             _isFuncCalled = false;
 
@@ -171,17 +171,18 @@ namespace NetworkMonitor.LLM.Services
 
                 if (!_isPrimaryLlm && !_isFuncCalled)
                 {
+                    string llmOutput = llmOutFull.ToString();
                     foreach (var token in _endTokens)
                     {
                         llmOutput = llmOutput.Replace(token, "");
                     }
                     llmOutput = llmOutput.Replace(_assistantHeader, "");
 
-                    string extraMessage ="";
-                    if (_isSystemLlm)  {
-                        llmOutput = llmOutFull.ToString();
-                        extraMessage+=" From System LLM ";
-                        }
+                    string extraMessage = "";
+                    if (_isSystemLlm)
+                    {
+                        extraMessage += " From System LLM ";
+                    }
                     else llmOutput = llmOutFull.ToString().Replace("\n", " ");
                     var finalServiceObj = new LLMServiceObj(serviceObj);
                     finalServiceObj.LlmMessage = llmOutput;
