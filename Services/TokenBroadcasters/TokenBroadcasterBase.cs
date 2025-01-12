@@ -31,6 +31,7 @@ namespace NetworkMonitor.LLM.Services
         protected readonly ILogger _logger;
         protected CancellationTokenSource _cancellationTokenSource;
         protected bool _isPrimaryLlm;
+        protected bool _isSystemLlm;
         protected bool _isFuncCalled;
         StringBuilder? _assistantMessage = null;
         protected bool _xmlFunctionParsing = false;
@@ -110,6 +111,7 @@ namespace NetworkMonitor.LLM.Services
         public async Task SetUp(LLMServiceObj serviceObj, bool sendOutput, int llmLoad)
         {
             _isPrimaryLlm = serviceObj.IsPrimaryLlm;
+            _isSystemLlm=serviceObj.IsSystemLlm;
             _responseProcessor.SendOutput = sendOutput;
             _isFuncCalled = false;
 
@@ -169,8 +171,11 @@ namespace NetworkMonitor.LLM.Services
 
                 if (!_isPrimaryLlm && !_isFuncCalled)
                 {
-                    string llmOutput ="";
-                    if (serviceObj.IsSystemLlm)  llmOutput = llmOutFull.ToString();
+                    string extraMessage ="";
+                    if (_isSystemLlm)  {
+                        llmOutput = llmOutFull.ToString();
+                        extraMessage+=" From System LLM "
+                        }
                     else llmOutput = llmOutFull.ToString().Replace("\n", " ");
                     foreach (var token in _endTokens)
                     {
@@ -181,7 +186,7 @@ namespace NetworkMonitor.LLM.Services
                     finalServiceObj.LlmMessage = llmOutput;
                     finalServiceObj.IsFunctionCallResponse = true;
                     await _responseProcessor.ProcessLLMOutput(finalServiceObj);
-                    _logger.LogInformation($" --> Sent redirected LLM Output {finalServiceObj.LlmMessage}");
+                    _logger.LogInformation($" --> Sent redirected LLM Output {extraMessage}{finalServiceObj.LlmMessage}");
                 }
             }
             catch (OperationCanceledException)
