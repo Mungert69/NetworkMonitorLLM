@@ -1,0 +1,1 @@
+~/code/models/llama.cpp/llama-cli -c 12000  -m ~/code/models/Gemma-The-Writer-9B-D_AU-Q6_k.gguf   --prompt-cache context-gemma-2-blogmonitor.gguf  -r "<|end_of_turn|>"  -f system_prompt_gemma_2_blogmonitor  --temp 0  -sp 
