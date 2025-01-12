@@ -15,9 +15,9 @@ namespace NetworkMonitor.LLM.Services
     {
 
         public TokenBroadcasterFunc_3_1(ILLMResponseProcessor responseProcessor, ILogger logger, bool xmlFunctionParsing = false)
-             : base(responseProcessor, logger,xmlFunctionParsing)
+             : base(responseProcessor, logger, xmlFunctionParsing)
         {
-            
+
         }
 
 
@@ -44,7 +44,8 @@ namespace NetworkMonitor.LLM.Services
 
         private (string json, string functionName)? ProcessFunctionCall(string functionCall)
         {
-            var match = Regex.Match(functionCall, @"<function=(\w+)>(.*?)</function>");
+            // note the regex is forgiving to </function> or <function> the = used to delimit the start
+            var match = Regex.Match(functionCall, @"</?function(?:=(\w+))?>(.*?)</?function>");
             if (match.Success)
             {
                 string functionName = match.Groups[1].Value;
