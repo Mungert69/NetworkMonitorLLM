@@ -112,6 +112,7 @@ namespace NetworkMonitor.LLM.Services
         {
             _isPrimaryLlm = serviceObj.IsPrimaryLlm;
             _isSystemLlm = serviceObj.IsSystemLlm;
+            _logger.LogInformation($"IsSystemLlm {_isSystemLlm} IsPrimaryLlm {_isPrimaryLlm}");
             _responseProcessor.SendOutput = sendOutput;
             _isFuncCalled = false;
 
