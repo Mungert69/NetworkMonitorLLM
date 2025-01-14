@@ -28,7 +28,7 @@ public class OpenAIRunner : ILLMRunner
     private ILogger _logger;
     private ILLMResponseProcessor _responseProcessor;
     private OpenAIService _openAiService; // Interface to interact with OpenAI
-    private IToolsBuilder _toolsBuilder;
+
     private ConcurrentDictionary<string, DateTime> _activeSessions;
 
     private SemaphoreSlim _openAIRunnerSemaphore;
@@ -49,15 +49,38 @@ public class OpenAIRunner : ILLMRunner
     //private bool _isFuncCalled;
     private string _serviceID;
     private int _maxTokens = 2000;
-    private string _gptModel = "gpt-4o-mini";
+    private int _responseTokens=2000;
     private int _llmLoad;
+    private List<ChatMessage> _systemPrompt = new List<ChatMessage>
+{
+    new ChatMessage
+    {
+        Role = "system",
+        Content = ""
+    }
+};
+
+    public List<ChatMessage> SystemPrompt
+    {
+        get => _systemPrompt;
+        set => _systemPrompt = value ?? new List<ChatMessage>(); // Optional: Handle null assignment
+    }
+
+
 
     public bool IsStateReady { get => _isStateReady; }
     public bool IsStateStarting { get => _isStateStarting; }
     public bool IsStateFailed { get => _isStateFailed; }
     public bool IsEnabled { get => _isEnabled; }
     public event Action<int, string> LoadChanged;
-        public int LlmLoad { get => _llmLoad; set => _llmLoad = value; }
+    public int LlmLoad { get => _llmLoad; set => _llmLoad = value; }
+    private readonly ILLMApi _llmApi;
+    private bool _useHF = true;
+    private string _gptModel="";
+     private string _hFModelID = "";
+    private string _hFKey ="";
+    private string _hFUrl="";
+    private string _hfModel="";
 
 #pragma warning disable CS8618
     public OpenAIRunner(ILogger<OpenAIRunner> logger, ILLMResponseProcessor responseProcessor, OpenAIService openAiService, ISystemParamsHelper systemParamsHelper, LLMServiceObj serviceObj, SemaphoreSlim openAIRunnerSemaphore)
@@ -67,16 +90,30 @@ public class OpenAIRunner : ILLMRunner
         _openAiService = openAiService;
         _openAIRunnerSemaphore = openAIRunnerSemaphore;
         _serviceID = systemParamsHelper.GetSystemParams().ServiceID!;
-        _maxTokens = systemParamsHelper.GetMLParams().LlmOpenAICtxSize;
-        _gptModel = systemParamsHelper.GetMLParams().LlmGptModel;
-        if (_serviceID == "monitor") _toolsBuilder = new MonitorToolsBuilder(serviceObj.UserInfo);
-        if (_serviceID == "cmdprocessor") _toolsBuilder = new CmdProcessorToolsBuilder(serviceObj.UserInfo);
-        if (_serviceID == "nmap") _toolsBuilder = new NmapToolsBuilder();
-        if (_serviceID == "meta") _toolsBuilder = new MetaToolsBuilder();
-        if (_serviceID == "search") _toolsBuilder = new SearchToolsBuilder();
+        _maxTokens = systemParamsHelper.GetMLParams().LlmOpenAICtxSize!;
+        _responseTokens = systemParamsHelper.GetMLParams().LlmResponseTokens!;
+        _hFModelID = systemParamsHelper.GetMLParams().LlmHFModelID!;
+        _hFKey =systemParamsHelper.GetMLParams().LlmHFModelID!;
+        _hFUrl=systemParamsHelper.GetMLParams().LlmHFUrl!;
+        _hfModel=systemParamsHelper.GetMLParams().LlmVersion!;
+        _gptModel = systemParamsHelper.GetMLParams().LlmGptModel!;
+        if (!_useHF)
+        {
+            IToolsBuilder? toolsBuilder=null;
+            if (_serviceID == "monitor") toolsBuilder = new MonitorToolsBuilder(serviceObj.UserInfo);
+            if (_serviceID == "cmdprocessor") toolsBuilder = new CmdProcessorToolsBuilder(serviceObj.UserInfo);
+            if (_serviceID == "nmap") toolsBuilder = new NmapToolsBuilder();
+            if (_serviceID == "meta") toolsBuilder = new MetaToolsBuilder();
+            if (_serviceID == "search") toolsBuilder = new SearchToolsBuilder();
 
-        if (_serviceID == "blogmonitor") _toolsBuilder = new BlogMonitorToolsBuilder(serviceObj.UserInfo);
-        if (_serviceID == "reportdata") _toolsBuilder = new ReportDataToolsBuilder();
+            if (_serviceID == "blogmonitor") toolsBuilder = new BlogMonitorToolsBuilder(serviceObj.UserInfo);
+            if (_serviceID == "reportdata") toolsBuilder = new ReportDataToolsBuilder();
+            if (toolsBuilder==null) toolsBuilder=new MonitorToolsBuilder(serviceObj.UserInfo);
+            _llmApi = new OpenAIApi(_openAiService, toolsBuilder, _gptModel);
+        }
+        else{
+            _llmApi = new HuggingFaceApi(_logger,_hFUrl, _hFKey, _hFModelID, _hfModel);
+        }
         _maxTokens = AccountTypeFactory.GetAccountTypeByName(serviceObj.UserInfo.AccountType!).ContextSize;
         _activeSessions = new ConcurrentDictionary<string, DateTime>();
         _sessionHistories = new ConcurrentDictionary<string, List<ChatMessage>>();
@@ -95,7 +132,9 @@ public class OpenAIRunner : ILLMRunner
             _isStateReady = true;
             throw new InvalidOperationException($"TurboLLM {_serviceID} Assistant already running.");
         }
-        _sessionHistories.GetOrAdd(serviceObj.SessionId, _toolsBuilder.GetSystemPrompt(_activeSessions[serviceObj.SessionId].ToString("yyyy-MM-ddTHH:mm:ss"), serviceObj));
+
+        var systemPrompt = _llmApi.GetSystemPrompt(_activeSessions[serviceObj.SessionId].ToString("yyyy-MM-ddTHH:mm:ss"), serviceObj);       
+        _sessionHistories.GetOrAdd(serviceObj.SessionId, systemPrompt);
 
         _logger.LogInformation($"Started TurboLLM {_serviceID} Assistant with session id {serviceObj.SessionId} at {currentTime}.");
         // Here, you might want to send an initial message or perform other setup tasks.
@@ -150,9 +189,9 @@ public class OpenAIRunner : ILLMRunner
 
         try
         {
-         LoadChanged?.Invoke(1, Type); 
-        await _openAIRunnerSemaphore.WaitAsync(); 
-       
+            LoadChanged?.Invoke(1, Type);
+            await _openAIRunnerSemaphore.WaitAsync();
+
             // Retrieve or initialize the conversation history
             var history = _sessionHistories[serviceObj.SessionId];
             var messageHistory = _messageHistories.GetOrAdd(serviceObj.MessageID, new List<ChatMessage>());
@@ -214,30 +253,11 @@ public class OpenAIRunner : ILLMRunner
             if (!serviceObj.IsFunctionCallResponse || (serviceObj.IsFunctionCallResponse && canAddFuncMessage))
             {
                 var currentHistory = new List<ChatMessage>(history.Concat(messageHistory));
-                ChatCompletionCreateResponse completionResult;
-                if (_toolsBuilder.Tools == null || _toolsBuilder.Tools.Count == 0)
-                {
-                    completionResult = await _openAiService.ChatCompletion.CreateCompletion(new ChatCompletionCreateRequest
-                    {
-                        Messages = currentHistory,
-                        MaxTokens = 10000,
-                        Model = _gptModel
-                    });
-                }
-                else
-                {
-                    completionResult = await _openAiService.ChatCompletion.CreateCompletion(new ChatCompletionCreateRequest
-                    {
-                        Messages = currentHistory,
-                        Tools = _toolsBuilder.Tools, // Your pre-defined tools
-                        ToolChoice = ToolChoice.Auto,
-                        MaxTokens = 10000,
-                        Model = _gptModel
-                    });
-                }
+                var completionSuccessResult = await _llmApi.CreateCompletionAsync(currentHistory, _responseTokens);
+                var completionResult=completionSuccessResult.Response;
+                var completionSuccess=completionSuccessResult.Success;
 
-
-                if (completionResult.Successful)
+                if (completionSuccess)
                 {
 
                     responseServiceObj.TokensUsed = completionResult.Usage.TotalTokens;
@@ -308,7 +328,7 @@ public class OpenAIRunner : ILLMRunner
         {
             _openAIRunnerSemaphore.Release(); // Release the semaphore
             _isStateReady = true;
-              LoadChanged?.Invoke(-1, Type); // Increment load for this type
+            LoadChanged?.Invoke(-1, Type); // Increment load for this type
 
         }
     }
@@ -512,11 +532,11 @@ public class OpenAIRunner : ILLMRunner
                     foreach (var toolCall in firstMessage.ToolCalls)
                     {
                         history.RemoveAll(m => m.ToolCallId == toolCall.Id);
-                    }             
+                    }
                 }
-               
+
                 history.RemoveAt(0);
-                
+
                 // Recalculate tokens after removal
                 tokenCount = CalculateTokens(history);
             }
@@ -616,11 +636,11 @@ public class OpenAIRunner : ILLMRunner
 
     }
 
-   public Task StopRequest(string sessionId)
-{
-    // TODO: Implement stop logic
-    return Task.CompletedTask;
-}
+    public Task StopRequest(string sessionId)
+    {
+        // TODO: Implement stop logic
+        return Task.CompletedTask;
+    }
 
 
 
