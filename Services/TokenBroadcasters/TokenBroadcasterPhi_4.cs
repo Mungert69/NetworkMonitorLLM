@@ -1,12 +1,11 @@
 using System;
-using System.IO;
 using System.Text;
-using System.Threading.Tasks;
 using System.Threading;
-using System.Diagnostics;
-using System.Text.Json;
 using System.Collections.Generic;
+using System.Threading.Tasks;
+using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
+using System.Linq;
 using NetworkMonitor.Objects.ServiceMessage;
 using NetworkMonitor.Objects;
 namespace NetworkMonitor.LLM.Services;
@@ -19,37 +18,55 @@ public class TokenBroadcasterPhi_4 : TokenBroadcasterBase
         
     }
 
-protected override string StripExtraFuncHeader(string input)
+       protected override string StripExtraFuncHeader(string input)
     {
-        return input.Replace("\\\n</tool_response", "");
+        return input.Replace("\\\n</function_response", "");
 
     }
-   
 
-    protected override List<(string json, string functionName)> ParseInputForJson(string input)
-    {
-        var functionCalls = new List<(string json, string functionName)>();
-        int tagStart = input.IndexOf("<tool_call>\n");
-        int tagEnd;
-
-        while (tagStart != -1)
+  protected override List<(string json, string functionName)> ParseInputForJson(string input)
         {
-            // Move the starting index after the "<tool_call>\n" tag
-            tagStart += "<tool_call>\n".Length;
-            tagEnd = input.IndexOf("\n</tool_call>", tagStart);
+            var functionCalls = new List<(string json, string functionName)>();
 
-            // If no matching end tag is found, break the loop
-            if (tagEnd == -1) break;
+            // Extract individual function call blocks using your custom method
+            var functionCallExtracts = ExtractFunctionCalls(input);
 
-            // Extract the JSON content between the tags
-            string jsonContent = input.Substring(tagStart, tagEnd - tagStart).Trim();
-            functionCalls.Add((JsonSanitizer.SanitizeJson(jsonContent), string.Empty));
+            // Process each function call block
+            foreach (var functionCallExtract in functionCallExtracts)
+            {
+                var processedCall = ProcessFunctionCall(functionCallExtract);
+                if (processedCall != null)
+                {
+                    functionCalls.Add((processedCall.Value.json, processedCall.Value.functionName));
+                }
+            }
 
-            // Look for the next "<tool_call>\n" tag after the current end tag
-            tagStart = input.IndexOf("<tool_call>\n", tagEnd + "</tool_call>".Length);
+            return functionCalls;
         }
 
-        return functionCalls;
-    }
+        private (string json, string functionName)? ProcessFunctionCall(string functionCall)
+        {
+            // note the regex is forgiving to </function> or <function> the = used to delimit the start
+            var match = Regex.Match(functionCall, @"</?function(?:=(\w+))?>(.*?)</?function>");
+            if (match.Success)
+            {
+                string functionName = match.Groups[1].Value;
+                string jsonArguments = match.Groups[2].Value;
+                return (jsonArguments, functionName);
 
+            }
+            return null;
+        }
+
+        private List<string> ExtractFunctionCalls(string input)
+        {
+            return Regex.Matches(input, @"</?function=\w+>.*?</?function>")
+                        .OfType<Match>()
+                        .Select(m => m.Value)
+                        .ToList();
+        }
+        private string RemoveFunctionCalls(string input)
+        {
+            return Regex.Replace(input, @"</?function=\w+>.*?</?function>", "").Trim();
+        }
 }

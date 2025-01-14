@@ -81,12 +81,12 @@ public static class LLMConfigFactory
         ["phi_4"] = new LLMConfig
         {
             UserReplace = "<|im_start|>user<|im_sep|>\\\n",
-            FunctionReplace = "<|im_start|>user<|im_sep|>\\\n<tool_response>\\\n",
+            FunctionReplace = "<|im_start|>user<|im_sep|>\\\n<function_response>\\\n",
             AssistantHeader = "<|im_start|>assistant<|im_sep|>\n",
             UserInputTemplate = "<|im_start|>user<|im_sep|>\\\n{0}",
             AssistantMessageTemplate = "<|im_start|>assistant<|im_sep|>\\\n{0}<|im_end|>",
             EOTToken = "<|im_end|>",
-            FunctionResponseTemplate = "<|im_start|>user<|im_sep|>\\\n<tool_response>\\\n{1}\\\n</tool_response>",
+            FunctionResponseTemplate = "<|im_start|>user<|im_sep|>\\\n<function_response name={0}>\\\n{1}\\\n</function_response>",
             CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
                 new TokenBroadcasterPhi_4(responseProcessor, logger, xmlFunctionParsing)
         },
