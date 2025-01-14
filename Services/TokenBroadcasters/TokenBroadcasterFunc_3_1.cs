@@ -58,14 +58,14 @@ namespace NetworkMonitor.LLM.Services
 
         private List<string> ExtractFunctionCalls(string input)
         {
-            return Regex.Matches(input, @"<function=\w+>.*?</function>")
+            return Regex.Matches(input, @"</?function=\w+>.*?</?function>")
                         .OfType<Match>()
                         .Select(m => m.Value)
                         .ToList();
         }
         private string RemoveFunctionCalls(string input)
         {
-            return Regex.Replace(input, @"<function=\w+>.*?</function>", "").Trim();
+            return Regex.Replace(input, @"</?function=\w+>.*?</?function>", "").Trim();
         }
     }
 }
