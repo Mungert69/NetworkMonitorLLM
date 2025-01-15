@@ -25,7 +25,7 @@ public class TokenBroadcasterQwen_2_5 : TokenBroadcasterBase
     }
 
 
-    protected override List<(string json, string functionName)> ParseInputForJson(string input)
+    public override List<(string json, string functionName)> ParseInputForJson(string input)
     {
         var functionCalls = new List<(string json, string functionName)>();
         int tagStart = input.IndexOf("<tool_call>\n");

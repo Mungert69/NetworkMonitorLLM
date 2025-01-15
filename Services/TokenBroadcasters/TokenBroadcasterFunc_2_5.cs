@@ -22,7 +22,7 @@ public class TokenBroadcasterFunc_2_5 : TokenBroadcasterBase
 
 
 
-    protected override List<(string json, string functionName)> ParseInputForJson(string input)
+    public override List<(string json, string functionName)> ParseInputForJson(string input)
     {
         string specialToken = "<|reserved_special_token_249|>";
         var functionCalls = new List<(string json, string functionName)>();

@@ -21,7 +21,7 @@ public class TokenBroadcasterGemma_2 : TokenBroadcasterBase
     }
    
 
-       protected override List<(string json, string functionName)> ParseInputForJson(string input)
+       public override List<(string json, string functionName)> ParseInputForJson(string input)
         {
             var functionsCalls = new List<(string json, string functionName)>();
             if (input.Contains("Funtion response:"))

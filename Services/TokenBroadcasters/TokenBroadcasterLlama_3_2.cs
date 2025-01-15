@@ -21,7 +21,7 @@ public class TokenBroadcasterLlama_3_2 : TokenBroadcasterBase
     }
    
 
-    protected override List<(string json, string functionName)> ParseInputForJson(string input)
+    public override List<(string json, string functionName)> ParseInputForJson(string input)
     {
         var functionCalls = new List<(string json, string functionName)>();
 

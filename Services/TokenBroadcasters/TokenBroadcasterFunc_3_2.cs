@@ -21,7 +21,7 @@ public class TokenBroadcasterFunc_3_2 : TokenBroadcasterBase
 
    
     // Updated ParseInputForJson to handle multiple function calls
-    protected override List<(string json, string functionName)> ParseInputForJson(string input)
+    public override List<(string json, string functionName)> ParseInputForJson(string input)
     {
         var functionCalls = new List<(string json, string functionName)>();
 

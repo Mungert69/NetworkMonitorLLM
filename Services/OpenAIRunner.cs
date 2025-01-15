@@ -93,13 +93,11 @@ public class OpenAIRunner : ILLMRunner
         _maxTokens = systemParamsHelper.GetMLParams().LlmOpenAICtxSize!;
         _responseTokens = systemParamsHelper.GetMLParams().LlmResponseTokens!;
         _hFModelID = systemParamsHelper.GetMLParams().LlmHFModelID!;
-        _hFKey =systemParamsHelper.GetMLParams().LlmHFModelID!;
+        _hFKey =systemParamsHelper.GetMLParams().LlmHFKey!;
         _hFUrl=systemParamsHelper.GetMLParams().LlmHFUrl!;
         _hfModel=systemParamsHelper.GetMLParams().LlmVersion!;
         _gptModel = systemParamsHelper.GetMLParams().LlmGptModel!;
-        if (!_useHF)
-        {
-            IToolsBuilder? toolsBuilder=null;
+         IToolsBuilder? toolsBuilder=null;
             if (_serviceID == "monitor") toolsBuilder = new MonitorToolsBuilder(serviceObj.UserInfo);
             if (_serviceID == "cmdprocessor") toolsBuilder = new CmdProcessorToolsBuilder(serviceObj.UserInfo);
             if (_serviceID == "nmap") toolsBuilder = new NmapToolsBuilder();
@@ -109,10 +107,13 @@ public class OpenAIRunner : ILLMRunner
             if (_serviceID == "blogmonitor") toolsBuilder = new BlogMonitorToolsBuilder(serviceObj.UserInfo);
             if (_serviceID == "reportdata") toolsBuilder = new ReportDataToolsBuilder();
             if (toolsBuilder==null) toolsBuilder=new MonitorToolsBuilder(serviceObj.UserInfo);
-            _llmApi = new OpenAIApi(_openAiService, toolsBuilder, _gptModel);
+         
+        if (!_useHF)
+        {
+              _llmApi = new OpenAIApi(_openAiService, toolsBuilder, _gptModel);
         }
         else{
-            _llmApi = new HuggingFaceApi(_logger,_hFUrl, _hFKey, _hFModelID, _hfModel);
+            _llmApi = new HuggingFaceApi(_logger, toolsBuilder,_hFUrl,_hFKey, _hFModelID, _hfModel);
         }
         _maxTokens = AccountTypeFactory.GetAccountTypeByName(serviceObj.UserInfo.AccountType!).ContextSize;
         _activeSessions = new ConcurrentDictionary<string, DateTime>();

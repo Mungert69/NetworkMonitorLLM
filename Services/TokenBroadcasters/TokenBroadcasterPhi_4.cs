@@ -24,7 +24,7 @@ public class TokenBroadcasterPhi_4 : TokenBroadcasterBase
 
     }
 
-  protected override List<(string json, string functionName)> ParseInputForJson(string input)
+  public override List<(string json, string functionName)> ParseInputForJson(string input)
         {
             var functionCalls = new List<(string json, string functionName)>();
 
