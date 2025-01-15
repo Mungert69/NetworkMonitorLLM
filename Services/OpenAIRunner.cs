@@ -179,12 +179,12 @@ public class OpenAIRunner : ILLMRunner
             throw new Exception($"No TurboLLM {_serviceID} Assistants found for session {serviceObj.SessionId}. Try reloading the Assistant or refreshing the page. If the problems persists contact support@freenetworkmontior.click");
         }
 
-        if (serviceObj.IsFunctionStillRunning && serviceObj.IsFunctionCallResponse)
+        /*if (serviceObj.IsFunctionStillRunning && serviceObj.IsFunctionCallResponse)
         {
             //TODO work out how to use function still running messages
             _logger.LogInformation("Ignoring FunctionStillRunning message.");
             return;
-        }
+        }*/
 
         _logger.LogInformation("Sending input and waiting for response...");
         _isPrimaryLlm = serviceObj.IsPrimaryLlm;
@@ -200,7 +200,7 @@ public class OpenAIRunner : ILLMRunner
             var messageHistory = _messageHistories.GetOrAdd(serviceObj.MessageID, new List<ChatMessage>());
             ChatMessage chatMessage;
 
-            if (serviceObj.IsFunctionCallStatus)
+            if (serviceObj.IsFunctionCallStatus && !_isSystemLlm)
             {
                 canAddFuncMessage = true;
                 // Create a unique ID for the fake function call
@@ -284,8 +284,8 @@ public class OpenAIRunner : ILLMRunner
 
 
                         addedPlaceHolder = true;
-                        var placeholderUser = ChatMessage.FromUser($"{serviceObj.UserInput} : us message_id <|{serviceObj.MessageID}|> to track the function calls");
-                        //var placeholderUser = ChatMessage.FromUser(serviceObj.UserInput);
+                        //var placeholderUser = ChatMessage.FromUser($"{serviceObj.UserInput} : us message_id <|{serviceObj.MessageID}|> to track the function calls");
+                        var placeholderUser = ChatMessage.FromUser(serviceObj.UserInput);
                        
                         history.Add(placeholderUser);
                         messageHistory.RemoveAt(0);
@@ -363,7 +363,7 @@ public class OpenAIRunner : ILLMRunner
                 // Update the existing response with the new content
                 funcResponseChatMessage = existingFuncResponseChatMessage;
                 string funcResponseJson=serviceObj.UserInput;
-                if (_useHF) funcResponseJson=$"<function_reponse message_id={serviceObj.MessageID}>"+funcResponseJson+"</function_respomse>";
+                if (_useHF) funcResponseJson=$"<function_reponse>"+funcResponseJson+"</function_respomse>";
                 funcResponseChatMessage.Content = funcResponseJson;
             }
             else
@@ -372,7 +372,7 @@ public class OpenAIRunner : ILLMRunner
                 funcResponseChatMessage = ChatMessage.FromTool("", serviceObj.FunctionCallId);
                 funcResponseChatMessage.Name = serviceObj.FunctionName;
                 string funcResponseJson=serviceObj.UserInput;
-                if (_useHF) funcResponseJson=$"<function_reponse message_id={serviceObj.MessageID}>"+funcResponseJson+"</function_respomse>";
+                if (_useHF) funcResponseJson=$"<function_reponse>"+funcResponseJson+"</function_respomse>";
                  funcResponseChatMessage.Content = funcResponseJson;
 
                 // Add the new response to the dictionary
