@@ -131,10 +131,21 @@ public class HuggingFaceApi : ILLMApi
             // Use the broadcaster to parse function calls
             foreach (var choice in responseObject.Choices)
             {
+                _logger.LogInformation($"Parsing function calls for message content: {choice.Message.Content}");
+
+                // Parse the input using the broadcaster
                 var functionCalls = tokenBroadcaster.ParseInputForJson(choice.Message.Content);
 
+                // Log the parsed results
                 if (functionCalls.Any())
                 {
+                    _logger.LogInformation($"Parsed {functionCalls.Count} function calls.");
+                    foreach (var fc in functionCalls)
+                    {
+                        _logger.LogInformation($"Function call detected - Name: {fc.functionName}, JSON: {fc.json}");
+                    }
+
+                    // Map the parsed function calls to ToolCalls
                     choice.Message.ToolCalls = functionCalls.Select(fc => new ToolCall
                     {
                         Type = "function",
@@ -145,6 +156,19 @@ public class HuggingFaceApi : ILLMApi
                             Arguments = fc.json
                         }
                     }).ToList();
+                    choice.Message.Content = string.Empty;
+                    choice.Message.Role = "assistant";
+
+                    // Log the ToolCalls that were created
+                    foreach (var toolCall in choice.Message.ToolCalls)
+                    {
+                        _logger.LogInformation($"ToolCall created - Type: {toolCall.Type}, Id: {toolCall.Id}, " +
+                                               $"FunctionName: {toolCall.FunctionCall.Name}, Arguments: {toolCall.FunctionCall.Arguments}");
+                    }
+                }
+                else
+                {
+                    _logger.LogWarning($"No function calls were parsed for the message content: {choice.Message.Content}");
                 }
             }
 
@@ -156,7 +180,16 @@ public class HuggingFaceApi : ILLMApi
                     {
                         Role = choice.Message.Role,
                         Content = choice.Message.Content,
-                        ToolCalls = choice.Message.ToolCalls // Include parsed tool calls
+                        ToolCalls = choice.Message.ToolCalls.Select(toolCall => new ToolCall
+                        {
+                            Type = toolCall.Type,
+                            Id = toolCall.Id,
+                            FunctionCall = new FunctionCall
+                            {
+                                Name = toolCall.FunctionCall.Name,
+                                Arguments = toolCall.FunctionCall.Arguments
+                            }
+                        }).ToList() // Explicitly map each ToolCall and its FunctionCall
                     },
                     Index = choice.Index,
                     FinishReason = choice.FinishReason
@@ -170,6 +203,7 @@ public class HuggingFaceApi : ILLMApi
                 Id = responseObject.Id,
                 Model = responseObject.Model
             };
+
             return new ChatCompletionCreateResponseSuccess { Success = true, Response = chatResponse };
         }
         catch (Exception ex)

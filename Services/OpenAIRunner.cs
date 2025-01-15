@@ -75,7 +75,7 @@ public class OpenAIRunner : ILLMRunner
     public event Action<int, string> LoadChanged;
     public int LlmLoad { get => _llmLoad; set => _llmLoad = value; }
     private readonly ILLMApi _llmApi;
-    private bool _useHF = true;
+    private bool _useHF = false;
     private string _gptModel="";
      private string _hFModelID = "";
     private string _hFKey ="";
@@ -253,6 +253,7 @@ public class OpenAIRunner : ILLMRunner
 
             if (!serviceObj.IsFunctionCallResponse || (serviceObj.IsFunctionCallResponse && canAddFuncMessage))
             {
+                bool addedPlaceHolder=false;
                 var currentHistory = new List<ChatMessage>(history.Concat(messageHistory));
                 var completionSuccessResult = await _llmApi.CreateCompletionAsync(currentHistory, _responseTokens);
                 var completionResult=completionSuccessResult.Response;
@@ -276,8 +277,10 @@ public class OpenAIRunner : ILLMRunner
 
                         // Add a lightweight placeholder to history indicating a tool call is in progress.
                         // This avoids the OpenAI API error of having an incomplete response.
+                        addedPlaceHolder=true;
                         var placeholderUser = ChatMessage.FromUser($"{serviceObj.UserInput} : us message_id <|{serviceObj.MessageID}|> to track the function calls");
                         history.Add(placeholderUser);
+                        messageHistory.RemoveAt(0);
                         var assistantMessage = new StringBuilder($"I have called the following functions : ");
                         foreach (ToolCall fnCall in choice.Message.ToolCalls)
                         {
@@ -303,9 +306,9 @@ public class OpenAIRunner : ILLMRunner
 
 
 
-
+                    if(!addedPlaceHolder){
                     history.AddRange(messageHistory);
-                    history.Add(assistantChatMessage);
+                    history.Add(assistantChatMessage);}
 
                     TruncateTokens(history, serviceObj);
 
