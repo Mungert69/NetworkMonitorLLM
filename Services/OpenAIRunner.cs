@@ -49,7 +49,7 @@ public class OpenAIRunner : ILLMRunner
     //private bool _isFuncCalled;
     private string _serviceID;
     private int _maxTokens = 2000;
-    private int _responseTokens=2000;
+    private int _responseTokens = 2000;
     private int _llmLoad;
     private List<ChatMessage> _systemPrompt = new List<ChatMessage>
 {
@@ -76,11 +76,11 @@ public class OpenAIRunner : ILLMRunner
     public int LlmLoad { get => _llmLoad; set => _llmLoad = value; }
     private readonly ILLMApi _llmApi;
     private bool _useHF = false;
-    private string _gptModel="";
-     private string _hFModelID = "";
-    private string _hFKey ="";
-    private string _hFUrl="";
-    private string _hfModel="";
+    private string _gptModel = "";
+    private string _hFModelID = "";
+    private string _hFKey = "";
+    private string _hFUrl = "";
+    private string _hfModel = "";
 
 #pragma warning disable CS8618
     public OpenAIRunner(ILogger<OpenAIRunner> logger, ILLMResponseProcessor responseProcessor, OpenAIService openAiService, ISystemParamsHelper systemParamsHelper, LLMServiceObj serviceObj, SemaphoreSlim openAIRunnerSemaphore)
@@ -93,27 +93,29 @@ public class OpenAIRunner : ILLMRunner
         _maxTokens = systemParamsHelper.GetMLParams().LlmOpenAICtxSize!;
         _responseTokens = systemParamsHelper.GetMLParams().LlmResponseTokens!;
         _hFModelID = systemParamsHelper.GetMLParams().LlmHFModelID!;
-        _hFKey =systemParamsHelper.GetMLParams().LlmHFKey!;
-        _hFUrl=systemParamsHelper.GetMLParams().LlmHFUrl!;
-        _hfModel=systemParamsHelper.GetMLParams().LlmVersion!;
+        _hFKey = systemParamsHelper.GetMLParams().LlmHFKey!;
+        _hFUrl = systemParamsHelper.GetMLParams().LlmHFUrl!;
+        _hfModel = systemParamsHelper.GetMLParams().LlmHFModelVersion!;
         _gptModel = systemParamsHelper.GetMLParams().LlmGptModel!;
-         IToolsBuilder? toolsBuilder=null;
-            if (_serviceID == "monitor") toolsBuilder = new MonitorToolsBuilder(serviceObj.UserInfo);
-            if (_serviceID == "cmdprocessor") toolsBuilder = new CmdProcessorToolsBuilder(serviceObj.UserInfo);
-            if (_serviceID == "nmap") toolsBuilder = new NmapToolsBuilder();
-            if (_serviceID == "meta") toolsBuilder = new MetaToolsBuilder();
-            if (_serviceID == "search") toolsBuilder = new SearchToolsBuilder();
+        _useHF = systemParamsHelper.GetMLParams().LlmUseHF;
+        IToolsBuilder? toolsBuilder = null;
+        if (_serviceID == "monitor") toolsBuilder = new MonitorToolsBuilder(serviceObj.UserInfo);
+        if (_serviceID == "cmdprocessor") toolsBuilder = new CmdProcessorToolsBuilder(serviceObj.UserInfo);
+        if (_serviceID == "nmap") toolsBuilder = new NmapToolsBuilder();
+        if (_serviceID == "meta") toolsBuilder = new MetaToolsBuilder();
+        if (_serviceID == "search") toolsBuilder = new SearchToolsBuilder();
 
-            if (_serviceID == "blogmonitor") toolsBuilder = new BlogMonitorToolsBuilder(serviceObj.UserInfo);
-            if (_serviceID == "reportdata") toolsBuilder = new ReportDataToolsBuilder();
-            if (toolsBuilder==null) toolsBuilder=new MonitorToolsBuilder(serviceObj.UserInfo);
-         
+        if (_serviceID == "blogmonitor") toolsBuilder = new BlogMonitorToolsBuilder(serviceObj.UserInfo);
+        if (_serviceID == "reportdata") toolsBuilder = new ReportDataToolsBuilder();
+        if (toolsBuilder == null) toolsBuilder = new MonitorToolsBuilder(serviceObj.UserInfo);
+
         if (!_useHF)
         {
-              _llmApi = new OpenAIApi(_openAiService, toolsBuilder, _gptModel);
+            _llmApi = new OpenAIApi(_openAiService, toolsBuilder, _gptModel);
         }
-        else{
-            _llmApi = new HuggingFaceApi(_logger, toolsBuilder,_hFUrl,_hFKey, _hFModelID, _hfModel);
+        else
+        {
+            _llmApi = new HuggingFaceApi(_logger, toolsBuilder, _hFUrl, _hFKey, _hFModelID, _hfModel);
         }
         _maxTokens = AccountTypeFactory.GetAccountTypeByName(serviceObj.UserInfo.AccountType!).ContextSize;
         _activeSessions = new ConcurrentDictionary<string, DateTime>();
@@ -134,7 +136,7 @@ public class OpenAIRunner : ILLMRunner
             throw new InvalidOperationException($"TurboLLM {_serviceID} Assistant already running.");
         }
 
-        var systemPrompt = _llmApi.GetSystemPrompt(_activeSessions[serviceObj.SessionId].ToString("yyyy-MM-ddTHH:mm:ss"), serviceObj);       
+        var systemPrompt = _llmApi.GetSystemPrompt(_activeSessions[serviceObj.SessionId].ToString("yyyy-MM-ddTHH:mm:ss"), serviceObj);
         _sessionHistories.GetOrAdd(serviceObj.SessionId, systemPrompt);
 
         _logger.LogInformation($"Started TurboLLM {_serviceID} Assistant with session id {serviceObj.SessionId} at {currentTime}.");
@@ -253,11 +255,11 @@ public class OpenAIRunner : ILLMRunner
 
             if (!serviceObj.IsFunctionCallResponse || (serviceObj.IsFunctionCallResponse && canAddFuncMessage))
             {
-                bool addedPlaceHolder=false;
+                bool addedPlaceHolder = false;
                 var currentHistory = new List<ChatMessage>(history.Concat(messageHistory));
                 var completionSuccessResult = await _llmApi.CreateCompletionAsync(currentHistory, _responseTokens);
-                var completionResult=completionSuccessResult.Response;
-                var completionSuccess=completionSuccessResult.Success;
+                var completionResult = completionSuccessResult.Response;
+                var completionSuccess = completionSuccessResult.Success;
 
                 if (completionSuccess)
                 {
@@ -272,16 +274,23 @@ public class OpenAIRunner : ILLMRunner
 
                     if (choice.Message.ToolCalls != null && choice.Message.ToolCalls.Any())
                     {
+                        string copyContent=choice.Message.Content;
                         choice.Message.Content = $"The user previously requested \"{serviceObj.UserInput}\" . The function calls needed to answer this query have now completed. ";
                         _pendingFunctionCalls.TryAdd(serviceObj.MessageID, choice.Message);
 
                         // Add a lightweight placeholder to history indicating a tool call is in progress.
                         // This avoids the OpenAI API error of having an incomplete response.
-                        addedPlaceHolder=true;
+                        var assistantMessage = new StringBuilder($"I have called the following functions : ");
+
+
+                        addedPlaceHolder = true;
                         var placeholderUser = ChatMessage.FromUser($"{serviceObj.UserInput} : us message_id <|{serviceObj.MessageID}|> to track the function calls");
+                        //var placeholderUser = ChatMessage.FromUser(serviceObj.UserInput);
+                       
                         history.Add(placeholderUser);
                         messageHistory.RemoveAt(0);
-                        var assistantMessage = new StringBuilder($"I have called the following functions : ");
+
+
                         foreach (ToolCall fnCall in choice.Message.ToolCalls)
                         {
                             if (fnCall.FunctionCall != null)
@@ -295,8 +304,10 @@ public class OpenAIRunner : ILLMRunner
                             }
                         }
                         assistantMessage.Append($" using message_id {serviceObj.MessageID} . Please wait it may take some time to complete.");
+                        if (_useHF) assistantMessage=new StringBuilder(copyContent);
                         var placeholderAssistant = ChatMessage.FromAssistant(assistantMessage.ToString());
                         history.Add(placeholderAssistant);
+
 
                     }
                     else
@@ -306,9 +317,11 @@ public class OpenAIRunner : ILLMRunner
 
 
 
-                    if(!addedPlaceHolder){
-                    history.AddRange(messageHistory);
-                    history.Add(assistantChatMessage);}
+                    if (!addedPlaceHolder)
+                    {
+                        history.AddRange(messageHistory);
+                        //history.Add(assistantChatMessage);
+                    }
 
                     TruncateTokens(history, serviceObj);
 
@@ -349,21 +362,24 @@ public class OpenAIRunner : ILLMRunner
             {
                 // Update the existing response with the new content
                 funcResponseChatMessage = existingFuncResponseChatMessage;
-                funcResponseChatMessage.Content = serviceObj.UserInput;
+                string funcResponseJson=serviceObj.UserInput;
+                if (_useHF) funcResponseJson=$"<function_reponse message_id={serviceObj.MessageID}>"+funcResponseJson+"</function_respomse>";
+                funcResponseChatMessage.Content = funcResponseJson;
             }
             else
             {
                 // Create a new ChatMessage for the function response if it doesn't exist
                 funcResponseChatMessage = ChatMessage.FromTool("", serviceObj.FunctionCallId);
                 funcResponseChatMessage.Name = serviceObj.FunctionName;
-                funcResponseChatMessage.Content = serviceObj.UserInput;
+                string funcResponseJson=serviceObj.UserInput;
+                if (_useHF) funcResponseJson=$"<function_reponse message_id={serviceObj.MessageID}>"+funcResponseJson+"</function_respomse>";
+                 funcResponseChatMessage.Content = funcResponseJson;
 
                 // Add the new response to the dictionary
                 _pendingFunctionResponses.TryAdd(serviceObj.FunctionCallId, funcResponseChatMessage);
             }
 
-            // Add the response content to the corresponding chat message
-            funcResponseChatMessage.Content = serviceObj.UserInput;
+        
             responseServiceObj.LlmMessage = "<Function Response:> " + serviceObj.UserInput + "\n\n";
 
             // Process the LLM output if it's the primary LLM
@@ -376,7 +392,7 @@ public class OpenAIRunner : ILLMRunner
             if (allResponsesReceived)
             {
                 // Add the function call and responses to the message history
-                messageHistory.Add(funcCallChatMessage);
+                if (!_useHF) messageHistory.Add(funcCallChatMessage);
 
                 foreach (var toolCall in funcCallChatMessage.ToolCalls)
                 {

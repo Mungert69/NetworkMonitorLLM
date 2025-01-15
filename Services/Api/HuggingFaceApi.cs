@@ -65,7 +65,7 @@ public class HuggingFaceApi : ILLMApi
 
         string toolsJson = JsonToolsBuilder.BuildToolsJson(_toolsBuilder.Tools);
         // List<ChatMessage> systemPrompt=_toolsBuilder.GetSystemPrompt(currentTime, serviceObj);
-        string footer = "Think very carefully before calling functions.\n\n" +
+       string footer = "Think very carefully before calling functions.\n\n" +
  "If you choose to call a function, ONLY reply in the following format:\n\n" +
  "{\"name\": \"{function_name}\", \"parameters\": {parameters}}\n\n" +
  "Where:\n\n" +
@@ -156,8 +156,6 @@ public class HuggingFaceApi : ILLMApi
                             Arguments = fc.json
                         }
                     }).ToList();
-                    choice.Message.Content = string.Empty;
-                    choice.Message.Role = "assistant";
 
                     // Log the ToolCalls that were created
                     foreach (var toolCall in choice.Message.ToolCalls)
