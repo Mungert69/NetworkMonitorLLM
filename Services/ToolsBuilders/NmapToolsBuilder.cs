@@ -74,13 +74,9 @@ namespace NetworkMonitor.LLM.Services
                 "  - **Response**: Use the Nmap command: {\"scan_options\": \"-p 80 --script vuln\", \"target\": \"192.168.1.1\"}.\n" +
                 "- **User Request**: \"Check the SSL configuration of test.com.\"\n" +
                 "  - **Response**: Use OpenSSL to check a tls 1.3 connection to test.com and show check the cipher being used : {\"command_options\": \"s_client -cipher ALL -tls1_3 \", \"target\": \"test.com\"}.\n" +
-                "Your overall goal is to simulate a thorough, professional security audit and provide users with actionable insights for improving their security posture.";
-
-            if (serviceObj.IsUserLoggedIn)
-                content += $" The user logged in at {currentTime} with email {serviceObj.UserInfo.Email}.";
-            else
-                content += $" The user is not logged in, the time is {currentTime}, ask the user for an email to add hosts etc.";
-
+                "Your overall goal is to simulate a thorough, professional security audit and provide users with actionable insights for improving their security posture." +
+                 $" The current time is{currentTime}.";
+           
             var chatMessage = new ChatMessage()
             {
                 Role = "system",

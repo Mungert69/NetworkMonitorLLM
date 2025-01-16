@@ -84,16 +84,8 @@ When responding to queries:
 5. Cite sources and provide a structured summary of findings.
 6. Be prepared for follow-up questions, using additional searches or page crawls as needed.
 
-Remember to use the functions responsibly and ethically, respecting user privacy and intellectual property rights. Always strive to provide accurate, up-to-date, and well-researched responses to user queries.";
-
-            if (serviceObj.IsUserLoggedIn)
-            {
-                content += $" The user logged in at {currentTime} with email {serviceObj.UserInfo.Email}.";
-            }
-            else
-            {
-                content += $" The user is not logged in, the time is {currentTime}.";
-            }
+Remember to use the functions responsibly and ethically, respecting user privacy and intellectual property rights. Always strive to provide accurate, up-to-date, and well-researched responses to user queries." 
++ $" The current time is{currentTime}.";
 
             var chatMessage = ChatMessage.FromSystem(content);
             var chatMessages = new List<ChatMessage>();

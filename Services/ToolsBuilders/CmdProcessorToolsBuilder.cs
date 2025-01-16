@@ -259,11 +259,7 @@ The user can also request to see what cmd processors are currently available by 
 Your goal is to help the user set up and manage cmd processors on different agents as requested.";
 
             string content = contentPart1 + contentPart2 + contentPart3;
-            if (serviceObj.IsUserLoggedIn)
-                content += $" The user logged in at {currentTime} with email {serviceObj.UserInfo.Email}.";
-            else
-                content += $" The user is not logged in, current time: {currentTime}. Prompt them if needed.";
-
+           content+=$" The current time is{currentTime}.";
             var chatMessage = new ChatMessage()
             {
                 Role = "system",

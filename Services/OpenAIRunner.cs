@@ -178,17 +178,18 @@ public class OpenAIRunner : ILLMRunner
             _isStateFailed = true;
             throw new Exception($"No TurboLLM {_serviceID} Assistants found for session {serviceObj.SessionId}. Try reloading the Assistant or refreshing the page. If the problems persists contact support@freenetworkmontior.click");
         }
-
-        /*if (serviceObj.IsFunctionStillRunning && serviceObj.IsFunctionCallResponse)
-        {
-            //TODO work out how to use function still running messages
-            _logger.LogInformation("Ignoring FunctionStillRunning message.");
-            return;
-        }*/
-
-        _logger.LogInformation("Sending input and waiting for response...");
         _isPrimaryLlm = serviceObj.IsPrimaryLlm;
         _isSystemLlm = serviceObj.IsSystemLlm;
+
+        if (serviceObj.IsFunctionStillRunning && _isPrimaryLlm)
+        {
+            //TODO work out how to use function still running messages
+            _logger.LogInformation("Ignoring FunctionStillRunning message for non PrimaryLLM.");
+            return;
+        }
+
+        _logger.LogInformation("Sending input and waiting for response...");
+
 
         try
         {
@@ -200,19 +201,17 @@ public class OpenAIRunner : ILLMRunner
             var messageHistory = _messageHistories.GetOrAdd(serviceObj.MessageID, new List<ChatMessage>());
             ChatMessage chatMessage;
 
-            if (serviceObj.IsFunctionCallStatus && !_isSystemLlm)
+            if (serviceObj.IsFunctionCallStatus)
             {
-                canAddFuncMessage = true;
-                // Create a unique ID for the fake function call
-                var fakeFunctionCallId = "call_" + StringUtils.GetNanoid();
+                 canAddFuncMessage = true;
 
-                // Simulate a previous user message that would have triggered a function call
-                // var fakeUserTriggerMessage = ChatMessage.FromUser($"Can you check the status the {serviceObj.FunctionName} call");
-                // messageHistory.Add(fakeUserTriggerMessage);
+                if (!_useHF)
+                {
+                   
+                    var fakeFunctionCallId = "call_" + StringUtils.GetNanoid();
 
-                // Create a fake assistant message that represents a function call
-                var fakeFunctionCallMessage = ChatMessage.FromAssistant("");
-                fakeFunctionCallMessage.ToolCalls = new List<ToolCall>()
+                    var fakeFunctionCallMessage = ChatMessage.FromAssistant("");
+                    fakeFunctionCallMessage.ToolCalls = new List<ToolCall>()
                     {
                         new ToolCall
                             {
@@ -226,18 +225,21 @@ public class OpenAIRunner : ILLMRunner
                             }
                     };
 
-                // Add the fake function call to the message history
-                messageHistory.Add(fakeFunctionCallMessage);
+                    messageHistory.Add(fakeFunctionCallMessage);
 
-                // Create a fake function response as if the tool returned a result
-                var fakeFunctionResponseMessage = ChatMessage.FromTool(serviceObj.UserInput, fakeFunctionCallId);
-                fakeFunctionResponseMessage.Name = "are_functions_running";
+                    // Create a fake function response as if the tool returned a result
+                    var fakeFunctionResponseMessage = ChatMessage.FromTool(serviceObj.UserInput, fakeFunctionCallId);
+                    fakeFunctionResponseMessage.Name = "are_functions_running";
 
-                // Add the fake function response to the message history
-                messageHistory.Add(fakeFunctionResponseMessage);
+                    // Add the fake function response to the message history
+                    messageHistory.Add(fakeFunctionResponseMessage);
+                }
+                else{
+                    var systemMessage = ChatMessage.FromAssistant(serviceObj.UserInput);     
+                     messageHistory.Add(systemMessage);
+                }
 
-                // Now the conversation history looks like the assistant previously made a function call
-                // and the corresponding function response was provided by the tool.
+
             }
 
 
@@ -274,7 +276,7 @@ public class OpenAIRunner : ILLMRunner
 
                     if (choice.Message.ToolCalls != null && choice.Message.ToolCalls.Any())
                     {
-                        string copyContent=choice.Message.Content;
+                        string copyContent = choice.Message.Content;
                         choice.Message.Content = $"The user previously requested \"{serviceObj.UserInput}\" . The function calls needed to answer this query have now completed. ";
                         _pendingFunctionCalls.TryAdd(serviceObj.MessageID, choice.Message);
 
@@ -286,7 +288,7 @@ public class OpenAIRunner : ILLMRunner
                         addedPlaceHolder = true;
                         //var placeholderUser = ChatMessage.FromUser($"{serviceObj.UserInput} : us message_id <|{serviceObj.MessageID}|> to track the function calls");
                         var placeholderUser = ChatMessage.FromUser(serviceObj.UserInput);
-                       
+
                         history.Add(placeholderUser);
                         messageHistory.RemoveAt(0);
 
@@ -304,7 +306,7 @@ public class OpenAIRunner : ILLMRunner
                             }
                         }
                         assistantMessage.Append($" using message_id {serviceObj.MessageID} . Please wait it may take some time to complete.");
-                        if (_useHF) assistantMessage=new StringBuilder(copyContent);
+                        if (_useHF) assistantMessage = new StringBuilder(copyContent);
                         var placeholderAssistant = ChatMessage.FromAssistant(assistantMessage.ToString());
                         history.Add(placeholderAssistant);
 
@@ -362,8 +364,8 @@ public class OpenAIRunner : ILLMRunner
             {
                 // Update the existing response with the new content
                 funcResponseChatMessage = existingFuncResponseChatMessage;
-                string funcResponseJson=serviceObj.UserInput;
-                if (_useHF) funcResponseJson=$"<function_reponse>"+funcResponseJson+"</function_respomse>";
+                string funcResponseJson = serviceObj.UserInput;
+                if (_useHF) funcResponseJson = $"<function_reponse>" + funcResponseJson + "</function_respomse>";
                 funcResponseChatMessage.Content = funcResponseJson;
             }
             else
@@ -371,15 +373,15 @@ public class OpenAIRunner : ILLMRunner
                 // Create a new ChatMessage for the function response if it doesn't exist
                 funcResponseChatMessage = ChatMessage.FromTool("", serviceObj.FunctionCallId);
                 funcResponseChatMessage.Name = serviceObj.FunctionName;
-                string funcResponseJson=serviceObj.UserInput;
-                if (_useHF) funcResponseJson=$"<function_reponse>"+funcResponseJson+"</function_respomse>";
-                 funcResponseChatMessage.Content = funcResponseJson;
+                string funcResponseJson = serviceObj.UserInput;
+                if (_useHF) funcResponseJson = $"<function_reponse>" + funcResponseJson + "</function_respomse>";
+                funcResponseChatMessage.Content = funcResponseJson;
 
                 // Add the new response to the dictionary
                 _pendingFunctionResponses.TryAdd(serviceObj.FunctionCallId, funcResponseChatMessage);
             }
 
-        
+
             responseServiceObj.LlmMessage = "<Function Response:> " + serviceObj.UserInput + "\n\n";
 
             // Process the LLM output if it's the primary LLM

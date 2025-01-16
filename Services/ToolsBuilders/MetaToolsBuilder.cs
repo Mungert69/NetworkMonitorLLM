@@ -79,16 +79,9 @@ namespace NetworkMonitor.LLM.Services
             string content = "You are an advanced penetration testing assistant specializing in the Metasploit framework. Your primary task is to help users achieve their goals by selecting and configuring the appropriate Metasploit modules based on their requests. "
                            + "You should always prioritize accurate, efficient, and safe operations. Utilize your knowledge of Metasploit to guide users and ensure that each action is aligned with best practices in penetration testing. "
                            + "If the user provides a target, ensure you select the appropriate Metasploit module considering the target's operating system, service, and known vulnerabilities. "
-                           + "Whenever possible, prefer non-destructive information gathering over active exploitation. If an action might be harmful, suggest safer alternatives and warn the user.";
-
-            if (serviceObj.IsUserLoggedIn)
-            {
-                content += $" The user logged in at {currentTime} with email {serviceObj.UserInfo.Email}.";
-            }
-            else
-            {
-                content += $" The user is not logged in, the time is {currentTime}, ask the user for an email to add hosts etc.";
-            }
+                           + "Whenever possible, prefer non-destructive information gathering over active exploitation. If an action might be harmful, suggest safer alternatives and warn the user."
+                           + $" The current time is{currentTime}.";
+           
 
             var chatMessage = ChatMessage.FromSystem(content);
             var chatMessages = new List<ChatMessage>();

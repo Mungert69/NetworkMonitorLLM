@@ -79,14 +79,10 @@ public class HuggingFaceApi : ILLMApi
  "Important: You will call functions only when necessary. Checking with the user before calling more functions.\n" +
  "Important! All json in your responses will be interpreted as a function call. You will only provide json in your responses when you intend to call a function.";
 
-        var chatMessage = new ChatMessage()
-        {
-            Role = "system",
-            Content = header + toolsJson + footer,
-        };
-        var chatMessages = new List<ChatMessage>();
-        chatMessages.Add(chatMessage);
-        return chatMessages;
+    var systemMessages=_toolsBuilder.GetSystemPrompt(currentTime, serviceObj);
+    systemMessages[0].Content=header + toolsJson + systemMessages[0].Content+ footer;
+ 
+    return systemMessages;
     }
 
     public async Task<ChatCompletionCreateResponseSuccess> CreateCompletionAsync(List<ChatMessage> messages, int maxTokens)
@@ -107,11 +103,11 @@ public class HuggingFaceApi : ILLMApi
             };
             string payloadJson = JsonConvert.SerializeObject(payload, Formatting.Indented);
 
-            _logger.LogInformation($"Payload JSON: {payloadJson}");
+            //_logger.LogInformation($"Payload JSON: {payloadJson}");
             var content = new StringContent(payloadJson, Encoding.UTF8, "application/json");
 
             string contentString = await content.ReadAsStringAsync();
-            _logger.LogInformation($"StringContent content: {contentString}");
+            //_logger.LogInformation($"StringContent content: {contentString}");
 
             var response = await _httpClient.PostAsync(_apiUrl, content);
 
@@ -122,7 +118,7 @@ public class HuggingFaceApi : ILLMApi
             }
 
             var responseContent = await response.Content.ReadAsStringAsync();
-            _logger.LogInformation($"Received response: {responseContent}");
+            //_logger.LogInformation($"Received response: {responseContent}");
 
             // Deserialize using Newtonsoft.Json
             var responseObject = JsonConvert.DeserializeObject<HuggingFaceChatResponse>(responseContent);
@@ -131,7 +127,7 @@ public class HuggingFaceApi : ILLMApi
             // Use the broadcaster to parse function calls
             foreach (var choice in responseObject.Choices)
             {
-                _logger.LogInformation($"Parsing function calls for message content: {choice.Message.Content}");
+               // _logger.LogInformation($"Parsing function calls for message content: {choice.Message.Content}");
 
                 // Parse the input using the broadcaster
                 var functionCalls = tokenBroadcaster.ParseInputForJson(choice.Message.Content);
@@ -139,10 +135,10 @@ public class HuggingFaceApi : ILLMApi
                 // Log the parsed results
                 if (functionCalls.Any())
                 {
-                    _logger.LogInformation($"Parsed {functionCalls.Count} function calls.");
+                    //_logger.LogInformation($"Parsed {functionCalls.Count} function calls.");
                     foreach (var fc in functionCalls)
                     {
-                        _logger.LogInformation($"Function call detected - Name: {fc.functionName}, JSON: {fc.json}");
+                        //_logger.LogInformation($"Function call detected - Name: {fc.functionName}, JSON: {fc.json}");
                     }
 
                     // Map the parsed function calls to ToolCalls
@@ -160,8 +156,7 @@ public class HuggingFaceApi : ILLMApi
                     // Log the ToolCalls that were created
                     foreach (var toolCall in choice.Message.ToolCalls)
                     {
-                        _logger.LogInformation($"ToolCall created - Type: {toolCall.Type}, Id: {toolCall.Id}, " +
-                                               $"FunctionName: {toolCall.FunctionCall.Name}, Arguments: {toolCall.FunctionCall.Arguments}");
+                        //_logger.LogInformation($"ToolCall created - Type: {toolCall.Type}, Id: {toolCall.Id}, " + $"FunctionName: {toolCall.FunctionCall.Name}, Arguments: {toolCall.FunctionCall.Arguments}");
                     }
                 }
                 else
