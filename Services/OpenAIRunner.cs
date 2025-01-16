@@ -364,18 +364,15 @@ public class OpenAIRunner : ILLMRunner
             {
                 // Update the existing response with the new content
                 funcResponseChatMessage = existingFuncResponseChatMessage;
-                string funcResponseJson = serviceObj.UserInput;
-                if (_useHF) funcResponseJson = $"<function_reponse>" + funcResponseJson + "</function_respomse>";
-                funcResponseChatMessage.Content = funcResponseJson;
+                funcResponseChatMessage.Content = _llmApi.WrapFunctionResponse(serviceObj.FunctionName,serviceObj.UserInput);
             }
             else
             {
                 // Create a new ChatMessage for the function response if it doesn't exist
                 funcResponseChatMessage = ChatMessage.FromTool("", serviceObj.FunctionCallId);
                 funcResponseChatMessage.Name = serviceObj.FunctionName;
-                string funcResponseJson = serviceObj.UserInput;
-                if (_useHF) funcResponseJson = $"<function_reponse>" + funcResponseJson + "</function_respomse>";
-                funcResponseChatMessage.Content = funcResponseJson;
+                funcResponseChatMessage.Content = _llmApi.WrapFunctionResponse(serviceObj.FunctionName,serviceObj.UserInput);
+            
 
                 // Add the new response to the dictionary
                 _pendingFunctionResponses.TryAdd(serviceObj.FunctionCallId, funcResponseChatMessage);

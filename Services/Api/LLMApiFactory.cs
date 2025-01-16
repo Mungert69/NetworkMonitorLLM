@@ -25,6 +25,7 @@ public interface ILLMApi
 {
     Task<ChatCompletionCreateResponseSuccess> CreateCompletionAsync(List<ChatMessage> messages, int maxTokens );
 List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj);
+ string WrapFunctionResponse(string name, string funcStr);
 }
 
 public static class LLMApiFactory

@@ -9,34 +9,34 @@ using Betalgo.Ranul.OpenAI.ObjectModels.SharedModels;
 using Betalgo.Ranul.OpenAI.ObjectModels.ResponseModels;
 public static class JsonToolsBuilder
 {
- public static string BuildToolsJson(List<ToolDefinition> tools)
-{
-    var toolJsonList = tools.Select(tool => new
+    public static string BuildToolsJson(List<ToolDefinition> tools)
     {
-        name = tool.Function.Name,
-        description = tool.Function.Description,
-        parameters = new
+        var toolJsonList = tools.Select(tool => new
         {
-            type = "object",
-            properties = tool.Function.Parameters?.Properties?
-                .Where(p => p.Value != null) // Exclude null properties
-                .ToDictionary(
-                    param => param.Key,
-                    param => new
-                    {
-                        type = param.Value.Type,
-                        description = param.Value.Description
-                    }
-                )
-        }
-    });
+            name = tool.Function.Name,
+            description = tool.Function.Description,
+            parameters = new
+            {
+                type = "object",
+                properties = tool.Function.Parameters?.Properties?
+                    .Where(p => p.Value != null) // Exclude null properties
+                    .ToDictionary(
+                        param => param.Key,
+                        param => new
+                        {
+                            type = param.Value.Type,
+                            description = param.Value.Description
+                        }
+                    )
+            }
+        });
 
-    // Serialize to JSON and ignore null values
-    return JsonConvert.SerializeObject(toolJsonList, Formatting.Indented, new JsonSerializerSettings
-    {
-        NullValueHandling = NullValueHandling.Ignore
-    });
-}
+        // Serialize to JSON and ignore null values
+        return JsonConvert.SerializeObject(toolJsonList, Formatting.Indented, new JsonSerializerSettings
+        {
+            NullValueHandling = NullValueHandling.Ignore
+        });
+    }
 
 
 }

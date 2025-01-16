@@ -59,35 +59,39 @@ public class HuggingFaceApi : ILLMApi
         _logger.LogInformation($"Initialized Hugging Face API with URL: {_apiUrl}");
     }
 
+    public string WrapFunctionResponse(string name, string funcStr)
+    {
+        return string.Format(_config.FunctionResponse, name, funcStr);
+
+    }
+    private string ToolsWrapper(string toolsStr)
+    {
+        return string.Format(_config.FunctionDefsWrap, toolsStr);
+    }
+
+    private string PromptFooter()
+    {
+        return _config.PromptFooter;
+    }
+
     public List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj)
     {
         string header = "\nHere is a list of functions in JSON format that you can invoke:\n";
 
-        string toolsJson = JsonToolsBuilder.BuildToolsJson(_toolsBuilder.Tools);
+        string toolsJson = ToolsWrapper(JsonToolsBuilder.BuildToolsJson(_toolsBuilder.Tools));
         // List<ChatMessage> systemPrompt=_toolsBuilder.GetSystemPrompt(currentTime, serviceObj);
-       string footer = "Think very carefully before calling functions.\n\n" +
- "If you choose to call a function, ONLY reply in the following format:\n\n" +
- "{\"name\": \"{function_name}\", \"parameters\": {parameters}}\n\n" +
- "Where:\n\n" +
- "    function_name: The name of the function being called.\n" +
- "    parameters: A JSON object where the argument names (keys) are taken from the function definition, and the argument values (values) must be in the correct data types (such as strings, numbers, booleans, etc.) as specified in the function's definition.\n\n" +
- "Notes:\n\n" +
- "    Numbers remain numbers (e.g., 123, 59.5).\n" +
- "    Booleans are true or false, not \"true\" or \"false\".\n" +
- "    Strings are enclosed in quotes (e.g., \"example\").\n" +
- "    Refer to the function definitions to ensure all parameters of the correct types.\n\n" +
- "Important: You will call functions only when necessary. Checking with the user before calling more functions.\n" +
- "Important! All json in your responses will be interpreted as a function call. You will only provide json in your responses when you intend to call a function.";
+        string footer = PromptFooter();
+        var systemMessages = _toolsBuilder.GetSystemPrompt(currentTime, serviceObj);
+        systemMessages[0].Content = header + toolsJson + systemMessages[0].Content + footer;
 
-    var systemMessages=_toolsBuilder.GetSystemPrompt(currentTime, serviceObj);
-    systemMessages[0].Content=header + toolsJson + systemMessages[0].Content+ footer;
- 
-    return systemMessages;
+        return systemMessages;
     }
 
     public async Task<ChatCompletionCreateResponseSuccess> CreateCompletionAsync(List<ChatMessage> messages, int maxTokens)
     {
         var tokenBroadcaster = _config.CreateBroadcaster(null, _logger, false);
+        var toolsJson = JsonToolsBuilder.BuildToolsJson(_toolsBuilder.Tools);
+        var tools = JsonConvert.DeserializeObject<List<object>>(toolsJson);
         try
         {
             var payload = new
@@ -99,12 +103,14 @@ public class HuggingFaceApi : ILLMApi
                     content = m.Content
                 }).ToList(),
                 max_tokens = maxTokens,
-                stream = false
+                stream = false,
+                temperture = 0.1
             };
             string payloadJson = JsonConvert.SerializeObject(payload, Formatting.Indented);
 
-            //_logger.LogInformation($"Payload JSON: {payloadJson}");
+            _logger.LogInformation($"Payload JSON: {payloadJson}");
             var content = new StringContent(payloadJson, Encoding.UTF8, "application/json");
+
 
             string contentString = await content.ReadAsStringAsync();
             //_logger.LogInformation($"StringContent content: {contentString}");
@@ -127,7 +133,7 @@ public class HuggingFaceApi : ILLMApi
             // Use the broadcaster to parse function calls
             foreach (var choice in responseObject.Choices)
             {
-               // _logger.LogInformation($"Parsing function calls for message content: {choice.Message.Content}");
+                // _logger.LogInformation($"Parsing function calls for message content: {choice.Message.Content}");
 
                 // Parse the input using the broadcaster
                 var functionCalls = tokenBroadcaster.ParseInputForJson(choice.Message.Content);

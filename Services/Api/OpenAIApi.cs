@@ -35,6 +35,12 @@ public class OpenAIApi : ILLMApi
         _openAiService = openAiService;
         _toolsBuilder = toolsBuilder;
     }
+
+    public string WrapFunctionResponse(string name, string funcStr){
+        // Do nothing just return
+        return funcStr;
+ 
+    }
     public List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj){
         return _toolsBuilder.GetSystemPrompt(currentTime, serviceObj);
             
