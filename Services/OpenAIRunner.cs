@@ -81,6 +81,7 @@ public class OpenAIRunner : ILLMRunner
     private string _hFKey = "";
     private string _hFUrl = "";
     private string _hfModel = "";
+    private bool _createAudio = false;
 
 #pragma warning disable CS8618
     public OpenAIRunner(ILogger<OpenAIRunner> logger, ILLMResponseProcessor responseProcessor, OpenAIService openAiService, ISystemParamsHelper systemParamsHelper, LLMServiceObj serviceObj, SemaphoreSlim openAIRunnerSemaphore)
@@ -178,6 +179,17 @@ public class OpenAIRunner : ILLMRunner
             _isStateFailed = true;
             throw new Exception($"No TurboLLM {_serviceID} Assistants found for session {serviceObj.SessionId}. Try reloading the Assistant or refreshing the page. If the problems persists contact support@freenetworkmontior.click");
         }
+        if (serviceObj.UserInput == "<|STOP_AUDIO|>") { 
+            _createAudio = false;
+            _logger.LogInformation(" Stopping Create Audio");
+             return; 
+            }
+        if (serviceObj.UserInput == "<|START_AUDIO|>") { 
+            _createAudio = true;
+            _logger.LogInformation(" Starting Create Audio");
+             return; 
+            }
+
         _isPrimaryLlm = serviceObj.IsPrimaryLlm;
         _isSystemLlm = serviceObj.IsSystemLlm;
 
@@ -512,19 +524,34 @@ public class OpenAIRunner : ILLMRunner
         {
             assistantChatMessage.Content = responseChoiceStr;
             responseServiceObj.IsFunctionCallResponse = false;
-            responseServiceObj.LlmMessage = "<Assistant:> " + responseChoiceStr + "\n\n";
             if (_isPrimaryLlm)
             {
-                string audioFilePath = await AudioGenerator.AudioForResponse(responseChoiceStr, _logger);
-
-                await _responseProcessor.ProcessLLMOutputInChunks(responseServiceObj);
-                // Generate audio file for the response
-                
-                if (!string.IsNullOrEmpty(audioFilePath))
+                if (_createAudio)
                 {
-                    responseServiceObj.LlmMessage += $"</audio>{audioFilePath}";
-                    await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+                    bool isFirstChunk = true;
+                    var chunks = AudioGenerator.GetChunksFromText(responseChoiceStr, 500);
+                    foreach (var chunk in chunks)
+                    {
+                        string audioFileUrl = await AudioGenerator.AudioForResponse(chunk, _logger);
+                        if (isFirstChunk)
+                        {
+                            responseServiceObj.LlmMessage = responseChoiceStr+"\n";
+                            await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+                            isFirstChunk = false;
+                        }
+
+                        responseServiceObj.LlmMessage = $"</audio>{audioFileUrl}";
+                        await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+
+                    }
                 }
+                else
+                {
+                    responseServiceObj.LlmMessage = responseChoiceStr;
+                    await _responseProcessor.ProcessLLMOutputInChunks(responseServiceObj);
+
+                }
+
             }
             else
             {
@@ -540,6 +567,8 @@ public class OpenAIRunner : ILLMRunner
         responseServiceObj.LlmMessage = "<end-of-line>";
         if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
     }
+
+
 
 
     private void TruncateTokens(List<ChatMessage> history, LLMServiceObj serviceObj)

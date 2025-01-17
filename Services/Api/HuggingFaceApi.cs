@@ -108,7 +108,7 @@ public class HuggingFaceApi : ILLMApi
             };
             string payloadJson = JsonConvert.SerializeObject(payload, Formatting.Indented);
 
-            _logger.LogInformation($"Payload JSON: {payloadJson}");
+            //_logger.LogInformation($"Payload JSON: {payloadJson}");
             var content = new StringContent(payloadJson, Encoding.UTF8, "application/json");
 
 
