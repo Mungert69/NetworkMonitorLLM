@@ -203,11 +203,11 @@ public class OpenAIRunner : ILLMRunner
 
             if (serviceObj.IsFunctionCallStatus)
             {
-                 canAddFuncMessage = true;
+                canAddFuncMessage = true;
 
                 if (!_useHF)
                 {
-                   
+
                     var fakeFunctionCallId = "call_" + StringUtils.GetNanoid();
 
                     var fakeFunctionCallMessage = ChatMessage.FromAssistant("");
@@ -234,9 +234,10 @@ public class OpenAIRunner : ILLMRunner
                     // Add the fake function response to the message history
                     messageHistory.Add(fakeFunctionResponseMessage);
                 }
-                else{
-                    var systemMessage = ChatMessage.FromAssistant(serviceObj.UserInput);     
-                     messageHistory.Add(systemMessage);
+                else
+                {
+                    var systemMessage = ChatMessage.FromAssistant(serviceObj.UserInput);
+                    messageHistory.Add(systemMessage);
                 }
 
 
@@ -364,15 +365,15 @@ public class OpenAIRunner : ILLMRunner
             {
                 // Update the existing response with the new content
                 funcResponseChatMessage = existingFuncResponseChatMessage;
-                funcResponseChatMessage.Content = _llmApi.WrapFunctionResponse(serviceObj.FunctionName,serviceObj.UserInput)+"\n";
+                funcResponseChatMessage.Content = _llmApi.WrapFunctionResponse(serviceObj.FunctionName, serviceObj.UserInput) + "\n";
             }
             else
             {
                 // Create a new ChatMessage for the function response if it doesn't exist
                 funcResponseChatMessage = ChatMessage.FromTool("", serviceObj.FunctionCallId);
                 funcResponseChatMessage.Name = serviceObj.FunctionName;
-                funcResponseChatMessage.Content = _llmApi.WrapFunctionResponse(serviceObj.FunctionName,serviceObj.UserInput)+"\n";
-            
+                funcResponseChatMessage.Content = _llmApi.WrapFunctionResponse(serviceObj.FunctionName, serviceObj.UserInput) + "\n";
+
 
                 // Add the new response to the dictionary
                 _pendingFunctionResponses.TryAdd(serviceObj.FunctionCallId, funcResponseChatMessage);
@@ -512,7 +513,19 @@ public class OpenAIRunner : ILLMRunner
             assistantChatMessage.Content = responseChoiceStr;
             responseServiceObj.IsFunctionCallResponse = false;
             responseServiceObj.LlmMessage = "<Assistant:> " + responseChoiceStr + "\n\n";
-            if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOuputInChunks(responseServiceObj);
+            if (_isPrimaryLlm)
+            {
+                string audioFilePath = await AudioGenerator.AudioForResponse(responseChoiceStr, _logger);
+
+                await _responseProcessor.ProcessLLMOutputInChunks(responseServiceObj);
+                // Generate audio file for the response
+                
+                if (!string.IsNullOrEmpty(audioFilePath))
+                {
+                    responseServiceObj.LlmMessage += $"</audio>{audioFilePath}";
+                    await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+                }
+            }
             else
             {
                 if (!_isSystemLlm) responseServiceObj.IsFunctionCallResponse = true;

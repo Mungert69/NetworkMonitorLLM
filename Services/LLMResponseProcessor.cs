@@ -23,7 +23,7 @@ public interface ILLMResponseProcessor
 {
     Task ProcessLLMOutput(LLMServiceObj serviceObj);
     Task ProcessLLMOutputError(LLMServiceObj serviceObj);
-    Task ProcessLLMOuputInChunks(LLMServiceObj serviceObj);
+    Task ProcessLLMOutputInChunks(LLMServiceObj serviceObj);
     Task ProcessFunctionCall(LLMServiceObj serviceObj);
     bool AreAllFunctionsProcessed(string messageId);
     void MarkFunctionAsProcessed(LLMServiceObj serviceObj);
@@ -74,7 +74,7 @@ public class LLMResponseProcessor : ILLMResponseProcessor
         //return Task.CompletedTask;
     }
 
-    public async Task ProcessLLMOuputInChunks(LLMServiceObj serviceObj)
+    public async Task ProcessLLMOutputInChunks(LLMServiceObj serviceObj)
     {
 
         char[] delimiters = { ' ', ',', '!', '?', '{', '}', '.', ':' };
