@@ -61,7 +61,7 @@ Instructions for Generating a Blog-Style Conversation Demonstrating Function Cal
         Show at least a few function calls in the blog post.
         Include any relevant parameters in the JSON call—only the parameters you truly need.
         Make sure it reads like a realistic conversation (the user might change their mind, want more data, or edit the setup, etc.).
-"
+";
     var chatMessage = new ChatMessage()
     {
         Role = "system",
