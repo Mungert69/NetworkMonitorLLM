@@ -364,14 +364,14 @@ public class OpenAIRunner : ILLMRunner
             {
                 // Update the existing response with the new content
                 funcResponseChatMessage = existingFuncResponseChatMessage;
-                funcResponseChatMessage.Content = _llmApi.WrapFunctionResponse(serviceObj.FunctionName,serviceObj.UserInput);
+                funcResponseChatMessage.Content = _llmApi.WrapFunctionResponse(serviceObj.FunctionName,serviceObj.UserInput)+"\n";
             }
             else
             {
                 // Create a new ChatMessage for the function response if it doesn't exist
                 funcResponseChatMessage = ChatMessage.FromTool("", serviceObj.FunctionCallId);
                 funcResponseChatMessage.Name = serviceObj.FunctionName;
-                funcResponseChatMessage.Content = _llmApi.WrapFunctionResponse(serviceObj.FunctionName,serviceObj.UserInput);
+                funcResponseChatMessage.Content = _llmApi.WrapFunctionResponse(serviceObj.FunctionName,serviceObj.UserInput)+"\n";
             
 
                 // Add the new response to the dictionary
@@ -560,7 +560,7 @@ public class OpenAIRunner : ILLMRunner
                 tokenCount = CalculateTokens(history);
             }
             // Tidy up in case any tool calls have missing tool responses
-            RemoveUnansweredToolCalls(serviceObj.SessionId);
+            if (!_useHF) RemoveUnansweredToolCalls(serviceObj.SessionId);
 
             // Re-add the system message to the beginning of the list
             history.Insert(0, systemMessage);
@@ -590,7 +590,7 @@ public class OpenAIRunner : ILLMRunner
         if (errorMessage.Contains("did not have response messages"))
         {
             // Attempt to remove the incomplete tool call from memory
-            RemoveUnansweredToolCalls(serviceObj.SessionId);
+            if (!_useHF) RemoveUnansweredToolCalls(serviceObj.SessionId);
             extraMessage = " A tool call was removed. ";
         }
 
