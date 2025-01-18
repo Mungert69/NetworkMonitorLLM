@@ -299,8 +299,9 @@ public class OpenAIRunner : ILLMRunner
 
 
                         addedPlaceHolder = true;
-                        //var placeholderUser = ChatMessage.FromUser($"{serviceObj.UserInput} : us message_id <|{serviceObj.MessageID}|> to track the function calls");
-                        var placeholderUser = ChatMessage.FromUser(serviceObj.UserInput);
+                        ChatMessage placeholderUser;
+                        if (!_useHF) placeholderUser = ChatMessage.FromUser($"{serviceObj.UserInput} : us message_id <|{serviceObj.MessageID}|> to track the function calls");
+                        else placeholderUser = ChatMessage.FromUser(serviceObj.UserInput);
 
                         history.Add(placeholderUser);
                         messageHistory.RemoveAt(0);
