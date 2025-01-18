@@ -548,7 +548,7 @@ public class OpenAIRunner : ILLMRunner
                 }
                 else
                 {
-                    responseServiceObj.LlmMessage = responseChoiceStr;
+                    responseServiceObj.LlmMessage = responseChoiceStr+"\n";
                     await _responseProcessor.ProcessLLMOutputInChunks(responseServiceObj);
 
                 }
