@@ -15,16 +15,14 @@ namespace NetworkMonitor.LLM.Services
     public class AudioGenerator
     {
         private static readonly string _apiEndpoint = "https://devtranscribe.freenetworkmonitor.click/generate_audio";
-        private static  string _baseUrl = "https://freenetworkmonitor.click/output_audio/";
-        private static readonly string _outputDirectory = "/home/mahadeva/code/securefiles/dev/output_audio"; // Centralized property
+        private static  string _baseUrl = "https://devtranscribe.freenetworkmonitor.click/files/";
+        private static readonly string _outputDirectory = "/home/audioservice/code/securefiles/dev/output_audio"; // Centralized property
 
         public static async Task<string> AudioForResponse(string text, ILogger logger, string frontendUrl)
         {
             try
             {
-                if (!string.IsNullOrEmpty(frontendUrl)){
-                    _baseUrl=frontendUrl+"/output_audio/";
-                }
+            
                 var payload = new
                 {
                     text,
