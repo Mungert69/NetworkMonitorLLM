@@ -14,7 +14,7 @@ namespace NetworkMonitor.LLM.Services
 {
     public class AudioGenerator
     {
-        private static readonly string _apiEndpoint = "http://127.0.0.1:5000/generate_audio";
+        private static readonly string _apiEndpoint = "https://devtranscribe.freenetworkmonitor.click/generate_audio";
         private static  string _baseUrl = "https://freenetworkmonitor.click/output_audio/";
         private static readonly string _outputDirectory = "/home/mahadeva/code/securefiles/dev/output_audio"; // Centralized property
 
@@ -149,7 +149,10 @@ namespace NetworkMonitor.LLM.Services
         {
             try
             {
-                using var client = new HttpClient();
+                 using var client = new HttpClient
+        {
+            Timeout = TimeSpan.FromSeconds(5) // Set the timeout to 5 seconds
+        };
                 var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
 
                 var response = await client.PostAsync(_apiEndpoint, content);
