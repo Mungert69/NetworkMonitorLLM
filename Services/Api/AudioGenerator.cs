@@ -1,9 +1,12 @@
 using System;
 using System.Net.Http;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Linq;
+using System.IO;
+
 using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 
@@ -11,28 +14,30 @@ namespace NetworkMonitor.LLM.Services
 {
     public class AudioGenerator
     {
-        private static readonly string ApiEndpoint = "http://127.0.0.1:5000/generate_audio";
-        private static readonly string BaseUrl = "https://devwww.freenetworkmonitor.click/output_audio/";
+        private static readonly string _apiEndpoint = "http://127.0.0.1:5000/generate_audio";
+        private static  string _baseUrl = "https://freenetworkmonitor.click/output_audio/";
         private static readonly string _outputDirectory = "/home/mahadeva/code/securefiles/dev/output_audio"; // Centralized property
 
-        public static async Task<string> AudioForResponse(string text, ILogger logger)
+        public static async Task<string> AudioForResponse(string text, ILogger logger, string frontendUrl)
         {
             try
             {
-                string guid = Guid.NewGuid().ToString();
-                string audioFilePath = $"{_outputDirectory}/output_audio_am_adam_{guid}.wav";
-                string returnUrl = $"{BaseUrl}output_audio_am_adam_{guid}.wav";
-
+                if (!string.IsNullOrEmpty(frontendUrl)){
+                    _baseUrl=frontendUrl+"/output_audio/";
+                }
                 var payload = new
                 {
                     text,
-                    output = audioFilePath
+                    output_dir = _outputDirectory
                 };
 
                 var outputPath = await PostToAudioApiAsync(payload, logger);
 
                 if (!string.IsNullOrEmpty(outputPath))
                 {
+                    string fileName = outputPath.Replace(_outputDirectory, "").TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+
+                    string returnUrl = _baseUrl + fileName;
                     logger.LogInformation($"Audio generated successfully: {returnUrl}");
                     return returnUrl;
                 }
@@ -120,18 +125,24 @@ namespace NetworkMonitor.LLM.Services
 
         private static async Task<string> GenerateAudioForChunkAsync(string chunk, ILogger logger)
         {
-            string guid = Guid.NewGuid().ToString();
-            string audioFilePath = $"{_outputDirectory}/output_audio_am_adam_{guid}.wav";
-            string returnUrl = $"{BaseUrl}output_audio_am_adam_{guid}.wav";
 
             var payload = new
             {
                 text = chunk,
-                output = audioFilePath
+                output_dir = _outputDirectory
             };
 
-            var response = await PostToAudioApiAsync(payload, logger);
-            return !string.IsNullOrEmpty(response) ? returnUrl : string.Empty;
+            var outputPath = await PostToAudioApiAsync(payload, logger);
+
+            if (!string.IsNullOrEmpty(outputPath))
+            {
+                string fileName = outputPath.Replace(_outputDirectory, "").TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+
+                string returnUrl = _baseUrl + fileName;
+                logger.LogInformation($"Audio generated successfully: {returnUrl}");
+                return returnUrl;
+            }
+            return string.Empty;
         }
 
         private static async Task<string> PostToAudioApiAsync(object payload, ILogger logger)
@@ -141,7 +152,7 @@ namespace NetworkMonitor.LLM.Services
                 using var client = new HttpClient();
                 var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
 
-                var response = await client.PostAsync(ApiEndpoint, content);
+                var response = await client.PostAsync(_apiEndpoint, content);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -193,7 +204,6 @@ namespace NetworkMonitor.LLM.Services
 
             return result;
         }
-
 
     }
 }

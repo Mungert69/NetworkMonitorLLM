@@ -82,6 +82,7 @@ public class OpenAIRunner : ILLMRunner
     private string _hFUrl = "";
     private string _hfModel = "";
     private bool _createAudio = false;
+       private string _frontendUrl;
 
 #pragma warning disable CS8618
     public OpenAIRunner(ILogger<OpenAIRunner> logger, ILLMResponseProcessor responseProcessor, OpenAIService openAiService, ISystemParamsHelper systemParamsHelper, LLMServiceObj serviceObj, SemaphoreSlim openAIRunnerSemaphore)
@@ -91,6 +92,7 @@ public class OpenAIRunner : ILLMRunner
         _openAiService = openAiService;
         _openAIRunnerSemaphore = openAIRunnerSemaphore;
         _serviceID = systemParamsHelper.GetSystemParams().ServiceID!;
+        _frontendUrl=systemParamsHelper.GetSystemParams().FrontEndUrl!;
         _maxTokens = systemParamsHelper.GetMLParams().LlmOpenAICtxSize!;
         _responseTokens = systemParamsHelper.GetMLParams().LlmResponseTokens!;
         _hFModelID = systemParamsHelper.GetMLParams().LlmHFModelID!;
@@ -533,7 +535,7 @@ public class OpenAIRunner : ILLMRunner
                     var chunks = AudioGenerator.GetChunksFromText(responseChoiceStr, 500);
                     foreach (var chunk in chunks)
                     {
-                        string audioFileUrl = await AudioGenerator.AudioForResponse(chunk, _logger);
+                        string audioFileUrl = await AudioGenerator.AudioForResponse(chunk, _logger, _frontendUrl);
                         if (isFirstChunk)
                         {
                             responseServiceObj.LlmMessage = responseChoiceStr+"\n";
