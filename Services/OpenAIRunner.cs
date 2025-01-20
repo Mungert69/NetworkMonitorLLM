@@ -306,7 +306,7 @@ public class OpenAIRunner : ILLMRunner
                         if (!_useHF) placeholderUser = ChatMessage.FromUser($"{serviceObj.UserInput} : us message_id <|{serviceObj.MessageID}|> to track the function calls");
                         else placeholderUser = ChatMessage.FromUser(serviceObj.UserInput);
 
-                        history.Add(placeholderUser);
+                        messageHistory.Add(placeholderUser);
                         messageHistory.RemoveAt(0);
 
 
@@ -325,7 +325,7 @@ public class OpenAIRunner : ILLMRunner
                         assistantMessage.Append($" using message_id {serviceObj.MessageID} . Please wait it may take some time to complete.");
                         if (_useHF) assistantMessage = new StringBuilder(copyContent);
                         var placeholderAssistant = ChatMessage.FromAssistant(assistantMessage.ToString());
-                        history.Add(placeholderAssistant);
+                        messageHistory.Add(placeholderAssistant);
 
 
                     }
@@ -336,11 +336,10 @@ public class OpenAIRunner : ILLMRunner
 
 
 
-                    if (!addedPlaceHolder)
-                    {
+                  
                         history.AddRange(messageHistory);
-                        //history.Add(assistantChatMessage);
-                    }
+                        messageHistory=new List<ChatMessage>();
+                   
 
                     TruncateTokens(history, serviceObj);
 
@@ -525,7 +524,7 @@ public class OpenAIRunner : ILLMRunner
         var responseChoiceStr = choice.Message.Content ?? "";
         _logger.LogInformation($"Assistant output : {responseChoiceStr}");
 
-        if (choice.FinishReason == "stop" || choice.FinishReason == "function_call")
+        if (choice.FinishReason == "stop" )
         {
             assistantChatMessage.Content = responseChoiceStr;
             responseServiceObj.IsFunctionCallResponse = false;
