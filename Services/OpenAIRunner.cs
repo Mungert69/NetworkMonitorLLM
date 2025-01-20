@@ -348,7 +348,7 @@ public class OpenAIRunner : ILLMRunner
                 {
                     if (completionResult.Error != null)
                     {
-                        await HandleOpenAIError(serviceObj, completionResult.Error.Message);
+                        await HandleOpenAIError(serviceObj, completionResult.Error.Message, messageHistory, history);
                     }
                 }
                 await _responseProcessor.UpdateTokensUsed(responseServiceObj);
@@ -605,7 +605,7 @@ public class OpenAIRunner : ILLMRunner
                 tokenCount = CalculateTokens(history);
             }
             // Tidy up in case any tool calls have missing tool responses
-            if (!_useHF) RemoveUnansweredToolCalls(serviceObj.SessionId);
+            if (!_useHF) RemoveUnansweredToolCalls(serviceObj.SessionId, history);
 
             // Re-add the system message to the beginning of the list
             history.Insert(0, systemMessage);
@@ -628,16 +628,21 @@ public class OpenAIRunner : ILLMRunner
 
         return tokenCount;
     }
-    private async Task HandleOpenAIError(LLMServiceObj serviceObj, string errorMessage)
+    private async Task HandleOpenAIError(LLMServiceObj serviceObj, string errorMessage, List<ChatMessage> messageHistory, List<ChatMessage> sessionHistory)
     {
         string extraMessage = "";
         // Check if it’s the known “tool_calls did not have response messages” error
+        
+          ChatMessageLogger.LogChatMessages(_logger, sessionHistory, "Chat history before input");
+           ChatMessageLogger.LogChatMessages(_logger, messageHistory, "Attepted addition to chat history");
+       
         if (errorMessage.Contains("did not have response messages"))
         {
             // Attempt to remove the incomplete tool call from memory
-            if (!_useHF) RemoveUnansweredToolCalls(serviceObj.SessionId);
+            if (!_useHF) RemoveUnansweredToolCalls(serviceObj.SessionId, sessionHistory);
             extraMessage = " A tool call was removed. ";
         }
+       
 
         // Optionally send user a friendly error
         var responseObj = new LLMServiceObj(serviceObj)
@@ -649,9 +654,9 @@ public class OpenAIRunner : ILLMRunner
         await _responseProcessor.ProcessLLMOutputError(responseObj);
         _logger.LogError($" {_serviceID} {responseObj.LlmMessage}");
     }
-   private void RemoveUnansweredToolCalls(string sessionId)
+   private void RemoveUnansweredToolCalls(string sessionId, List<ChatMessage> sessionHistory)
 {
-    if (!_sessionHistories.TryGetValue(sessionId, out var sessionHistory))
+    if (sessionHistory==null || sessionHistory.Count()==0)
     {
         _logger.LogWarning($"No history found for session {sessionId} to remove unanswered tool calls.");
         return;
@@ -703,7 +708,6 @@ public class OpenAIRunner : ILLMRunner
     // Log the original history only if unanswered tool calls were found
     if (foundUnansweredCalls)
     {
-        ChatMessageLogger.LogChatMessages(_logger, originalHistory, "Original Chat Message History Before Cleanup");
         ChatMessageLogger.LogChatMessages(_logger, sessionHistory, "Updated Chat Message History After Cleanup");
     }
 }
