@@ -243,6 +243,7 @@ public class OpenAIRunner : ILLMRunner
 
                     // Create a fake function response as if the tool returned a result
                     var fakeFunctionResponseMessage = ChatMessage.FromTool(serviceObj.UserInput, fakeFunctionCallId);
+                    fakeFunctionResponseMessage.Role="tool";
                     fakeFunctionResponseMessage.Name = "are_functions_running";
 
                     // Add the fake function response to the message history
@@ -386,6 +387,7 @@ public class OpenAIRunner : ILLMRunner
             {
                 // Create a new ChatMessage for the function response if it doesn't exist
                 funcResponseChatMessage = ChatMessage.FromTool("", serviceObj.FunctionCallId);
+                funcResponseChatMessage.Role="tool";
                 funcResponseChatMessage.Name = serviceObj.FunctionName;
                 funcResponseChatMessage.Content = _llmApi.WrapFunctionResponse(serviceObj.FunctionName, serviceObj.UserInput) + "\n";
 
