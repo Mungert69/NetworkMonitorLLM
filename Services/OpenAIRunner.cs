@@ -525,7 +525,7 @@ public class OpenAIRunner : ILLMRunner
         var responseChoiceStr = choice.Message.Content ?? "";
         _logger.LogInformation($"Assistant output : {responseChoiceStr}");
 
-        if (choice.FinishReason == "stop")
+        if (choice.FinishReason == "stop" || choice.FinishReason == "function_call")
         {
             assistantChatMessage.Content = responseChoiceStr;
             responseServiceObj.IsFunctionCallResponse = false;
