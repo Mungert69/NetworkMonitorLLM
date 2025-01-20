@@ -9,48 +9,60 @@ using System.IO;
 
 using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
+using NetworkMonitor.Utils.Helpers;
 
 namespace NetworkMonitor.LLM.Services
 {
-    public class AudioGenerator
+    public class AudioGenerator : IAudioGenerator
     {
-        private static readonly string _apiEndpoint = "https://devtranscribe.freenetworkmonitor.click/generate_audio";
-        private static  string _baseUrl = "https://devtranscribe.freenetworkmonitor.click/files/";
-        private static readonly string _outputDirectory = "/home/audioservice/code/securefiles/dev/output_audio"; // Centralized property
+        private string _apiEndpoint = "";
+        private string _baseUrl = "";
+        private string _outputDirectory = ""; // Centralized property
+        private string _frontendUrl = "";
+        private ILogger _logger;
+        public AudioGenerator(ILogger<OpenAIRunner> logger, ISystemParamsHelper systemParamsHelper)
+        {
+            _apiEndpoint = systemParamsHelper.GetSystemParams().AudioServiceUrl + "/generate_audio";
+            _baseUrl = systemParamsHelper.GetSystemParams().AudioServiceUrl + "/files";
+            _outputDirectory = systemParamsHelper.GetSystemParams().AudioServiceOutputDir;
+            _frontendUrl = systemParamsHelper.GetSystemParams().FrontEndUrl;
+            _logger = logger;
+        }
 
-        public static async Task<string> AudioForResponse(string text, ILogger logger, string frontendUrl)
+
+        public async Task<string> AudioForResponse(string text)
         {
             try
             {
-            
+
                 var payload = new
                 {
                     text,
                     output_dir = _outputDirectory
                 };
 
-                var outputPath = await PostToAudioApiAsync(payload, logger);
+                var outputPath = await PostToAudioApiAsync(payload);
 
                 if (!string.IsNullOrEmpty(outputPath))
                 {
                     string fileName = outputPath.Replace(_outputDirectory, "").TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
 
                     string returnUrl = _baseUrl + fileName;
-                    logger.LogInformation($"Audio generated successfully: {returnUrl}");
+                    _logger.LogInformation($"Audio generated successfully: {returnUrl}");
                     return returnUrl;
                 }
 
-                logger.LogError("Audio generation failed for single response.");
+                _logger.LogError("Audio generation failed for single response.");
                 return string.Empty;
             }
             catch (Exception ex)
             {
-                logger.LogError($"Error generating audio: {ex.Message}");
+                _logger.LogError($"Error generating audio: {ex.Message}");
                 return string.Empty;
             }
         }
 
-        public static List<string> GetChunksFromText(string text, int maxLength = 500)
+        public List<string> GetChunksFromText(string text, int maxLength = 500)
         {
             // Split text into paragraphs or logical chunks
             var chunks = text.Split(new[] { "\n\n", "\n" }, StringSplitOptions.RemoveEmptyEntries)
@@ -76,7 +88,7 @@ namespace NetworkMonitor.LLM.Services
             return resultChunks;
         }
 
-        public static async Task<List<string>> AudioForResponseChunks(string text, ILogger logger)
+        public async Task<List<string>> AudioForResponseChunks(string text)
         {
             var audioUrls = new List<string>();
 
@@ -96,7 +108,7 @@ namespace NetworkMonitor.LLM.Services
                         var subChunks = SplitByWordLimit(chunk, 500);
                         foreach (var subChunk in subChunks)
                         {
-                            var responseUrl = await GenerateAudioForChunkAsync(subChunk, logger);
+                            var responseUrl = await GenerateAudioForChunkAsync(subChunk);
                             if (!string.IsNullOrEmpty(responseUrl))
                             {
                                 audioUrls.Add(responseUrl);
@@ -105,7 +117,7 @@ namespace NetworkMonitor.LLM.Services
                     }
                     else
                     {
-                        var responseUrl = await GenerateAudioForChunkAsync(chunk, logger);
+                        var responseUrl = await GenerateAudioForChunkAsync(chunk);
                         if (!string.IsNullOrEmpty(responseUrl))
                         {
                             audioUrls.Add(responseUrl);
@@ -115,13 +127,13 @@ namespace NetworkMonitor.LLM.Services
             }
             catch (Exception ex)
             {
-                logger.LogError($"Error generating audio for chunks: {ex.Message}");
+                _logger.LogError($"Error generating audio for chunks: {ex.Message}");
             }
 
             return audioUrls;
         }
 
-        private static async Task<string> GenerateAudioForChunkAsync(string chunk, ILogger logger)
+        private async Task<string> GenerateAudioForChunkAsync(string chunk)
         {
 
             var payload = new
@@ -130,27 +142,28 @@ namespace NetworkMonitor.LLM.Services
                 output_dir = _outputDirectory
             };
 
-            var outputPath = await PostToAudioApiAsync(payload, logger);
+            var outputPath = await PostToAudioApiAsync(payload);
 
             if (!string.IsNullOrEmpty(outputPath))
             {
-                string fileName = outputPath.Replace(_outputDirectory, "").TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                string fileName = outputPath.Replace(_outputDirectory, "");
+                fileName= fileName.TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
 
                 string returnUrl = _baseUrl + fileName;
-                logger.LogInformation($"Audio generated successfully: {returnUrl}");
+                _logger.LogInformation($"Audio generated successfully: {returnUrl}");
                 return returnUrl;
             }
             return string.Empty;
         }
 
-        private static async Task<string> PostToAudioApiAsync(object payload, ILogger logger)
+        private async Task<string> PostToAudioApiAsync(object payload)
         {
             try
             {
-                 using var client = new HttpClient
-        {
-            Timeout = TimeSpan.FromSeconds(5) // Set the timeout to 5 seconds
-        };
+                using var client = new HttpClient
+                {
+                    Timeout = TimeSpan.FromSeconds(5) // Set the timeout to 5 seconds
+                };
                 var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
 
                 var response = await client.PostAsync(_apiEndpoint, content);
@@ -160,7 +173,7 @@ namespace NetworkMonitor.LLM.Services
                     var result = await response.Content.ReadAsStringAsync();
                     var responseData = JsonSerializer.Deserialize<Dictionary<string, string>>(result);
 
-                    if (responseData != null && responseData.TryGetValue("output_path", out var outputPath))
+                    if (responseData != null && responseData.TryGetValue("output_path", out string outputPath))
                     {
                         return outputPath; // Return actual output path
                     }
@@ -168,17 +181,17 @@ namespace NetworkMonitor.LLM.Services
                 else
                 {
                     var error = await response.Content.ReadAsStringAsync();
-                    logger.LogError($"Audio API request failed: {error}");
+                    _logger.LogError($"Audio API request failed: {error}");
                 }
             }
             catch (Exception ex)
             {
-                logger.LogError($"Error sending request to audio API: {ex.Message}");
+                _logger.LogError($"Error sending request to audio API: {ex.Message}");
             }
 
             return string.Empty;
         }
-        private static List<string> SplitByWordLimit(string text, int maxLength)
+        private List<string> SplitByWordLimit(string text, int maxLength)
         {
             var words = text.Split(' ');
             var result = new List<string>();

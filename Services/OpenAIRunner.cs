@@ -82,18 +82,17 @@ public class OpenAIRunner : ILLMRunner
     private string _hFUrl = "";
     private string _hfModel = "";
     private bool _createAudio = false;
-       private string _frontendUrl;
+    private IAudioGenerator _audioGenerator;
 
 #pragma warning disable CS8618
-    public OpenAIRunner(ILogger<OpenAIRunner> logger, ILLMResponseProcessor responseProcessor, OpenAIService openAiService, ISystemParamsHelper systemParamsHelper, LLMServiceObj serviceObj, SemaphoreSlim openAIRunnerSemaphore)
+    public OpenAIRunner(ILogger<OpenAIRunner> logger, ILLMResponseProcessor responseProcessor, OpenAIService openAiService, ISystemParamsHelper systemParamsHelper, LLMServiceObj serviceObj, SemaphoreSlim openAIRunnerSemaphore, IAudioGenerator audioGenerator)
     {
         _logger = logger;
         _responseProcessor = responseProcessor;
         _openAiService = openAiService;
         _openAIRunnerSemaphore = openAIRunnerSemaphore;
         _serviceID = systemParamsHelper.GetSystemParams().ServiceID!;
-        _frontendUrl=systemParamsHelper.GetSystemParams().FrontEndUrl!;
-        _maxTokens = systemParamsHelper.GetMLParams().LlmOpenAICtxSize!;
+         _maxTokens = systemParamsHelper.GetMLParams().LlmOpenAICtxSize!;
         _responseTokens = systemParamsHelper.GetMLParams().LlmResponseTokens!;
         _hFModelID = systemParamsHelper.GetMLParams().LlmHFModelID!;
         _hFKey = systemParamsHelper.GetMLParams().LlmHFKey!;
@@ -123,6 +122,7 @@ public class OpenAIRunner : ILLMRunner
         _maxTokens = AccountTypeFactory.GetAccountTypeByName(serviceObj.UserInfo.AccountType!).ContextSize;
         _activeSessions = new ConcurrentDictionary<string, DateTime>();
         _sessionHistories = new ConcurrentDictionary<string, List<ChatMessage>>();
+        _audioGenerator=audioGenerator;
 
     }
 #pragma warning restore CS8618
@@ -532,10 +532,10 @@ public class OpenAIRunner : ILLMRunner
                 if (_createAudio)
                 {
                     bool isFirstChunk = true;
-                    var chunks = AudioGenerator.GetChunksFromText(responseChoiceStr, 500);
+                    var chunks = _audioGenerator.GetChunksFromText(responseChoiceStr, 500);
                     foreach (var chunk in chunks)
                     {
-                        string audioFileUrl = await AudioGenerator.AudioForResponse(chunk, _logger, _frontendUrl);
+                        string audioFileUrl = await _audioGenerator.AudioForResponse(chunk);
                         if (isFirstChunk)
                         {
                             responseServiceObj.LlmMessage = responseChoiceStr+"\n";

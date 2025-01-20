@@ -46,10 +46,11 @@ public class LLMProcessRunner : ILLMRunner
     public int LlmLoad { get => _llmLoad; set => _llmLoad = value; }
 
     public event Action<int, string> LoadChanged;
+    private IAudioGenerator _audioGenerator;
 
     private ConcurrentDictionary<string, StringBuilder?> _assistantMessages = new ConcurrentDictionary<string, StringBuilder?>();
 
-    public LLMProcessRunner(ILogger<LLMProcessRunner> logger, ILLMResponseProcessor responseProcessor, ISystemParamsHelper systemParamsHelper, LLMServiceObj startServiceObj, SemaphoreSlim processRunnerSemaphore)
+    public LLMProcessRunner(ILogger<LLMProcessRunner> logger, ILLMResponseProcessor responseProcessor, ISystemParamsHelper systemParamsHelper, LLMServiceObj startServiceObj, SemaphoreSlim processRunnerSemaphore, IAudioGenerator audioGenerator)
     {
         _logger = logger;
         _responseProcessor = responseProcessor;
@@ -57,6 +58,7 @@ public class LLMProcessRunner : ILLMRunner
         _mlParams = systemParamsHelper.GetMLParams();
         _serviceID = systemParamsHelper.GetSystemParams().ServiceID!;
         _processRunnerSemaphore = processRunnerSemaphore;
+        _audioGenerator= audioGenerator;
         _idleCheckTimer = new Timer(async _ => await CheckAndTerminateIdleProcesses(), null, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
         _isEnabled = _mlParams.StartThisFreeLLM;
     }

@@ -61,7 +61,7 @@ namespace NetworkMonitor.LLM
             services.AddSingleton(
                     openAiService
             );
-
+            services.AddSingleton<IAudioGenerator, AudioGenerator>();
             services.AddSingleton<IRabbitListener, RabbitListener>();
             services.AddSingleton<IRabbitRepo, RabbitRepo>();
             services.AddSingleton<IFileRepo, FileRepo>();
