@@ -33,8 +33,8 @@ namespace NetworkMonitor.LLM.Services
                 {
                     "user" => "User:",
                     "assistant" => "Assistant:",
-                    "tool" => "ToolCall:",
-                    _ => "ToolResponse:"
+                    "tool" => "ToolResponse:",
+                    _ => "Unknown:"
                 };
 
                 logBuilder.AppendLine($"{label} {message.Content}");
