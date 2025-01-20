@@ -23,7 +23,7 @@ namespace NetworkMonitor.LLM.Services
         public AudioGenerator(ILogger<OpenAIRunner> logger, ISystemParamsHelper systemParamsHelper)
         {
             _apiEndpoint = systemParamsHelper.GetSystemParams().AudioServiceUrl + "/generate_audio";
-            _baseUrl = systemParamsHelper.GetSystemParams().AudioServiceUrl + "/files";
+            _baseUrl = systemParamsHelper.GetSystemParams().AudioServiceUrl + "/files/";
             _outputDirectory = systemParamsHelper.GetSystemParams().AudioServiceOutputDir;
             _frontendUrl = systemParamsHelper.GetSystemParams().FrontEndUrl;
             _logger = logger;
