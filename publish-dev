@@ -4,5 +4,5 @@ sudo ./publish-eu-search
 sudo ./publish-eu-monitor
 sudo ./publish-eu-cmdprocessor
 #sudo ./publish-eu-reportdata-dev
-#sudo ./publish-eu-blogmonitor-dev
+sudo ./publish-eu-blogmonitor
 
