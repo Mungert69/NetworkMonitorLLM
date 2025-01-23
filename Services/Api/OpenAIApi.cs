@@ -25,37 +25,76 @@ namespace NetworkMonitor.LLM.Services;
 public class OpenAIApi : ILLMApi
 {
     private readonly OpenAIService _openAiService;
-     private IToolsBuilder _toolsBuilder;
-     private string _gptModel = "gpt-4o-mini";
+    private IToolsBuilder _toolsBuilder;
+    private string _gptModel = "gpt-4o-mini";
+    private ILogger _logger;
 
 
-    public OpenAIApi(OpenAIService openAiService, IToolsBuilder toolsBuilder, string gptModel)
+    public OpenAIApi(ILogger logger, OpenAIService openAiService, IToolsBuilder toolsBuilder, string gptModel)
     {
-        _gptModel= gptModel;
+        _gptModel = gptModel;
+        _logger=logger;
         _openAiService = openAiService;
         _toolsBuilder = toolsBuilder;
     }
 
-    public string WrapFunctionResponse(string name, string funcStr){
+    public string WrapFunctionResponse(string name, string funcStr)
+    {
         // Do nothing just return
         return funcStr;
- 
+
     }
-    public List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj){
+    public List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj)
+    {
         return _toolsBuilder.GetSystemPrompt(currentTime, serviceObj);
-            
+
     }
 
     public async Task<ChatCompletionCreateResponseSuccess> CreateCompletionAsync(List<ChatMessage> messages, int maxTokens)
     {
-        var chatResponse= await _openAiService.ChatCompletion.CreateCompletion(new ChatCompletionCreateRequest
+        try
         {
-            Messages = messages,
-            MaxTokens = maxTokens,
-            Model = _gptModel,
-            Tools = _toolsBuilder.Tools,
-            ToolChoice = _toolsBuilder.Tools != null ? ToolChoice.Auto : ToolChoice.None
-        });
-        return new ChatCompletionCreateResponseSuccess(){Success=chatResponse.Successful, Response=chatResponse};
+            var chatResponse = await _openAiService.ChatCompletion.CreateCompletion(new ChatCompletionCreateRequest
+            {
+                Messages = messages,
+                MaxTokens = maxTokens,
+                Model = _gptModel,
+                Tools = _toolsBuilder.Tools,
+                ToolChoice = _toolsBuilder.Tools != null ? ToolChoice.Auto : ToolChoice.None
+            });
+            return new ChatCompletionCreateResponseSuccess() { Success = chatResponse.Successful, Response = chatResponse };
+
+        }
+      catch (Exception ex)
+{
+    _logger.LogError($"Exception in CreateCompletionAsync: {ex.Message}");
+
+    // Create a ChatCompletionCreateResponse with error details
+    var errorChatResponse = new ChatCompletionCreateResponse
+    {
+        Id = Guid.NewGuid().ToString(),
+        Model = _gptModel,
+        Choices = new List<ChatChoiceResponse>(),
+        Usage = new UsageResponse
+        {
+            PromptTokens = 0,
+            CompletionTokens = 0,
+            TotalTokens = 0
+        },
+        Error = new Error
+        {
+            MessageObject = ex.Message,
+            Type = "Exception",
+            Code = "500"
+        }
+    };
+
+    return new ChatCompletionCreateResponseSuccess
+    {
+        Success = false,
+        Response = errorChatResponse
+    };
+}
+
     }
 }

@@ -113,7 +113,7 @@ public class OpenAIRunner : ILLMRunner
 
         if (!_useHF)
         {
-            _llmApi = new OpenAIApi(_openAiService, toolsBuilder, _gptModel);
+            _llmApi = new OpenAIApi(_logger, _openAiService, toolsBuilder, _gptModel);
         }
         else
         {
@@ -246,7 +246,7 @@ public class OpenAIRunner : ILLMRunner
                     ChatChoiceResponse choice = completionResult.Choices.First();
                     if (choice.Message.ToolCalls != null && choice.Message.ToolCalls.Any())
                     {
-                        await HandleFunctionProcessing(serviceObj, choice.Message, messageHistory,responseServiceObj, assistantChatMessage);
+                        await HandleFunctionProcessing(serviceObj, choice.Message, messageHistory, responseServiceObj, assistantChatMessage);
                     }
                     else
                     {
@@ -454,23 +454,43 @@ public class OpenAIRunner : ILLMRunner
         {
             json = JsonSerializer.Serialize(fn!.ParseArguments());
         }
+        catch (JsonException e)
+        {
+            isValidJson = false;
+            json = JsonSerializer.Serialize(new
+            {
+                invalid_json_error = e.Message,
+                path = e.Path,
+                line_number = e.LineNumber,
+                byte_position_in_line = e.BytePositionInLine,
+                hint = "Check the structure and format of the JSON data."
+            });
+        }
         catch (Exception e)
         {
             isValidJson = false;
-            json = $"{{\"invalid_json_error\" : \"{e.Message}\"}}";
+            string errorMessage = JsonSerializer.Serialize(e.Message);
+            json = $"{{\"invalid_json_error\" : \"{errorMessage}\"}}";
+
         }
+        if (isValidJson) _logger.LogError($" Error : invald json from model. Sending json error : {json}");
 
         responseServiceObj.UserInput = serviceObj.UserInput;
         responseServiceObj.LlmMessage = "</functioncall>";
         if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
 
-        var functionResponseServiceObj = new LLMServiceObj(serviceObj)
+        LLMServiceObj functionResponseServiceObj ;
+        if (isValidJson) functionResponseServiceObj = new LLMServiceObj(serviceObj,fs => fs.SetAsCall())
         {
-            IsFunctionCallError = !isValidJson,
-            IsFunctionCall = true,
             JsonFunction = json,
             FunctionName = functionName
         };
+        else functionResponseServiceObj = new LLMServiceObj(serviceObj,fs => fs.SetAsCallError())
+        {
+            JsonFunction = json,
+            FunctionName = functionName
+        };
+       
         _logger.LogInformation($" Sending json: {json}");
 
         await _responseProcessor.ProcessFunctionCall(functionResponseServiceObj);
@@ -489,7 +509,7 @@ public class OpenAIRunner : ILLMRunner
         if (choice.FinishReason == "stop")
         {
             assistantChatMessage.Content = responseChoiceStr;
-            responseServiceObj.IsFunctionCallResponse = false;
+            responseServiceObj.SetAsNotCall();
             if (_isPrimaryLlm)
             {
                 if (_createAudio)
@@ -521,7 +541,7 @@ public class OpenAIRunner : ILLMRunner
             }
             else
             {
-                if (!_isSystemLlm) responseServiceObj.IsFunctionCallResponse = true;
+                if (!_isSystemLlm) responseServiceObj.SetAsResponseComplete();
                 responseServiceObj.LlmMessage = responseChoiceStr;
                 await _responseProcessor.ProcessLLMOutput(responseServiceObj);
             }
@@ -608,10 +628,9 @@ public class OpenAIRunner : ILLMRunner
 
 
         // Optionally send user a friendly error
-        var responseObj = new LLMServiceObj(serviceObj)
+        var responseObj = new LLMServiceObj(serviceObj, fs => fs.SetAsResponseErrorComplete())
         {
             LlmMessage = $"I encountered an error when calling TurboLLM.{extraMessage}\nError detail: {errorMessage}",
-            IsFunctionCallResponse = true
         };
         // If this is the “primary” or “system” LLM, do
         await _responseProcessor.ProcessLLMOutputError(responseObj);

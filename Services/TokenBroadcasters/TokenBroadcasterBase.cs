@@ -197,9 +197,8 @@ namespace NetworkMonitor.LLM.Services
                         extraMessage += " From System LLM ";
                     }
                     else llmOutput = llmOutput.Replace("\n", " ");
-                    var finalServiceObj = new LLMServiceObj(serviceObj);
+                    var finalServiceObj = new LLMServiceObj(serviceObj, fs => fs.SetAsResponseComplete());
                     finalServiceObj.LlmMessage = llmOutput;
-                    finalServiceObj.IsFunctionCallResponse = true;
                     await _responseProcessor.ProcessLLMOutput(finalServiceObj);
                     _logger.LogInformation($" --> Sent redirected LLM Output {extraMessage}{finalServiceObj.LlmMessage}");
                 }
@@ -262,8 +261,7 @@ namespace NetworkMonitor.LLM.Services
                     responseServiceObj.LlmMessage = "</functioncall>";
                     await SendLLMPrimary(responseServiceObj);
                     responseServiceObj.LlmMessage = "";
-                    responseServiceObj.IsFunctionCall = true;
-                    responseServiceObj.IsFunctionCallResponse = false;
+                    responseServiceObj.SetAsCall();
                     responseServiceObj.JsonFunction = jsonArguments;
                     responseServiceObj.FunctionName = functionName;
                     responseServiceObj.IsProcessed = false;

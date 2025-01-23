@@ -85,10 +85,8 @@ public class TokenBroadcasterFunc_2_4 : TokenBroadcasterBase
                 }
                 catch { }
 
-                var finalServiceObj = new LLMServiceObj(serviceObj);
+                var finalServiceObj = new LLMServiceObj(serviceObj, fs => fs.SetAsResponseComplete());
                 finalServiceObj.LlmMessage = llmOutput;
-                finalServiceObj.IsFunctionCall = false;
-                finalServiceObj.IsFunctionCallResponse = true;
                 await SendLLM(finalServiceObj);
                 _logger.LogInformation($" --> Sent redirected LLM Output {finalServiceObj.LlmMessage}");
             }
@@ -224,23 +222,20 @@ public class TokenBroadcasterFunc_2_4 : TokenBroadcasterBase
                 _logger.LogInformation($" ProcessLLMOutput(call_func) -> {jsonLine}");
                 //responseServiceObj = new LLMServiceObj() { SessionId = sessionId, UserInput = userInput, SourceLlm = sourceLlm, DestinationLlm = destinationLlm };
                 responseServiceObj.LlmMessage = "</functioncall>";
-                if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+                responseServiceObj.SetAsCall();
+                if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);         
                 else
                 {
-                    var forwardFuncServiceObj = new LLMServiceObj(responseServiceObj);
+                    var forwardFuncServiceObj = new LLMServiceObj(responseServiceObj,fs => fs.SetAsResponseRunning());
                     forwardFuncServiceObj.LlmMessage = $"Please wait calling function. Be patient this may take some time";
-                    forwardFuncServiceObj.IsFunctionCall = false;
-                    forwardFuncServiceObj.IsFunctionCallResponse = true;
                     forwardFuncServiceObj.FunctionName = messageSegment.Recipient;
                     // await _responseProcessor.ProcessLLMOutput(forwardFuncServiceObj);
                     // _logger.LogInformation($" --> Sent redirected LLM Function Output {forwardFuncServiceObj.LlmMessage}");
 
                 }
                 responseServiceObj.LlmMessage = "";
-                responseServiceObj.IsFunctionCall = true;
                 responseServiceObj.JsonFunction = jsonFunction;
                 responseServiceObj.FunctionName = messageSegment.Recipient;
-                //responseServiceObj.JsonFunction = CallFuncJson(cleanLine);
                 await _responseProcessor.ProcessFunctionCall(responseServiceObj);
                 _isFuncCalled = true;
             }

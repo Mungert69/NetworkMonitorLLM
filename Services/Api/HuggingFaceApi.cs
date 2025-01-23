@@ -27,11 +27,6 @@ using Newtonsoft.Json;
 
 namespace NetworkMonitor.LLM.Services;
 
-public class ChatCompletionCreateResponseSuccess
-{
-    public bool Success { get; set; }
-    public ChatCompletionCreateResponse Response { get; set; }
-}
 
 public class HuggingFaceApi : ILLMApi
 {
@@ -206,10 +201,37 @@ public class HuggingFaceApi : ILLMApi
             return new ChatCompletionCreateResponseSuccess { Success = true, Response = chatResponse };
         }
         catch (Exception ex)
+{
+    _logger.LogError($"Exception in CreateCompletionAsync: {ex.Message}");
+
+    // Create a ChatCompletionCreateResponse with error details
+    var errorChatResponse = new ChatCompletionCreateResponse
+    {
+        Id = Guid.NewGuid().ToString(),
+        Model = _modelID,
+        Choices = new List<ChatChoiceResponse>(),
+        Usage = new UsageResponse
         {
-            _logger.LogError($"Exception in CreateCompletionAsync: {ex.Message}");
-            return new ChatCompletionCreateResponseSuccess { Success = false };
+            PromptTokens = 0,
+            CompletionTokens = 0,
+            TotalTokens = 0
+        },
+        Error = new Error
+        {
+            MessageObject = ex.Message,
+            Type = "Exception",
+            Code = "500"
         }
+    };
+
+    return new ChatCompletionCreateResponseSuccess
+    {
+        Success = false,
+        Response = errorChatResponse
+    };
+}
+
+
     }
 }
 

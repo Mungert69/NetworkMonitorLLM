@@ -184,7 +184,8 @@ public class LLMProcessRunner : ILLMRunner
         );
 
         serviceObj.UserInput = functionResponse;
-        serviceObj.IsFunctionCallResponse = false;
+        // We have to set it as a not call as the function call is already in the history or context. so this is just user input as a function response 
+        serviceObj.SetAsNotCall();
         _sendOutput = false;
         if (!_mlParams.LlmNoInitMessage) await SendInputAndGetResponse(serviceObj);
 

@@ -152,8 +152,7 @@ public class LLMResponseProcessor : ILLMResponseProcessor
             {
                 trackedServiceObj.IsProcessed = true;
                 trackedServiceObj.UserInput = serviceObj.UserInput;
-                trackedServiceObj.IsFunctionCallResponse = true;
-                trackedServiceObj.IsFunctionCall = false;
+                trackedServiceObj.SetAsResponseComplete();
                 trackedServiceObj.FunctionName = serviceObj.FunctionName;
             }
         }
