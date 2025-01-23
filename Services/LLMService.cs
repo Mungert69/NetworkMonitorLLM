@@ -366,7 +366,7 @@ public class LLMService : ILLMService
                     };
                 }
                 // Optionally log the updated load counts
-                _logger.LogInformation($"Sent Load Update to {llmType} LLM : {session.Runner.LlmLoad} ");
+                //_logger.LogInformation($"Sent Load Update to {llmType} LLM : {session.Runner.LlmLoad} ");
 
             }
         }

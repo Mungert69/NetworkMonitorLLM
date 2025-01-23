@@ -204,7 +204,7 @@ public class OpenAIRunner : ILLMRunner
             return;
         }*/
 
-        _logger.LogInformation("Sending input and waiting for response...");
+        _logger.LogInformation($"Received INPUT -> \n\n {serviceObj.UserInput} \n\n");
 
 
         try
