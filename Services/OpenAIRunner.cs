@@ -197,12 +197,12 @@ public class OpenAIRunner : ILLMRunner
         _isPrimaryLlm = serviceObj.IsPrimaryLlm;
         _isSystemLlm = serviceObj.IsSystemLlm;
 
-        if (serviceObj.IsFunctionStillRunning && _isPrimaryLlm)
+        /*if (serviceObj.IsFunctionStillRunning && _isPrimaryLlm)
         {
             //TODO work out how to use function still running messages
             _logger.LogInformation("Ignoring FunctionStillRunning message for non PrimaryLLM.");
             return;
-        }
+        }*/
 
         _logger.LogInformation("Sending input and waiting for response...");
 
