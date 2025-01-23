@@ -55,7 +55,7 @@ namespace NetworkMonitor.LLM.Services
             // Define add_cmd_processor
             fn_add_cmd_processor = new FunctionDefinitionBuilder("add_cmd_processor", "Add or update a cmd processor with provided source code to an agent.")
                 .AddParameter("cmd_processor_type", PropertyDefinition.DefineString("The name of the cmd processor to add. Use this name when referencing the processor later."))
-                .AddParameter("source_code", PropertyDefinition.DefineString("The .NET source code implementing the cmd processor. Must extend CmdProcessor base class. Make sure to include all using statements, methods and supporting classes. ENSURE that this fields value is accurately formatted and escaped according to JSON standards."))
+                .AddParameter("source_code", PropertyDefinition.DefineString("The .NET source code implementing the cmd processor. Must extend CmdProcessor base class. Make sure to include all using statements, methods and supporting classes. ENSURE that this fields value is accurately formatted and escaped to make it a valid json string."))
                 .AddParameter("agent_location", PropertyDefinition.DefineString("The location of the agent to which this cmd processor will be added."))
                 .Validate()
                 .Build();
@@ -91,7 +91,7 @@ namespace NetworkMonitor.LLM.Services
             // Construct the system content from the original prompt instructions
             string contentPart1 =
 @"You are an AI-powered assistant that creates and interacts with Command Processors. 
-A Command Processor is a .NET class that runs on an agent and can be invoked via defined functions.
+A Command Processor is a .NET class that runs on an agent and can be invoked via run_cmd_processor.
 
 **.NET Source Code in add_cmd_processor**:
 When adding a cmd processor, supply its source code in the 'source_code' parameter. The code must inherit from the base class CmdProcessor
@@ -204,7 +204,7 @@ namespace NetworkMonitor.Connection
         }
 
         // You can use this helper method in your cmd processor for argument parsing
-                protected virtual Dictionary<string, string> ParseArguments(string arguments)
+        protected virtual Dictionary<string, string> ParseArguments(string arguments)
         {
             var args = new Dictionary<string, string>();
             var regex = new Regex(@""--(?<key>\w+)\s+(?<value>[^\s]+)"");
@@ -227,18 +227,13 @@ namespace NetworkMonitor.Connection
 }
 
 ";
-            string contentPart2;
-            string tempContent;
+            string contentPart2="";
+            string source_code;
             try
             {
-                tempContent = File.ReadAllText(Path.Combine("Examples","Example.cs"));
-                if (string.IsNullOrWhiteSpace(tempContent))
-                {
-                    contentPart2 = "";
-                }
-                else
-                {
-                    contentPart2 = "Here is an example implementation: " + tempContent;
+                source_code = File.ReadAllText(Path.Combine("Examples","Example.cs"));
+                if (string.IsNullOrEmpty(source_code)) {source_code = System.Text.Json.JsonSerializer.Serialize(source_code);                    
+                contentPart2 = $"Here is an example add_cmd_processor function call. The example is a fully json formatted function call to create a cmd processor called FTPConnectionTester with escaped source_code and using a typical users agent_location 'user@memail.com-localhost' : {{ \"source_code\" : {source_code} , \"agent_location\" : \"user@email.com-locahost\" , \"cmd_processor_type\" : \"FTPConnectionTester\"}} Note how the source_code parameter is an escaped version of the original .net source code in order to make it a valid json string.\n";
                 }
             }
             catch (Exception ex)
@@ -250,13 +245,15 @@ namespace NetworkMonitor.Connection
 Also make sure not to include word CmdProcessor in the cmd_processor_type. For example if you want to call the cmd processor HttpTest then cmd_processor_type is HttpTest and the class name is HttpTestCmdProcessor.
 Use _rootFolder for file operations as this has read write access. Try and implement the CancellationToken cancellationToken to make sure the command can be cancelled.
 
-If the user requests to add a cmd processor, produce a call to add_cmd_processor with the cmd_processor_type, the agent_location, and the .NET source code correctly escaped for json.
+If the user requests to add a cmd processor, call the function add_cmd_processor with parameters cmd_processor_type, the agent_location, and the .NET source code correctly escaped as a json string.
 
-If the user wants to run, delete, or get help from a cmd processor, use the corresponding tools with the correct parameters.
+The user can also: delete a cmd processor (delete_cmd_processor), or get the help file for a cmd processor (get_cmd_processor_help), view the .net source code that the cmd processor runs (get_cmd_processor_source_code) and run a cmd processor (run_cmd_processor).
 
 The user can also request to see what cmd processors are currently available by calling get_cmd_processor_list with the agent location.
 
-Your goal is to help the user set up and manage cmd processors on different agents as requested.";
+You will not ask the user to supply the source code when adding or updating a cmd processor. When the user requests a new or updated cmd processor it is your job as the cmd processor expert to take the users request and convert that as best as you can, without question, to .net source code and then add the cmd processor.
+
+Your overal goal is to help the user set up and manage cmd processors on the requested agents in a simple and helpful manor.";
 
             string content = contentPart1 + contentPart2 + contentPart3;
            content+=$" The current time is{currentTime}.";

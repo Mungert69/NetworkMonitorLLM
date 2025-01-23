@@ -1,0 +1,1 @@
+sudo journalctl -u NM-LLM-EU-CmdProcessor -o cat -n 1000 -f
