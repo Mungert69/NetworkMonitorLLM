@@ -473,7 +473,7 @@ public class OpenAIRunner : ILLMRunner
             json = $"{{\"invalid_json_error\" : \"{errorMessage}\"}}";
 
         }
-        if (isValidJson) _logger.LogError($" Error : invald json from model. Sending json error : {json}");
+        if (!isValidJson) _logger.LogError($" Error : invald json from model. Sending json error : {json}");
 
         responseServiceObj.UserInput = serviceObj.UserInput;
         responseServiceObj.LlmMessage = "</functioncall>";
@@ -630,7 +630,7 @@ public class OpenAIRunner : ILLMRunner
         // Optionally send user a friendly error
         var responseObj = new LLMServiceObj(serviceObj, fs => fs.SetAsResponseErrorComplete())
         {
-            LlmMessage = $"I encountered an error when calling TurboLLM.{extraMessage}\nError detail: {errorMessage}",
+            LlmMessage = $"I encountered an error when calling TurboLLM.{extraMessage}\nError detail: {errorMessage}\n",
         };
         // If this is the “primary” or “system” LLM, do
         await _responseProcessor.ProcessLLMOutputError(responseObj);

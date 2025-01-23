@@ -103,24 +103,7 @@ public class HuggingFaceApi : ILLMApi
             };
             string payloadJson = JsonConvert.SerializeObject(payload, Formatting.Indented);
 
-            //_logger.LogInformation($"Payload JSON: {payloadJson}");
-            var content = new StringContent(payloadJson, Encoding.UTF8, "application/json");
-
-
-            string contentString = await content.ReadAsStringAsync();
-            //_logger.LogInformation($"StringContent content: {contentString}");
-
-            var response = await _httpClient.PostAsync(_apiUrl, content);
-
-            if (!response.IsSuccessStatusCode)
-            {
-                _logger.LogError($"Error: {response.StatusCode}, Content: {await response.Content.ReadAsStringAsync()}");
-                return new ChatCompletionCreateResponseSuccess { Success = false };
-            }
-
-            var responseContent = await response.Content.ReadAsStringAsync();
-            //_logger.LogInformation($"Received response: {responseContent}");
-
+            string responseContent = await SendHttpRequestAsync(payloadJson);
             // Deserialize using Newtonsoft.Json
             var responseObject = JsonConvert.DeserializeObject<HuggingFaceChatResponse>(responseContent);
 
@@ -201,38 +184,108 @@ public class HuggingFaceApi : ILLMApi
             return new ChatCompletionCreateResponseSuccess { Success = true, Response = chatResponse };
         }
         catch (Exception ex)
-{
-    _logger.LogError($"Exception in CreateCompletionAsync: {ex.Message}");
+        {
+            _logger.LogError($"Exception in CreateCompletionAsync: {ex.Message}");
 
-    // Create a ChatCompletionCreateResponse with error details
-    var errorChatResponse = new ChatCompletionCreateResponse
-    {
-        Id = Guid.NewGuid().ToString(),
-        Model = _modelID,
-        Choices = new List<ChatChoiceResponse>(),
-        Usage = new UsageResponse
-        {
-            PromptTokens = 0,
-            CompletionTokens = 0,
-            TotalTokens = 0
-        },
-        Error = new Error
-        {
-            MessageObject = ex.Message,
-            Type = "Exception",
-            Code = "500"
+            // Create a ChatCompletionCreateResponse with error details
+            var errorChatResponse = new ChatCompletionCreateResponse
+            {
+                Id = Guid.NewGuid().ToString(),
+                Model = _modelID,
+                Choices = new List<ChatChoiceResponse>(),
+                Usage = new UsageResponse
+                {
+                    PromptTokens = 0,
+                    CompletionTokens = 0,
+                    TotalTokens = 0
+                },
+                Error = new Error
+                {
+                    MessageObject = ex.Message,
+                    Type = "Exception",
+                    Code = "500"
+                }
+            };
+
+            return new ChatCompletionCreateResponseSuccess
+            {
+                Success = false,
+                Response = errorChatResponse
+            };
         }
-    };
-
-    return new ChatCompletionCreateResponseSuccess
-    {
-        Success = false,
-        Response = errorChatResponse
-    };
-}
 
 
     }
+    private async Task<string> SendHttpRequestAsync(string payloadJson)
+    {
+        const int maxRetries = 3;
+        const int delayBetweenRetries = 5000; // 5 seconds in milliseconds
+        const int timeout = 20000; // 20 seconds in milliseconds
+
+        for (int attempt = 1; attempt <= maxRetries; attempt++)
+        {
+            try
+            {
+                var content = new StringContent(payloadJson, Encoding.UTF8, "application/json");
+                _logger.LogInformation($"Attempt {attempt}: Sending request to Hugging Face API...");
+
+                using (var cts = new CancellationTokenSource(timeout))
+                {
+                    var response = await _httpClient.PostAsync(_apiUrl, content, cts.Token);
+
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        string errorContent = await response.Content.ReadAsStringAsync();
+                        _logger.LogError($"Attempt {attempt}: Error {response.StatusCode}, Content: {errorContent}");
+
+                        if (attempt < maxRetries)
+                        {
+                            _logger.LogInformation($"Retrying in {delayBetweenRetries / 1000} seconds...");
+                            await Task.Delay(delayBetweenRetries);
+                            continue;
+                        }
+
+                        return null; // Return null if all retries fail
+                    }
+
+                    string responseContent = await response.Content.ReadAsStringAsync();
+                    _logger.LogInformation($"Attempt {attempt}: Successfully received response from Hugging Face API.");
+                    return responseContent;
+                }
+            }
+            catch (TaskCanceledException ex) when (!ex.CancellationToken.IsCancellationRequested)
+            {
+                _logger.LogError($"Attempt {attempt}: Request timed out after {timeout / 1000} seconds.");
+
+                if (attempt < maxRetries)
+                {
+                    _logger.LogInformation($"Retrying in {delayBetweenRetries / 1000} seconds...");
+                    await Task.Delay(delayBetweenRetries);
+                    continue;
+                }
+
+                throw new TimeoutException("All retry attempts timed out.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Attempt {attempt}: Exception occurred: {ex.Message}");
+
+                if (attempt < maxRetries)
+                {
+                    _logger.LogInformation($"Retrying in {delayBetweenRetries / 1000} seconds...");
+                    await Task.Delay(delayBetweenRetries);
+                    continue;
+                }
+
+                throw; // Rethrow the exception if all retries fail
+            }
+        }
+
+        // If all retries are exhausted, return null
+        _logger.LogError("Should not get here.");
+        return null;
+    }
+
 }
 
 public class HuggingFaceChatResponse
