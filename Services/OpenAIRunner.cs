@@ -204,7 +204,7 @@ public class OpenAIRunner : ILLMRunner
             return;
         }*/
 
-        _logger.LogInformation($"Received INPUT -> \n\n {serviceObj.UserInput} \n\n");
+        _logger.LogInformation($"\nFrom FunctionState : {serviceObj.GetFunctionStateString()}\n\nReceived INPUT -> \n\n {serviceObj.UserInput} \n\n");
 
 
         try
