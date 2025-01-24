@@ -297,7 +297,7 @@ public class OpenAIRunner : ILLMRunner
         if (!_useHF)
         {
             var fakeFunctionCallId = "call_" + StringUtils.GetNanoid();
-            var fakeFunctionCallMessage = ChatMessage.FromAssistant("I have received an are_functions_running auto check status update.");
+            var fakeFunctionCallMessage = ChatMessage.FromAssistant("I have received an are_functions_running auto-check status update.");
             fakeFunctionCallMessage.ToolCalls = new List<ToolCall>()
                     {
                         new ToolCall
@@ -431,24 +431,27 @@ public class OpenAIRunner : ILLMRunner
             if (!isFuncMessage) localHistory.RemoveAt(0);
         }*/
 
-        var assistantMessage = new StringBuilder($"I have called the following functions : ");
+        var toolResponces=new List<ChatMessage>();
         foreach (ToolCall fnCall in choiceMessage.ToolCalls)
         {
             if (fnCall.FunctionCall != null)
             {
                 var funcName = fnCall.FunctionCall.Name;
                 var funcArgs = fnCall.FunctionCall.Arguments;
-                assistantMessage.Append($" Name {funcName} Arguments {funcArgs} : ");
-                // Handle the function call asynchronously and remove the placeholder when complete
+                var funcId= fnCall.Id;
                 await HandleFunctionCallAsync(serviceObj, fnCall, responseServiceObj, assistantChatMessage);
                 await Task.Delay(500);
+                var toolResponse=ChatMessage.FromTool("Function called waiting for the result",funcId);
+                toolResponse.Role = "tool";
+                toolResponces.Add(toolResponse);
             }
         }
-        assistantMessage.Append($" using message_id {serviceObj.MessageID} . Please wait it may take some time to complete.");
+       choiceMessage.Content=$"I have called the functions using message_id {serviceObj.MessageID} . Please wait it may take some time to complete.";
 
         // OpenAI models we also add a assistant message with no func calls to the history.
-        if (!_useHF) localHistory.Add(ChatMessage.FromAssistant(assistantMessage.ToString()));
-        else localHistory.Add(choiceMessage);
+       localHistory.Add(choiceMessage);
+        localHistory.AddRange(toolResponces);
+
         return;
     }
     private async Task HandleFunctionCallAsync(LLMServiceObj serviceObj, ToolCall fnCall, LLMServiceObj responseServiceObj, ChatMessage assistantChatMessage)
