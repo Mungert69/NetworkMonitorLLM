@@ -118,7 +118,9 @@ public class OpenAIRunner : ILLMRunner
         {
             _llmApi = new HuggingFaceApi(_logger, toolsBuilder, _hFUrl, _hFKey, _hFModelID, _hfModel);
         }
-        _maxTokens = AccountTypeFactory.GetAccountTypeByName(serviceObj.UserInfo.AccountType!).ContextSize;
+        string accountType="Free";
+        if (!string.IsNullOrEmpty(serviceObj.UserInfo.AccountType)) accountType=serviceObj.UserInfo.AccountType;
+        _maxTokens = AccountTypeFactory.GetAccountTypeByName(accountType).ContextSize;
         _activeSessions = new ConcurrentDictionary<string, DateTime>();
         _sessionHistories = new ConcurrentDictionary<string, List<ChatMessage>>();
         _audioGenerator = audioGenerator;
@@ -373,7 +375,8 @@ public class OpenAIRunner : ILLMRunner
             if (allResponsesReceived)
             {
                 // Add the function call and responses to the message history only if its OpenAI. HF we have aleady added it
-                if (!_useHF) localHistory.Add(funcCallChatMessage);
+                //if (!_useHF) 
+                localHistory.Add(funcCallChatMessage);
                 int count = 0;
                 foreach (var toolCall in funcCallChatMessage.ToolCalls)
                 {
@@ -421,15 +424,8 @@ public class OpenAIRunner : ILLMRunner
         // Note we deal with HF modles assistant function call messages differently to OpenAi models.
         // OpenAI models need the assistant func calls to be followed by the respones. HF models don't
         // The _useHF parameter is used to construct the messages that are added to the history to deal with this difference
-        if (!_useHF) choiceMessage.Content = $"The user previously requested \"{serviceObj.UserInput}\" . The function calls needed to answer this query have now completed. ";
+        choiceMessage.Content = $"The user previously requested \"{serviceObj.UserInput}\" . The function calls needed to answer this query have now completed. ";
         _pendingFunctionCalls.TryAdd(serviceObj.MessageID, choiceMessage);
-       /* if (!_useHF)
-        {
-            // Replace the user message with the message_id, only for OpenAI modesl
-            var placeholderUser = ChatMessage.FromUser($"{serviceObj.UserInput} : us message_id <|{serviceObj.MessageID}|> to track the function calls");
-            localHistory.Add(placeholderUser);
-            if (!isFuncMessage) localHistory.RemoveAt(0);
-        }*/
 
         var toolResponces=new List<ChatMessage>();
         foreach (ToolCall fnCall in choiceMessage.ToolCalls)
@@ -449,7 +445,7 @@ public class OpenAIRunner : ILLMRunner
        choiceMessage.Content=$"I have called the functions using message_id {serviceObj.MessageID} . Please wait it may take some time to complete.";
 
         // OpenAI models we also add a assistant message with no func calls to the history.
-       localHistory.Add(choiceMessage);
+        localHistory.Add(choiceMessage);
         localHistory.AddRange(toolResponces);
 
         return;
