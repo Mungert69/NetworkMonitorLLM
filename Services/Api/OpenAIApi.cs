@@ -40,7 +40,7 @@ public class OpenAIApi : ILLMApi
 
     public string WrapFunctionResponse(string name, string funcStr)
     {
-        // Do nothing just return
+        // Return back funcStr unchanged
         return funcStr;
 
     }

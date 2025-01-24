@@ -296,8 +296,8 @@ public class OpenAIRunner : ILLMRunner
         var localHistory = new List<ChatMessage>();
         if (serviceObj.IsFunctionCallResponse==false) return localHistory;
 
-        if (!_useHF)
-        {
+       // if (!_useHF)
+        //{
             var fakeFunctionCallId = "call_" + StringUtils.GetNanoid();
             var fakeFunctionCallMessage = ChatMessage.FromAssistant("I have received an are_functions_running auto-check status update.");
             fakeFunctionCallMessage.ToolCalls = new List<ToolCall>()
@@ -320,15 +320,15 @@ public class OpenAIRunner : ILLMRunner
             var fakeFunctionResponseMessage = ChatMessage.FromTool(serviceObj.UserInput, fakeFunctionCallId);
             fakeFunctionResponseMessage.Role = "tool";
             fakeFunctionResponseMessage.Name = "are_functions_running";
-
+            fakeFunctionResponseMessage.Content = _llmApi.WrapFunctionResponse(serviceObj.FunctionName, serviceObj.UserInput) + "\n";
             // Add the fake function response to the message history
             localHistory.Add(fakeFunctionResponseMessage);
-        }
+        /*}
         else
         {
             var systemMessage = ChatMessage.FromAssistant(serviceObj.UserInput);
             localHistory.Add(systemMessage);
-        }
+        }*/
         return localHistory;
     }
 
@@ -438,8 +438,9 @@ public class OpenAIRunner : ILLMRunner
                 var funcId= fnCall.Id;
                 await HandleFunctionCallAsync(serviceObj, fnCall, responseServiceObj, assistantChatMessage);
                 await Task.Delay(500);
-                var toolResponse=ChatMessage.FromTool("Function called waiting for the result",funcId);
+                var toolResponse=ChatMessage.FromTool($"The function {funcName} has been called, waiting for the result...",funcId);
                 toolResponse.Role = "tool";
+                toolResponse.Name=funcName;
                 toolResponces.Add(toolResponse);
             }
         }
@@ -447,7 +448,7 @@ public class OpenAIRunner : ILLMRunner
 
         // OpenAI models we also add a assistant message with no func calls to the history.
         localHistory.Add(choiceMessage);
-        if (!_useHF) localHistory.AddRange(toolResponces);
+        localHistory.AddRange(toolResponces);
 
         return;
     }
