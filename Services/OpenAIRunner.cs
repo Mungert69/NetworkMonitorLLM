@@ -292,7 +292,7 @@ public class OpenAIRunner : ILLMRunner
     {
         var localHistory = new List<ChatMessage>();
 
-        if (!_useHF)
+        /*if (!_useHF)
         {
             var fakeFunctionCallId = "call_" + StringUtils.GetNanoid();
             var fakeFunctionCallMessage = ChatMessage.FromAssistant("");
@@ -320,9 +320,9 @@ public class OpenAIRunner : ILLMRunner
             // Add the fake function response to the message history
             localHistory.Add(fakeFunctionResponseMessage);
         }
-        else
+        else*/
         {
-            var systemMessage = ChatMessage.FromAssistant(serviceObj.UserInput);
+            var systemMessage = ChatMessage.FromSystem(serviceObj.UserInput);
             localHistory.Add(systemMessage);
         }
         return localHistory;
