@@ -322,7 +322,7 @@ public class OpenAIRunner : ILLMRunner
         }
         else*/
         {
-            var systemMessage = ChatMessage.FromSystem(serviceObj.UserInput);
+            var systemMessage = ChatMessage.FromAssistant(serviceObj.UserInput);
             localHistory.Add(systemMessage);
         }
         return localHistory;
