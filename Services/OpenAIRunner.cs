@@ -533,7 +533,7 @@ public class OpenAIRunner : ILLMRunner
             }
             else
             {
-                _logger.LogWarning("Skipped JSON repair for sensitive path: source_code.");
+                _logger.LogWarning($"Skipped JSON repair for sensitive path: {field}.");
             }
         }
         catch (Exception repairEx)
