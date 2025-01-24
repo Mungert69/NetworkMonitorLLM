@@ -297,7 +297,7 @@ public class OpenAIRunner : ILLMRunner
         if (!_useHF)
         {
             var fakeFunctionCallId = "call_" + StringUtils.GetNanoid();
-            var fakeFunctionCallMessage = ChatMessage.FromAssistant("");
+            var fakeFunctionCallMessage = ChatMessage.FromAssistant("I have received an are_functions_running auto check status update.");
             fakeFunctionCallMessage.ToolCalls = new List<ToolCall>()
                     {
                         new ToolCall
