@@ -216,14 +216,19 @@ public class OpenAIRunner : ILLMRunner
             // Retrieve or initialize the conversation history
             var history = _sessionHistories[serviceObj.SessionId];
             var messageHistory = _messageHistories.GetOrAdd(serviceObj.MessageID, new List<ChatMessage>());
+            messageHistory = new List<ChatMessage>();
+
             ChatMessage chatMessage;
             if (serviceObj.IsFunctionCallStatus)
             {
-                canAddFuncMessage = HandleFunctionCallStatus(serviceObj, messageHistory);
+                messageHistory= HandleFunctionCallStatus(serviceObj);
+                  if (messageHistory.Count > 0)  canAddFuncMessage=true;
+          
             }
             else if (serviceObj.IsFunctionCallResponse)
             {
-                canAddFuncMessage = HandleFunctionCallResponse(serviceObj, messageHistory, responseServiceObj);
+                messageHistory = HandleFunctionCallResponse(serviceObj, responseServiceObj);
+                if (messageHistory.Count > 0)  canAddFuncMessage=true;
             }
             else
             {
@@ -247,7 +252,7 @@ public class OpenAIRunner : ILLMRunner
                     ChatChoiceResponse choice = completionResult.Choices.First();
                     if (choice.Message.ToolCalls != null && choice.Message.ToolCalls.Any())
                     {
-                        await HandleFunctionProcessing(serviceObj, choice.Message, messageHistory, responseServiceObj, assistantChatMessage);
+                        await HandleFunctionProcessing(serviceObj, choice.Message, messageHistory, responseServiceObj, assistantChatMessage, canAddFuncMessage);
                     }
                     else
                     {
@@ -256,7 +261,6 @@ public class OpenAIRunner : ILLMRunner
 
                     history.AddRange(messageHistory);
                     TruncateTokens(history, serviceObj);
-                    messageHistory = new List<ChatMessage>();
                 }
                 else
                 {
@@ -265,6 +269,7 @@ public class OpenAIRunner : ILLMRunner
                         await HandleOpenAIError(serviceObj, completionResult.Error.Message, messageHistory, history);
                     }
                 }
+
                 await _responseProcessor.UpdateTokensUsed(responseServiceObj);
             }
         }
@@ -281,9 +286,9 @@ public class OpenAIRunner : ILLMRunner
         }
     }
 
-    private bool HandleFunctionCallStatus(LLMServiceObj serviceObj, List<ChatMessage> messageHistory)
+    private List<ChatMessage> HandleFunctionCallStatus(LLMServiceObj serviceObj)
     {
-        bool canAddFuncMessage = true;
+        var messageHistory=new List<ChatMessage>();
 
         if (!_useHF)
         {
@@ -318,16 +323,18 @@ public class OpenAIRunner : ILLMRunner
             var systemMessage = ChatMessage.FromAssistant(serviceObj.UserInput);
             messageHistory.Add(systemMessage);
         }
-        return canAddFuncMessage;
+        return messageHistory;
     }
 
 
-    private bool HandleFunctionCallResponse(LLMServiceObj serviceObj, List<ChatMessage> messageHistory, LLMServiceObj responseServiceObj)
+    private List<ChatMessage> HandleFunctionCallResponse(LLMServiceObj serviceObj, LLMServiceObj responseServiceObj)
     {
         ChatMessage funcResponseChatMessage;
+        List<ChatMessage> messageHistory = new List<ChatMessage>();
+        bool canAddFuncMessage = false;
         // Check if there are any pending function calls associated with the current message
         _pendingFunctionCalls.TryGetValue(serviceObj.MessageID, out var funcCallChatMessage);
-        if (funcCallChatMessage != null && funcCallChatMessage.ToolCalls != null)
+        if (funcCallChatMessage != null && funcCallChatMessage.ToolCalls != null && funcCallChatMessage.ToolCalls.Count > 0)
         {
             // Check if a response for the given FunctionCallId already exists in the dictionary
             if (_pendingFunctionResponses.TryGetValue(serviceObj.FunctionCallId, out var existingFuncResponseChatMessage))
@@ -363,7 +370,7 @@ public class OpenAIRunner : ILLMRunner
             {
                 // Add the function call and responses to the message history only if its OpenAI. HF we have aleady added it
                 if (!_useHF) messageHistory.Add(funcCallChatMessage);
-
+                int count = 0;
                 foreach (var toolCall in funcCallChatMessage.ToolCalls)
                 {
                     if (_pendingFunctionResponses.TryGetValue(toolCall.Id!, out var response))
@@ -371,15 +378,22 @@ public class OpenAIRunner : ILLMRunner
 
                         messageHistory.Add(response);
                         _pendingFunctionResponses.TryRemove(toolCall.Id!, out _);
+                        count++;
                     }
                 }
+                if (count == funcCallChatMessage.ToolCalls.Count)
+                {
+                     canAddFuncMessage = true;
+                }
+                else {
+                    _logger.LogError($" Error : Function calls failed to return the correct number of responses for {serviceObj.MessageID}");
+                }
 
-                // Clean up the pending function call
                 _pendingFunctionCalls.TryRemove(serviceObj.MessageID, out _);
+                   
                 // Mark the function call as complete
                 responseServiceObj.LlmMessage = "</functioncall-complete>";
                 if (_isPrimaryLlm) _responseProcessor.ProcessLLMOutput(responseServiceObj);
-                return true; // Indicates that the function call response was handled successfully
 
             }
         }
@@ -392,10 +406,11 @@ public class OpenAIRunner : ILLMRunner
 
             _logger.LogWarning($"No pending function call found for Message ID: {serviceObj.MessageID}");
         }
-        return false; // Indicates that the function call response could not be fully handled
+        if (canAddFuncMessage) return messageHistory;
+        return new List<ChatMessage>();
     }
 
-    private async Task<bool> HandleFunctionProcessing(LLMServiceObj serviceObj, ChatMessage choiceMessage, List<ChatMessage> messageHistory, LLMServiceObj responseServiceObj, ChatMessage assistantChatMessage)
+    private async Task<bool> HandleFunctionProcessing(LLMServiceObj serviceObj, ChatMessage choiceMessage, List<ChatMessage> messageHistory, LLMServiceObj responseServiceObj, ChatMessage assistantChatMessage, bool canAddFuncMessage)
     {
 
         bool addedPlaceHolder = true;
@@ -409,7 +424,7 @@ public class OpenAIRunner : ILLMRunner
             // Replace the user message with the message_id, only for OpenAI modesl
             var placeholderUser = ChatMessage.FromUser($"{serviceObj.UserInput} : us message_id <|{serviceObj.MessageID}|> to track the function calls");
             messageHistory.Add(placeholderUser);
-            messageHistory.RemoveAt(0);
+            if (!canAddFuncMessage) messageHistory.RemoveAt(0);
         }
 
         var assistantMessage = new StringBuilder($"I have called the following functions : ");
@@ -427,9 +442,10 @@ public class OpenAIRunner : ILLMRunner
         }
         assistantMessage.Append($" using message_id {serviceObj.MessageID} . Please wait it may take some time to complete.");
 
-        var placeholderAssistant = choiceMessage;
+        ChatMessage placeholderAssistant;
         // OpenAI models we also add a assistant message with no func calls to the history.
         if (!_useHF) placeholderAssistant = ChatMessage.FromAssistant(assistantMessage.ToString());
+        else placeholderAssistant = choiceMessage;
         messageHistory.Add(placeholderAssistant);
         return addedPlaceHolder;
     }
@@ -453,12 +469,11 @@ public class OpenAIRunner : ILLMRunner
         bool isValidJson = true;
         try
         {
-            fn!.ParseArguments();
-            json=fn.Arguments;
+            json = JsonSerializer.Serialize(fn!.ParseArguments());
         }
         catch (JsonException e)
         {
-            var (failed, returnJson) = AttemptJsonRepair(fn.Arguments, e);
+            var (failed, returnJson) = AttemptJsonRepair(fn, e);
             isValidJson = !failed;
             json = returnJson;
         }
@@ -497,19 +512,20 @@ public class OpenAIRunner : ILLMRunner
         //assistantChatMessage.Content = $"Please wait I am calling the function {functionName}. Some functions take a long time to complete so please be patient...";
     }
 
-    private (bool failed, string json) AttemptJsonRepair(string input, JsonException e)
+    private (bool failed, string json) AttemptJsonRepair(FunctionCall fn, JsonException e)
     {
         try
         {
-             string field=e.Path.Replace("$.","");
-                    if (!_ignoreParameters.Contains(field))
-                    {
-          
-                string repairedJson = JsonRepair.RepairJson(input);
+            string input = fn.Arguments;
+            string field = e.Path.Replace("$.", "");
+            if (!_ignoreParameters.Contains(field))
+            {
+                _logger.LogInformation("\n\nrepair => " + field + " \n\n");
 
-                // Check if the repaired JSON can be deserialized
-                JsonSerializer.Deserialize<Dictionary<string, object>>(repairedJson);
-                _logger.LogInformation("Repaired invalid JSON successfully.");
+                string testJson = JsonRepair.RepairJson(input);
+                fn.Arguments = testJson;
+                string repairedJson = JsonSerializer.Serialize(fn!.ParseArguments());
+                _logger.LogInformation("Invalid JSON repair successfully.");
                 return (false, repairedJson);
             }
             else
