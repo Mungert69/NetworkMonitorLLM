@@ -423,13 +423,13 @@ public class OpenAIRunner : ILLMRunner
         // The _useHF parameter is used to construct the messages that are added to the history to deal with this difference
         if (!_useHF) choiceMessage.Content = $"The user previously requested \"{serviceObj.UserInput}\" . The function calls needed to answer this query have now completed. ";
         _pendingFunctionCalls.TryAdd(serviceObj.MessageID, choiceMessage);
-        if (!_useHF)
+       /* if (!_useHF)
         {
             // Replace the user message with the message_id, only for OpenAI modesl
             var placeholderUser = ChatMessage.FromUser($"{serviceObj.UserInput} : us message_id <|{serviceObj.MessageID}|> to track the function calls");
             localHistory.Add(placeholderUser);
             if (!isFuncMessage) localHistory.RemoveAt(0);
-        }
+        }*/
 
         var assistantMessage = new StringBuilder($"I have called the following functions : ");
         foreach (ToolCall fnCall in choiceMessage.ToolCalls)
