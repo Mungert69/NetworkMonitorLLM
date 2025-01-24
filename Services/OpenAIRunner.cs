@@ -33,8 +33,6 @@ public class OpenAIRunner : ILLMRunner
 
     private SemaphoreSlim _openAIRunnerSemaphore;
     private ConcurrentDictionary<string, List<ChatMessage>> _sessionHistories = new ConcurrentDictionary<string, List<ChatMessage>>();
-    private ConcurrentDictionary<string, List<ChatMessage>> _messageHistories = new ConcurrentDictionary<string, List<ChatMessage>>();
-    //private ConcurrentDictionary<string, string> _toolCallMetadata = new ConcurrentDictionary<string, string>();
 
     private ConcurrentDictionary<string, ChatMessage> _pendingFunctionCalls = new ConcurrentDictionary<string, ChatMessage>();
     private ConcurrentDictionary<string, ChatMessage> _pendingFunctionResponses = new ConcurrentDictionary<string, ChatMessage>();
@@ -175,7 +173,7 @@ public class OpenAIRunner : ILLMRunner
         var responseServiceObj = new LLMServiceObj(serviceObj);
         responseServiceObj.TokensUsed = 0;
         var assistantChatMessage = ChatMessage.FromAssistant("");
-        bool canAddFuncMessage = false;
+        bool isFuncMessage = false;
 
         if (!_activeSessions.ContainsKey(serviceObj.SessionId))
         {
@@ -215,63 +213,67 @@ public class OpenAIRunner : ILLMRunner
 
             // Retrieve or initialize the conversation history
             var history = _sessionHistories[serviceObj.SessionId];
-            var messageHistory = _messageHistories.GetOrAdd(serviceObj.MessageID, new List<ChatMessage>());
-            messageHistory = new List<ChatMessage>();
+            var localHistory = new List<ChatMessage>();
 
             ChatMessage chatMessage;
             if (serviceObj.IsFunctionCallStatus)
             {
-                messageHistory= HandleFunctionCallStatus(serviceObj);
-                  if (messageHistory.Count > 0)  canAddFuncMessage=true;
-          
+                localHistory = HandleFunctionCallStatus(serviceObj);
+                if (localHistory.Count > 0) isFuncMessage = true;
+
             }
             else if (serviceObj.IsFunctionCallResponse)
             {
-                messageHistory = HandleFunctionCallResponse(serviceObj, responseServiceObj);
-                if (messageHistory.Count > 0)  canAddFuncMessage=true;
+                localHistory = HandleFunctionCallResponse(serviceObj, responseServiceObj);
+                if (localHistory.Count > 0) isFuncMessage = true;
             }
             else
             {
                 chatMessage = ChatMessage.FromUser(serviceObj.UserInput);
                 responseServiceObj.LlmMessage = "<User:> " + serviceObj.UserInput + "\n\n";
                 if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
-                messageHistory.Add(chatMessage);
+                localHistory.Add(chatMessage);
+                isFuncMessage = false;
             }
 
-            if (!serviceObj.IsFunctionCallResponse || canAddFuncMessage)
+
+            var currentHistory = new List<ChatMessage>(history.Concat(localHistory));
+            var completionSuccessResult = await _llmApi.CreateCompletionAsync(currentHistory, _responseTokens);
+            var completionResult = completionSuccessResult.Response;
+            var completionSuccess = completionSuccessResult.Success;
+
+            if (completionSuccess)
             {
-                var currentHistory = new List<ChatMessage>(history.Concat(messageHistory));
-                var completionSuccessResult = await _llmApi.CreateCompletionAsync(currentHistory, _responseTokens);
-                var completionResult = completionSuccessResult.Response;
-                var completionSuccess = completionSuccessResult.Success;
-
-                if (completionSuccess)
+                responseServiceObj.TokensUsed = completionResult.Usage.TotalTokens;
+                if (completionResult.Usage != null && completionResult.Usage.PromptTokensDetails != null) _logger.LogInformation($"Cached Prompt Tokens {completionResult.Usage.PromptTokensDetails.CachedTokens}");
+                ChatChoiceResponse choice = completionResult.Choices.First();
+                if (choice.Message.ToolCalls != null && choice.Message.ToolCalls.Any())
                 {
-                    responseServiceObj.TokensUsed = completionResult.Usage.TotalTokens;
-                    if (completionResult.Usage != null && completionResult.Usage.PromptTokensDetails != null) _logger.LogInformation($"Cached Prompt Tokens {completionResult.Usage.PromptTokensDetails.CachedTokens}");
-                    ChatChoiceResponse choice = completionResult.Choices.First();
-                    if (choice.Message.ToolCalls != null && choice.Message.ToolCalls.Any())
-                    {
-                        await HandleFunctionProcessing(serviceObj, choice.Message, messageHistory, responseServiceObj, assistantChatMessage, canAddFuncMessage);
-                    }
-                    else
-                    {
-                        await ProcessAssistantMessageAsync(choice, responseServiceObj, assistantChatMessage, messageHistory, history, serviceObj);
-                    }
-
-                    history.AddRange(messageHistory);
-                    TruncateTokens(history, serviceObj);
+                    await HandleFunctionProcessing(serviceObj, choice.Message, localHistory, responseServiceObj, assistantChatMessage, isFuncMessage);
                 }
                 else
                 {
-                    if (completionResult.Error != null)
-                    {
-                        await HandleOpenAIError(serviceObj, completionResult.Error.Message, messageHistory, history);
-                    }
+                    await ProcessAssistantMessageAsync(choice, responseServiceObj, assistantChatMessage, localHistory, history, serviceObj);
                 }
 
+
+            }
+            else
+            {
+                if (completionResult.Error != null)
+                {
+                    await HandleOpenAIError(serviceObj, completionResult.Error.Message, localHistory, history);
+                    localHistory = new List<ChatMessage>();
+                }
+            }
+
+            if (localHistory.Count > 0)
+            {
+                history.AddRange(localHistory);
+                TruncateTokens(history, serviceObj);
                 await _responseProcessor.UpdateTokensUsed(responseServiceObj);
             }
+
         }
         catch
         {
@@ -288,7 +290,7 @@ public class OpenAIRunner : ILLMRunner
 
     private List<ChatMessage> HandleFunctionCallStatus(LLMServiceObj serviceObj)
     {
-        var messageHistory=new List<ChatMessage>();
+        var localHistory = new List<ChatMessage>();
 
         if (!_useHF)
         {
@@ -308,7 +310,7 @@ public class OpenAIRunner : ILLMRunner
                             }
                     };
 
-            messageHistory.Add(fakeFunctionCallMessage);
+            localHistory.Add(fakeFunctionCallMessage);
 
             // Create a fake function response as if the tool returned a result
             var fakeFunctionResponseMessage = ChatMessage.FromTool(serviceObj.UserInput, fakeFunctionCallId);
@@ -316,22 +318,22 @@ public class OpenAIRunner : ILLMRunner
             fakeFunctionResponseMessage.Name = "are_functions_running";
 
             // Add the fake function response to the message history
-            messageHistory.Add(fakeFunctionResponseMessage);
+            localHistory.Add(fakeFunctionResponseMessage);
         }
         else
         {
             var systemMessage = ChatMessage.FromAssistant(serviceObj.UserInput);
-            messageHistory.Add(systemMessage);
+            localHistory.Add(systemMessage);
         }
-        return messageHistory;
+        return localHistory;
     }
 
 
     private List<ChatMessage> HandleFunctionCallResponse(LLMServiceObj serviceObj, LLMServiceObj responseServiceObj)
     {
         ChatMessage funcResponseChatMessage;
-        List<ChatMessage> messageHistory = new List<ChatMessage>();
-        bool canAddFuncMessage = false;
+        var localHistory = new List<ChatMessage>();
+        bool isComplete = false;
         // Check if there are any pending function calls associated with the current message
         _pendingFunctionCalls.TryGetValue(serviceObj.MessageID, out var funcCallChatMessage);
         if (funcCallChatMessage != null && funcCallChatMessage.ToolCalls != null && funcCallChatMessage.ToolCalls.Count > 0)
@@ -369,28 +371,29 @@ public class OpenAIRunner : ILLMRunner
             if (allResponsesReceived)
             {
                 // Add the function call and responses to the message history only if its OpenAI. HF we have aleady added it
-                if (!_useHF) messageHistory.Add(funcCallChatMessage);
+                if (!_useHF) localHistory.Add(funcCallChatMessage);
                 int count = 0;
                 foreach (var toolCall in funcCallChatMessage.ToolCalls)
                 {
                     if (_pendingFunctionResponses.TryGetValue(toolCall.Id!, out var response))
                     {
 
-                        messageHistory.Add(response);
+                        localHistory.Add(response);
                         _pendingFunctionResponses.TryRemove(toolCall.Id!, out _);
                         count++;
                     }
                 }
                 if (count == funcCallChatMessage.ToolCalls.Count)
                 {
-                     canAddFuncMessage = true;
+                    isComplete = true;
                 }
-                else {
+                else
+                {
                     _logger.LogError($" Error : Function calls failed to return the correct number of responses for {serviceObj.MessageID}");
                 }
 
                 _pendingFunctionCalls.TryRemove(serviceObj.MessageID, out _);
-                   
+
                 // Mark the function call as complete
                 responseServiceObj.LlmMessage = "</functioncall-complete>";
                 if (_isPrimaryLlm) _responseProcessor.ProcessLLMOutput(responseServiceObj);
@@ -406,14 +409,13 @@ public class OpenAIRunner : ILLMRunner
 
             _logger.LogWarning($"No pending function call found for Message ID: {serviceObj.MessageID}");
         }
-        if (canAddFuncMessage) return messageHistory;
+        if (isComplete) return localHistory;
         return new List<ChatMessage>();
     }
 
-    private async Task<bool> HandleFunctionProcessing(LLMServiceObj serviceObj, ChatMessage choiceMessage, List<ChatMessage> messageHistory, LLMServiceObj responseServiceObj, ChatMessage assistantChatMessage, bool canAddFuncMessage)
+    private async Task HandleFunctionProcessing(LLMServiceObj serviceObj, ChatMessage choiceMessage, List<ChatMessage> localHistory, LLMServiceObj responseServiceObj, ChatMessage assistantChatMessage, bool isFuncMessage)
     {
 
-        bool addedPlaceHolder = true;
         // Note we deal with HF modles assistant function call messages differently to OpenAi models.
         // OpenAI models need the assistant func calls to be followed by the respones. HF models don't
         // The _useHF parameter is used to construct the messages that are added to the history to deal with this difference
@@ -423,8 +425,8 @@ public class OpenAIRunner : ILLMRunner
         {
             // Replace the user message with the message_id, only for OpenAI modesl
             var placeholderUser = ChatMessage.FromUser($"{serviceObj.UserInput} : us message_id <|{serviceObj.MessageID}|> to track the function calls");
-            messageHistory.Add(placeholderUser);
-            if (!canAddFuncMessage) messageHistory.RemoveAt(0);
+            localHistory.Add(placeholderUser);
+            if (!isFuncMessage) localHistory.RemoveAt(0);
         }
 
         var assistantMessage = new StringBuilder($"I have called the following functions : ");
@@ -442,12 +444,10 @@ public class OpenAIRunner : ILLMRunner
         }
         assistantMessage.Append($" using message_id {serviceObj.MessageID} . Please wait it may take some time to complete.");
 
-        ChatMessage placeholderAssistant;
         // OpenAI models we also add a assistant message with no func calls to the history.
-        if (!_useHF) placeholderAssistant = ChatMessage.FromAssistant(assistantMessage.ToString());
-        else placeholderAssistant = choiceMessage;
-        messageHistory.Add(placeholderAssistant);
-        return addedPlaceHolder;
+        if (!_useHF) localHistory.Add(ChatMessage.FromAssistant(assistantMessage.ToString()));
+        else localHistory.Add(choiceMessage);
+        return;
     }
     private async Task HandleFunctionCallAsync(LLMServiceObj serviceObj, ToolCall fnCall, LLMServiceObj responseServiceObj, ChatMessage assistantChatMessage)
     {
@@ -549,7 +549,7 @@ public class OpenAIRunner : ILLMRunner
 
     }
 
-    private async Task ProcessAssistantMessageAsync(ChatChoiceResponse choice, LLMServiceObj responseServiceObj, ChatMessage assistantChatMessage, List<ChatMessage> messageHistory, List<ChatMessage> history, LLMServiceObj serviceObj)
+    private async Task ProcessAssistantMessageAsync(ChatChoiceResponse choice, LLMServiceObj responseServiceObj, ChatMessage assistantChatMessage, List<ChatMessage> localHistory, List<ChatMessage> history, LLMServiceObj serviceObj)
     {
         var responseChoiceStr = choice.Message.Content ?? "";
         _logger.LogInformation($"Assistant output : {responseChoiceStr}");
@@ -594,7 +594,7 @@ public class OpenAIRunner : ILLMRunner
                 await _responseProcessor.ProcessLLMOutput(responseServiceObj);
             }
 
-            messageHistory.Add(assistantChatMessage);
+            localHistory.Add(assistantChatMessage);
 
         }
 
@@ -637,6 +637,7 @@ public class OpenAIRunner : ILLMRunner
             }
             // Tidy up in case any tool calls have missing tool responses
             RemoveUnansweredToolCalls(serviceObj.SessionId, history);
+            RemoveOrphanToolResponses(serviceObj.SessionId, history);
 
             // Re-add the system message to the beginning of the list
             history.Insert(0, systemMessage);
@@ -659,18 +660,19 @@ public class OpenAIRunner : ILLMRunner
 
         return tokenCount;
     }
-    private async Task HandleOpenAIError(LLMServiceObj serviceObj, string errorMessage, List<ChatMessage> messageHistory, List<ChatMessage> sessionHistory)
+    private async Task HandleOpenAIError(LLMServiceObj serviceObj, string errorMessage, List<ChatMessage> localHistory, List<ChatMessage> sessionHistory)
     {
         string extraMessage = "";
         // Check if it’s the known “tool_calls did not have response messages” error
 
         ChatMessageLogger.LogChatMessages(_logger, sessionHistory, "Chat history before input");
-        ChatMessageLogger.LogChatMessages(_logger, messageHistory, "Attepted addition to chat history");
+        ChatMessageLogger.LogChatMessages(_logger, localHistory, "Attepted addition to chat history");
 
-        if (errorMessage.Contains("did not have response messages"))
+        if (errorMessage.Contains("did not have response messages") || errorMessage.Contains("messages with role"))
         {
             // Attempt to remove the incomplete tool call from memory
             RemoveUnansweredToolCalls(serviceObj.SessionId, sessionHistory);
+            RemoveOrphanToolResponses(serviceObj.SessionId, sessionHistory);
             extraMessage = " A tool call was removed. ";
         }
 
@@ -686,9 +688,10 @@ public class OpenAIRunner : ILLMRunner
     }
     private void RemoveUnansweredToolCalls(string sessionId, List<ChatMessage> sessionHistory)
     {
-        // HF model does not use tools calls so they can be left in the history as they are.
+        // HF model does not use tool calls so they can be left in the history as they are.
         if (_useHF) return;
-        if (sessionHistory == null || sessionHistory.Count() == 0)
+
+        if (sessionHistory == null || sessionHistory.Count == 0)
         {
             _logger.LogWarning($"No history found for session {sessionId} to remove unanswered tool calls.");
             return;
@@ -712,12 +715,26 @@ public class OpenAIRunner : ILLMRunner
         {
             bool anyCallUnanswered = false;
 
+            // Collect all the toolCallIds so we can remove them if incomplete
+            var allToolCallIds = assistantMsg.ToolCalls!.Select(t => t.Id).Where(id => id != null).ToList();
+
+            // If there is a single tool call that does not have a matching tool response, 
+            // we consider this entire assistant message as "incomplete".
             foreach (var tCall in assistantMsg.ToolCalls!)
             {
-                // Does any "tool" role message with the same tool_call_id exist?
+                if (string.IsNullOrEmpty(tCall.Id))
+                {
+                    // If for some reason we have no ID on the tool call, treat it as unanswered
+                    anyCallUnanswered = true;
+                    _logger.LogInformation("Unanswered tool call detected: Missing tool call ID.");
+                    break;
+                }
+
+                // See if any "tool" role message with the same tool_call_id exists
                 var matchingToolResponse = sessionHistory.FirstOrDefault(
                     m => m.Role == "tool" && m.ToolCallId == tCall.Id
                 );
+
                 if (matchingToolResponse == null)
                 {
                     // We found a tool call with no corresponding response
@@ -728,20 +745,73 @@ public class OpenAIRunner : ILLMRunner
                 }
             }
 
-            // If there’s at least one missing tool response,
-            // remove this entire assistant message from the history
+            // If there’s at least one missing tool response, remove the entire assistant 
+            // message and all partial tool responses that did exist
             if (anyCallUnanswered)
             {
+                // Remove the tool responses that have the same IDs as the assistant’s calls
+                foreach (var callId in allToolCallIds)
+                {
+                    // We remove all tool messages with matching toolCallId to keep the chat fully consistent
+                    sessionHistory.RemoveAll(m => m.Role == "tool" && m.ToolCallId == callId);
+                }
+
+                // Finally, remove the assistant message itself
                 sessionHistory.Remove(assistantMsg);
+
                 _logger.LogError($"Error: Assistant message removed due to missing tool response: {assistantMsg.Content}");
             }
         }
 
-        // Log the original history only if unanswered tool calls were found
+        // Log the original and updated history only if unanswered tool calls were found
         if (foundUnansweredCalls)
         {
+            _logger.LogWarning("Some messages had incomplete tool calls and were removed.");
             ChatMessageLogger.LogChatMessages(_logger, sessionHistory, "Updated Chat Message History After Cleanup");
         }
+    }
+    /// <summary>
+    /// Removes tool responses that have no corresponding assistant message (i.e. orphaned tool calls).
+    /// </summary>
+    private void RemoveOrphanToolResponses(string sessionId, List<ChatMessage> sessionHistory)
+    {
+        // If using a HuggingFace model, skip because we do not use tool calls there.
+        if (_useHF) return;
+
+        if (sessionHistory == null || sessionHistory.Count == 0)
+        {
+            _logger.LogWarning($"No history found for session {sessionId} to remove orphaned tool responses.");
+            return;
+        }
+
+        // Gather all tool-call IDs that exist in assistant messages
+        var assistantToolCallIds = sessionHistory
+            .Where(m => m.Role == "assistant" && m.ToolCalls != null && m.ToolCalls.Any())
+            .SelectMany(m => m.ToolCalls!.Select(tc => tc.Id))
+            .Where(id => !string.IsNullOrEmpty(id))
+            .ToHashSet();
+
+        // Find all tool messages whose ToolCallId is missing or does not match any known assistant call ID
+        var orphanToolResponses = sessionHistory
+            .Where(m => m.Role == "tool" &&
+                        (string.IsNullOrEmpty(m.ToolCallId) ||
+                         !assistantToolCallIds.Contains(m.ToolCallId)))
+            .ToList();
+
+        if (!orphanToolResponses.Any())
+            return;
+
+        // Remove the orphaned tool messages
+        foreach (var orphanToolMsg in orphanToolResponses)
+        {
+            sessionHistory.Remove(orphanToolMsg);
+            _logger.LogWarning(
+                $"Removed orphaned tool response: ToolCallId='{orphanToolMsg.ToolCallId}', Content='{orphanToolMsg.Content}'");
+        }
+
+        // Optionally log the updated chat messages after removal
+        //ChatMessageLogger.LogChatMessages(_logger, sessionHistory, 
+        //    "Updated Chat Message History After Removing Orphaned Tool Responses");
     }
 
     public Task StopRequest(string sessionId)
