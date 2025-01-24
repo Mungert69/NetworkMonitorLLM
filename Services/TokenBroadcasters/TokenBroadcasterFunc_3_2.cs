@@ -13,8 +13,8 @@ namespace NetworkMonitor.LLM.Services;
 public class TokenBroadcasterFunc_3_2 : TokenBroadcasterBase
 {
 
-    public TokenBroadcasterFunc_3_2(ILLMResponseProcessor responseProcessor, ILogger logger, bool xmlFunctionParsing = false)
-         : base(responseProcessor, logger,xmlFunctionParsing)
+    public TokenBroadcasterFunc_3_2(ILLMResponseProcessor responseProcessor, ILogger logger, bool xmlFunctionParsing, HashSet<string> ignoreParameters)
+         : base(responseProcessor, logger,xmlFunctionParsing,ignoreParameters)
     {
 
     }
@@ -45,7 +45,7 @@ public class TokenBroadcasterFunc_3_2 : TokenBroadcasterBase
             if (jsonEnd == -1) break;
 
             string jsonContent = noHeaderLine.Substring(jsonStart, jsonEnd - jsonStart).Trim();
-            functionCalls.Add((JsonSanitizer.SanitizeJson(jsonContent), functionName));
+            functionCalls.Add((JsonSanitizer.RepairJson(jsonContent,_ignoreParameters), functionName));
 
             // Move to the next function call in the input (if any)
             tagStart = input.IndexOf(_assistantHeader, jsonEnd);

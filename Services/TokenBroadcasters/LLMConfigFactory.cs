@@ -19,7 +19,7 @@ public static class LLMConfigFactory
             FunctionResponse = "<|from|> {0}\n<|recipient|> all\n<|content|>{1}",
             FunctionDefsWrap = "{0}",
             CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
-                   new TokenBroadcasterFunc_2_4(responseProcessor, logger, xmlFunctionParsing)
+                   new TokenBroadcasterFunc_2_4(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
 
         },
         ["func_2.5"] = new LLMConfig
@@ -34,7 +34,7 @@ public static class LLMConfigFactory
             FunctionResponse = "<|reserved_special_token_249|>{0}\n{1}",
             FunctionDefsWrap = "{0}",
             CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
-                   new TokenBroadcasterFunc_2_5(responseProcessor, logger, xmlFunctionParsing)
+                   new TokenBroadcasterFunc_2_5(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
 
         },
         // Configuration for func_3.1
@@ -69,7 +69,7 @@ Reminder:
 ",
 
             CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
-                   new TokenBroadcasterFunc_3_1(responseProcessor, logger, xmlFunctionParsing)
+                   new TokenBroadcasterFunc_3_1(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
         },
 
         // Configuration for func_3.2
@@ -92,7 +92,7 @@ Respond in this format:
 ${content}
 ",
             CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
-                   new TokenBroadcasterFunc_3_2(responseProcessor, logger, xmlFunctionParsing)
+                   new TokenBroadcasterFunc_3_2(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
 
         },
         ["llama_3.2"] = new LLMConfig
@@ -105,7 +105,7 @@ ${content}
             EOTToken = "<|eot_id|>",
             EOMToken = "<|eom_id|>",
             FunctionResponseTemplate = "<|start_header_id|>ipython<|end_header_id|>\\\n\\\n{1}",
-            FunctionResponse = "<function_response name={0}>{1}</function_response>",
+            FunctionResponse = "{1}",
             FunctionDefsWrap = "{0}",
             PromptFooter = "Think very carefully before calling functions.\n\n" +
  "If you choose to call a function, ONLY reply in the following format:\n\n" +
@@ -122,7 +122,7 @@ ${content}
  "Important! All json in your responses will be interpreted as a function call. You will only provide json in your responses when you intend to call a function.",
 
             CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
-                  new TokenBroadcasterLlama_3_2(responseProcessor, logger, xmlFunctionParsing)
+                  new TokenBroadcasterLlama_3_2(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
         },
 
 
@@ -157,7 +157,7 @@ Reminder:
 ",
 
             CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
-                new TokenBroadcasterPhi_4(responseProcessor, logger, xmlFunctionParsing)
+                new TokenBroadcasterPhi_4(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
         },
 
         // Configuration for qwen_2.5
@@ -174,7 +174,7 @@ Reminder:
             FunctionDefsWrap = "<tools>\n{0}</tools>",
             PromptFooter="For each function call, return a json object with function name and arguments within <tool_call></tool_call> XML tags:\n<tool_call>\n{\"name\": <function-name>, \"arguments\": <args-json-object>}\n</tool_call>",
             CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
-                    new TokenBroadcasterQwen_2_5(responseProcessor, logger, xmlFunctionParsing)
+                    new TokenBroadcasterQwen_2_5(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
         },
 
         // Configuration for qwen_2.5
@@ -191,7 +191,7 @@ Reminder:
             FunctionDefsWrap = "{0}",
             PromptFooter="",
             CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
-                    new TokenBroadcasterQwen_2_5(responseProcessor, logger, xmlFunctionParsing)
+                    new TokenBroadcasterQwen_2_5(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
         },
 
         // Configuration for standard
@@ -208,7 +208,7 @@ Reminder:
             FunctionDefsWrap = "{0}",
             PromptFooter="",
             CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
-                    new TokenBroadcasterStandard(responseProcessor, logger, xmlFunctionParsing)
+                    new TokenBroadcasterStandard(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
         }
     };
 
@@ -221,6 +221,11 @@ Reminder:
 
         throw new KeyNotFoundException($"LLM version '{llmVersion}' is not configured.");
     }
+
+   private static readonly Lazy<HashSet<string>> _ignoreParameters = new(() => 
+    new HashSet<string> { "source_code" });
+
+public static HashSet<string> IgnoreParameters => _ignoreParameters.Value;
 }
 public class LLMConfig
 {

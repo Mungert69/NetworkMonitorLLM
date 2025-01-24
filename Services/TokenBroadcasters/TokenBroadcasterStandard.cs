@@ -13,8 +13,8 @@ namespace NetworkMonitor.LLM.Services;
 public class TokenBroadcasterStandard : TokenBroadcasterBase
 {
 
-    public TokenBroadcasterStandard(ILLMResponseProcessor responseProcessor, ILogger logger, bool xmlFunctionParsing = false)
-         : base(responseProcessor, logger,xmlFunctionParsing)
+    public TokenBroadcasterStandard(ILLMResponseProcessor responseProcessor, ILogger logger, bool xmlFunctionParsing, HashSet<string> ignoreParameters)
+         : base(responseProcessor, logger,xmlFunctionParsing,ignoreParameters)
     {
 
     }

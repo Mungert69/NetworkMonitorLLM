@@ -13,8 +13,8 @@ namespace NetworkMonitor.LLM.Services;
 public class TokenBroadcasterFunc_2_5 : TokenBroadcasterBase
 {
 
-    public TokenBroadcasterFunc_2_5(ILLMResponseProcessor responseProcessor, ILogger logger, bool xmlFunctionParsing = false)
-         : base(responseProcessor, logger,xmlFunctionParsing)
+    public TokenBroadcasterFunc_2_5(ILLMResponseProcessor responseProcessor, ILogger logger, bool xmlFunctionParsing, HashSet<string> ignoreParameters)
+         : base(responseProcessor, logger,xmlFunctionParsing,ignoreParameters)
     {
     
     }
@@ -68,7 +68,7 @@ public class TokenBroadcasterFunc_2_5 : TokenBroadcasterBase
             }
 
             // Sanitize and add the extracted JSON and function name to the list
-            functionCalls.Add((JsonSanitizer.SanitizeJson(jsonContent), functionName));
+            functionCalls.Add((JsonSanitizer.RepairJson(jsonContent,_ignoreParameters), functionName));
 
             // Update currentIndex to continue searching after this function call
             currentIndex = tokenIndex + specialToken.Length + jsonEndIndex + 1;

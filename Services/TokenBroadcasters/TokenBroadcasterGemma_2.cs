@@ -14,8 +14,8 @@ namespace NetworkMonitor.LLM.Services;
 public class TokenBroadcasterGemma_2 : TokenBroadcasterBase
 {
 
-    public TokenBroadcasterGemma_2(ILLMResponseProcessor responseProcessor, ILogger logger, bool xmlFunctionParsing = false)
-         : base(responseProcessor, logger,xmlFunctionParsing)
+    public TokenBroadcasterGemma_2(ILLMResponseProcessor responseProcessor, ILogger logger, bool xmlFunctionParsing, HashSet<string> ignoreParameters)
+         : base(responseProcessor, logger,xmlFunctionParsing,ignoreParameters)
     {
 
     }
@@ -48,7 +48,7 @@ public class TokenBroadcasterGemma_2 : TokenBroadcasterBase
             }
             if (foundEnd)
             {
-                functionsCalls.Add((JsonSanitizer.SanitizeJson(newLine), ""));
+                functionsCalls.Add((JsonSanitizer.RepairJson(newLine,_ignoreParameters), ""));
                 return functionsCalls;
             }
             else

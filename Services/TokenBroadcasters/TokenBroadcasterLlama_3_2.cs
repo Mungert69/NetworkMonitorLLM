@@ -14,8 +14,8 @@ namespace NetworkMonitor.LLM.Services;
 public class TokenBroadcasterLlama_3_2 : TokenBroadcasterBase
 {
 
-    public TokenBroadcasterLlama_3_2(ILLMResponseProcessor responseProcessor, ILogger logger, bool xmlFunctionParsing = false)
-         : base(responseProcessor, logger,xmlFunctionParsing)
+    public TokenBroadcasterLlama_3_2(ILLMResponseProcessor responseProcessor, ILogger logger, bool xmlFunctionParsing, HashSet<string> ignoreParameters)
+         : base(responseProcessor, logger,xmlFunctionParsing,ignoreParameters)
     {
        
     }
@@ -36,7 +36,7 @@ public class TokenBroadcasterLlama_3_2 : TokenBroadcasterBase
             var jsonContent = match.Groups["parameters"].Value;
 
             // Optionally sanitize the JSON content
-            functionCalls.Add((JsonSanitizer.SanitizeJson(jsonContent), functionName));
+            functionCalls.Add((JsonSanitizer.RepairJson(jsonContent,_ignoreParameters), functionName));
         }
 
         return functionCalls;

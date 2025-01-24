@@ -83,6 +83,7 @@ public class OpenAIRunner : ILLMRunner
     private string _hfModel = "";
     private bool _createAudio = false;
     private IAudioGenerator _audioGenerator;
+    private HashSet<string> _ignoreParameters => LLMConfigFactory.IgnoreParameters;
 
 #pragma warning disable CS8618
     public OpenAIRunner(ILogger<OpenAIRunner> logger, ILLMResponseProcessor responseProcessor, OpenAIService openAiService, ISystemParamsHelper systemParamsHelper, LLMServiceObj serviceObj, SemaphoreSlim openAIRunnerSemaphore, IAudioGenerator audioGenerator)
@@ -452,19 +453,14 @@ public class OpenAIRunner : ILLMRunner
         bool isValidJson = true;
         try
         {
-            json = JsonSerializer.Serialize(fn!.ParseArguments());
+            fn!.ParseArguments();
+            json=fn.Arguments;
         }
         catch (JsonException e)
         {
-            isValidJson = false;
-            json = JsonSerializer.Serialize(new
-            {
-                invalid_json_error = e.Message,
-                path = e.Path,
-                line_number = e.LineNumber,
-                byte_position_in_line = e.BytePositionInLine,
-                hint = "Check the structure and format of the JSON data."
-            });
+            var (failed, returnJson) = AttemptJsonRepair(fn.Arguments, e);
+            isValidJson = !failed;
+            json = returnJson;
         }
         catch (Exception e)
         {
@@ -479,18 +475,18 @@ public class OpenAIRunner : ILLMRunner
         responseServiceObj.LlmMessage = "</functioncall>";
         if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
 
-        LLMServiceObj functionResponseServiceObj ;
-        if (isValidJson) functionResponseServiceObj = new LLMServiceObj(serviceObj,fs => fs.SetAsCall())
+        LLMServiceObj functionResponseServiceObj;
+        if (isValidJson) functionResponseServiceObj = new LLMServiceObj(serviceObj, fs => fs.SetAsCall())
         {
             JsonFunction = json,
             FunctionName = functionName
         };
-        else functionResponseServiceObj = new LLMServiceObj(serviceObj,fs => fs.SetAsCallError())
+        else functionResponseServiceObj = new LLMServiceObj(serviceObj, fs => fs.SetAsCallError())
         {
             JsonFunction = json,
             FunctionName = functionName
         };
-       
+
         _logger.LogInformation($" Sending json: {json}");
 
         await _responseProcessor.ProcessFunctionCall(functionResponseServiceObj);
@@ -499,6 +495,42 @@ public class OpenAIRunner : ILLMRunner
         if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
         // This is disabled until I find out how to set this without confusing chatgpt
         //assistantChatMessage.Content = $"Please wait I am calling the function {functionName}. Some functions take a long time to complete so please be patient...";
+    }
+
+    private (bool failed, string json) AttemptJsonRepair(string input, JsonException e)
+    {
+        try
+        {
+             string field=e.Path.Replace("$.","");
+                    if (!_ignoreParameters.Contains(field))
+                    {
+          
+                string repairedJson = JsonRepair.RepairJson(input);
+
+                // Check if the repaired JSON can be deserialized
+                JsonSerializer.Deserialize<Dictionary<string, object>>(repairedJson);
+                _logger.LogInformation("Repaired invalid JSON successfully.");
+                return (false, repairedJson);
+            }
+            else
+            {
+                _logger.LogWarning("Skipped JSON repair for sensitive path: source_code.");
+            }
+        }
+        catch (Exception repairEx)
+        {
+            _logger.LogError($"Error: Failed to repair JSON. Exception: {repairEx.Message}");
+        }
+
+        return (true, JsonSerializer.Serialize(new
+        {
+            invalid_json_error = e.Message,
+            path = e.Path,
+            line_number = e.LineNumber,
+            byte_position_in_line = e.BytePositionInLine,
+            hint = $"Check the structure and format of the JSON data. Check the '{e.Path}' parameter value."
+        }));
+
     }
 
     private async Task ProcessAssistantMessageAsync(ChatChoiceResponse choice, LLMServiceObj responseServiceObj, ChatMessage assistantChatMessage, List<ChatMessage> messageHistory, List<ChatMessage> history, LLMServiceObj serviceObj)

@@ -12,8 +12,8 @@ namespace NetworkMonitor.LLM.Services;
 public class TokenBroadcasterPhi_4 : TokenBroadcasterBase
 {
 
-    public TokenBroadcasterPhi_4(ILLMResponseProcessor responseProcessor, ILogger logger, bool xmlFunctionParsing = false)
-        : base(responseProcessor, logger,xmlFunctionParsing)
+    public TokenBroadcasterPhi_4(ILLMResponseProcessor responseProcessor, ILogger logger, bool xmlFunctionParsing, HashSet<string> ignoreParameters)
+        : base(responseProcessor, logger,xmlFunctionParsing,ignoreParameters)
     {
         
     }
@@ -52,6 +52,8 @@ public class TokenBroadcasterPhi_4 : TokenBroadcasterBase
             {
                 string functionName = match.Groups[1].Value;
                 string jsonArguments = match.Groups[2].Value;
+                   jsonArguments=JsonSanitizer.RepairJson(jsonArguments,_ignoreParameters);
+   
                 return (jsonArguments, functionName);
 
             }

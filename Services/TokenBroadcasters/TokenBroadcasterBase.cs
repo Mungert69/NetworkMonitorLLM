@@ -43,13 +43,16 @@ namespace NetworkMonitor.LLM.Services
         protected int _stopAfter = 2;
         protected List<string> _endTokens = new List<string>();
         protected LLMConfig _config;
+        protected HashSet<string> _ignoreParameters;
+
 
         public StringBuilder AssistantMessage { get => _assistantMessage; set => _assistantMessage = value; }
 
-        protected TokenBroadcasterBase(ILLMResponseProcessor responseProcessor, ILogger logger, bool xmlFunctionParsing)
+        protected TokenBroadcasterBase(ILLMResponseProcessor responseProcessor, ILogger logger, bool xmlFunctionParsing, HashSet<string> ignoreParameters)
         {
             _responseProcessor = responseProcessor;
             _xmlFunctionParsing = xmlFunctionParsing;
+            _ignoreParameters=ignoreParameters;
             _logger = logger;
             _cancellationTokenSource = new CancellationTokenSource();
         }
@@ -356,7 +359,7 @@ namespace NetworkMonitor.LLM.Services
             }
             if (foundEnd)
             {
-                functionsCalls.Add((JsonSanitizer.SanitizeJson(newLine), ""));
+                functionsCalls.Add((JsonSanitizer.RepairJson(newLine, _ignoreParameters), ""));
                 return functionsCalls;
             }
             else

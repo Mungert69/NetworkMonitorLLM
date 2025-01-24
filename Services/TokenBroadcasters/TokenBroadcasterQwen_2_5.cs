@@ -13,8 +13,8 @@ namespace NetworkMonitor.LLM.Services;
 public class TokenBroadcasterQwen_2_5 : TokenBroadcasterBase
 {
 
-    public TokenBroadcasterQwen_2_5(ILLMResponseProcessor responseProcessor, ILogger logger, bool xmlFunctionParsing = false)
-        : base(responseProcessor, logger, xmlFunctionParsing)
+    public TokenBroadcasterQwen_2_5(ILLMResponseProcessor responseProcessor, ILogger logger, bool xmlFunctionParsing, HashSet<string> ignoreParameters)
+        : base(responseProcessor, logger,xmlFunctionParsing,ignoreParameters)
     {
 
     }
@@ -42,7 +42,7 @@ public class TokenBroadcasterQwen_2_5 : TokenBroadcasterBase
 
             // Extract the JSON content between the tags
             string jsonContent = input.Substring(tagStart, tagEnd - tagStart).Trim();
-            functionCalls.Add((JsonSanitizer.SanitizeJson(jsonContent), string.Empty));
+            functionCalls.Add((JsonSanitizer.RepairJson(jsonContent,_ignoreParameters), string.Empty));
 
             // Look for the next "<tool_call>\n" tag after the current end tag
             tagStart = input.IndexOf("<tool_call>\n", tagEnd + "</tool_call>".Length);

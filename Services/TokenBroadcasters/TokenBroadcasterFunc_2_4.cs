@@ -17,8 +17,8 @@ namespace NetworkMonitor.LLM.Services;
 public class TokenBroadcasterFunc_2_4 : TokenBroadcasterBase
 {
 
-    public TokenBroadcasterFunc_2_4(ILLMResponseProcessor responseProcessor, ILogger logger,bool xmlFunctionParsing = false)
-         : base(responseProcessor, logger,xmlFunctionParsing)
+    public TokenBroadcasterFunc_2_4(ILLMResponseProcessor responseProcessor, ILogger logger,bool xmlFunctionParsing, HashSet<string> ignoreParameters)
+         : base(responseProcessor, logger,xmlFunctionParsing,ignoreParameters)
     {
       
     }
@@ -275,7 +275,7 @@ public class TokenBroadcasterFunc_2_4 : TokenBroadcasterBase
             newLine = newLine.Substring(0, lastClosingBraceIndex + 1);
             foundEnd = true;
         }
-        if (foundEnd) return (true, JsonSanitizer.SanitizeJson(newLine));
+        if (foundEnd) return (true, JsonSanitizer.RepairJson(newLine,_ignoreParameters));
         else return (false, input);
     }
 }
