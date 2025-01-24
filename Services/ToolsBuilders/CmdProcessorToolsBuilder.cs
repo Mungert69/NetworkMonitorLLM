@@ -40,6 +40,8 @@ namespace NetworkMonitor.LLM.Services
             fn_get_cmd_processor_help = new FunctionDefinitionBuilder("get_cmd_processor_help", "Get help information for a specific cmd processor type on a given agent.")
                 .AddParameter("cmd_processor_type", PropertyDefinition.DefineString("The name of the cmd processor to get help for. Case sensitive."))
                 .AddParameter("agent_location", PropertyDefinition.DefineString("The agent location where the cmd processor resides."))
+                .AddParameter("number_lines", PropertyDefinition.DefineInteger("Number of lines to return. Set to -1 to use the default value. Increase this if you need more data returned by the command. Be careful with using larger numbers as a lot of data can be returned. Note that HTML output will be parsed into text with newlines. To override this behavior and return all output in an unprocessed format, set number_lines to -2."))
+                .AddParameter("page", PropertyDefinition.DefineInteger("The page of lines to return. Use to paginate through many lines of data."))
                 .Validate()
                 .Build();
             
@@ -47,6 +49,8 @@ namespace NetworkMonitor.LLM.Services
             fn_get_cmd_processor_source_code = new FunctionDefinitionBuilder("get_cmd_processor_source_code", "Get the source code for a specific cmd processor type on a given agent.")
                 .AddParameter("cmd_processor_type", PropertyDefinition.DefineString("The name of the cmd processor to get the source code for. Case sensitive."))
                 .AddParameter("agent_location", PropertyDefinition.DefineString("The agent location where the cmd processor resides."))
+                .AddParameter("number_lines", PropertyDefinition.DefineInteger("Number of lines to return. Set to -1 to use the default value. Increase this if you need more data returned by the command. Be careful with using larger numbers as a lot of data can be returned. To return all output in an unprocessed format, set number_lines to -2."))
+                .AddParameter("page", PropertyDefinition.DefineInteger("The page of lines to return. Use to paginate through many lines of data."))
                 .Validate()
                 .Build();
 
@@ -65,6 +69,9 @@ namespace NetworkMonitor.LLM.Services
                 .AddParameter("cmd_processor_type", PropertyDefinition.DefineString("The name of the cmd processor to run. Case sensitive."))
                 .AddParameter("arguments", PropertyDefinition.DefineString("The arguments to pass to the cmd processor. Use get_cmd_processor_help for details on usage."))
                 .AddParameter("agent_location", PropertyDefinition.DefineString("The agent location where the cmd processor is to be run."))
+                .AddParameter("number_lines", PropertyDefinition.DefineInteger("Number of lines to return. Set to -1 to use the default value. Increase this if you need more data returned by the command. Be careful with using larger numbers as a lot of data can be returned. Note that HTML output will be parsed into text with newlines. To override this behavior and return all output in an unprocessed format, set number_lines to -2."))
+                .AddParameter("page", PropertyDefinition.DefineInteger("The page of lines to return. Use to paginate through many lines of data."))
+               
                 .Validate()
                 .Build();
 
