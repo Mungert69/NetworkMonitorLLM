@@ -424,7 +424,8 @@ public class OpenAIRunner : ILLMRunner
         // Note we deal with HF modles assistant function call messages differently to OpenAi models.
         // OpenAI models need the assistant func calls to be followed by the respones. HF models don't
         // The _useHF parameter is used to construct the messages that are added to the history to deal with this difference
-        choiceMessage.Content = $"The user previously requested \"{serviceObj.UserInput}\" . The function calls needed to answer this query have now completed. ";
+        string origMessage=choiceMessage.Content;
+        choiceMessage.Content = $"The function call with message_id {serviceObj.MessageID} has now completed. ";
         _pendingFunctionCalls.TryAdd(serviceObj.MessageID, choiceMessage);
 
         var toolResponces=new List<ChatMessage>();
@@ -442,11 +443,11 @@ public class OpenAIRunner : ILLMRunner
                 toolResponces.Add(toolResponse);
             }
         }
-       choiceMessage.Content=$"I have called the functions using message_id {serviceObj.MessageID} . Please wait it may take some time to complete.";
+       choiceMessage.Content=$"{origMessage} . I have called the functions using message_id {serviceObj.MessageID} . Please wait it may take some time to complete.";
 
         // OpenAI models we also add a assistant message with no func calls to the history.
         localHistory.Add(choiceMessage);
-        localHistory.AddRange(toolResponces);
+        if (!_useHF) localHistory.AddRange(toolResponces);
 
         return;
     }
