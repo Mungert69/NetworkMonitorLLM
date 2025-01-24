@@ -220,6 +220,7 @@ public class OpenAIRunner : ILLMRunner
             {
                 localHistory = HandleFunctionCallStatus(serviceObj);
                 if (localHistory.Count > 0) isFuncMessage = true;
+                else return;
 
             }
             else if (serviceObj.IsFunctionCallResponse)
@@ -291,8 +292,9 @@ public class OpenAIRunner : ILLMRunner
     private List<ChatMessage> HandleFunctionCallStatus(LLMServiceObj serviceObj)
     {
         var localHistory = new List<ChatMessage>();
+        if (serviceObj.IsFunctionCallResponse==false) return localHistory;
 
-        /*if (!_useHF)
+        if (!_useHF)
         {
             var fakeFunctionCallId = "call_" + StringUtils.GetNanoid();
             var fakeFunctionCallMessage = ChatMessage.FromAssistant("");
@@ -320,7 +322,7 @@ public class OpenAIRunner : ILLMRunner
             // Add the fake function response to the message history
             localHistory.Add(fakeFunctionResponseMessage);
         }
-        else*/
+        else
         {
             var systemMessage = ChatMessage.FromAssistant(serviceObj.UserInput);
             localHistory.Add(systemMessage);
