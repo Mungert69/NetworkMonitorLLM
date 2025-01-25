@@ -269,15 +269,7 @@ public class HuggingFaceApi : ILLMApi
             catch (Exception ex)
             {
                 _logger.LogError($"Attempt {attempt}: Exception occurred: {ex.Message}");
-
-                if (attempt < maxRetries)
-                {
-                    _logger.LogInformation($"Retrying in {delayBetweenRetries / 1000} seconds...");
-                    await Task.Delay(delayBetweenRetries);
-                    continue;
-                }
-
-                throw; // Rethrow the exception if all retries fail
+                throw; 
             }
         }
 

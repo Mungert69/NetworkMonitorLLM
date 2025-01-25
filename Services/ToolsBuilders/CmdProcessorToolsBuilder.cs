@@ -65,7 +65,7 @@ namespace NetworkMonitor.LLM.Services
                 .Build();
 
             // Define run_cmd_processor
-            fn_run_cmd_processor = new FunctionDefinitionBuilder("run_cmd_processor", "Run a previously added cmd processor on a given agent.")
+            fn_run_cmd_processor = new FunctionDefinitionBuilder("run_cmd_processor", "Run a previously added cmd processor on a given agent. After running the cmd processor give the user the full output, do not summerize it")
                 .AddParameter("cmd_processor_type", PropertyDefinition.DefineString("The name of the cmd processor to run. Case sensitive."))
                 .AddParameter("arguments", PropertyDefinition.DefineString("The arguments to pass to the cmd processor. Use get_cmd_processor_help for details on usage."))
                 .AddParameter("agent_location", PropertyDefinition.DefineString("The agent location where the cmd processor is to be run."))
