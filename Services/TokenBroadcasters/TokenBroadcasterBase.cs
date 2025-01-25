@@ -324,18 +324,16 @@ namespace NetworkMonitor.LLM.Services
                 var parsedParameters = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonParameters);
 
                 // Check for "source_code" with a "#cdata-section" field
-                bool argsEscaped = false;
                 if (parsedParameters.TryGetValue("source_code", out var sourceCodeNode) && sourceCodeNode is Newtonsoft.Json.Linq.JObject sourceCodeObj)
                 {
                     // If "#cdata-section" exists, replace "source_code" with its value
                     if (sourceCodeObj.TryGetValue("#cdata-section", out var cdataSection))
                     {
                         parsedParameters["source_code"] = cdataSection.ToString();
-                        argsEscaped = true;
                     }
                 }
-                // Add the `args_escaped` field
-                parsedParameters["args_escaped"] = argsEscaped;
+                // Add the `args_escaped` field we do this to indicate that it was create from non escapped code. So examples will not need to be escapped
+                parsedParameters["args_escaped"] = false;
 
                 // Convert the updated parameters back to JSON
                 string adjustedJsonParameters = JsonConvert.SerializeObject(parsedParameters, Newtonsoft.Json.Formatting.None);
