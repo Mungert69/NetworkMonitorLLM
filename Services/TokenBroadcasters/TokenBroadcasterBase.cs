@@ -24,6 +24,7 @@ namespace NetworkMonitor.LLM.Services
         StringBuilder AssistantMessage { get; set; }
         Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput);
         List<(string json, string functionName)> ParseInputForJson(string input);
+        List<(string json, string functionName)> ParseInputForXml(string input);
     }
 
     public abstract class TokenBroadcasterBase : ITokenBroadcaster, IDisposable
@@ -297,7 +298,7 @@ namespace NetworkMonitor.LLM.Services
 
 
 
-        protected virtual List<(string json, string functionName)> ParseInputForXml(string input)
+        public virtual List<(string json, string functionName)> ParseInputForXml(string input)
         {
             var functionCalls = new List<(string json, string functionName)>();
 

@@ -28,14 +28,25 @@ public class OpenAIApi : ILLMApi
     private IToolsBuilder _toolsBuilder;
     private string _gptModel = "gpt-4o-mini";
     private ILogger _logger;
+       private readonly bool _isXml;
+    private readonly MLParams _mlParams;
+    private readonly LLMConfig _config;
+     private readonly string _modelVersion;
+    private string _serviceID;
 
 
-    public OpenAIApi(ILogger logger, OpenAIService openAiService, IToolsBuilder toolsBuilder, string gptModel)
+    public OpenAIApi(ILogger logger, MLParams mlParams, IToolsBuilder toolsBuilder, string serviceID, OpenAIService openAiService)
     {
-        _gptModel = gptModel;
+        _mlParams=mlParams;
+        _gptModel = mlParams.LlmGptModel;
+        _serviceID=serviceID;
         _logger=logger;
         _openAiService = openAiService;
         _toolsBuilder = toolsBuilder;
+         _modelVersion = mlParams.LlmHFModelVersion;
+            _isXml=_mlParams.XmlFunctionParsing;
+          _config = LLMConfigFactory.GetConfig(_modelVersion);
+      
     }
 
     public string WrapFunctionResponse(string name, string funcStr)
@@ -44,9 +55,21 @@ public class OpenAIApi : ILLMApi
         return funcStr;
 
     }
+
+     private string PromptFooter()
+    {
+        if (_mlParams.XmlFunctionParsing) return _config.XmlPromptFooter;
+        else return _config.PromptFooter;
+    }
     public List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj)
     {
-        return _toolsBuilder.GetSystemPrompt(currentTime, serviceObj);
+        string footer = PromptFooter();
+        var systemMessages=_toolsBuilder.GetSystemPrompt(currentTime, serviceObj);
+        systemMessages[0].Content = systemMessages[0].Content + footer;
+      
+           systemMessages.AddRange(NShotPromptFactory.GetPrompt(_serviceID,_mlParams.XmlFunctionParsing));
+     
+        return systemMessages;
 
     }
 

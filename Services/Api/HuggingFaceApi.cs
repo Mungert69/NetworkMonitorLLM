@@ -34,23 +34,29 @@ public class HuggingFaceApi : ILLMApi
     private readonly HttpClient _httpClient;
     private readonly string _apiUrl;
     private readonly string _authToken;
-    private readonly string _model;
+    private readonly string _modelVersion;
     private readonly string _modelID;
+    private readonly string _serviceID;
+    private readonly bool _isXml;
+    private readonly MLParams _mlParams;
     private readonly LLMConfig _config;
 
     private IToolsBuilder _toolsBuilder;
 
-    public HuggingFaceApi(ILogger logger, IToolsBuilder toolsBuilder, string apiUrl, string authToken, string modelID, string model)
+    public HuggingFaceApi(ILogger logger, MLParams mlParams, IToolsBuilder toolsBuilder, string serviceID)
     {
         _logger = logger;
         _toolsBuilder = toolsBuilder;
+        _serviceID=serviceID;
         _httpClient = new HttpClient();
-        _model = model;
-        _modelID = modelID;
-        _authToken = authToken;
-        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authToken);
-        _apiUrl = $"{apiUrl.TrimEnd('/')}/models/{modelID}/v1/chat/completions";
-        _config = LLMConfigFactory.GetConfig(model);
+        _mlParams = mlParams;
+        _modelVersion = mlParams.LlmHFModelVersion;
+        _modelID = mlParams.LlmHFModelID;
+        _authToken = mlParams.LlmHFKey;
+        _isXml=_mlParams.XmlFunctionParsing;
+        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _authToken);
+        _apiUrl = $"{mlParams.LlmHFUrl.TrimEnd('/')}/models/{_modelID}/v1/chat/completions";
+        _config = LLMConfigFactory.GetConfig(_modelVersion);
         _logger.LogInformation($"Initialized Hugging Face API with URL: {_apiUrl}");
     }
 
@@ -64,20 +70,24 @@ public class HuggingFaceApi : ILLMApi
         return string.Format(_config.FunctionDefsWrap, toolsStr);
     }
 
+
+
     private string PromptFooter()
     {
-        return _config.PromptFooter;
+        if (_mlParams.XmlFunctionParsing) return _config.XmlPromptFooter;
+        else return _config.PromptFooter;
     }
 
     public List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj)
     {
-      
+
         string toolsJson = ToolsWrapper(JsonToolsBuilder.BuildToolsJson(_toolsBuilder.Tools));
         // List<ChatMessage> systemPrompt=_toolsBuilder.GetSystemPrompt(currentTime, serviceObj);
         string footer = PromptFooter();
         var systemMessages = _toolsBuilder.GetSystemPrompt(currentTime, serviceObj);
         systemMessages[0].Content = toolsJson + systemMessages[0].Content + footer;
-
+        _logger.LogInformation($" Using SYSTEM prompt\n\n{systemMessages[0].Content}");
+        systemMessages.AddRange(NShotPromptFactory.GetPrompt(_serviceID,_isXml));
         return systemMessages;
     }
 
@@ -113,7 +123,9 @@ public class HuggingFaceApi : ILLMApi
                 // _logger.LogInformation($"Parsing function calls for message content: {choice.Message.Content}");
 
                 // Parse the input using the broadcaster
-                var functionCalls = tokenBroadcaster.ParseInputForJson(choice.Message.Content);
+                List<(string json, string functionName)> functionCalls;
+                if (_isXml) functionCalls =tokenBroadcaster.ParseInputForXml(choice.Message.Content);
+                else  functionCalls = tokenBroadcaster.ParseInputForJson(choice.Message.Content);
 
                 // Log the parsed results
                 if (functionCalls.Any())
@@ -268,7 +280,13 @@ public class HuggingFaceApi : ILLMApi
             catch (Exception ex)
             {
                 _logger.LogError($"Attempt {attempt}: Exception occurred: {ex.Message}");
-                throw; 
+                if (attempt < maxRetries)
+                {
+                    _logger.LogInformation($"Retrying in {delayBetweenRetries / 1000} seconds...");
+                    await Task.Delay(delayBetweenRetries);
+                    continue;
+                }
+                throw;
             }
         }
 

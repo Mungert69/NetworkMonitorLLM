@@ -46,11 +46,10 @@ public class OpenAIRunner : ILLMRunner
     private bool _isEnabled = true;
     //private bool _isFuncCalled;
     private string _serviceID;
-    private int _llmCtxSize=32000;
-    private int _maxTokens=32000;
+    private int _maxTokens = 32000;
     private int _responseTokens = 4000;
-    private int _promptTokens =28000;
-    private int _llmCtxRatio=6;
+    private int _promptTokens = 28000;
+    private MLParams _mlParams;
     private int _llmLoad;
     private List<ChatMessage> _systemPrompt = new List<ChatMessage>
 {
@@ -77,11 +76,6 @@ public class OpenAIRunner : ILLMRunner
     public int LlmLoad { get => _llmLoad; set => _llmLoad = value; }
     private readonly ILLMApi _llmApi;
     private bool _useHF = false;
-    private string _gptModel = "";
-    private string _hFModelID = "";
-    private string _hFKey = "";
-    private string _hFUrl = "";
-    private string _hfModel = "";
     private bool _createAudio = false;
     private IAudioGenerator _audioGenerator;
     private HashSet<string> _ignoreParameters => LLMConfigFactory.IgnoreParameters;
@@ -94,39 +88,33 @@ public class OpenAIRunner : ILLMRunner
         _openAiService = openAiService;
         _openAIRunnerSemaphore = openAIRunnerSemaphore;
         _serviceID = systemParamsHelper.GetSystemParams().ServiceID!;
-        _llmCtxSize = systemParamsHelper.GetMLParams().LlmOpenAICtxSize!;
-        _llmCtxRatio = systemParamsHelper.GetMLParams().LlmCtxRatio;
-        _hFModelID = systemParamsHelper.GetMLParams().LlmHFModelID!;
-        _hFKey = systemParamsHelper.GetMLParams().LlmHFKey!;
-        _hFUrl = systemParamsHelper.GetMLParams().LlmHFUrl!;
-        _hfModel = systemParamsHelper.GetMLParams().LlmHFModelVersion!;
-        _gptModel = systemParamsHelper.GetMLParams().LlmGptModel!;
+        _mlParams = systemParamsHelper.GetMLParams();
         _useHF = systemParamsHelper.GetMLParams().LlmUseHF;
         IToolsBuilder? toolsBuilder = null;
-        if (_serviceID == "monitor") toolsBuilder = new MonitorToolsBuilder(serviceObj.UserInfo);
-        if (_serviceID == "cmdprocessor") toolsBuilder = new CmdProcessorToolsBuilder(serviceObj.UserInfo);
-        if (_serviceID == "nmap") toolsBuilder = new NmapToolsBuilder();
+       // if (_serviceID == "monitor") toolsBuilder = new MonitorToolsBuilder(serviceObj.UserInfo);
+        if (_serviceID == "monitor") toolsBuilder = new CmdProcessorToolsBuilder(serviceObj.UserInfo);
+        /*if (_serviceID == "nmap") toolsBuilder = new NmapToolsBuilder();
         if (_serviceID == "meta") toolsBuilder = new MetaToolsBuilder();
         if (_serviceID == "search") toolsBuilder = new SearchToolsBuilder();
 
         if (_serviceID == "blogmonitor") toolsBuilder = new BlogMonitorToolsBuilder(serviceObj.UserInfo);
-        if (_serviceID == "reportdata") toolsBuilder = new ReportDataToolsBuilder();
+        if (_serviceID == "reportdata") toolsBuilder = new ReportDataToolsBuilder();*/
         if (toolsBuilder == null) toolsBuilder = new MonitorToolsBuilder(serviceObj.UserInfo);
 
         if (!_useHF)
         {
-            _llmApi = new OpenAIApi(_logger, _openAiService, toolsBuilder, _gptModel);
+            _llmApi = new OpenAIApi(_logger, _mlParams, toolsBuilder,_serviceID, _openAiService);
         }
         else
         {
-            _llmApi = new HuggingFaceApi(_logger, toolsBuilder, _hFUrl, _hFKey, _hFModelID, _hfModel);
+            _llmApi = new HuggingFaceApi(_logger, _mlParams, toolsBuilder, _serviceID );
         }
-        string accountType="Free";
-        if (!string.IsNullOrEmpty(serviceObj.UserInfo.AccountType)) accountType=serviceObj.UserInfo.AccountType;
+        string accountType = "Free";
+        if (!string.IsNullOrEmpty(serviceObj.UserInfo.AccountType)) accountType = serviceObj.UserInfo.AccountType;
         _maxTokens = AccountTypeFactory.GetAccountTypeByName(accountType).ContextSize;
-        if (_maxTokens>_llmCtxSize) _maxTokens=_llmCtxSize;
-        _responseTokens=_maxTokens/_llmCtxRatio;
-        _promptTokens=_maxTokens-_responseTokens;
+        if (_maxTokens > _mlParams.LlmOpenAICtxSize) _maxTokens = _mlParams.LlmOpenAICtxSize;
+        _responseTokens = _maxTokens / _mlParams.LlmCtxRatio;
+        _promptTokens = _maxTokens - _responseTokens;
         _activeSessions = new ConcurrentDictionary<string, DateTime>();
         _sessionHistories = new ConcurrentDictionary<string, List<ChatMessage>>();
         _audioGenerator = audioGenerator;
@@ -300,13 +288,13 @@ public class OpenAIRunner : ILLMRunner
     private List<ChatMessage> HandleFunctionCallStatus(LLMServiceObj serviceObj)
     {
         var localHistory = new List<ChatMessage>();
-        if (serviceObj.IsFunctionCallResponse==false) return localHistory;
+        if (serviceObj.IsFunctionCallResponse == false) return localHistory;
 
-       // if (!_useHF)
+        // if (!_useHF)
         //{
-            var fakeFunctionCallId = "call_" + StringUtils.GetNanoid();
-            var fakeFunctionCallMessage = ChatMessage.FromAssistant("I have received an are_functions_running auto-check status update.");
-            fakeFunctionCallMessage.ToolCalls = new List<ToolCall>()
+        var fakeFunctionCallId = "call_" + StringUtils.GetNanoid();
+        var fakeFunctionCallMessage = ChatMessage.FromAssistant("I have received an are_functions_running auto-check status update.");
+        fakeFunctionCallMessage.ToolCalls = new List<ToolCall>()
                     {
                         new ToolCall
                             {
@@ -320,15 +308,15 @@ public class OpenAIRunner : ILLMRunner
                             }
                     };
 
-            localHistory.Add(fakeFunctionCallMessage);
+        localHistory.Add(fakeFunctionCallMessage);
 
-            // Create a fake function response as if the tool returned a result
-            var fakeFunctionResponseMessage = ChatMessage.FromTool(serviceObj.UserInput, fakeFunctionCallId);
-            fakeFunctionResponseMessage.Role = "tool";
-            fakeFunctionResponseMessage.Name = "are_functions_running";
-            fakeFunctionResponseMessage.Content = _llmApi.WrapFunctionResponse(serviceObj.FunctionName, serviceObj.UserInput) + "\n";
-            // Add the fake function response to the message history
-            localHistory.Add(fakeFunctionResponseMessage);
+        // Create a fake function response as if the tool returned a result
+        var fakeFunctionResponseMessage = ChatMessage.FromTool(serviceObj.UserInput, fakeFunctionCallId);
+        fakeFunctionResponseMessage.Role = "tool";
+        fakeFunctionResponseMessage.Name = "are_functions_running";
+        fakeFunctionResponseMessage.Content = _llmApi.WrapFunctionResponse(serviceObj.FunctionName, serviceObj.UserInput) + "\n";
+        // Add the fake function response to the message history
+        localHistory.Add(fakeFunctionResponseMessage);
         /*}
         else
         {
@@ -430,27 +418,27 @@ public class OpenAIRunner : ILLMRunner
         // Note we deal with HF modles assistant function call messages differently to OpenAi models.
         // OpenAI models need the assistant func calls to be followed by the respones. HF models don't
         // The _useHF parameter is used to construct the messages that are added to the history to deal with this difference
-        string origMessage=choiceMessage.Content;
+        string origMessage = choiceMessage.Content;
         choiceMessage.Content = $"The function call with message_id {serviceObj.MessageID} has now completed. ";
         _pendingFunctionCalls.TryAdd(serviceObj.MessageID, choiceMessage);
 
-        var toolResponces=new List<ChatMessage>();
+        var toolResponces = new List<ChatMessage>();
         foreach (ToolCall fnCall in choiceMessage.ToolCalls)
         {
             if (fnCall.FunctionCall != null)
             {
                 var funcName = fnCall.FunctionCall.Name;
                 var funcArgs = fnCall.FunctionCall.Arguments;
-                var funcId= fnCall.Id;
+                var funcId = fnCall.Id;
                 await HandleFunctionCallAsync(serviceObj, fnCall, responseServiceObj, assistantChatMessage);
                 await Task.Delay(500);
-                var toolResponse=ChatMessage.FromTool($"The function {funcName} has been called, waiting for the result...",funcId);
+                var toolResponse = ChatMessage.FromTool($"The function {funcName} has been called, waiting for the result...", funcId);
                 toolResponse.Role = "tool";
-                toolResponse.Name=funcName;
+                toolResponse.Name = funcName;
                 toolResponces.Add(toolResponse);
             }
         }
-       choiceMessage.Content=$"{origMessage} . I have called the functions using message_id {serviceObj.MessageID} . Please wait it may take some time to complete.";
+        choiceMessage.Content = $"{origMessage} . I have called the functions using message_id {serviceObj.MessageID} . Please wait it may take some time to complete.";
 
         // OpenAI models we also add a assistant message with no func calls to the history.
         localHistory.Add(choiceMessage);

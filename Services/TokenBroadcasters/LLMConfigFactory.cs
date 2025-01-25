@@ -194,6 +194,26 @@ You are provided with function signatures within <tools></tools> XML tags:
 <tools>
 {0}
 </tools>",
+            XmlPromptFooter=@"Each function call should be represented as an XML document with a root element <function_call> and a <parameters> element nested inside it.
+
+Function Call Format Requirements:
+
+    When you decide to call a function, do not return JSON. Instead, return XML following this format:
+
+<function_call name=""{function_name}"">
+    <parameters>
+        <!-- Each parameter as an XML element -->
+        <parameter_name>parameter_value</parameter_name>
+        ...
+    </parameters>
+</function_call>
+
+Where:
+
+    {function_name} is replaced with the actual function name you want to call.
+    Each parameter from the function definition becomes an XML element inside <parameters>.
+    Treat all parameter values as strings for simplicity, placing them inside the XML elements.
+",
             PromptFooter=@"For each function call, return a json object with function name and arguments within <tool_call></tool_call> XML tags:
 <tool_call>
 {""name"": <function-name>, ""arguments"": <args-json-object>}
@@ -272,6 +292,7 @@ public class LLMConfig
      public string FunctionResponse { get; set; } = string.Empty;
      public string FunctionDefsWrap { get; set; } = string.Empty;
       public string PromptFooter { get; set; } = string.Empty;
+         public string XmlPromptFooter { get; set; } = string.Empty;
        
     public string ReversePrompt { get; set; } = string.Empty;
     public string ExtraReversePrompt { get; set; } = string.Empty;

@@ -8,6 +8,7 @@ using Betalgo.Ranul.OpenAI.ObjectModels;
 using Betalgo.Ranul.OpenAI.ObjectModels.RequestModels;
 using Betalgo.Ranul.OpenAI.ObjectModels.SharedModels;
 using System;
+using System.Text.Json;
 using System.Collections.Generic;
 using System.Net.Mime;
 using System.Threading.Tasks;
@@ -44,8 +45,8 @@ namespace NetworkMonitor.LLM.Services
                 .AddParameter("page", PropertyDefinition.DefineInteger("The page of lines to return. Use to paginate through many lines of data. Start at page 1"))
                 .Validate()
                 .Build();
-            
-             // Define get_cmd_processor_source_code
+
+            // Define get_cmd_processor_source_code
             fn_get_cmd_processor_source_code = new FunctionDefinitionBuilder("get_cmd_processor_source_code", "Get the source code for a specific cmd processor type on a given agent.")
                 .AddParameter("cmd_processor_type", PropertyDefinition.DefineString("The name of the cmd processor to get the source code for. Case sensitive."))
                 .AddParameter("agent_location", PropertyDefinition.DefineString("The agent location where the cmd processor resides."))
@@ -54,7 +55,7 @@ namespace NetworkMonitor.LLM.Services
                 .Validate()
                 .Build();
 
-                
+
 
             // Define add_cmd_processor
             fn_add_cmd_processor = new FunctionDefinitionBuilder("add_cmd_processor", "Add or update a cmd processor with provided source code to an agent.")
@@ -71,7 +72,7 @@ namespace NetworkMonitor.LLM.Services
                 .AddParameter("agent_location", PropertyDefinition.DefineString("The agent location where the cmd processor is to be run."))
                 .AddParameter("number_lines", PropertyDefinition.DefineInteger("Number of lines to return. Set to -1 to use the default value. Increase this if you need more data returned by the command. Be careful with using larger numbers as a lot of data can be returned."))
                 .AddParameter("page", PropertyDefinition.DefineInteger("The page of lines to return. Use to paginate through many lines of data. Start at page 1"))
-               
+
                 .Validate()
                 .Build();
 
@@ -234,22 +235,26 @@ namespace NetworkMonitor.Connection
 }
 
 ";
-            string contentPart2="";
+            string contentPart2 = "";
             string source_code;
             try
             {
-                source_code = File.ReadAllText(Path.Combine("Examples","Example.cs"));
-                if (string.IsNullOrEmpty(source_code)) {source_code = System.Text.Json.JsonSerializer.Serialize(source_code);                    
-                contentPart2 = $"Here is an example add_cmd_processor function call. The example is a fully json formatted function call to create a cmd processor called FTPConnectionTester with escaped source_code and using a typical users agent_location 'user@memail.com-localhost' : {{ \"source_code\" : {source_code} , \"agent_location\" : \"user@email.com-locahost\" , \"cmd_processor_type\" : \"FTPConnectionTester\"}} Note how the source_code parameter is an escaped version of the original .net source code in order to make it a valid json string.\n";
-                }
+                string outputPath = Path.Combine("Examples", "Example");
+               source_code = File.ReadAllText(outputPath);
+                if (!string.IsNullOrEmpty(source_code))
+                {
+                   source_code = System.Text.Json.JsonSerializer.Serialize(source_code);
+                    contentPart2 = $"Here is an example add_cmd_processor function call. The example is a fully json formatted function call to create a cmd processor called FTPConnectionTester with escaped source_code and using a typical users agent_location 'user@memail.com-localhost' : {{ \"source_code\" : {source_code} , \"agent_location\" : \"user@email.com-locahost\" , \"cmd_processor_type\" : \"FTPConnectionTester\"}} Note how the source_code parameter is an escaped version of the original .net source code in order to make it a valid json string.\n";
+
+                }//contentPart2="Here is an example implementation you can use as a guide to creating the source_code for a cmd processors. "+source_code;
+
             }
             catch (Exception ex)
             {
                 contentPart2 = "";
             }
 
-            string contentPart3 = @" Important: Ensure that the source_code parameter is accurately formatted and escaped according to JSON standards.
-Also make sure not to include word CmdProcessor in the cmd_processor_type. For example if you want to call the cmd processor HttpTest then cmd_processor_type is HttpTest and the class name is HttpTestCmdProcessor.
+            string contentPart3 = @"Do not to include the word CmdProcessor in the cmd_processor_type. For example if you want to call the cmd processor HttpTest then cmd_processor_type is HttpTest and the class name is HttpTestCmdProcessor.
 Use _rootFolder for file operations as this has read write access. Try and implement the CancellationToken cancellationToken to make sure the command can be cancelled.
 
 If the user requests to add a cmd processor, call the function add_cmd_processor with parameters cmd_processor_type, the agent_location, and the .NET source code correctly escaped as a json string.
@@ -263,7 +268,7 @@ You will not ask the user to supply the source code when adding or updating a cm
 Your overal goal is to help the user set up and manage cmd processors on the requested agents in a simple and helpful manor.";
 
             string content = contentPart1 + contentPart2 + contentPart3;
-           content+=$" The current time is{currentTime}.";
+            content += $" The current time is{currentTime}.";
             var chatMessage = new ChatMessage()
             {
                 Role = "system",
