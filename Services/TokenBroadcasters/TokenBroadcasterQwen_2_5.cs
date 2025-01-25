@@ -27,6 +27,7 @@ public class TokenBroadcasterQwen_2_5 : TokenBroadcasterBase
 
     public override List<(string json, string functionName)> ParseInputForJson(string input)
     {
+        input=RemoveThinking(input,"think");
         var functionCalls = new List<(string json, string functionName)>();
         int tagStart = input.IndexOf("<tool_call>\n");
         int tagEnd;

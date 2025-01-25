@@ -26,6 +26,8 @@ public class TokenBroadcasterPhi_4 : TokenBroadcasterBase
 
   public override List<(string json, string functionName)> ParseInputForJson(string input)
         {
+             input=RemoveThinking(input, "reasoning");
+           
             var functionCalls = new List<(string json, string functionName)>();
 
             // Extract individual function call blocks using your custom method

@@ -23,6 +23,7 @@ public class TokenBroadcasterFunc_3_2 : TokenBroadcasterBase
     // Updated ParseInputForJson to handle multiple function calls
     public override List<(string json, string functionName)> ParseInputForJson(string input)
     {
+        input=RemoveThinking(input,"think");
         var functionCalls = new List<(string json, string functionName)>();
 
         int tagStart = input.IndexOf(_assistantHeader);

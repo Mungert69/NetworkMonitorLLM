@@ -106,21 +106,33 @@ ${content}
             EOMToken = "<|eom_id|>",
             FunctionResponseTemplate = "<|start_header_id|>ipython<|end_header_id|>\\\n\\\n{1}",
             FunctionResponse = "{1}",
-            FunctionDefsWrap = "{0}",
-            PromptFooter = "Think very carefully before calling functions.\n\n" +
- "If you choose to call a function, ONLY reply in the following format:\n\n" +
- "{\"name\": \"{function_name}\", \"parameters\": {parameters}}\n\n" +
- "Where:\n\n" +
- "    function_name: The name of the function being called.\n" +
- "    parameters: A JSON object where the argument names (keys) are taken from the function definition, and the argument values (values) must be in the correct data types (such as strings, numbers, booleans, etc.) as specified in the function's definition.\n\n" +
- "Notes:\n\n" +
- "    Numbers remain numbers (e.g., 123, 59.5).\n" +
- "    Booleans are true or false, not \"true\" or \"false\".\n" +
- "    Strings are enclosed in quotes (e.g., \"example\").\n" +
- "    Refer to the function definitions to ensure all parameters of the correct types.\n\n" +
- "Important: You will call functions only when necessary. Checking with the user before calling more functions.\n" +
- "Important! All json in your responses will be interpreted as a function call. You will only provide json in your responses when you intend to call a function.",
+            FunctionDefsWrap = @"
+Ensure that any function calls you use align with the user's request. Use only the functions necessary for the task. For failed function calls, provide feedback about the issue before retrying or switching functions.
 
+Here is a list of functions in JSON format that you can invoke:
+
+{0}",
+            PromptFooter = @"Think very carefully before calling functions.
+
+ If you choose to call a function, ONLY reply in the following format:
+
+ {""name"": ""{function_name}"", ""parameters"": {parameters}}
+
+ Where:
+
+     function_name: The name of the function being called.
+     parameters: A JSON object where the argument names (keys) are taken from the function definition, and the argument values (values) must be in the correct data types (such as strings, numbers, booleans, etc.) as specified in the function's definition.
+ 
+ Notes:
+    The format of the function call is json. Only valid json should be used. For example
+    Numbers remain numbers (e.g., 123, 59.5)
+    Booleans are true or false without quotes around them
+    Strings are enclosed in quotes (e.g., ""escaped json string""). The string must be a valid json string.
+    Refer to the function definitions to ensure all parameters of the correct types
+
+Important: You will call functions only when necessary. Checking with the user before calling more functions.
+Important! All json in your responses will be interpreted as a function call. You will only provide json in your responses when you intend to call a function.
+",
             CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
                   new TokenBroadcasterLlama_3_2(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
         },
@@ -137,7 +149,10 @@ ${content}
             EOTToken = "<|im_end|>",
             FunctionResponseTemplate = "<|im_start|>user<|im_sep|>\\\n<function_response name={0}>\\\n{1}\\\n</function_response>",
             FunctionResponse = "<function_response name={0}>{1}</function_response>",
-            FunctionDefsWrap = "{0}",
+            FunctionDefsWrap = @"
+You have access to the following functions:
+
+{0}",
             PromptFooter = @"
 Think very carefully before calling functions.
 If you choose to call a function, ONLY reply in the following format:
@@ -171,8 +186,25 @@ Reminder:
             EOTToken = "<|im_end|>",
             FunctionResponseTemplate = "<|im_start|>assistant\\\n<tool_response>\\\n{1}\\\n</tool_response>",
             FunctionResponse = "<tool_response>{1}</tool_response>",
-            FunctionDefsWrap = "<tools>\n{0}</tools>",
-            PromptFooter="For each function call, return a json object with function name and arguments within <tool_call></tool_call> XML tags:\n<tool_call>\n{\"name\": <function-name>, \"arguments\": <args-json-object>}\n</tool_call>",
+            FunctionDefsWrap = @"# Tools
+
+You may call one or more functions to assist with the user query.
+
+You are provided with function signatures within <tools></tools> XML tags:
+<tools>
+{0}
+</tools>",
+            PromptFooter=@"For each function call, return a json object with function name and arguments within <tool_call></tool_call> XML tags:
+<tool_call>
+{""name"": <function-name>, ""arguments"": <args-json-object>}
+</tool_call>
+Reminder:
+- Function calls MUST follow the specified format : <tool_call> {""name"": <function-name>, ""arguments"": <args-json-object>} </tool_call>
+- The function call repsonses are between tags <tool_response> and </tool_response> 
+- Required parameters MUST be specified
+- Only call one function at a time
+- Important: You will call functions only when necessary. Checking with the user before calling more functions.
+",
             CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
                     new TokenBroadcasterQwen_2_5(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
         },

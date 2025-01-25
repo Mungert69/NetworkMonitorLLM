@@ -52,7 +52,7 @@ namespace NetworkMonitor.LLM.Services
         {
             _responseProcessor = responseProcessor;
             _xmlFunctionParsing = xmlFunctionParsing;
-            _ignoreParameters=ignoreParameters;
+            _ignoreParameters = ignoreParameters;
             _logger = logger;
             _cancellationTokenSource = new CancellationTokenSource();
         }
@@ -72,6 +72,21 @@ namespace NetworkMonitor.LLM.Services
             _cancellationTokenSource.Dispose();
             _cancellationTokenSource = new CancellationTokenSource();
         }
+
+        protected virtual string RemoveThinking(string input, string thinkTag="think")
+{
+    // Escape the tag to handle special regex characters if present
+    string escapedTag = Regex.Escape(thinkTag);
+
+    // Build the regex pattern dynamically
+    string pattern = $@"<{escapedTag}>.*?</{escapedTag}>";
+
+    // Perform the replacement
+    string result = Regex.Replace(input, pattern, "", RegexOptions.Singleline);
+
+    return result;
+}
+
 
         public async Task SendLLMPrimaryChunk(LLMServiceObj serviceObj, string chunk)
         {
@@ -134,9 +149,9 @@ namespace NetworkMonitor.LLM.Services
             var chunkServiceObj = new LLMServiceObj(serviceObj);
             if (serviceObj.IsFunctionCallResponse)
             {
-                userInput= userInput.Replace(_functionReplace, "<Function Response:> ");
-                userInput= StripExtraFuncHeader(userInput);
-                userInput= userInput.Replace("\n", "");
+                userInput = userInput.Replace(_functionReplace, "<Function Response:> ");
+                userInput = StripExtraFuncHeader(userInput);
+                userInput = userInput.Replace("\n", "");
                 chunkServiceObj.LlmMessage = userInput;
             }
             else chunkServiceObj.LlmMessage = userInput.Replace(_userReplace, "<User:> ") + "\n";
@@ -308,18 +323,18 @@ namespace NetworkMonitor.LLM.Services
                 var parsedParameters = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonParameters);
 
                 // Check for "source_code" with a "#cdata-section" field
-                 bool argsEscaped = false;
+                bool argsEscaped = false;
                 if (parsedParameters.TryGetValue("source_code", out var sourceCodeNode) && sourceCodeNode is Newtonsoft.Json.Linq.JObject sourceCodeObj)
                 {
                     // If "#cdata-section" exists, replace "source_code" with its value
                     if (sourceCodeObj.TryGetValue("#cdata-section", out var cdataSection))
                     {
                         parsedParameters["source_code"] = cdataSection.ToString();
-                        argsEscaped=true;
+                        argsEscaped = true;
                     }
                 }
-                   // Add the `args_escaped` field
-                    parsedParameters["args_escaped"] = argsEscaped;
+                // Add the `args_escaped` field
+                parsedParameters["args_escaped"] = argsEscaped;
 
                 // Convert the updated parameters back to JSON
                 string adjustedJsonParameters = JsonConvert.SerializeObject(parsedParameters, Newtonsoft.Json.Formatting.None);

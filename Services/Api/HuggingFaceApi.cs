@@ -71,13 +71,12 @@ public class HuggingFaceApi : ILLMApi
 
     public List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj)
     {
-        string header = "\nHere is a list of functions in JSON format that you can invoke:\n";
-
+      
         string toolsJson = ToolsWrapper(JsonToolsBuilder.BuildToolsJson(_toolsBuilder.Tools));
         // List<ChatMessage> systemPrompt=_toolsBuilder.GetSystemPrompt(currentTime, serviceObj);
         string footer = PromptFooter();
         var systemMessages = _toolsBuilder.GetSystemPrompt(currentTime, serviceObj);
-        systemMessages[0].Content = header + toolsJson + systemMessages[0].Content + footer;
+        systemMessages[0].Content = toolsJson + systemMessages[0].Content + footer;
 
         return systemMessages;
     }

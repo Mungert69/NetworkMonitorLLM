@@ -46,8 +46,11 @@ public class OpenAIRunner : ILLMRunner
     private bool _isEnabled = true;
     //private bool _isFuncCalled;
     private string _serviceID;
-    private int _maxTokens = 2000;
-    private int _responseTokens = 2000;
+    private int _llmCtxSize=32000;
+    private int _maxTokens=32000;
+    private int _responseTokens = 4000;
+    private int _promptTokens =28000;
+    private int _llmCtxRatio=6;
     private int _llmLoad;
     private List<ChatMessage> _systemPrompt = new List<ChatMessage>
 {
@@ -91,8 +94,8 @@ public class OpenAIRunner : ILLMRunner
         _openAiService = openAiService;
         _openAIRunnerSemaphore = openAIRunnerSemaphore;
         _serviceID = systemParamsHelper.GetSystemParams().ServiceID!;
-        _maxTokens = systemParamsHelper.GetMLParams().LlmOpenAICtxSize!;
-        _responseTokens = systemParamsHelper.GetMLParams().LlmResponseTokens!;
+        _llmCtxSize = systemParamsHelper.GetMLParams().LlmOpenAICtxSize!;
+        _llmCtxRatio = systemParamsHelper.GetMLParams().LlmCtxRatio;
         _hFModelID = systemParamsHelper.GetMLParams().LlmHFModelID!;
         _hFKey = systemParamsHelper.GetMLParams().LlmHFKey!;
         _hFUrl = systemParamsHelper.GetMLParams().LlmHFUrl!;
@@ -121,6 +124,9 @@ public class OpenAIRunner : ILLMRunner
         string accountType="Free";
         if (!string.IsNullOrEmpty(serviceObj.UserInfo.AccountType)) accountType=serviceObj.UserInfo.AccountType;
         _maxTokens = AccountTypeFactory.GetAccountTypeByName(accountType).ContextSize;
+        if (_maxTokens>_llmCtxSize) _maxTokens=_llmCtxSize;
+        _responseTokens=_maxTokens/_llmCtxRatio;
+        _promptTokens=_maxTokens-_responseTokens;
         _activeSessions = new ConcurrentDictionary<string, DateTime>();
         _sessionHistories = new ConcurrentDictionary<string, List<ChatMessage>>();
         _audioGenerator = audioGenerator;
@@ -143,7 +149,7 @@ public class OpenAIRunner : ILLMRunner
         var systemPrompt = _llmApi.GetSystemPrompt(_activeSessions[serviceObj.SessionId].ToString("yyyy-MM-ddTHH:mm:ss"), serviceObj);
         _sessionHistories.GetOrAdd(serviceObj.SessionId, systemPrompt);
 
-        _logger.LogInformation($"Started TurboLLM {_serviceID} Assistant with session id {serviceObj.SessionId} at {currentTime}.");
+        _logger.LogInformation($"Started TurboLLM {_serviceID} Assistant with session id {serviceObj.SessionId} at {currentTime}. with CTX size {_maxTokens} and Response tokens {_responseTokens}");
         // Here, you might want to send an initial message or perform other setup tasks.
         _isStateStarting = false;
         _isStateReady = true;
@@ -613,7 +619,7 @@ public class OpenAIRunner : ILLMRunner
         int tokenCount = CalculateTokens(history);
         _logger.LogInformation($"History Token count: {tokenCount}");
 
-        if (tokenCount > _maxTokens)
+        if (tokenCount > _promptTokens)
         {
             _logger.LogInformation($"Token count ({tokenCount}) exceeded the limit, truncating history.");
 
@@ -622,7 +628,7 @@ public class OpenAIRunner : ILLMRunner
             history = history.Skip(1).ToList();
 
             // Remove messages until the token count is under the limit
-            while (tokenCount > _maxTokens)
+            while (tokenCount > _promptTokens)
             {
                 var firstMessage = history[0];
                 if (firstMessage.ToolCalls != null && firstMessage.ToolCalls.Any())
