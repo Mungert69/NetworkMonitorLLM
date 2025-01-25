@@ -91,14 +91,14 @@ public class OpenAIRunner : ILLMRunner
         _mlParams = systemParamsHelper.GetMLParams();
         _useHF = systemParamsHelper.GetMLParams().LlmUseHF;
         IToolsBuilder? toolsBuilder = null;
-       // if (_serviceID == "monitor") toolsBuilder = new MonitorToolsBuilder(serviceObj.UserInfo);
-        if (_serviceID == "monitor") toolsBuilder = new CmdProcessorToolsBuilder(serviceObj.UserInfo);
-        /*if (_serviceID == "nmap") toolsBuilder = new NmapToolsBuilder();
+        if (_serviceID == "monitor") toolsBuilder = new MonitorToolsBuilder(serviceObj.UserInfo);
+        if (_serviceID == "cmdprocessor") toolsBuilder = new CmdProcessorToolsBuilder(serviceObj.UserInfo);
+        if (_serviceID == "nmap") toolsBuilder = new NmapToolsBuilder();
         if (_serviceID == "meta") toolsBuilder = new MetaToolsBuilder();
         if (_serviceID == "search") toolsBuilder = new SearchToolsBuilder();
 
         if (_serviceID == "blogmonitor") toolsBuilder = new BlogMonitorToolsBuilder(serviceObj.UserInfo);
-        if (_serviceID == "reportdata") toolsBuilder = new ReportDataToolsBuilder();*/
+        if (_serviceID == "reportdata") toolsBuilder = new ReportDataToolsBuilder();
         if (toolsBuilder == null) toolsBuilder = new MonitorToolsBuilder(serviceObj.UserInfo);
 
         if (!_useHF)
