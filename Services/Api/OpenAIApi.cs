@@ -58,8 +58,9 @@ public class OpenAIApi : ILLMApi
 
      private string PromptFooter()
     {
+        // For chatgpt we only alter the footer is we are using xml function calling
         if (_mlParams.XmlFunctionParsing) return _config.XmlPromptFooter;
-        else return _config.PromptFooter;
+        else return "";
     }
     public List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj)
     {
