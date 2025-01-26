@@ -137,7 +137,7 @@ Here is a list of functions in JSON format that you can invoke:
 
  If you choose to call a function, ONLY reply in the following format:
 
- {""name"": ""{function_name}"", ""parameters"": {parameters}}
+ {""name"": ""function_name"", ""parameters"": {parameters}}
 
  Where:
 
@@ -152,7 +152,7 @@ Here is a list of functions in JSON format that you can invoke:
     Refer to the function definitions to ensure all parameters of the correct types
 
 Important: You will call functions only when necessary. Checking with the user before calling more functions. You will only provide json in your responses when you intend to call a function.
-VERY IMPORTANT : Only call functions using this format :  {{""name"": ""{{function_name}}"", ""parameters"": {{parameters}}
+VERY IMPORTANT : Only call functions using this format :  {""name"": ""function_name"", ""parameters"": {parameters}}
 ",
             CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
                   new TokenBroadcasterLlama_3_2(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)

@@ -156,7 +156,7 @@ public class HuggingFaceApi : ILLMApi
                 }
                 else
                 {
-                    _logger.LogWarning($"No function calls were parsed for the message content: {choice.Message.Content}");
+                    //_logger.LogWarning($"No function calls were parsed for the message content: {choice.Message.Content}");
                 }
             }
 

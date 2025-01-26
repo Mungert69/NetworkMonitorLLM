@@ -16,7 +16,7 @@ namespace NetworkMonitor.LLM.Services
         // Factory method to return the appropriate prompt by name
         public static List<ChatMessage> GetPrompt(string name, bool isXml = false, params object[] args)
         {
-            if (isXml) name += "xml";
+           if (isXml) name += "xml";
             switch (name.ToLower())
             {
                 case "cmdprocessorxml":
@@ -90,8 +90,7 @@ namespace NetworkMonitor.LLM.Services
                 // 1) userPrompt
                 "Please can you create a cmd processor to run the ls command on my agent",
 // 2) assistantPrompt (includes the <function_call>)
-@"I will create a cmd processor that will run the ls command
-<function_call name=""add_cmd_processor"">
+@"<function_call name=""add_cmd_processor"">
     <parameters>
         <cmd_processor_type>List</cmd_processor_type>
         <source_code>
@@ -186,7 +185,7 @@ namespace NetworkMonitor.Connection
     </parameters>
 </function_call>",
 // 3) toolResponse
-@"{{""message"" : ""Success: added List cmd processor"", ""success"" : true, ""agent_location"" : ""London - UK"" }}",
+@"{""message"" : ""Success: added List cmd processor"", ""success"" : true, ""agent_location"" : ""London - UK"" }",
                 // functionName
                 "add_cmd_processor"
             );
@@ -203,15 +202,14 @@ namespace NetworkMonitor.Connection
             AddAssistantMessageWithToolCall(
                 messages,
                 "Can you run ls on agent London - UK",
-@"Yes I will run ls on agent London - UK
-<function_call name=""run_cmd_processor"">
+@"<function_call name=""run_cmd_processor"">
     <parameters>
         <cmd_processor_type>List</cmd_processor_type>
         <arguments>-l</arguments>
         <agent_location>London - UK</agent_location>
     </parameters>
 </function_call>",
-@"{{""message"" : "" ls command output nmap meta openssl busybox"", ""success"" : true, ""agent_location"" : ""London - UK"" }}",
+@"{""message"" : "" ls command output nmap meta openssl busybox"", ""success"" : true, ""agent_location"" : ""London - UK"" }",
                 "run_cmd_processor"
             );
 
@@ -226,8 +224,7 @@ namespace NetworkMonitor.Connection
             AddAssistantMessageWithToolCall(
                 messages,
                 "Can you create a commmand to test ftp sites. I would like it to run on Scanner - US",
-@"I will create a FTPConnectionTester on agent Scanner - US
-<function_call name=""add_cmd_processor"">
+@"<function_call name=""add_cmd_processor"">
     <parameters>
         <cmd_processor_type>FTPConnectionTester</cmd_processor_type>
         <source_code>
@@ -285,7 +282,7 @@ namespace NetworkMonitor.Connection
         <agent_location>Scanner - US</agent_location>
     </parameters>
 </function_call>",
-@"{{""message"" : ""Success: added FtpConnectionTester cmd processor"", ""success"" : true, ""agent_location"" : ""Scanner - US"" }}", "add_cmd_processor");
+@"{""message"" : ""Success: added FtpConnectionTester cmd processor"", ""success"" : true, ""agent_location"" : ""Scanner - US"" }", "add_cmd_processor");
 
             messages.Add(ChatMessage.FromAssistant(
                 "I have created a FTPConnectionTester cmd processor and it is ready for use on agent Scanner - US"
@@ -298,15 +295,14 @@ namespace NetworkMonitor.Connection
             AddAssistantMessageWithToolCall(
                 messages,
                 "Can you check if ftp ftpsite.com is working I use username test password test123",
-@"I will check this site
-<function_call name=""run_cmd_processor"">
+@"<function_call name=""run_cmd_processor"">
     <parameters>
         <cmd_processor_type>FTPConnectionTester</cmd_processor_type>
         <arguments>--username test --password test123 --host ftpsite.com</arguments>
         <agent_location>Scanner - US</agent_location>
     </parameters>
 </function_call>",
-@"{{""message"": ""Success: ftpsite.com connection success"", ""success"": true, ""agent_location"": ""Scanner - US""}}",
+@"{""message"": ""Success: ftpsite.com connection success"", ""success"": true, ""agent_location"": ""Scanner - US""}",
                 "run_cmd_processor"
             );
 
@@ -323,9 +319,9 @@ namespace NetworkMonitor.Connection
                 // userPrompt
                 "Please delete the List cmd processor.",
                 // assistantPrompt
-                @"Ok, removing the List cmd processor now.\n<function_call name=""delete_cmd_processor"">\n    <parameters>\n        <cmd_processor_type>List</cmd_processor_type>\n        <agent_location>London - UK</agent_location>\n    </parameters>\n</function_call>",
+                @"<function_call name=""delete_cmd_processor"">\n    <parameters>\n        <cmd_processor_type>List</cmd_processor_type>\n        <agent_location>London - UK</agent_location>\n    </parameters>\n</function_call>",
                 // toolResponse
-                @"{{""message"" : ""Success: deleted List cmd processor"", ""success"" : true, ""agent_location"" : ""London - UK"" }}",
+                @"{""message"" : ""Success: deleted List cmd processor"", ""success"" : true, ""agent_location"" : ""London - UK"" }",
                 // functionName
                 "delete_cmd_processor"
             );
@@ -344,9 +340,9 @@ namespace NetworkMonitor.Connection
                 // userPrompt
                 "Also, please delete the FTPConnectionTester cmd processor.",
                 // assistantPrompt
-                @"Sure, removing the FTPConnectionTester cmd processor now.\n<function_call name=""delete_cmd_processor"">\n    <parameters>\n        <cmd_processor_type>FTPConnectionTester</cmd_processor_type>\n        <agent_location>Scanner - US</agent_location>\n    </parameters>\n</function_call>",
+                @"<function_call name=""delete_cmd_processor"">\n    <parameters>\n        <cmd_processor_type>FTPConnectionTester</cmd_processor_type>\n        <agent_location>Scanner - US</agent_location>\n    </parameters>\n</function_call>",
                 // toolResponse
-                @"{{""message"" : ""Success: deleted FTPConnectionTester cmd processor"", ""success"" : true, ""agent_location"" : ""Scanner - US"" }}",
+                @"{""message"" : ""Success: deleted FTPConnectionTester cmd processor"", ""success"" : true, ""agent_location"" : ""Scanner - US"" }",
                 // functionName
                 "delete_cmd_processor"
             );
@@ -400,7 +396,7 @@ namespace NetworkMonitor.Connection
                 // userPrompt
                 "What’s my user info?",
                 // assistantPrompt
-                @"I will check your user info.\n{{""name"" : ""get_user_info"", ""parameters"" : {{""detail_response"" : false}} }}",
+                @"{""name"" : ""get_user_info"", ""parameters"" : {""detail_response"" : false} }",
                 // toolResponse (tool response in JSON format)
                 $@"{{
             ""message"": ""Got user info"",
