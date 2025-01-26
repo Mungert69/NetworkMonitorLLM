@@ -87,7 +87,7 @@ public class HuggingFaceApi : ILLMApi
         var systemMessages = _toolsBuilder.GetSystemPrompt(currentTime, serviceObj);
         systemMessages[0].Content = toolsJson + systemMessages[0].Content + footer;
         _logger.LogInformation($" Using SYSTEM prompt\n\n{systemMessages[0].Content}");
-        systemMessages.AddRange(NShotPromptFactory.GetPrompt(_serviceID,_isXml));
+        systemMessages.AddRange(NShotPromptFactory.GetPrompt(_serviceID,_isXml, currentTime, serviceObj));
         return systemMessages;
     }
 
@@ -230,8 +230,8 @@ public class HuggingFaceApi : ILLMApi
     private async Task<string> SendHttpRequestAsync(string payloadJson)
     {
         const int maxRetries = 3;
-        const int delayBetweenRetries = 20000; // 5 seconds in milliseconds
-        const int timeout = 60000; // 20 seconds in milliseconds
+        const int delayBetweenRetries = 30000; 
+        const int timeout = 120000;
 
         for (int attempt = 1; attempt <= maxRetries; attempt++)
         {

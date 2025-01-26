@@ -68,7 +68,7 @@ public class OpenAIApi : ILLMApi
         var systemMessages=_toolsBuilder.GetSystemPrompt(currentTime, serviceObj);
         systemMessages[0].Content = systemMessages[0].Content + footer;
       
-           systemMessages.AddRange(NShotPromptFactory.GetPrompt(_serviceID,_mlParams.XmlFunctionParsing));
+           systemMessages.AddRange(NShotPromptFactory.GetPrompt(_serviceID,_mlParams.XmlFunctionParsing, currentTime, serviceObj));
      
         return systemMessages;
 

@@ -151,8 +151,8 @@ Here is a list of functions in JSON format that you can invoke:
     Strings are enclosed in quotes (e.g., ""escaped json string""). The string must be a valid json string.
     Refer to the function definitions to ensure all parameters of the correct types
 
-Important: You will call functions only when necessary. Checking with the user before calling more functions.
-Important! All json in your responses will be interpreted as a function call. You will only provide json in your responses when you intend to call a function.
+Important: You will call functions only when necessary. Checking with the user before calling more functions. You will only provide json in your responses when you intend to call a function.
+VERY IMPORTANT : Only call functions using this format :  {{""name"": ""{{function_name}}"", ""parameters"": {{parameters}}
 ",
             CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
                   new TokenBroadcasterLlama_3_2(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)

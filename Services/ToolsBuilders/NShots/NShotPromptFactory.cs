@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using NetworkMonitor.Objects;
 using NetworkMonitor.Utils;
+using NetworkMonitor.Objects.ServiceMessage;
 using Betalgo.Ranul.OpenAI.Managers;
 using Betalgo.Ranul.OpenAI.ObjectModels.RequestModels;
 using Betalgo.Ranul.OpenAI.Tokenizer.GPT3;
@@ -13,18 +14,18 @@ namespace NetworkMonitor.LLM.Services
     public static class NShotPromptFactory
     {
         // Factory method to return the appropriate prompt by name
-        public static List<ChatMessage> GetPrompt(string name, bool isXml = false)
+        public static List<ChatMessage> GetPrompt(string name, bool isXml = false, params object[] args)
         {
             if (isXml) name += "xml";
             switch (name.ToLower())
             {
                 case "cmdprocessorxml":
-                    return GetCmdProcessorXml();
+                    return GetCmdProcessorXml(args);
                 // Add more cases here for additional prompt types
                 // case "anotherprompt":
                 //     return GetAnotherPrompt();
                 default:
-                    return new List<ChatMessage>();
+                    return GetDefaultPrompt(args);
             }
         }
 
@@ -74,10 +75,10 @@ namespace NetworkMonitor.LLM.Services
             messages.Add(assistantMessage);
 
             // 3) Add the tool (function response)
-            messages.Add(ChatMessage.FromTool(toolResponse,toolCallId));
+            messages.Add(ChatMessage.FromTool(toolResponse, toolCallId));
         }
 
-        private static List<ChatMessage> GetCmdProcessorXml()
+        private static List<ChatMessage> GetCmdProcessorXml(params object[] args)
         {
             var messages = new List<ChatMessage>();
 
@@ -88,7 +89,7 @@ namespace NetworkMonitor.LLM.Services
                 messages,
                 // 1) userPrompt
                 "Please can you create a cmd processor to run the ls command on my agent",
-                // 2) assistantPrompt (includes the <function_call>)
+// 2) assistantPrompt (includes the <function_call>)
 @"I will create a cmd processor that will run the ls command
 <function_call name=""add_cmd_processor"">
     <parameters>
@@ -184,7 +185,7 @@ namespace NetworkMonitor.Connection
         <agent_location>Scanner - EU</agent_location>
     </parameters>
 </function_call>",
-                // 3) toolResponse
+// 3) toolResponse
 @"{{""message"" : ""Success: added List cmd processor"", ""success"" : true, ""agent_location"" : ""London - UK"" }}",
                 // functionName
                 "add_cmd_processor"
@@ -284,7 +285,7 @@ namespace NetworkMonitor.Connection
         <agent_location>Scanner - US</agent_location>
     </parameters>
 </function_call>",
-@"{{""message"" : ""Success: added FtpConnectionTester cmd processor"", ""success"" : true, ""agent_location"" : ""Scanner - US"" }}","add_cmd_processor");
+@"{{""message"" : ""Success: added FtpConnectionTester cmd processor"", ""success"" : true, ""agent_location"" : ""Scanner - US"" }}", "add_cmd_processor");
 
             messages.Add(ChatMessage.FromAssistant(
                 "I have created a FTPConnectionTester cmd processor and it is ready for use on agent Scanner - US"
@@ -313,7 +314,7 @@ namespace NetworkMonitor.Connection
                 "The FTP connection to ftpsite.com was successful."
             ));
 
-             // --------------------------------------------------
+            // --------------------------------------------------
             // 5TH GROUP: user -> assistant (with function_call) -> tool
             // (Delete the List CmdProcessor)
             // --------------------------------------------------
@@ -360,11 +361,64 @@ namespace NetworkMonitor.Connection
         }
 
         // Example placeholder for additional prompts
-        private static List<ChatMessage> GetAnotherPrompt()
+        private static List<ChatMessage> GetDefaultPrompt(params object[] args)
         {
             var messages = new List<ChatMessage>();
-            messages.Add(ChatMessage.FromUser("Example user message for AnotherPrompt"));
-            messages.Add(ChatMessage.FromAssistant("Example assistant response for AnotherPrompt"));
+
+            if (args.Length < 2)
+            {
+                throw new ArgumentException("GetDefaultPrompt requires at least two arguments: current time and LLMServiceObj instance.");
+            }
+
+            // Extract currentTime
+            string currentTime = args[0]?.ToString() ?? "unknown";
+
+            // Safely retrieve the LLMServiceObj instance
+            var serviceObj = args.Length > 1 && args[1] is LLMServiceObj obj ? obj : new LLMServiceObj();
+
+            // Initialize the content variable
+            string content;
+
+            // Determine if the user is logged in and generate content accordingly
+            if (serviceObj.IsUserLoggedIn)
+            {
+                content = $"The user logged in at {currentTime} with email {serviceObj.UserInfo.Email}. " +
+                          $"Users account type is {serviceObj.UserInfo.AccountType}. They have {serviceObj.UserInfo.TokensUsed} available tokens. " +
+                          $"Remind the user that upgrading accounts gives more tokens and access to more functions. " +
+                          $"See https://freenetworkmonitor.click/subscription for details.";
+            }
+            else
+            {
+                content = $"The user is not logged in, the time is {currentTime}. " +
+                          $"They don't need to be logged in, but to add hosts they will need to supply an email address. " +
+                          $"All other functions can be called with or without an email address.";
+            }
+
+            // Add messages using the helper method
+            AddAssistantMessageWithToolCall(
+                messages,
+                // userPrompt
+                "What’s my user info?",
+                // assistantPrompt
+                @"I will check your user info.\n{{""name"" : ""get_user_info"", ""parameters"" : {{""detail_response"" : false}} }}",
+                // toolResponse (tool response in JSON format)
+                $@"{{
+            ""message"": ""Got user info"",
+            ""success"": true,
+            ""current_time"": ""{currentTime}"",
+            ""email"": ""{serviceObj.UserInfo.Email}"",
+            ""account_type"": ""{serviceObj.UserInfo.AccountType}"",
+            ""available_tokens"": {serviceObj.UserInfo.TokensUsed},
+            ""logged_in"": {serviceObj.IsUserLoggedIn.ToString().ToLower()}
+        }}",
+                // functionName
+                "get_user_info"
+            );
+
+              messages.Add(ChatMessage.FromAssistant(
+                content
+            ));
+
             return messages;
         }
     }
