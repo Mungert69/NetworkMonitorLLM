@@ -5,6 +5,26 @@ using System.Collections.Generic;
 namespace NetworkMonitor.LLM.Services;
 public static class LLMConfigFactory
 {
+    private static readonly string _xmlPromptFooter=@"Each function call should be represented as an XML document with a root element <function_call> and a <parameters> element nested inside it.
+
+Function Call Format Requirements:
+
+    When you decide to call a function, do not return JSON. Instead, return XML following this format:
+
+<function_call name=""{function_name}"">
+    <parameters>
+        <!-- Each parameter as an XML element -->
+        <parameter_name>parameter_value</parameter_name>
+        ...
+    </parameters>
+</function_call>
+
+Where:
+
+    {function_name} is replaced with the actual function name you want to call.
+    Each parameter from the function definition becomes an XML element inside <parameters>.
+    Treat all parameter values as strings for simplicity, placing them inside the XML elements.
+";
     private static readonly Dictionary<string, LLMConfig> _llmConfigs = new()
     {
         ["func_2.4"] = new LLMConfig
@@ -112,6 +132,7 @@ Ensure that any function calls you use align with the user's request. Use only t
 Here is a list of functions in JSON format that you can invoke:
 
 {0}",
+            XmlPromptFooter=_xmlPromptFooter,
             PromptFooter = @"Think very carefully before calling functions.
 
  If you choose to call a function, ONLY reply in the following format:
@@ -153,6 +174,7 @@ Important! All json in your responses will be interpreted as a function call. Yo
 You have access to the following functions:
 
 {0}",
+            XmlPromptFooter=_xmlPromptFooter,
             PromptFooter = @"
 Think very carefully before calling functions.
 If you choose to call a function, ONLY reply in the following format:
@@ -194,26 +216,7 @@ You are provided with function signatures within <tools></tools> XML tags:
 <tools>
 {0}
 </tools>",
-            XmlPromptFooter=@"Each function call should be represented as an XML document with a root element <function_call> and a <parameters> element nested inside it.
-
-Function Call Format Requirements:
-
-    When you decide to call a function, do not return JSON. Instead, return XML following this format:
-
-<function_call name=""{function_name}"">
-    <parameters>
-        <!-- Each parameter as an XML element -->
-        <parameter_name>parameter_value</parameter_name>
-        ...
-    </parameters>
-</function_call>
-
-Where:
-
-    {function_name} is replaced with the actual function name you want to call.
-    Each parameter from the function definition becomes an XML element inside <parameters>.
-    Treat all parameter values as strings for simplicity, placing them inside the XML elements.
-",
+            XmlPromptFooter=_xmlPromptFooter,
             PromptFooter=@"For each function call, return a json object with function name and arguments within <tool_call></tool_call> XML tags:
 <tool_call>
 {""name"": <function-name>, ""arguments"": <args-json-object>}
