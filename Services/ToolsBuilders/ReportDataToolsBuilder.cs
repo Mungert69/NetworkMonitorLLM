@@ -24,7 +24,7 @@ namespace NetworkMonitor.LLM.Services
 
         public List<ToolDefinition> Tools => _tools;
 
-        public List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj)
+        public List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
         {
             string content = @"You are a network monitoring analysis expert. Your task is to provide a high-level JSON summary of the input report data, focusing on 'Performance Assessment' and 'Expert Recommendations' in a structured and objective manner.
 

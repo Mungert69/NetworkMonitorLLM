@@ -93,7 +93,7 @@ namespace NetworkMonitor.LLM.Services
             };
         }
 
-        public List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj)
+        public List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
         {
             // Construct the system content from the original prompt instructions
             string contentPart1 =

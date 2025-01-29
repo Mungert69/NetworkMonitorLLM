@@ -12,6 +12,6 @@ using System.Net.Mime;
 
 namespace NetworkMonitor.LLM.Services;
 public interface IToolsBuilder {
-       List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj);
+       List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType);
         List<ToolDefinition> Tools { get; }
 }

@@ -31,6 +31,7 @@ public class LLMService : ILLMService
 
     private readonly ILLMRunnerFactory _processRunnerFactory;
     private readonly ILLMRunnerFactory _openAIRunnerFactory;
+    private readonly ILLMRunnerFactory _hfRunnerFactory;
     private IServiceProvider _serviceProvider;
     private IRabbitRepo _rabbitRepo;
     private SemaphoreSlim _processRunnerSemaphore = new SemaphoreSlim(1, 1);
@@ -43,6 +44,7 @@ public class LLMService : ILLMService
     {
         _processRunnerFactory = new LLMProcessRunnerFactory();
         _openAIRunnerFactory = new OpenAIRunnerFactory();
+        _hfRunnerFactory = new HFRunnerFactory();
         _serviceProvider = serviceProvider;
         _rabbitRepo = rabbitRepo;
         _mlParams = systemParamsHelper.GetMLParams();
@@ -325,6 +327,7 @@ public class LLMService : ILLMService
         ILLMRunner runner = runnerType switch
         {
             "TurboLLM" => _openAIRunnerFactory.CreateRunner(_serviceProvider, obj, new SemaphoreSlim(1)),
+             "HugLLM" => _hfRunnerFactory.CreateRunner(_serviceProvider, obj, new SemaphoreSlim(1)),
             "FreeLLM" => _processRunnerFactory.CreateRunner(_serviceProvider, obj, _processRunnerSemaphore),
             _ => throw new ArgumentException($"Invalid runner type: {runnerType}")
         };
@@ -337,6 +340,10 @@ public class LLMService : ILLMService
     {
         // Update the load count for the respective runner type
         if (llmType == "TurboLLM")
+        {
+            _openAIRunnerFactory.LoadCount += delta;
+        }
+        else if (llmType == "HugLLM")
         {
             _openAIRunnerFactory.LoadCount += delta;
         }
@@ -362,6 +369,7 @@ public class LLMService : ILLMService
                     {
                         "TurboLLM" => _openAIRunnerFactory.LoadCount,
                         "FreeLLM" => _processRunnerFactory.LoadCount,
+                        "HugLLM" => _hfRunnerFactory.LoadCount,
                         _ => 0 // Fallback case (shouldn't occur due to earlier check)
                     };
                 }

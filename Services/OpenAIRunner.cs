@@ -36,8 +36,8 @@ public class OpenAIRunner : ILLMRunner
 
     private ConcurrentDictionary<string, ChatMessage> _pendingFunctionCalls = new ConcurrentDictionary<string, ChatMessage>();
     private ConcurrentDictionary<string, ChatMessage> _pendingFunctionResponses = new ConcurrentDictionary<string, ChatMessage>();
+    private string _type="TurboLLM";
 
-    public string Type { get => "TurboLLM"; }
     private bool _isStateReady = false;
     private bool _isStateStarting = false;
     private bool _isStateFailed = false;
@@ -80,8 +80,10 @@ public class OpenAIRunner : ILLMRunner
     private IAudioGenerator _audioGenerator;
     private HashSet<string> _ignoreParameters => LLMConfigFactory.IgnoreParameters;
 
+    public string Type { get => _type; set => _type = value; }
+
 #pragma warning disable CS8618
-    public OpenAIRunner(ILogger<OpenAIRunner> logger, ILLMResponseProcessor responseProcessor, OpenAIService openAiService, ISystemParamsHelper systemParamsHelper, LLMServiceObj serviceObj, SemaphoreSlim openAIRunnerSemaphore, IAudioGenerator audioGenerator)
+    public OpenAIRunner(ILogger<OpenAIRunner> logger, ILLMResponseProcessor responseProcessor, OpenAIService openAiService, ISystemParamsHelper systemParamsHelper, LLMServiceObj serviceObj, SemaphoreSlim openAIRunnerSemaphore, IAudioGenerator audioGenerator, bool useHF)
     {
         _logger = logger;
         _responseProcessor = responseProcessor;
@@ -89,7 +91,7 @@ public class OpenAIRunner : ILLMRunner
         _openAIRunnerSemaphore = openAIRunnerSemaphore;
         _serviceID = systemParamsHelper.GetSystemParams().ServiceID!;
         _mlParams = systemParamsHelper.GetMLParams();
-        _useHF = systemParamsHelper.GetMLParams().LlmUseHF;
+        _useHF = useHF;
         IToolsBuilder? toolsBuilder = null;
         if (_serviceID == "monitor") toolsBuilder = new MonitorToolsBuilder(serviceObj.UserInfo);
         if (_serviceID == "cmdprocessor") toolsBuilder = new CmdProcessorToolsBuilder(serviceObj.UserInfo);
@@ -103,10 +105,12 @@ public class OpenAIRunner : ILLMRunner
 
         if (!_useHF)
         {
+            _type="TurboLLM";
             _llmApi = new OpenAIApi(_logger, _mlParams, toolsBuilder,_serviceID, _openAiService);
         }
         else
         {
+            _type="HugLLM";
             _llmApi = new HuggingFaceApi(_logger, _mlParams, toolsBuilder, _serviceID );
         }
         string accountType = "Free";
@@ -131,13 +135,13 @@ public class OpenAIRunner : ILLMRunner
         {
             _isStateStarting = false;
             _isStateReady = true;
-            throw new InvalidOperationException($"TurboLLM {_serviceID} Assistant already running.");
+            throw new InvalidOperationException($"{_type} {_serviceID} Assistant already running.");
         }
 
         var systemPrompt = _llmApi.GetSystemPrompt(_activeSessions[serviceObj.SessionId].ToString("yyyy-MM-ddTHH:mm:ss"), serviceObj);
         _sessionHistories.GetOrAdd(serviceObj.SessionId, systemPrompt);
 
-        _logger.LogInformation($"Started TurboLLM {_serviceID} Assistant with session id {serviceObj.SessionId} at {currentTime}. with CTX size {_maxTokens} and Response tokens {_responseTokens}");
+        _logger.LogInformation($"Started {_type} {_serviceID} Assistant with session id {serviceObj.SessionId} at {currentTime}. with CTX size {_maxTokens} and Response tokens {_responseTokens}");
         // Here, you might want to send an initial message or perform other setup tasks.
         _isStateStarting = false;
         _isStateReady = true;
@@ -150,14 +154,14 @@ public class OpenAIRunner : ILLMRunner
         _isStateReady = false;
         if (!_activeSessions.TryRemove(sessionId, out var lastActivity) || !_sessionHistories.TryRemove(sessionId, out var history))
         {
-            _logger.LogWarning($"Attempted to stop TurboLLM {_serviceID} Assistant with non-existent session {sessionId}.");
+            _logger.LogWarning($"Attempted to stop {_type} {_serviceID} Assistant with non-existent session {sessionId}.");
             _isStateReady = true;
             _isStateFailed = true;
             return Task.CompletedTask;
         }
         _isStateReady = true;
         _isStateFailed = true;
-        _logger.LogInformation($" Stopped TurboLLM {_serviceID} Assistant with session {sessionId}. Last active at {lastActivity}. History had {history.Count} messages.");
+        _logger.LogInformation($" Stopped {_type} {_serviceID} Assistant with session {sessionId}. Last active at {lastActivity}. History had {history.Count} messages.");
         return Task.CompletedTask;
     }
 
@@ -174,7 +178,7 @@ public class OpenAIRunner : ILLMRunner
         if (!_activeSessions.ContainsKey(serviceObj.SessionId))
         {
             _isStateFailed = true;
-            throw new Exception($"No TurboLLM {_serviceID} Assistants found for session {serviceObj.SessionId}. Try reloading the Assistant or refreshing the page. If the problems persists contact support@freenetworkmontior.click");
+            throw new Exception($"No {_type} {_serviceID} Assistants found for session {serviceObj.SessionId}. Try reloading the Assistant or refreshing the page. If the problems persists contact support@freenetworkmontior.click");
         }
         if (serviceObj.UserInput == "<|STOP_AUDIO|>")
         {
@@ -204,7 +208,7 @@ public class OpenAIRunner : ILLMRunner
 
         try
         {
-            LoadChanged?.Invoke(1, Type);
+            LoadChanged?.Invoke(1, _type);
             await _openAIRunnerSemaphore.WaitAsync();
 
             // Retrieve or initialize the conversation history
@@ -280,7 +284,7 @@ public class OpenAIRunner : ILLMRunner
         {
             _openAIRunnerSemaphore.Release(); // Release the semaphore
             _isStateReady = true;
-            LoadChanged?.Invoke(-1, Type); // Increment load for this type
+            LoadChanged?.Invoke(-1, _type); // Increment load for this _type
 
         }
     }
@@ -677,7 +681,7 @@ public class OpenAIRunner : ILLMRunner
         // Optionally send user a friendly error
         var responseObj = new LLMServiceObj(serviceObj, fs => fs.SetAsResponseErrorComplete())
         {
-            LlmMessage = $"I encountered an error when calling TurboLLM.{extraMessage}\nError detail: {errorMessage}\n",
+            LlmMessage = $"I encountered an error when calling {_type}.{extraMessage}\nError detail: {errorMessage}\n",
         };
         // If this is the “primary” or “system” LLM, do
         await _responseProcessor.ProcessLLMOutputError(responseObj);

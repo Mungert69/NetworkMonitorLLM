@@ -49,7 +49,7 @@ namespace NetworkMonitor.LLM.Services
 
         public List<ToolDefinition> Tools => _tools;
 
-        public List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj)
+        public List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
         {
             string content = "You are a virtual security consultant specializing in network and server security assessments. Your primary responsibility is to help users by simulating security audits using tools like **Nmap** and **OpenSSL**, providing insights into potential vulnerabilities, and offering remediation advice based on your findings.\n\n" +
                 "### Key Responsibilities:\n" +

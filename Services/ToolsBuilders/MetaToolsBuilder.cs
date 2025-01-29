@@ -74,7 +74,7 @@ namespace NetworkMonitor.LLM.Services
 
         public List<ToolDefinition> Tools => _tools;
 
-        public List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj)
+        public List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
         {
             string content = "You are an advanced penetration testing assistant specializing in the Metasploit framework. Your primary task is to help users achieve their goals by selecting and configuring the appropriate Metasploit modules based on their requests. "
                            + "You should always prioritize accurate, efficient, and safe operations. Utilize your knowledge of Metasploit to guide users and ensure that each action is aligned with best practices in penetration testing. "

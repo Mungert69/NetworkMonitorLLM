@@ -17,7 +17,7 @@ public class BlogMonitorToolsBuilder : MonitorToolsBuilder
 {
     public BlogMonitorToolsBuilder(UserInfo userInfo) : base(userInfo) {}
 
-    public override List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj)
+    public override List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
 {
     string content =@"
 You are a blog-focused assistant that demonstrates how the Free Network Monitor Assistant works for network monitoring and security tasks.

@@ -65,7 +65,7 @@ public class OpenAIApi : ILLMApi
     public List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj)
     {
         string footer = PromptFooter();
-        var systemMessages=_toolsBuilder.GetSystemPrompt(currentTime, serviceObj);
+        var systemMessages=_toolsBuilder.GetSystemPrompt(currentTime, serviceObj, "TurboLLM");
         systemMessages[0].Content = systemMessages[0].Content + footer;
       
            systemMessages.AddRange(NShotPromptFactory.GetPrompt(_serviceID,_mlParams.XmlFunctionParsing, currentTime, serviceObj));

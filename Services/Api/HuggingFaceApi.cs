@@ -55,7 +55,10 @@ public class HuggingFaceApi : ILLMApi
         _authToken = mlParams.LlmHFKey;
         _isXml=_mlParams.XmlFunctionParsing;
         _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _authToken);
+        _apiUrl=mlParams.LlmHFUrl.TrimEnd();
+        if (!_apiUrl.Contains("completions"))
         _apiUrl = $"{mlParams.LlmHFUrl.TrimEnd('/')}/models/{_modelID}/v1/chat/completions";
+        
         _config = LLMConfigFactory.GetConfig(_modelVersion);
         _logger.LogInformation($"Initialized Hugging Face API with URL: {_apiUrl}");
     }
@@ -84,7 +87,7 @@ public class HuggingFaceApi : ILLMApi
         string toolsJson = ToolsWrapper(JsonToolsBuilder.BuildToolsJson(_toolsBuilder.Tools));
         // List<ChatMessage> systemPrompt=_toolsBuilder.GetSystemPrompt(currentTime, serviceObj);
         string footer = PromptFooter();
-        var systemMessages = _toolsBuilder.GetSystemPrompt(currentTime, serviceObj);
+        var systemMessages = _toolsBuilder.GetSystemPrompt(currentTime, serviceObj,"HugLLM");
         systemMessages[0].Content = toolsJson + systemMessages[0].Content + footer;
         _logger.LogInformation($" Using SYSTEM prompt\n\n{systemMessages[0].Content}");
         systemMessages.AddRange(NShotPromptFactory.GetPrompt(_serviceID,_isXml, currentTime, serviceObj));

@@ -56,7 +56,7 @@ namespace NetworkMonitor.LLM.Services
         public List<ToolDefinition> Tools => _tools;
 
 
-        public List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj)
+        public List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
         {
             string content = @"You are an AI-powered web research assistant specializing in gathering and analyzing information from the internet. Your primary responsibility is to help users by performing web searches, crawling relevant web pages, and providing comprehensive insights based on the collected data.
 
