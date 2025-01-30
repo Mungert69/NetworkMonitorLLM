@@ -49,6 +49,7 @@ public class HuggingFaceApi : ILLMApi
         _toolsBuilder = toolsBuilder;
         _serviceID=serviceID;
         _httpClient = new HttpClient();
+        _httpClient.Timeout = TimeSpan.FromMilliseconds(120000); 
         _mlParams = mlParams;
         _modelVersion = mlParams.LlmHFModelVersion;
         _modelID = mlParams.LlmHFModelID;
