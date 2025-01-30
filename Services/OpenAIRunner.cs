@@ -570,7 +570,7 @@ public class OpenAIRunner : ILLMRunner
                         string audioFileUrl = await _audioGenerator.AudioForResponse(chunk);
                         if (isFirstChunk)
                         {
-                            responseServiceObj.LlmMessage = responseChoiceStr + "\n";
+                            responseServiceObj.LlmMessage = "<Assistant:>"+responseChoiceStr + "\n";
                             await _responseProcessor.ProcessLLMOutput(responseServiceObj);
                             isFirstChunk = false;
                         }
@@ -582,7 +582,7 @@ public class OpenAIRunner : ILLMRunner
                 }
                 else
                 {
-                    responseServiceObj.LlmMessage = responseChoiceStr + "\n";
+                    responseServiceObj.LlmMessage = "<Assistant:>"+responseChoiceStr + "\n";
                     await _responseProcessor.ProcessLLMOutputInChunks(responseServiceObj);
 
                 }
