@@ -28,25 +28,25 @@ public class OpenAIApi : ILLMApi
     private IToolsBuilder _toolsBuilder;
     private string _gptModel = "gpt-4o-mini";
     private ILogger _logger;
-       private readonly bool _isXml;
+    private readonly bool _isXml;
     private readonly MLParams _mlParams;
     private readonly LLMConfig _config;
-     private readonly string _modelVersion;
+    private readonly string _modelVersion;
     private string _serviceID;
 
 
     public OpenAIApi(ILogger logger, MLParams mlParams, IToolsBuilder toolsBuilder, string serviceID, OpenAIService openAiService)
     {
-        _mlParams=mlParams;
+        _mlParams = mlParams;
         _gptModel = mlParams.LlmGptModel;
-        _serviceID=serviceID;
-        _logger=logger;
+        _serviceID = serviceID;
+        _logger = logger;
         _openAiService = openAiService;
         _toolsBuilder = toolsBuilder;
-         _modelVersion = mlParams.LlmHFModelVersion;
-            _isXml=_mlParams.XmlFunctionParsing;
-          _config = LLMConfigFactory.GetConfig(_modelVersion);
-      
+        _modelVersion = mlParams.LlmHFModelVersion;
+        _isXml = _mlParams.XmlFunctionParsing;
+        _config = LLMConfigFactory.GetConfig(_modelVersion);
+
     }
 
     public string WrapFunctionResponse(string name, string funcStr)
@@ -56,7 +56,7 @@ public class OpenAIApi : ILLMApi
 
     }
 
-     private string PromptFooter()
+    private string PromptFooter()
     {
         // For chatgpt we only alter the footer is we are using xml function calling
         if (_mlParams.XmlFunctionParsing) return _config.XmlPromptFooter;
@@ -65,11 +65,11 @@ public class OpenAIApi : ILLMApi
     public List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj)
     {
         string footer = PromptFooter();
-        var systemMessages=_toolsBuilder.GetSystemPrompt(currentTime, serviceObj, "TurboLLM");
+        var systemMessages = _toolsBuilder.GetSystemPrompt(currentTime, serviceObj, "TurboLLM");
         systemMessages[0].Content = systemMessages[0].Content + footer;
-      
-           systemMessages.AddRange(NShotPromptFactory.GetPrompt(_serviceID,_mlParams.XmlFunctionParsing, currentTime, serviceObj));
-     
+
+        systemMessages.AddRange(NShotPromptFactory.GetPrompt(_serviceID, _mlParams.XmlFunctionParsing, currentTime, serviceObj));
+
         return systemMessages;
 
     }
@@ -86,39 +86,44 @@ public class OpenAIApi : ILLMApi
                 Tools = _toolsBuilder.Tools,
                 ToolChoice = _toolsBuilder.Tools != null ? ToolChoice.Auto : ToolChoice.None
             });
+            if (_isXml)
+            {
+                var chatResponseBuilder = new ChatResponseBuilder(_config, _isXml, _logger);
+                chatResponse = chatResponseBuilder.BuildResponseFromOpenAI(chatResponse);
+            }
             return new ChatCompletionCreateResponseSuccess() { Success = chatResponse.Successful, Response = chatResponse };
 
         }
-      catch (Exception ex)
-{
-    _logger.LogError($"Exception in CreateCompletionAsync: {ex.Message}");
+        catch (Exception ex)
+        {
+            _logger.LogError($"Exception in CreateCompletionAsync: {ex.Message}");
 
-    // Create a ChatCompletionCreateResponse with error details
-    var errorChatResponse = new ChatCompletionCreateResponse
-    {
-        Id = Guid.NewGuid().ToString(),
-        Model = _gptModel,
-        Choices = new List<ChatChoiceResponse>(),
-        Usage = new UsageResponse
-        {
-            PromptTokens = 0,
-            CompletionTokens = 0,
-            TotalTokens = 0
-        },
-        Error = new Error
-        {
-            MessageObject = ex.Message,
-            Type = "Exception",
-            Code = "500"
+            // Create a ChatCompletionCreateResponse with error details
+            var errorChatResponse = new ChatCompletionCreateResponse
+            {
+                Id = Guid.NewGuid().ToString(),
+                Model = _gptModel,
+                Choices = new List<ChatChoiceResponse>(),
+                Usage = new UsageResponse
+                {
+                    PromptTokens = 0,
+                    CompletionTokens = 0,
+                    TotalTokens = 0
+                },
+                Error = new Error
+                {
+                    MessageObject = ex.Message,
+                    Type = "Exception",
+                    Code = "500"
+                }
+            };
+
+            return new ChatCompletionCreateResponseSuccess
+            {
+                Success = false,
+                Response = errorChatResponse
+            };
         }
-    };
-
-    return new ChatCompletionCreateResponseSuccess
-    {
-        Success = false,
-        Response = errorChatResponse
-    };
-}
 
     }
 }

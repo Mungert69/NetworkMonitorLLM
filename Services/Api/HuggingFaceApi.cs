@@ -97,7 +97,6 @@ public class HuggingFaceApi : ILLMApi
 
     public async Task<ChatCompletionCreateResponseSuccess> CreateCompletionAsync(List<ChatMessage> messages, int maxTokens)
     {
-        var tokenBroadcaster = _config.CreateBroadcaster(null, _logger, false);
         var toolsJson = JsonToolsBuilder.BuildToolsJson(_toolsBuilder.Tools);
         var tools = JsonConvert.DeserializeObject<List<object>>(toolsJson);
         try
@@ -121,81 +120,9 @@ public class HuggingFaceApi : ILLMApi
             var responseObject = JsonConvert.DeserializeObject<HuggingFaceChatResponse>(responseContent);
 
 
-            // Use the broadcaster to parse function calls
-            foreach (var choice in responseObject.Choices)
-            {
-                // _logger.LogInformation($"Parsing function calls for message content: {choice.Message.Content}");
-
-                // Parse the input using the broadcaster
-                List<(string json, string functionName)> functionCalls;
-                if (_isXml) functionCalls =tokenBroadcaster.ParseInputForXml(choice.Message.Content);
-                else  functionCalls = tokenBroadcaster.ParseInputForJson(choice.Message.Content);
-
-                // Log the parsed results
-                if (functionCalls.Any())
-                {
-                    //_logger.LogInformation($"Parsed {functionCalls.Count} function calls.");
-                    foreach (var fc in functionCalls)
-                    {
-                        //_logger.LogInformation($"Function call detected - Name: {fc.functionName}, JSON: {fc.json}");
-                    }
-
-                    // Map the parsed function calls to ToolCalls
-                    choice.Message.ToolCalls = functionCalls.Select(fc => new ToolCall
-                    {
-                        Type = "function",
-                        Id = "call_" + StringUtils.GetNanoid(),
-                        FunctionCall = new FunctionCall
-                        {
-                            Name = fc.functionName,
-                            Arguments = fc.json
-                        }
-                    }).ToList();
-
-                    // Log the ToolCalls that were created
-                    foreach (var toolCall in choice.Message.ToolCalls)
-                    {
-                        //_logger.LogInformation($"ToolCall created - Type: {toolCall.Type}, Id: {toolCall.Id}, " + $"FunctionName: {toolCall.FunctionCall.Name}, Arguments: {toolCall.FunctionCall.Arguments}");
-                    }
-                }
-                else
-                {
-                    //_logger.LogWarning($"No function calls were parsed for the message content: {choice.Message.Content}");
-                }
-            }
-
-            var chatResponse = new ChatCompletionCreateResponse
-            {
-                Choices = responseObject.Choices.Select(choice => new ChatChoiceResponse
-                {
-                    Message = new ChatMessage
-                    {
-                        Role = choice.Message.Role,
-                        Content = choice.Message.Content,
-                        ToolCalls = choice.Message.ToolCalls.Select(toolCall => new ToolCall
-                        {
-                            Type = toolCall.Type,
-                            Id = toolCall.Id,
-                            FunctionCall = new FunctionCall
-                            {
-                                Name = toolCall.FunctionCall.Name,
-                                Arguments = toolCall.FunctionCall.Arguments
-                            }
-                        }).ToList() // Explicitly map each ToolCall and its FunctionCall
-                    },
-                    Index = choice.Index,
-                    FinishReason = choice.FinishReason
-                }).ToList(),
-                Usage = new UsageResponse
-                {
-                    PromptTokens = responseObject.Usage.PromptTokens,
-                    CompletionTokens = responseObject.Usage.CompletionTokens,
-                    TotalTokens = responseObject.Usage.TotalTokens
-                },
-                Id = responseObject.Id,
-                Model = responseObject.Model
-            };
-
+           var chatResponseBuilder=new ChatResponseBuilder(_config,_isXml, _logger);
+           var chatResponse=chatResponseBuilder.BuildResponse(responseObject);
+          
             return new ChatCompletionCreateResponseSuccess { Success = true, Response = chatResponse };
         }
         catch (Exception ex)
@@ -301,66 +228,4 @@ public class HuggingFaceApi : ILLMApi
 
 }
 
-public class HuggingFaceChatResponse
-{
-    [JsonProperty("object")]
-    public string Object { get; set; } = string.Empty; // Maps to "object"
-
-    [JsonProperty("id")]
-    public string Id { get; set; } = string.Empty; // Maps to "id"
-
-    [JsonProperty("created")]
-    public long Created { get; set; } = 0; // Maps to "created"
-
-    [JsonProperty("model")]
-    public string Model { get; set; } = string.Empty; // Maps to "model"
-
-    [JsonProperty("system_fingerprint")]
-    public string SystemFingerprint { get; set; } = string.Empty; // Maps to "system_fingerprint"
-
-    [JsonProperty("choices")]
-    public List<HuggingFaceChoice> Choices { get; set; } = new List<HuggingFaceChoice>(); // Maps to "choices"
-
-    [JsonProperty("usage")]
-    public HuggingFaceUsage Usage { get; set; } = new HuggingFaceUsage(); // Maps to "usage"
-}
-
-public class HuggingFaceChoice
-{
-    [JsonProperty("index")]
-    public int Index { get; set; } = 0; // Maps to "index"
-
-    [JsonProperty("message")]
-    public HuggingFaceMessage Message { get; set; } = new HuggingFaceMessage(); // Maps to "message"
-
-    [JsonProperty("logprobs")]
-    public object Logprobs { get; set; } = null; // Maps to "logprobs"
-
-    [JsonProperty("finish_reason")]
-    public string FinishReason { get; set; } = string.Empty; // Maps to "finish_reason"
-}
-
-public class HuggingFaceMessage
-{
-    [JsonProperty("role")]
-    public string Role { get; set; } = string.Empty; // Maps to "role"
-
-    [JsonProperty("content")]
-    public string Content { get; set; } = string.Empty; // Maps to "content"
-
-    [JsonIgnore] // Not serialized/deserialized unless you add it explicitly in JSON
-    public List<ToolCall> ToolCalls { get; set; } = new List<ToolCall>();
-}
-
-public class HuggingFaceUsage
-{
-    [JsonProperty("prompt_tokens")]
-    public int PromptTokens { get; set; } = 0; // Maps to "prompt_tokens"
-
-    [JsonProperty("completion_tokens")]
-    public int CompletionTokens { get; set; } = 0; // Maps to "completion_tokens"
-
-    [JsonProperty("total_tokens")]
-    public int TotalTokens { get; set; } = 0; // Maps to "total_tokens"
-}
 
