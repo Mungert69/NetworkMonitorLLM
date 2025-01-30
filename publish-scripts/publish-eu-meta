@@ -1,4 +1,4 @@
 systemctl stop NM-LLM-EU-Meta.service
-cp ../appsettings-eu-meta.json ./appsettings.json
+cp ../appsettings-eu-meta.json ../appsettings.json
 dotnet publish ../NetworkMonitorLLM.csproj --os linux --arch x64  --output ../../services/llm-eu-meta -c Release --self-contained true 
 systemctl start NM-LLM-EU-Meta.service

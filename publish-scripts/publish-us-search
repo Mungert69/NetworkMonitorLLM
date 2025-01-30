@@ -1,4 +1,4 @@
 systemctl stop NM-LLM-US-Search.service
-cp appsettings-us-search.json ./appsettings.json
+cp appsettings-us-search.json ../appsettings.json
 dotnet publish ../NetworkMonitorLLM.csproj --os linux --arch x64  --output ../../services/llm-us-search -c Release --self-contained true 
 systemctl start NM-LLM-US-Search.service
