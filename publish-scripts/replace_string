@@ -1,0 +1,32 @@
+#!/bin/bash
+
+# Check if enough arguments are passed
+if [ "$#" -ne 3 ]; then
+    echo "Usage: $0 <file_pattern> <string_to_replace> <replacement_string>"
+    echo "Example: $0 'appsettings*' 'old_string' 'new_string'"
+    exit 1
+fi
+
+# Assign the input arguments to variables
+file_pattern="$1"
+string_to_replace="$2"
+replacement_string="$3"
+
+# Find files that match the pattern
+files=$(ls $file_pattern 2>/dev/null)
+
+# Check if any files match the pattern
+if [ -z "$files" ]; then
+    echo "Error: No files found matching pattern '$file_pattern'"
+    exit 1
+fi
+
+# Loop through each matched file and apply the replacement
+for file in $files; do
+    echo "Processing file: $file"
+    sed -i "s/$string_to_replace/$replacement_string/g" "$file"
+done
+
+# Confirmation message
+echo "Replaced all occurrences of '$string_to_replace' with '$replacement_string' in files matching '$file_pattern'."
+

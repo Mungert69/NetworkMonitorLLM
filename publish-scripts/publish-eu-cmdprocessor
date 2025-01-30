@@ -1,4 +1,4 @@
 systemctl stop NM-LLM-EU-CmdProcessor.service
-cp appsettings-eu-cmdprocessor.json appsettings.json
-dotnet publish NetworkMonitorLLM.csproj --os linux --arch x64  --output ../services/llm-eu-cmdprocessor -c Release --self-contained true 
+cp ../appsettings-eu-cmdprocessor.json appsettings.json
+dotnet publish ../NetworkMonitorLLM.csproj --os linux --arch x64  --output ../../services/llm-eu-cmdprocessor -c Release --self-contained true 
 systemctl start NM-LLM-EU-CmdProcessor.service
