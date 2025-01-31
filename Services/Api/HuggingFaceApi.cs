@@ -127,9 +127,11 @@ public class HuggingFaceApi : ILLMApi
 
             string responseContent = "";
             HuggingFaceChatResponse responseObject;
+             string payloadJson = JsonConvert.SerializeObject(payload, Formatting.Indented);
+             _logger.LogInformation($"{payloadJson}");
+               
             if (!_isStream)
             {
-                string payloadJson = JsonConvert.SerializeObject(payload, Formatting.Indented);
                 responseContent = await SendHttpRequestAsync(payloadJson);
                 responseObject = JsonConvert.DeserializeObject<HuggingFaceChatResponse>(responseContent);
 
@@ -137,7 +139,7 @@ public class HuggingFaceApi : ILLMApi
             else
             {
                 var process = new HuggingFaceProcessWrapper(_httpClient);
-                await process.InitializeRequest(_apiUrl, payload);
+                await process.InitializeRequest(_apiUrl, payloadJson);
                 var tokenBroadcaster = _config.CreateBroadcaster(_responseProcessor, _logger, false);
                 tokenBroadcaster.IsAddAssistant = true;
                 tokenBroadcaster.SetUp(serviceObj, true, 1);

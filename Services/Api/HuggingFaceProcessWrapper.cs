@@ -26,12 +26,12 @@ namespace NetworkMonitor.LLM.Services
             _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         }
 
-        public async Task InitializeRequest(string url, object payload)
+        public async Task InitializeRequest(string url, string payloadJson)
         {
             var request = new HttpRequestMessage(HttpMethod.Post, url)
             {
                 Content = new StringContent(
-                    JsonConvert.SerializeObject(payload),
+                    payloadJson,
                     Encoding.UTF8,
                     "application/json")
             };
