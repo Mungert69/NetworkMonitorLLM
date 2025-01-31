@@ -43,6 +43,7 @@ public class OpenAIRunner : ILLMRunner
     private bool _isStateFailed = false;
     private bool _isPrimaryLlm;
     private bool _isSystemLlm;
+    private bool _isStream=false;
     private bool _isEnabled = true;
     //private bool _isFuncCalled;
     private string _serviceID;
@@ -91,6 +92,7 @@ public class OpenAIRunner : ILLMRunner
         _openAIRunnerSemaphore = openAIRunnerSemaphore;
         _serviceID = systemParamsHelper.GetSystemParams().ServiceID!;
         _mlParams = systemParamsHelper.GetMLParams();
+
         _useHF = useHF;
         IToolsBuilder? toolsBuilder = null;
         if (_serviceID == "monitor") toolsBuilder = new MonitorToolsBuilder(serviceObj.UserInfo);
@@ -111,7 +113,8 @@ public class OpenAIRunner : ILLMRunner
         else
         {
             _type="HugLLM";
-            _llmApi = new HuggingFaceApi(_logger, _mlParams, toolsBuilder, _serviceID );
+            _isStream=true;
+            _llmApi = new HuggingFaceApi(_logger, _mlParams, toolsBuilder, _serviceID, _responseProcessor,_isStream );
         }
         string accountType = "Free";
         if (!string.IsNullOrEmpty(serviceObj.UserInfo.AccountType)) accountType = serviceObj.UserInfo.AccountType;
@@ -239,7 +242,7 @@ public class OpenAIRunner : ILLMRunner
 
 
             var currentHistory = new List<ChatMessage>(history.Concat(localHistory));
-            var completionSuccessResult = await _llmApi.CreateCompletionAsync(currentHistory, _responseTokens);
+            var completionSuccessResult = await _llmApi.CreateCompletionAsync(currentHistory, _responseTokens, serviceObj);
             var completionResult = completionSuccessResult.Response;
             var completionSuccess = completionSuccessResult.Success;
 
@@ -436,7 +439,7 @@ public class OpenAIRunner : ILLMRunner
                 var funcId = fnCall.Id;
                 await HandleFunctionCallAsync(serviceObj, fnCall, responseServiceObj, assistantChatMessage);
                 await Task.Delay(500);
-                var toolResponse = ChatMessage.FromTool($"The function {funcName} has been called, waiting for the result...", funcId);
+                var toolResponse = ChatMessage.FromTool($"The function {funcName} has been called, waiting for the result. DO NOT call are_functions_running unless the user asks you to.", funcId);
                 toolResponse.Role = "tool";
                 toolResponse.Name = funcName;
                 toolResponces.Add(toolResponse);
@@ -571,7 +574,7 @@ public class OpenAIRunner : ILLMRunner
                         if (isFirstChunk)
                         {
                             responseServiceObj.LlmMessage = "<Assistant:>"+responseChoiceStr + "\n";
-                            await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+                            if (!_isStream) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
                             isFirstChunk = false;
                         }
 
@@ -583,7 +586,7 @@ public class OpenAIRunner : ILLMRunner
                 else
                 {
                     responseServiceObj.LlmMessage = "<Assistant:>"+responseChoiceStr + "\n";
-                    await _responseProcessor.ProcessLLMOutputInChunks(responseServiceObj);
+                    if (!_isStream) await _responseProcessor.ProcessLLMOutputInChunks(responseServiceObj);
 
                 }
 
@@ -592,7 +595,7 @@ public class OpenAIRunner : ILLMRunner
             {
                 if (!_isSystemLlm) responseServiceObj.SetAsResponseComplete();
                 responseServiceObj.LlmMessage = responseChoiceStr;
-                await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+                if (!_isStream) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
             }
 
             localHistory.Add(assistantChatMessage);

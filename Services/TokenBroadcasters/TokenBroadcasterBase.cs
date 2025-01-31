@@ -25,6 +25,11 @@ namespace NetworkMonitor.LLM.Services
         Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput);
         List<(string json, string functionName)> ParseInputForJson(string input);
         List<(string json, string functionName)> ParseInputForXml(string input);
+        string ResponseContent { get; }
+        bool IsAddAssistant { get; set; }
+        
+
+
     }
 
     public abstract class TokenBroadcasterBase : ITokenBroadcaster, IDisposable
@@ -45,9 +50,13 @@ namespace NetworkMonitor.LLM.Services
         protected List<string> _endTokens = new List<string>();
         protected LLMConfig _config;
         protected HashSet<string> _ignoreParameters;
+        private bool _isAddAssistant = false;
+        private StringBuilder _responseContentBuilder = new StringBuilder();
+        public string ResponseContent => _responseContentBuilder.ToString();
 
 
         public StringBuilder AssistantMessage { get => _assistantMessage; set => _assistantMessage = value; }
+        public bool IsAddAssistant { get => _isAddAssistant; set => _isAddAssistant = value; }
 
         protected TokenBroadcasterBase(ILLMResponseProcessor responseProcessor, ILogger logger, bool xmlFunctionParsing, HashSet<string> ignoreParameters)
         {
@@ -74,19 +83,19 @@ namespace NetworkMonitor.LLM.Services
             _cancellationTokenSource = new CancellationTokenSource();
         }
 
-        protected virtual string RemoveThinking(string input, string thinkTag="think")
-{
-    // Escape the tag to handle special regex characters if present
-    string escapedTag = Regex.Escape(thinkTag);
+        protected virtual string RemoveThinking(string input, string thinkTag = "think")
+        {
+            // Escape the tag to handle special regex characters if present
+            string escapedTag = Regex.Escape(thinkTag);
 
-    // Build the regex pattern dynamically
-    string pattern = $@"<{escapedTag}>.*?</{escapedTag}>";
+            // Build the regex pattern dynamically
+            string pattern = $@"<{escapedTag}>.*?</{escapedTag}>";
 
-    // Perform the replacement
-    string result = Regex.Replace(input, pattern, "", RegexOptions.Singleline);
+            // Perform the replacement
+            string result = Regex.Replace(input, pattern, "", RegexOptions.Singleline);
 
-    return result;
-}
+            return result;
+        }
 
 
         public async Task SendLLMPrimaryChunk(LLMServiceObj serviceObj, string chunk)
@@ -148,6 +157,12 @@ namespace NetworkMonitor.LLM.Services
         public async Task SendHeader(LLMServiceObj serviceObj, string userInput)
         {
             var chunkServiceObj = new LLMServiceObj(serviceObj);
+            if (_isAddAssistant)
+            {
+                chunkServiceObj.LlmMessage = "<Assistant:>";
+                await SendLLMPrimary(chunkServiceObj);
+                return;
+            }
             if (serviceObj.IsFunctionCallResponse)
             {
                 userInput = userInput.Replace(_functionReplace, "<Function Response:> ");
@@ -158,10 +173,26 @@ namespace NetworkMonitor.LLM.Services
             else chunkServiceObj.LlmMessage = userInput.Replace(_userReplace, "<User:> ") + "\n";
             await SendLLMPrimary(chunkServiceObj);
 
+
         }
         protected virtual string StripExtraFuncHeader(string input)
         {
             return input;
+        }
+
+        protected string ConvertToContent(string line)
+        {
+            var jsonContent = line["data:".Length..].Trim();
+            if (jsonContent.Contains("data: [DONE]")) return "<|DONE|>";
+
+            try
+            {
+                var partialResponse = JsonConvert.DeserializeObject<StreamingChatCompletionChunk>(jsonContent);
+                var contentChunk = partialResponse?.Choices?.FirstOrDefault()?.Delta?.Content;
+                return contentChunk;
+            }
+            catch { 
+                return "<|Error|>";           }
         }
 
         public virtual async Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput)
@@ -172,16 +203,30 @@ namespace NetworkMonitor.LLM.Services
 
             var lineBuilder = new StringBuilder();
             var llmOutFull = new StringBuilder();
+             _responseContentBuilder=new StringBuilder();
             int stopCount = 0;
 
             try
             {
                 while (!_cancellationTokenSource.Token.IsCancellationRequested)
                 {
-                    byte[] buffer = new byte[255];
-                    int charRead = await process.StandardOutput.ReadAsync(buffer, 0, buffer.Length, _cancellationTokenSource.Token);
+                    byte[] buffer = new byte[1024];
+                    int charRead;
+                    if (_isAddAssistant) charRead = await process.ReadAsync(buffer, 0, buffer.Length, _cancellationTokenSource.Token);
+                    else charRead = await process.StandardOutput.ReadAsync(buffer, 0, buffer.Length, _cancellationTokenSource.Token);
                     string textChunk = Encoding.UTF8.GetString(buffer, 0, charRead);
+                    if (_isAddAssistant)
+                    {
+                        textChunk = ConvertToContent(textChunk);
+                        if (textChunk == "<|DONE|>")
+                        {
+                          _cancellationTokenSource.Cancel();
+                          break;
+                        }
+
+                    }
                     llmOutFull.Append(textChunk);
+                    _responseContentBuilder.Append(textChunk);
                     await SendLLMPrimaryChunk(serviceObj, textChunk);
                     string llmOutStr = llmOutFull.ToString();
                     int eotIdCount = CountOccurrences(llmOutStr, _endTokens);
@@ -192,7 +237,7 @@ namespace NetworkMonitor.LLM.Services
                         _logger.LogInformation($" Stop count {stopCount} output is {llmOutStr} ");
 
                     }
-                    if (stopCount == _stopAfter)
+                    if (stopCount == _stopAfter )
                     {
                         await ProcessLine(llmOutStr, serviceObj);
                         _logger.LogInformation($" Cancel due to {stopCount} end tokens detected ");

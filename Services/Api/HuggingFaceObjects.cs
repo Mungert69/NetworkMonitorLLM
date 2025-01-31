@@ -68,3 +68,49 @@ public class HuggingFaceUsage
     [JsonProperty("total_tokens")]
     public int TotalTokens { get; set; } = 0; // Maps to "total_tokens"
 }
+
+public class StreamingChatCompletionChunk
+{
+    [JsonProperty("id")]
+    public string Id { get; set; }
+    
+    [JsonProperty("choices")]
+    public List<StreamingChatChoice> Choices { get; set; }
+}
+
+public class StreamingChatChoice
+{
+    [JsonProperty("delta")]
+    public StreamingChatDelta Delta { get; set; }
+}
+
+public class StreamingChatDelta
+{
+    [JsonProperty("content")]
+    public string Content { get; set; }
+    
+    [JsonProperty("tool_calls")]
+    public List<ToolCallChunk> ToolCalls { get; set; }
+}
+
+public class ToolCallChunk
+{
+    [JsonProperty("index")]
+    public int Index { get; set; }
+    
+    [JsonProperty("id")]
+    public string Id { get; set; }
+    
+    [JsonProperty("function")]
+    public FunctionCallChunk Function { get; set; }
+}
+
+public class FunctionCallChunk
+{
+    [JsonProperty("name")]
+    public string Name { get; set; }
+    
+    [JsonProperty("arguments")]
+    public string Arguments { get; set; }
+}
+

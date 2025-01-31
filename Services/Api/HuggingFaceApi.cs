@@ -38,28 +38,39 @@ public class HuggingFaceApi : ILLMApi
     private readonly string _modelID;
     private readonly string _serviceID;
     private readonly bool _isXml;
+    private readonly float _temperture;
     private readonly MLParams _mlParams;
     private readonly LLMConfig _config;
+    private bool _isStream;
 
     private IToolsBuilder _toolsBuilder;
+    private ILLMResponseProcessor _responseProcessor;
 
-    public HuggingFaceApi(ILogger logger, MLParams mlParams, IToolsBuilder toolsBuilder, string serviceID)
+    public HuggingFaceApi(ILogger logger, MLParams mlParams, IToolsBuilder toolsBuilder, string serviceID, ILLMResponseProcessor responseProcessor, bool isStream = false)
     {
         _logger = logger;
+        _responseProcessor = responseProcessor;
         _toolsBuilder = toolsBuilder;
-        _serviceID=serviceID;
+        _serviceID = serviceID;
+        _isStream = isStream;
         _httpClient = new HttpClient();
-        _httpClient.Timeout = TimeSpan.FromMilliseconds(120000); 
+        _httpClient.Timeout = TimeSpan.FromMilliseconds(120000);
         _mlParams = mlParams;
+        if (!float.TryParse(_mlParams.LlmTemp, out float temperature))
+        {
+            _logger.LogWarning($"Invalid temperature value '{_mlParams.LlmTemp}', using default 0.1");
+            temperature = 0.1f; // Default value
+        }
+        _temperture = temperature;
         _modelVersion = mlParams.LlmHFModelVersion;
         _modelID = mlParams.LlmHFModelID;
         _authToken = mlParams.LlmHFKey;
-        _isXml=_mlParams.XmlFunctionParsing;
+        _isXml = _mlParams.XmlFunctionParsing;
         _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _authToken);
-        _apiUrl=mlParams.LlmHFUrl.TrimEnd();
+        _apiUrl = mlParams.LlmHFUrl.TrimEnd();
         if (!_apiUrl.Contains("completions"))
-        _apiUrl = $"{mlParams.LlmHFUrl.TrimEnd('/')}/models/{_modelID}/v1/chat/completions";
-        
+            _apiUrl = $"{mlParams.LlmHFUrl.TrimEnd('/')}/models/{_modelID}/v1/chat/completions";
+
         _config = LLMConfigFactory.GetConfig(_modelVersion);
         _logger.LogInformation($"Initialized Hugging Face API with URL: {_apiUrl}");
     }
@@ -88,14 +99,14 @@ public class HuggingFaceApi : ILLMApi
         string toolsJson = ToolsWrapper(JsonToolsBuilder.BuildToolsJson(_toolsBuilder.Tools));
         // List<ChatMessage> systemPrompt=_toolsBuilder.GetSystemPrompt(currentTime, serviceObj);
         string footer = PromptFooter();
-        var systemMessages = _toolsBuilder.GetSystemPrompt(currentTime, serviceObj,"HugLLM");
+        var systemMessages = _toolsBuilder.GetSystemPrompt(currentTime, serviceObj, "HugLLM");
         systemMessages[0].Content = toolsJson + systemMessages[0].Content + footer;
         _logger.LogInformation($" Using SYSTEM prompt\n\n{systemMessages[0].Content}");
-        systemMessages.AddRange(NShotPromptFactory.GetPrompt(_serviceID,_isXml, currentTime, serviceObj));
+        systemMessages.AddRange(NShotPromptFactory.GetPrompt(_serviceID, _isXml, currentTime, serviceObj));
         return systemMessages;
     }
 
-    public async Task<ChatCompletionCreateResponseSuccess> CreateCompletionAsync(List<ChatMessage> messages, int maxTokens)
+    public async Task<ChatCompletionCreateResponseSuccess> CreateCompletionAsync(List<ChatMessage> messages, int maxTokens, LLMServiceObj serviceObj)
     {
         var toolsJson = JsonToolsBuilder.BuildToolsJson(_toolsBuilder.Tools);
         var tools = JsonConvert.DeserializeObject<List<object>>(toolsJson);
@@ -110,19 +121,49 @@ public class HuggingFaceApi : ILLMApi
                     content = m.Content
                 }).ToList(),
                 max_tokens = maxTokens,
-                stream = false,
-                temperture = 0.1
+                stream = _isStream,
+                temperture = _temperture
             };
-            string payloadJson = JsonConvert.SerializeObject(payload, Formatting.Indented);
 
-            string responseContent = await SendHttpRequestAsync(payloadJson);
-            // Deserialize using Newtonsoft.Json
-            var responseObject = JsonConvert.DeserializeObject<HuggingFaceChatResponse>(responseContent);
+            string responseContent = "";
+            HuggingFaceChatResponse responseObject;
+            if (!_isStream)
+            {
+                string payloadJson = JsonConvert.SerializeObject(payload, Formatting.Indented);
+                responseContent = await SendHttpRequestAsync(payloadJson);
+                responseObject = JsonConvert.DeserializeObject<HuggingFaceChatResponse>(responseContent);
+
+            }
+            else
+            {
+                var process = new HuggingFaceProcessWrapper(_httpClient);
+                await process.InitializeRequest(_apiUrl, payload);
+                var tokenBroadcaster = _config.CreateBroadcaster(_responseProcessor, _logger, false);
+                tokenBroadcaster.IsAddAssistant = true;
+                tokenBroadcaster.SetUp(serviceObj, true, 1);
+
+                await tokenBroadcaster.BroadcastAsync(process, serviceObj, "");
+                responseObject = new HuggingFaceChatResponse
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Choices = new List<HuggingFaceChoice>
+                    {
+                        new HuggingFaceChoice
+                            {
+                                Message = new HuggingFaceMessage { Role = "assistant", Content = tokenBroadcaster.ResponseContent },
+                                FinishReason = "stop"
+                            }
+                    },
+                    Created = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+                    Usage = new HuggingFaceUsage()
+                };
 
 
-           var chatResponseBuilder=new ChatResponseBuilder(_config,_isXml, _logger);
-           var chatResponse=chatResponseBuilder.BuildResponse(responseObject);
-          
+            }
+            
+            var chatResponseBuilder = new ChatResponseBuilder(_config, _isXml, _logger);
+            var chatResponse = chatResponseBuilder.BuildResponse(responseObject);
+
             return new ChatCompletionCreateResponseSuccess { Success = true, Response = chatResponse };
         }
         catch (Exception ex)
@@ -161,7 +202,7 @@ public class HuggingFaceApi : ILLMApi
     private async Task<string> SendHttpRequestAsync(string payloadJson)
     {
         const int maxRetries = 3;
-        const int delayBetweenRetries = 10000; 
+        const int delayBetweenRetries = 10000;
         const int timeout = 120000;
 
         for (int attempt = 1; attempt <= maxRetries; attempt++)
@@ -225,6 +266,7 @@ public class HuggingFaceApi : ILLMApi
         _logger.LogError("Should not get here.");
         return null;
     }
+
 
 }
 

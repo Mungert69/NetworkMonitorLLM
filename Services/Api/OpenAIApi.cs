@@ -74,7 +74,7 @@ public class OpenAIApi : ILLMApi
 
     }
 
-    public async Task<ChatCompletionCreateResponseSuccess> CreateCompletionAsync(List<ChatMessage> messages, int maxTokens)
+    public async Task<ChatCompletionCreateResponseSuccess> CreateCompletionAsync(List<ChatMessage> messages, int maxTokens,LLMServiceObj serviceObj)
     {
         try
         {
@@ -126,4 +126,5 @@ public class OpenAIApi : ILLMApi
         }
 
     }
+    
 }

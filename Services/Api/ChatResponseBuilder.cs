@@ -28,126 +28,129 @@ using Newtonsoft.Json;
 namespace NetworkMonitor.LLM.Services;
 
 
-public class ChatResponseBuilder 
+public class ChatResponseBuilder
 {
-     private ITokenBroadcaster   _tokenBroadcaster;
-     private ILogger _logger;
-     private bool _isXml;
-     public ChatResponseBuilder(LLMConfig config, bool isXml,ILogger logger){
-        _logger=logger;
-        _isXml=isXml;
-            _tokenBroadcaster = config.CreateBroadcaster(null, _logger, false);
-     }
-
-     // Add this method to the ChatResponseBuilder class
-public ChatCompletionCreateResponse BuildResponseFromOpenAI(ChatCompletionCreateResponse openAIResponse)
-{
-    foreach (var choice in openAIResponse.Choices)
+    private ITokenBroadcaster _tokenBroadcaster;
+    private ILogger _logger;
+    private bool _isXml;
+    public ChatResponseBuilder(LLMConfig config, bool isXml, ILogger logger)
     {
-        var message = choice.Message;
-        if (message == null) continue;
-
-        // Parse the content for XML function calls
-        var functionCalls = _tokenBroadcaster.ParseInputForXml(message.Content);
-
-        if (functionCalls.Any())
-        {
-            // Map parsed function calls to ToolCalls
-            message.ToolCalls = functionCalls.Select(fc => new ToolCall
-            {
-                Type = "function",
-                Id = "call_" + StringUtils.GetNanoid(),
-                FunctionCall = new FunctionCall
-                {
-                    Name = fc.functionName,
-                    Arguments = fc.json
-                }
-            }).ToList();
-
-            // For XML parsing, we might want to clear the content since we're using tool calls
-            //message.Content = string.Empty; // Uncomment if needed
-        }
+        _logger = logger;
+        _isXml = isXml;
+        _tokenBroadcaster = config.CreateBroadcaster(null, _logger, false);
     }
-    
-    return openAIResponse;
-}
-     
-    public ChatCompletionCreateResponse BuildResponse (HuggingFaceChatResponse responseObject){
-        var choices=responseObject.Choices;
-          foreach (var choice in choices)
+
+    // Add this method to the ChatResponseBuilder class
+    public ChatCompletionCreateResponse BuildResponseFromOpenAI(ChatCompletionCreateResponse openAIResponse)
+    {
+        foreach (var choice in openAIResponse.Choices)
+        {
+            var message = choice.Message;
+            if (message == null) continue;
+
+            // Parse the content for XML function calls
+            var functionCalls = _tokenBroadcaster.ParseInputForXml(message.Content);
+
+            if (functionCalls.Any())
             {
-                // _logger.LogInformation($"Parsing function calls for message content: {choice.Message.Content}");
-
-                // Parse the input using the broadcaster
-                List<(string json, string functionName)> functionCalls;
-                if (_isXml) functionCalls =_tokenBroadcaster.ParseInputForXml(choice.Message.Content);
-                else  functionCalls = _tokenBroadcaster.ParseInputForJson(choice.Message.Content);
-
-                // Log the parsed results
-                if (functionCalls.Any())
+                // Map parsed function calls to ToolCalls
+                message.ToolCalls = functionCalls.Select(fc => new ToolCall
                 {
-                    //_logger.LogInformation($"Parsed {functionCalls.Count} function calls.");
-                    foreach (var fc in functionCalls)
+                    Type = "function",
+                    Id = "call_" + StringUtils.GetNanoid(),
+                    FunctionCall = new FunctionCall
                     {
-                        //_logger.LogInformation($"Function call detected - Name: {fc.functionName}, JSON: {fc.json}");
+                        Name = fc.functionName,
+                        Arguments = fc.json
                     }
+                }).ToList();
 
-                    // Map the parsed function calls to ToolCalls
-                    choice.Message.ToolCalls = functionCalls.Select(fc => new ToolCall
-                    {
-                        Type = "function",
-                        Id = "call_" + StringUtils.GetNanoid(),
-                        FunctionCall = new FunctionCall
-                        {
-                            Name = fc.functionName,
-                            Arguments = fc.json
-                        }
-                    }).ToList();
+                // For XML parsing, we might want to clear the content since we're using tool calls
+                //message.Content = string.Empty; // Uncomment if needed
+            }
+        }
 
-                    // Log the ToolCalls that were created
-                    foreach (var toolCall in choice.Message.ToolCalls)
-                    {
-                        //_logger.LogInformation($"ToolCall created - Type: {toolCall.Type}, Id: {toolCall.Id}, " + $"FunctionName: {toolCall.FunctionCall.Name}, Arguments: {toolCall.FunctionCall.Arguments}");
-                    }
+        return openAIResponse;
+    }
+
+    public ChatCompletionCreateResponse BuildResponse(HuggingFaceChatResponse responseObject)
+    {
+        var choices = responseObject.Choices;
+        foreach (var choice in choices)
+        {
+            // _logger.LogInformation($"Parsing function calls for message content: {choice.Message.Content}");
+
+            // Parse the input using the broadcaster
+            List<(string json, string functionName)> functionCalls;
+            if (_isXml) functionCalls = _tokenBroadcaster.ParseInputForXml(choice.Message.Content);
+            else functionCalls = _tokenBroadcaster.ParseInputForJson(choice.Message.Content);
+
+            // Log the parsed results
+            if (functionCalls.Any())
+            {
+                choice.FinishReason = "tool_calls";
+                //_logger.LogInformation($"Parsed {functionCalls.Count} function calls.");
+                foreach (var fc in functionCalls)
+                {
+                    //_logger.LogInformation($"Function call detected - Name: {fc.functionName}, JSON: {fc.json}");
                 }
-                else
+
+                // Map the parsed function calls to ToolCalls
+                choice.Message.ToolCalls = functionCalls.Select(fc => new ToolCall
                 {
-                    //_logger.LogWarning($"No function calls were parsed for the message content: {choice.Message.Content}");
+                    Type = "function",
+                    Id = "call_" + StringUtils.GetNanoid(),
+                    FunctionCall = new FunctionCall
+                    {
+                        Name = fc.functionName,
+                        Arguments = fc.json
+                    }
+                }).ToList();
+
+                // Log the ToolCalls that were created
+                foreach (var toolCall in choice.Message.ToolCalls)
+                {
+                    //_logger.LogInformation($"ToolCall created - Type: {toolCall.Type}, Id: {toolCall.Id}, " + $"FunctionName: {toolCall.FunctionCall.Name}, Arguments: {toolCall.FunctionCall.Arguments}");
                 }
             }
-
-            var chatResponse = new ChatCompletionCreateResponse
+            else
             {
-                Choices = choices.Select(choice => new ChatChoiceResponse
+                choice.FinishReason = "stop";
+            }
+        }
+
+        var chatResponse = new ChatCompletionCreateResponse
+        {
+            Choices = choices.Select(choice => new ChatChoiceResponse
+            {
+                Message = new ChatMessage
                 {
-                    Message = new ChatMessage
+                    Role = choice.Message.Role,
+                    Content = choice.Message.Content,
+                    ToolCalls = choice.Message.ToolCalls.Select(toolCall => new ToolCall
                     {
-                        Role = choice.Message.Role,
-                        Content = choice.Message.Content,
-                        ToolCalls = choice.Message.ToolCalls.Select(toolCall => new ToolCall
+                        Type = toolCall.Type,
+                        Id = toolCall.Id,
+                        FunctionCall = new FunctionCall
                         {
-                            Type = toolCall.Type,
-                            Id = toolCall.Id,
-                            FunctionCall = new FunctionCall
-                            {
-                                Name = toolCall.FunctionCall.Name,
-                                Arguments = toolCall.FunctionCall.Arguments
-                            }
-                        }).ToList() // Explicitly map each ToolCall and its FunctionCall
-                    },
-                    Index = choice.Index,
-                    FinishReason = choice.FinishReason
-                }).ToList(),
-                Usage = new UsageResponse
-                {
-                    PromptTokens = responseObject.Usage.PromptTokens,
-                    CompletionTokens = responseObject.Usage.CompletionTokens,
-                    TotalTokens = responseObject.Usage.TotalTokens
+                            Name = toolCall.FunctionCall.Name,
+                            Arguments = toolCall.FunctionCall.Arguments
+                        }
+                    }).ToList() // Explicitly map each ToolCall and its FunctionCall
                 },
-                Id = responseObject.Id,
-                Model = responseObject.Model
-            };
-            return chatResponse;
+                Index = choice.Index,
+                FinishReason = choice.FinishReason
+            }).ToList(),
+            Usage = new UsageResponse
+            {
+                PromptTokens = responseObject.Usage.PromptTokens,
+                CompletionTokens = responseObject.Usage.CompletionTokens,
+                TotalTokens = responseObject.Usage.TotalTokens
+            },
+            Id = responseObject.Id,
+            Model = responseObject.Model
+        };
+        return chatResponse;
     }
-    
+
 }
