@@ -1,1 +1,2 @@
-~/code/models/llama.cpp/llama-cli -c 12000  -m ~/code/models/Llama-3.2-3B-Instruct-Q4_K_S.gguf --prompt-cache context-llama-3.2-nmap.gguf  -r "<|eot_id|>"  -f system_prompt_llama_3.2_nmap  --temp 0  -sp  -ctv q4_0 -ctk q4_0 -fa 
+~/code/models/llama.cpp/llama-cli -c 12000  -m ~/code/models/Llama-3.2-3B-Instruct-Q4_K_S.gguf --prompt-cache context-llama-3.2-nmap.gguf  -r "<|eot_id|>"  -f system_prompt_llama_3.2_nmap  --temp 0  -sp  -ctv q4_0 -ctk q4_0 -fa --in-suffix "<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"
+
