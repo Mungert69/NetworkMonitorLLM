@@ -1,0 +1,7 @@
+
+
+python3 convert_hf_to_gguf.py     ~/code/models/functionary-v4r-small-preview     --outfile ~/code/models/functionary-v4r-small-preview-bf16.gguf     --model-name functionary-v4r-small-preview     --outtype bf16
+
+
+./llama-quantize --imatrix  functionary-small-v3.1.imatrix  --leave-output-tensor --output-tensor-type BF16 --token-embedding-type BF16    ~/code/models/functionary-v4r-small-preview-bf16.gguf     ~/code/models/functionary-v4r-small-preview-optimized.gguf     Q4_K
+
