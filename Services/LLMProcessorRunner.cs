@@ -79,10 +79,7 @@ public class LLMProcessRunner : ILLMRunner
     public void SetStartInfo(ProcessStartInfo startInfo, MLParams mlParams)
     {
         string promptPrefix = "";
-        string extraReversePrompt = "";
-        // if (!mlParams.LlmIsfunc_2.4) promptPrefix = " --in-prefix \"<|user|>\" ";
-        //if (mlParams.LlmVersion == "llama_3.2" || mlParams.LlmVersion == "func_3.1") extraReversePrompt = " -r \"<|eom_id|>\" ";
-
+        string promptSuffix=$" --in-suffix \"{_config.EOTToken}{_config.AssistantHeader}\" ";
 
         if (_startServiceoObj.UserInfo.AccountType == null)
         {
@@ -112,8 +109,10 @@ public class LLMProcessRunner : ILLMRunner
         {
             contextFileName = mlParams.LlmContextFileName + permissionSuffix;
         }
+        string reversePrompt=$"-r \"{_config.EOTToken}\" ";
+        if (!string.IsNullOrEmpty(_config.EOMToken)) reversePrompt+=$"-r \"{_config.EOMToken}\" ";
         startInfo.FileName = $"{mlParams.LlmModelPath}llama.cpp/llama-cli";
-        startInfo.Arguments = $" -c {mlParams.LlmCtxSize} -n {mlParams.LlmPromptTokens} -m {mlParams.LlmModelPath + mlParams.LlmModelFileName}  --prompt-cache {mlParams.LlmModelPath + contextFileName} --prompt-cache-ro  -f {mlParams.LlmModelPath + promptName} {mlParams.LlmPromptMode} -r \"{mlParams.LlmReversePrompt}\" {extraReversePrompt}  --keep -1 --temp {mlParams.LlmTemp} -t {mlParams.LlmThreads} {promptPrefix}";
+        startInfo.Arguments = $" -c {mlParams.LlmCtxSize} -n {mlParams.LlmPromptTokens} -m {mlParams.LlmModelPath + mlParams.LlmModelFileName}  --prompt-cache {mlParams.LlmModelPath + contextFileName} --prompt-cache-ro  -f {mlParams.LlmModelPath + promptName} {mlParams.LlmPromptMode} {reversePrompt} {promptSuffix} --keep -1 --temp {mlParams.LlmTemp} -t {mlParams.LlmThreads} {promptPrefix}";
         _logger.LogInformation($"Running command : {startInfo.FileName}{startInfo.Arguments}");
         startInfo.UseShellExecute = false;
         startInfo.RedirectStandardInput = true;
@@ -122,6 +121,8 @@ public class LLMProcessRunner : ILLMRunner
     }
     public async Task StartProcess(LLMServiceObj serviceObj, DateTime currentTime)
     {
+         _config = LLMConfigFactory.GetConfig(_mlParams.LlmVersion);
+
         if (!_mlParams.StartThisFreeLLM || _isStateStarting) return;
         _isStateStarting = true;
         _isStateReady = false;
@@ -166,8 +167,7 @@ public class LLMProcessRunner : ILLMRunner
         }
 
 
-        _config = LLMConfigFactory.GetConfig(_mlParams.LlmVersion);
-
+       
         var userInfo = serviceObj.IsUserLoggedIn
             ? new UserInfo { Email = serviceObj.UserInfo.Email }
             : new UserInfo();
@@ -365,7 +365,7 @@ public class LLMProcessRunner : ILLMRunner
         // Replace line breaks with spaces
         string userInput = pendingServiceObj.UserInput.Replace("\r\n", " ").Replace("\n", " ");
 
-        if (pendingServiceObj.FunctionName != "are_functions_running")
+        /*if (pendingServiceObj.FunctionName != "are_functions_running")
         {
             int firstBraceIndex = userInput.IndexOf('{');
             if (firstBraceIndex != -1)
@@ -374,7 +374,7 @@ public class LLMProcessRunner : ILLMRunner
                 string messageIdField = $"\"message_id\" : \"{pendingServiceObj.MessageID}\", ";
                 userInput = userInput.Insert(firstBraceIndex + 1, messageIdField);
             }
-        }
+        }*/
 
         // Return the formatted response
         return string.Format(_config.FunctionResponseTemplate, pendingServiceObj.FunctionName, userInput);

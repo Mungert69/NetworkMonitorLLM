@@ -141,7 +141,8 @@ public class HuggingFaceApi : ILLMApi
                 var process = new HuggingFaceProcessWrapper(_httpClient);
                 await process.InitializeRequest(_apiUrl, payloadJson);
                 var tokenBroadcaster = _config.CreateBroadcaster(_responseProcessor, _logger, false);
-                tokenBroadcaster.IsAddAssistant = true;
+                tokenBroadcaster.UseHttpProcess=true;
+                tokenBroadcaster.IsAddAssistant=true;
                 tokenBroadcaster.SetUp(serviceObj, true, 1);
 
                 await tokenBroadcaster.BroadcastAsync(process, serviceObj, "");

@@ -27,6 +27,7 @@ namespace NetworkMonitor.LLM.Services
         List<(string json, string functionName)> ParseInputForXml(string input);
         string ResponseContent { get; }
         bool IsAddAssistant { get; set; }
+        bool UseHttpProcess { get; set; }
         
 
 
@@ -51,12 +52,14 @@ namespace NetworkMonitor.LLM.Services
         protected LLMConfig _config;
         protected HashSet<string> _ignoreParameters;
         private bool _isAddAssistant = false;
+        private bool _useHttpProcess=false;
         private StringBuilder _responseContentBuilder = new StringBuilder();
         public string ResponseContent => _responseContentBuilder.ToString();
 
 
         public StringBuilder AssistantMessage { get => _assistantMessage; set => _assistantMessage = value; }
         public bool IsAddAssistant { get => _isAddAssistant; set => _isAddAssistant = value; }
+        public bool UseHttpProcess { get => _useHttpProcess; set => _useHttpProcess = value; }
 
         protected TokenBroadcasterBase(ILLMResponseProcessor responseProcessor, ILogger logger, bool xmlFunctionParsing, HashSet<string> ignoreParameters)
         {
@@ -212,10 +215,10 @@ namespace NetworkMonitor.LLM.Services
                 {
                     byte[] buffer = new byte[1024];
                     int charRead;
-                    if (_isAddAssistant) charRead = await process.ReadAsync(buffer, 0, buffer.Length, _cancellationTokenSource.Token);
+                    if (_useHttpProcess) charRead = await process.ReadAsync(buffer, 0, buffer.Length, _cancellationTokenSource.Token);
                     else charRead = await process.StandardOutput.ReadAsync(buffer, 0, buffer.Length, _cancellationTokenSource.Token);
                     string textChunk = Encoding.UTF8.GetString(buffer, 0, charRead);
-                    if (_isAddAssistant)
+                    if (_useHttpProcess)
                     {
                         textChunk = ConvertToContent(textChunk);
                         if (textChunk == "<|DONE|>")
@@ -311,7 +314,7 @@ namespace NetworkMonitor.LLM.Services
             else functionCalls = ParseInputForJson(line);
 
             bool makeAssistantMessage = false;
-            if (functionCalls != null && functionCalls.Count > 0 && !functionCalls.Any(f => f.functionName == "are_functions_running")) makeAssistantMessage = true;
+           // if (functionCalls != null && functionCalls.Count > 0 && !functionCalls.Any(f => f.functionName == "are_functions_running")) makeAssistantMessage = true;
 
             if (makeAssistantMessage) _assistantMessage = new StringBuilder($"I have called the following functions ");
 
