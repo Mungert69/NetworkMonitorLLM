@@ -383,7 +383,10 @@ public class LLMProcessRunner : ILLMRunner
 
     public async Task SendInputAndGetResponse(LLMServiceObj serviceObj)
     {
-
+        if (serviceObj.UserInfo.Contains"<|START_AUDIO|>" || serviceObj.UserInfo.Contains"<|STOP_AUDIO|>") {
+               throw new Exception($"Audio is not available for the FreeLLM. Switch to another LLM if you need audio output.");
+         
+        }
         _isStateReady = false;
         string tokenBroadcasterMessage = "";
         int sendLlmLoad = 0;
