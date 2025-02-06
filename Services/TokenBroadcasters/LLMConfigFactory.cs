@@ -36,6 +36,7 @@ Where:
             AssistantMessageTemplate = "<|from|> assistant\\\n<|recipient|> all\\\n<|content|>{0}\\\n",
             EOTToken = "<|stop|>",
             FunctionResponseTemplate = "<|from|> {0}\\\n<|recipient|> all\\\n<|content|>{1}",
+            FunctionBuilder = "<|from|> {0}\\\n<|recipient|> all\\\n<|content|>{1}",
             FunctionResponse = "<|from|> {0}\n<|recipient|> all\n<|content|>{1}",
             FunctionDefsWrap = "{0}",
             CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
@@ -51,6 +52,8 @@ Where:
             AssistantMessageTemplate = "<|start_header_id|>assistant<|end_header_id|>\\\n\\\n{0}<|eot_id|>",
             EOTToken = "<|eot_id|>",
             FunctionResponseTemplate = "<|start_header_id|>tool<|end_header_id|>\\\n\\\nname={0} {1}",
+            
+            FunctionBuilder= " name = {0} {1}",
             FunctionResponse = "<|reserved_special_token_249|>{0}\n{1}",
             FunctionDefsWrap = "{0}",
             CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
@@ -68,7 +71,9 @@ Where:
             EOTToken = "<|eot_id|>",
             EOMToken = "<|eom_id|>",
             FunctionResponseTemplate = "<|start_header_id|>ipython<|end_header_id|>\\\n\\\n{1}",
-            FunctionResponse = "<function_response name={0}>{1}</function_response>",
+            
+            FunctionBuilder ="<function={0}>{1}</function>",
+            FunctionResponse = "{1}",
             FunctionDefsWrap = "{0}",
             PromptFooter = @"
 Think very carefully before calling functions.
@@ -102,7 +107,8 @@ Reminder:
             AssistantMessageTemplate = "<|start_header_id|>assistant<|end_header_id|>\\\n\\\n{0}<|eot_id|>",
             EOTToken = "<|eot_id|>",
             FunctionResponseTemplate = "<|start_header_id|>tool<|end_header_id|>\\\n\\\n{1}",
-            FunctionResponse = "<function_response name={0}>{1}</function_response>",
+            
+            FunctionResponse = "{1}",
             FunctionDefsWrap = "{0}",
             PromptFooter=@"Only execute function(s) when absolutely necessary.
 Ask for the required input to:recipient==all
@@ -125,6 +131,8 @@ ${content}
             EOTToken = "<|eot_id|>",
             EOMToken = "<|eom_id|>",
             FunctionResponseTemplate = "<|start_header_id|>ipython<|end_header_id|>\\\n\\\n{1}",
+            
+            FunctionBuilder="{{\"name\":\"{0}\", \"parameters\":{1}}}",
             FunctionResponse = "{1}",
             FunctionDefsWrap = @"
 Ensure that any function calls you use align with the user's request. Use only the functions necessary for the task. For failed function calls, provide feedback about the issue before retrying or switching functions.
@@ -169,7 +177,9 @@ VERY IMPORTANT : Only call functions using this format :  {""name"": ""function_
             AssistantMessageTemplate = "<|im_start|>assistant<|im_sep|>\\\n{0}<|im_end|>",
             EOTToken = "<|im_end|>",
             FunctionResponseTemplate = "<|im_start|>user<|im_sep|>\\\n<function_response name={0}>\\\n{1}\\\n</function_response>",
-            FunctionResponse = "<function_response name={0}>{1}</function_response>",
+            
+            FunctionBuilder ="<function={0}>{1}</function>",
+            FunctionResponse = "{1}",
             FunctionDefsWrap = @"
 You have access to the following functions:
 
@@ -207,6 +217,8 @@ Reminder:
             AssistantMessageTemplate = "<|im_start|>assistant\\\n{0}<|im_end|>",
             EOTToken = "<|im_end|>",
             FunctionResponseTemplate = "<|im_start|>assistant\\\n<tool_response>\\\n{1}\\\n</tool_response>",
+            
+            FunctionBuilder="<tool_call>\n{1}\n</tool_call>",
             FunctionResponse = "<tool_response>{1}</tool_response>",
             FunctionDefsWrap = @"# Tools
 
@@ -242,6 +254,8 @@ Reminder:
             AssistantMessageTemplate = "<start_of_turn>model\\\n{0}<end_of_turn>",
             EOTToken = "<end_of_turn>",
             FunctionResponseTemplate = "<start_of_turn>user\\\nFunction response: {1}",
+            
+            FunctionBuilder ="Function call: {1}",
             FunctionResponse = "Function response: {1}",
             FunctionDefsWrap = "{0}",
             PromptFooter="",
@@ -259,6 +273,8 @@ Reminder:
             AssistantMessageTemplate = "Response : {0}",
             EOTToken = "",
             FunctionResponseTemplate = "FUNCTION RESPONSE: {1}",
+            
+            FunctionBuilder = "FUNCTION CALL: {1}",
             FunctionResponse = "FUNCTION RESPONSE: {1}",
             FunctionDefsWrap = "{0}",
             PromptFooter="",
@@ -294,6 +310,7 @@ public class LLMConfig
     public string FunctionResponseTemplate { get; set; } = string.Empty;
      public string FunctionResponse { get; set; } = string.Empty;
      public string FunctionDefsWrap { get; set; } = string.Empty;
+     public string FunctionBuilder {get;set;}= string.Empty;
       public string PromptFooter { get; set; } = string.Empty;
          public string XmlPromptFooter { get; set; } = string.Empty;
        

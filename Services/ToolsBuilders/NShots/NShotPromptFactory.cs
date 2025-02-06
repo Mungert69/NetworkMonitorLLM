@@ -361,9 +361,9 @@ namespace NetworkMonitor.Connection
         {
             var messages = new List<ChatMessage>();
 
-            if (args.Length < 2)
+            if (args.Length < 3)
             {
-                throw new ArgumentException("GetDefaultPrompt requires at least two arguments: current time and LLMServiceObj instance.");
+                throw new ArgumentException("GetDefaultPrompt requires at least three arguments: current time and LLMServiceObj instance.");
             }
 
             // Extract currentTime
@@ -371,7 +371,7 @@ namespace NetworkMonitor.Connection
 
             // Safely retrieve the LLMServiceObj instance
             var serviceObj = args.Length > 1 && args[1] is LLMServiceObj obj ? obj : new LLMServiceObj();
-
+            var config = args.Length > 2 && args[2] is LLMConfig lmobj ? lmobj : new LLMConfig();
             // Initialize the content variable
             string content;
 
@@ -389,14 +389,16 @@ namespace NetworkMonitor.Connection
                           $"They don't need to be logged in, but to add hosts they will need to supply an email address. " +
                           $"All other functions can be called with or without an email address.";
             }
-
+            string parameters=@"{""detail_response"" : false}";
+            string assistantStr=  string.Format(config.FunctionBuilder, "get_user_info", parameters);
+          
             // Add messages using the helper method
             AddAssistantMessageWithToolCall(
                 messages,
                 // userPrompt
                 "What’s my user info?",
                 // assistantPrompt
-                @"{""name"" : ""get_user_info"", ""parameters"" : {""detail_response"" : false} }",
+                assistantStr,
                 // toolResponse (tool response in JSON format)
                 $@"{{
             ""message"": ""Got user info"",

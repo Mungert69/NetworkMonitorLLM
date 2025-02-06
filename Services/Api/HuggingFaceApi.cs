@@ -102,7 +102,7 @@ public class HuggingFaceApi : ILLMApi
         var systemMessages = _toolsBuilder.GetSystemPrompt(currentTime, serviceObj, "HugLLM");
         systemMessages[0].Content = toolsJson + systemMessages[0].Content + footer;
         _logger.LogInformation($" Using SYSTEM prompt\n\n{systemMessages[0].Content}");
-        systemMessages.AddRange(NShotPromptFactory.GetPrompt(_serviceID, _isXml, currentTime, serviceObj));
+        systemMessages.AddRange(NShotPromptFactory.GetPrompt(_serviceID, _isXml, currentTime, serviceObj, _config));
         return systemMessages;
     }
 
