@@ -422,13 +422,31 @@ public class OpenAIRunner : ILLMRunner
     private async Task HandleFunctionProcessing(LLMServiceObj serviceObj, ChatMessage choiceMessage, List<ChatMessage> localHistory, LLMServiceObj responseServiceObj, ChatMessage assistantChatMessage, bool isFuncMessage)
     {
 
-        // Note we deal with HF modles assistant function call messages differently to OpenAi models.
-        // OpenAI models need the assistant func calls to be followed by the respones. HF models don't
-        // The _useHF parameter is used to construct the messages that are added to the history to deal with this difference
-        string origMessage = choiceMessage.Content;
-        choiceMessage.Content = $"The function call with message_id {serviceObj.MessageID} has now completed. ";
-        _pendingFunctionCalls.TryAdd(serviceObj.MessageID, choiceMessage);
+       
+       // Create a deep copy of the choiceMessage to avoid modifying the original
+    var choiceMessageCopy = new ChatMessage
+    {
+        Role = choiceMessage.Role,
+        Content = choiceMessage.Content,
+        ToolCalls = choiceMessage.ToolCalls?.Select(tc => new ToolCall
+        {
+            Id = tc.Id,
+            Type = tc.Type,
+            FunctionCall = tc.FunctionCall != null ? new FunctionCall
+            {
+                Name = tc.FunctionCall.Name,
+                Arguments = tc.FunctionCall.Arguments
+            } : null
+        }).ToList()
+    };
 
+    // Store the original message content
+    string origMessage = choiceMessageCopy.Content;
+
+    // Update the copy's content for the pending function call
+    choiceMessageCopy.Content = $"The function call with message_id {serviceObj.MessageID} has now completed.";
+    _pendingFunctionCalls.TryAdd(serviceObj.MessageID, choiceMessageCopy);
+       //TODO make a copy of the choiceMesage and use that instead 
         var toolResponces = new List<ChatMessage>();
         foreach (ToolCall fnCall in choiceMessage.ToolCalls)
         {
