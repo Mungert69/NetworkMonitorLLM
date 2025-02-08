@@ -66,6 +66,7 @@ public class HuggingFaceApi : ILLMApi
         _modelID = mlParams.LlmHFModelID;
         _authToken = mlParams.LlmHFKey;
         _isXml = _mlParams.XmlFunctionParsing;
+        _httpClient.DefaultRequestHeaders.Add("api-key", _authToken);
         _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _authToken);
         _apiUrl = mlParams.LlmHFUrl.TrimEnd();
         if (!_apiUrl.Contains("completions"))
