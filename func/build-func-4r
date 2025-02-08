@@ -1,1 +1,1 @@
-~/code/models/llama.cpp/llama-cli -c 12000  -m ~/code/models/functionary-v4r-small-preview-q8_0-q4_k.gguf   --prompt-cache context-func-4r.gguf  -r "<|eot_id|>"  -f system_prompt_func_4r  --temp 0  -sp -ub 2048 -b 2048  --cpu-strict 1
+~/code/models/llama.cpp/llama-cli -c 12000  -m ~/code/models/functionary-v4r-small-preview-q8_0-q4_k.gguf   --prompt-cache context-func-4r.gguf  -r "<|eot_id|>"  -f system_prompt_func_4r  --temp 0 -no-cnv  -sp -ub 2048 -b 2048  --in-suffix "<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"
