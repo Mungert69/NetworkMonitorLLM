@@ -19,11 +19,7 @@ using Betalgo.Ranul.OpenAI.ObjectModels.RequestModels;
 
 namespace NetworkMonitor.LLM.Services;
 
-public class HistoryDisplayName
-{
-    public string Name { get; set; } = "";
-    public string SessionIdId { get; set; } = "";
-}
+
 public interface ILLMFactory
 {
     ILLMRunner CreateRunner(string runnerType, LLMServiceObj obj);
@@ -81,7 +77,7 @@ public class LLMFactory : ILLMFactory
 
             foreach (var historyKey in historyKeys)
             {
-                var parts = historyKey.Split(':'); // Split the key on '-'
+                var parts = historyKey.Split('¿'); // Split the key on '-'
 
                 if (parts.Length >= 3) // Ensure we have enough parts to extract data
                 {
