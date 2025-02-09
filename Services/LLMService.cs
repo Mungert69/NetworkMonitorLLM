@@ -61,7 +61,7 @@ public class LLMService : ILLMService
 
             //if (!isRunnerNull && checkSession.Runner.Type != llmServiceObj.LLMRunnerType) isSwapLLMType = true;
 
-            // Create a new runner is there is not one . Or the RunnerType needs to be swapped. Or is the type is the same but its is a failed State
+            // Create a new runner if there is not one . Or the RunnerType needs to be swapped. Or is the type is the same but its is a failed State
             bool isCreateNewRunner = isRunnerNull ||  checkSession?.Runner?.IsStateFailed == true;
 
             if (isCreateNewRunner)

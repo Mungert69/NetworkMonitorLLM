@@ -84,7 +84,7 @@ public class LLMFactory : ILLMFactory
                     var historyDisplayName = new HistoryDisplayName
                     {
                         Name = historyKey,  // Map the full key to Name
-                        SessionIdId = parts[0] // Map the SessionId
+                        SessionId = parts[0] // Map the SessionId
                     };
 
                     historyDisplayNames.Add(historyDisplayName);
@@ -139,7 +139,7 @@ public class LLMFactory : ILLMFactory
         {
             "TurboLLM" => _openAIRunnerFactory.CreateRunner(_serviceProvider, obj, new SemaphoreSlim(1), history, historyDisplayNames),
             "HugLLM" => _hfRunnerFactory.CreateRunner(_serviceProvider, obj, new SemaphoreSlim(1), history, historyDisplayNames),
-            "FreeLLM" => _processRunnerFactory.CreateRunner(_serviceProvider, obj, _processRunnerSemaphore, history, historyDisplayNames),
+            //"FreeLLM" => _processRunnerFactory.CreateRunner(_serviceProvider, obj, _processRunnerSemaphore, history, historyDisplayNames),
             _ => throw new ArgumentException($"Invalid runner type: {runnerType}")
         };
 
