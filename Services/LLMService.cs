@@ -27,33 +27,30 @@ public interface ILLMService
 
 public class LLMService : ILLMService
 {
-    private ILogger _logger;
+    private readonly ILogger _logger;
 
-    private readonly ILLMRunnerFactory _processRunnerFactory;
-    private readonly ILLMRunnerFactory _openAIRunnerFactory;
-    private readonly ILLMRunnerFactory _hfRunnerFactory;
-    private IServiceProvider _serviceProvider;
-    private IRabbitRepo _rabbitRepo;
-    private SemaphoreSlim _processRunnerSemaphore = new SemaphoreSlim(1, 1);
+    private readonly IServiceProvider _serviceProvider;
+    private readonly IRabbitRepo _rabbitRepo;
+        private ILLMFactory _llmFactory;
 
     private MLParams _mlParams;
     private string _serviceID;
     private readonly ConcurrentDictionary<string, Session> _sessions = new ConcurrentDictionary<string, Session>();
 
-    public LLMService(ILogger<LLMService> logger, IRabbitRepo rabbitRepo, ISystemParamsHelper systemParamsHelper, IServiceProvider serviceProvider)
+    public LLMService(ILogger<LLMService> logger, IRabbitRepo rabbitRepo, ISystemParamsHelper systemParamsHelper, IServiceProvider serviceProvider, ILLMFactory llmFactory)
     {
-        _processRunnerFactory = new LLMProcessRunnerFactory();
-        _openAIRunnerFactory = new OpenAIRunnerFactory();
-        _hfRunnerFactory = new HFRunnerFactory();
+       
         _serviceProvider = serviceProvider;
         _rabbitRepo = rabbitRepo;
         _mlParams = systemParamsHelper.GetMLParams();
         _serviceID = systemParamsHelper.GetSystemParams().ServiceID!;
         _logger = logger;
+        _llmFactory=llmFactory;
+        _llmFactory.Sessions=_sessions;
     }
     public async Task<LLMServiceObj> StartProcess(LLMServiceObj llmServiceObj)
     {
-        llmServiceObj.SessionId = llmServiceObj.RequestSessionId+"-"+llmServiceObj.LLMRunnerType;
+        llmServiceObj.SessionId = llmServiceObj.RequestSessionId+":"+llmServiceObj.LLMRunnerType;
         try
         {
 
@@ -72,7 +69,7 @@ public class LLMService : ILLMService
                 if (!isRunnerNull)
                     await SafeRemoveRunnerProcess(checkSession, llmServiceObj.SessionId);
 
-                ILLMRunner runner = CreateRunner(llmServiceObj.LLMRunnerType, llmServiceObj);
+                ILLMRunner runner = _llmFactory.CreateRunner(llmServiceObj.LLMRunnerType, llmServiceObj);
                 if (!runner.IsEnabled)
                 {
                     //await SetResultMessageAsync(llmServiceObj, $"{llmServiceObj.LLMRunnerType} {_serviceID} not started as it is disabled.", true, "llmServiceMessage");
@@ -136,7 +133,10 @@ public class LLMService : ILLMService
 
         try
         {
-            session.Runner.LoadChanged -= OnRunnerLoadChanged;
+             // Save the conversation history before removing the session
+            await _llmFactory.SaveHistoryForSessionAsync(llmServiceObj.SessionId);
+
+            session.Runner.LoadChanged -= _llmFactory.OnRunnerLoadChanged;
             await session.Runner.RemoveProcess(llmServiceObj.SessionId);
             _sessions.TryRemove(llmServiceObj.SessionId, out _);
 
@@ -322,65 +322,8 @@ public class LLMService : ILLMService
     }
 
 
-    private ILLMRunner CreateRunner(string runnerType, LLMServiceObj obj)
-    {
-        ILLMRunner runner = runnerType switch
-        {
-            "TurboLLM" => _openAIRunnerFactory.CreateRunner(_serviceProvider, obj, new SemaphoreSlim(1)),
-             "HugLLM" => _hfRunnerFactory.CreateRunner(_serviceProvider, obj, new SemaphoreSlim(1)),
-            "FreeLLM" => _processRunnerFactory.CreateRunner(_serviceProvider, obj, _processRunnerSemaphore),
-            _ => throw new ArgumentException($"Invalid runner type: {runnerType}")
-        };
-
-        runner.LoadChanged += OnRunnerLoadChanged;
-
-        return runner;
-    }
-    private void OnRunnerLoadChanged(int delta, string llmType)
-    {
-        // Update the load count for the respective runner type
-        if (llmType == "TurboLLM")
-        {
-            _openAIRunnerFactory.LoadCount += delta;
-        }
-        else if (llmType == "HugLLM")
-        {
-            _openAIRunnerFactory.LoadCount += delta;
-        }
-        else if (llmType == "FreeLLM")
-        {
-            _processRunnerFactory.LoadCount += delta;
-        }
-        else
-        {
-            _logger.LogWarning($"Unknown LLM type: {llmType}. Load update ignored.");
-            return;
-        }
-
-        // Broadcast the updated load counts to the relevant sessions
-        foreach (var session in _sessions.Values)
-        {
-            if (session.Runner != null)
-            {
-                if (session.Runner.Type == llmType)
-                {
-                    // Update the session's runner with the specific load for its type
-                    session.Runner.LlmLoad = llmType switch
-                    {
-                        "TurboLLM" => _openAIRunnerFactory.LoadCount,
-                        "FreeLLM" => _processRunnerFactory.LoadCount,
-                        "HugLLM" => _hfRunnerFactory.LoadCount,
-                        _ => 0 // Fallback case (shouldn't occur due to earlier check)
-                    };
-                }
-                // Optionally log the updated load counts
-                //_logger.LogInformation($"Sent Load Update to {llmType} LLM : {session.Runner.LlmLoad} ");
-
-            }
-        }
-
-    }
-
+   
+   
     private int _load; // Tracks the total load across all sessions
 
 

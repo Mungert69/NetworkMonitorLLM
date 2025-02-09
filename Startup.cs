@@ -68,6 +68,8 @@ namespace NetworkMonitor.LLM
             services.AddSingleton<ISystemParamsHelper, SystemParamsHelper>();
             services.AddTransient<ILLMResponseProcessor, LLMResponseProcessor>();
             services.AddSingleton<ILLMService, LLMService>();
+            services.AddSingleton<ILLMFactory, LLMFactory>();
+             services.AddSingleton<IHistoryStorage, FileSystemHistoryStorage>();
 
 
             services.AddSingleton(_cancellationTokenSource);

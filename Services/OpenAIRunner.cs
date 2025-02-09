@@ -29,21 +29,18 @@ public class OpenAIRunner : ILLMRunner
     private ILLMResponseProcessor _responseProcessor;
     private OpenAIService _openAiService; // Interface to interact with OpenAI
 
-    private ConcurrentDictionary<string, DateTime> _activeSessions;
-
     private SemaphoreSlim _openAIRunnerSemaphore;
-    private ConcurrentDictionary<string, List<ChatMessage>> _sessionHistories = new ConcurrentDictionary<string, List<ChatMessage>>();
-
+    private List<ChatMessage> _history;
     private ConcurrentDictionary<string, ChatMessage> _pendingFunctionCalls = new ConcurrentDictionary<string, ChatMessage>();
     private ConcurrentDictionary<string, ChatMessage> _pendingFunctionResponses = new ConcurrentDictionary<string, ChatMessage>();
-    private string _type="TurboLLM";
+    private string _type = "TurboLLM";
 
     private bool _isStateReady = false;
     private bool _isStateStarting = false;
     private bool _isStateFailed = false;
     private bool _isPrimaryLlm;
     private bool _isSystemLlm;
-    private bool _isStream=false;
+    private bool _isStream = false;
     private bool _isEnabled = true;
     //private bool _isFuncCalled;
     private string _serviceID;
@@ -78,13 +75,14 @@ public class OpenAIRunner : ILLMRunner
     private readonly ILLMApi _llmApi;
     private bool _useHF = false;
     private bool _createAudio = false;
+    private List<HistoryDisplayName> _historyDisplayNames = new();
     private IAudioGenerator _audioGenerator;
     private HashSet<string> _ignoreParameters => LLMConfigFactory.IgnoreParameters;
 
     public string Type { get => _type; set => _type = value; }
 
 #pragma warning disable CS8618
-    public OpenAIRunner(ILogger<OpenAIRunner> logger, ILLMResponseProcessor responseProcessor, OpenAIService openAiService, ISystemParamsHelper systemParamsHelper, LLMServiceObj serviceObj, SemaphoreSlim openAIRunnerSemaphore, IAudioGenerator audioGenerator, bool useHF)
+    public OpenAIRunner(ILogger<OpenAIRunner> logger, ILLMResponseProcessor responseProcessor, OpenAIService openAiService, ISystemParamsHelper systemParamsHelper, LLMServiceObj serviceObj, SemaphoreSlim openAIRunnerSemaphore, IAudioGenerator audioGenerator, bool useHF, List<ChatMessage> history, List<HistoryDisplayName> historyDisplaysNames)
     {
         _logger = logger;
         _responseProcessor = responseProcessor;
@@ -92,6 +90,8 @@ public class OpenAIRunner : ILLMRunner
         _openAIRunnerSemaphore = openAIRunnerSemaphore;
         _serviceID = systemParamsHelper.GetSystemParams().ServiceID!;
         _mlParams = systemParamsHelper.GetMLParams();
+        _history = history;
+        _historyDisplayNames = historyDisplaysNames;
 
         _useHF = useHF;
         IToolsBuilder? toolsBuilder = null;
@@ -107,14 +107,14 @@ public class OpenAIRunner : ILLMRunner
 
         if (!_useHF)
         {
-            _type="TurboLLM";
-            _llmApi = new OpenAIApi(_logger, _mlParams, toolsBuilder,_serviceID, _openAiService);
+            _type = "TurboLLM";
+            _llmApi = new OpenAIApi(_logger, _mlParams, toolsBuilder, _serviceID, _openAiService);
         }
         else
         {
-            _type="HugLLM";
-            _isStream=_mlParams.IsStream;
-            _llmApi = new HuggingFaceApi(_logger, _mlParams, toolsBuilder, _serviceID, _responseProcessor,_isStream );
+            _type = "HugLLM";
+            _isStream = _mlParams.IsStream;
+            _llmApi = new HuggingFaceApi(_logger, _mlParams, toolsBuilder, _serviceID, _responseProcessor, _isStream);
         }
         string accountType = "Free";
         if (!string.IsNullOrEmpty(serviceObj.UserInfo.AccountType)) accountType = serviceObj.UserInfo.AccountType;
@@ -122,49 +122,71 @@ public class OpenAIRunner : ILLMRunner
         if (_maxTokens > _mlParams.LlmOpenAICtxSize) _maxTokens = _mlParams.LlmOpenAICtxSize;
         _responseTokens = _maxTokens / _mlParams.LlmCtxRatio;
         _promptTokens = _maxTokens - _responseTokens;
-        _activeSessions = new ConcurrentDictionary<string, DateTime>();
-        _sessionHistories = new ConcurrentDictionary<string, List<ChatMessage>>();
         _audioGenerator = audioGenerator;
+
 
     }
 #pragma warning restore CS8618
-    public Task StartProcess(LLMServiceObj serviceObj, DateTime currentTime)
+    public async Task StartProcess(LLMServiceObj serviceObj, DateTime currentTime)
     {
         _isStateStarting = true;
         _isStateReady = false;
         _responseProcessor.IsManagedMultiFunc = true;
 
-        if (!_activeSessions.TryAdd(serviceObj.SessionId, currentTime))
+        var systemPrompt = _llmApi.GetSystemPrompt(currentTime.ToString("yyyy-MM-ddTHH:mm:ss"), serviceObj);
+
+        if (_history.Count == 0)
         {
-            _isStateStarting = false;
-            _isStateReady = true;
-            throw new InvalidOperationException($"{_type} {_serviceID} Assistant already running.");
+            _history.AddRange(systemPrompt);
+        }
+        else
+        {
+            // Remove the first 'systemPrompt.Count' items, if there are enough elements
+            int removeCount = Math.Min(systemPrompt.Count, _history.Count);
+            _history.RemoveRange(0, removeCount);
+
+            // Insert the new system prompt at the beginning
+            _history.InsertRange(0, systemPrompt);
         }
 
-        var systemPrompt = _llmApi.GetSystemPrompt(_activeSessions[serviceObj.SessionId].ToString("yyyy-MM-ddTHH:mm:ss"), serviceObj);
-        _sessionHistories.GetOrAdd(serviceObj.SessionId, systemPrompt);
+        await SendHistoryDisplayNames(serviceObj);
 
         _logger.LogInformation($"Started {_type} {_serviceID} Assistant with session id {serviceObj.SessionId} at {currentTime}. with CTX size {_maxTokens} and Response tokens {_responseTokens}");
-        // Here, you might want to send an initial message or perform other setup tasks.
+
         _isStateStarting = false;
         _isStateReady = true;
         _isStateFailed = false;
-        return Task.CompletedTask;
+    }
+
+    public async Task SendHistoryDisplayNames(LLMServiceObj serviceObj)
+    {
+        try
+        {
+            if (_historyDisplayNames != null && _historyDisplayNames.Count > 0)
+            {
+                string payload = JsonSerializer.Serialize(_historyDisplayNames);
+                var responseServiceObj = new LLMServiceObj(serviceObj);
+                responseServiceObj.LlmMessage = $"<history-display-name>{payload}</history-display-name>";
+                await  _responseProcessor.ProcessLLMOutput(responseServiceObj);
+        }
+        }
+        catch (Exception e)
+        {
+            _logger.LogError($" Error : failed to send History Display Names. Error was : {e.Message}");
+        }
+
+
     }
 
     public Task RemoveProcess(string sessionId)
     {
         _isStateReady = false;
-        if (!_activeSessions.TryRemove(sessionId, out var lastActivity) || !_sessionHistories.TryRemove(sessionId, out var history))
-        {
-            _logger.LogWarning($"Attempted to stop {_type} {_serviceID} Assistant with non-existent session {sessionId}.");
-            _isStateReady = true;
-            _isStateFailed = true;
-            return Task.CompletedTask;
-        }
+
+        // DO something here 
+
         _isStateReady = true;
         _isStateFailed = true;
-        _logger.LogInformation($" Stopped {_type} {_serviceID} Assistant with session {sessionId}. Last active at {lastActivity}. History had {history.Count} messages.");
+        _logger.LogInformation($" Stopped {_type} {_serviceID} Assistant with session {sessionId}.  History has {_history.Count} messages.");
         return Task.CompletedTask;
     }
 
@@ -178,10 +200,12 @@ public class OpenAIRunner : ILLMRunner
         var assistantChatMessage = ChatMessage.FromAssistant("");
         bool isFuncMessage = false;
 
-        if (!_activeSessions.ContainsKey(serviceObj.SessionId))
+
+        if (serviceObj.UserInput == "<|REPLAY_HISTORY|>")
         {
-            _isStateFailed = true;
-            throw new Exception($"No {_type} {_serviceID} Assistants found for session {serviceObj.SessionId}. Try reloading the Assistant or refreshing the page. If the problems persists contact support@freenetworkmontior.click");
+            await ReplayHistory(serviceObj.SessionId);
+            _logger.LogInformation($" Replayed history for sessionId {serviceObj.SessionId}");
+            return;
         }
         if (serviceObj.UserInput == "<|STOP_AUDIO|>")
         {
@@ -215,7 +239,6 @@ public class OpenAIRunner : ILLMRunner
             await _openAIRunnerSemaphore.WaitAsync();
 
             // Retrieve or initialize the conversation history
-            var history = _sessionHistories[serviceObj.SessionId];
             var localHistory = new List<ChatMessage>();
 
             ChatMessage chatMessage;
@@ -241,7 +264,7 @@ public class OpenAIRunner : ILLMRunner
             }
 
 
-            var currentHistory = new List<ChatMessage>(history.Concat(localHistory));
+            var currentHistory = new List<ChatMessage>(_history.Concat(localHistory));
             var completionSuccessResult = await _llmApi.CreateCompletionAsync(currentHistory, _responseTokens, serviceObj);
             var completionResult = completionSuccessResult.Response;
             var completionSuccess = completionSuccessResult.Success;
@@ -257,7 +280,7 @@ public class OpenAIRunner : ILLMRunner
                 }
                 else
                 {
-                    await ProcessAssistantMessageAsync(choice, responseServiceObj, assistantChatMessage, localHistory, history, serviceObj);
+                    await ProcessAssistantMessageAsync(choice, responseServiceObj, assistantChatMessage, localHistory, _history, serviceObj);
                 }
 
 
@@ -266,15 +289,15 @@ public class OpenAIRunner : ILLMRunner
             {
                 if (completionResult.Error != null)
                 {
-                    await HandleOpenAIError(serviceObj, completionResult.Error.Message, localHistory, history);
+                    await HandleOpenAIError(serviceObj, completionResult.Error.Message, localHistory, _history);
                     localHistory = new List<ChatMessage>();
                 }
             }
 
             if (localHistory.Count > 0)
             {
-                history.AddRange(localHistory);
-                TruncateTokens(history, serviceObj);
+                _history.AddRange(localHistory);
+                TruncateTokens(_history, serviceObj);
                 await _responseProcessor.UpdateTokensUsed(responseServiceObj);
             }
 
@@ -422,31 +445,31 @@ public class OpenAIRunner : ILLMRunner
     private async Task HandleFunctionProcessing(LLMServiceObj serviceObj, ChatMessage choiceMessage, List<ChatMessage> localHistory, LLMServiceObj responseServiceObj, ChatMessage assistantChatMessage, bool isFuncMessage)
     {
 
-       
-       // Create a deep copy of the choiceMessage to avoid modifying the original
-    var choiceMessageCopy = new ChatMessage
-    {
-        Role = choiceMessage.Role,
-        Content = choiceMessage.Content,
-        ToolCalls = choiceMessage.ToolCalls?.Select(tc => new ToolCall
+
+        // Create a deep copy of the choiceMessage to avoid modifying the original
+        var choiceMessageCopy = new ChatMessage
         {
-            Id = tc.Id,
-            Type = tc.Type,
-            FunctionCall = tc.FunctionCall != null ? new FunctionCall
+            Role = choiceMessage.Role,
+            Content = choiceMessage.Content,
+            ToolCalls = choiceMessage.ToolCalls?.Select(tc => new ToolCall
             {
-                Name = tc.FunctionCall.Name,
-                Arguments = tc.FunctionCall.Arguments
-            } : null
-        }).ToList()
-    };
+                Id = tc.Id,
+                Type = tc.Type,
+                FunctionCall = tc.FunctionCall != null ? new FunctionCall
+                {
+                    Name = tc.FunctionCall.Name,
+                    Arguments = tc.FunctionCall.Arguments
+                } : null
+            }).ToList()
+        };
 
-    // Store the original message content
-    string origMessage = choiceMessageCopy.Content;
+        // Store the original message content
+        string origMessage = choiceMessageCopy.Content;
 
-    // Update the copy's content for the pending function call
-    choiceMessageCopy.Content = $"The function call with message_id {serviceObj.MessageID} has now completed.";
-    _pendingFunctionCalls.TryAdd(serviceObj.MessageID, choiceMessageCopy);
-       //TODO make a copy of the choiceMesage and use that instead 
+        // Update the copy's content for the pending function call
+        choiceMessageCopy.Content = $"The function call with message_id {serviceObj.MessageID} has now completed.";
+        _pendingFunctionCalls.TryAdd(serviceObj.MessageID, choiceMessageCopy);
+        //TODO make a copy of the choiceMesage and use that instead 
         var toolResponces = new List<ChatMessage>();
         foreach (ToolCall fnCall in choiceMessage.ToolCalls)
         {
@@ -591,7 +614,7 @@ public class OpenAIRunner : ILLMRunner
                         string audioFileUrl = await _audioGenerator.AudioForResponse(chunk);
                         if (isFirstChunk)
                         {
-                            responseServiceObj.LlmMessage = "<Assistant:>"+responseChoiceStr + "\n";
+                            responseServiceObj.LlmMessage = "<Assistant:>" + responseChoiceStr + "\n";
                             if (!_isStream) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
                             isFirstChunk = false;
                         }
@@ -603,7 +626,7 @@ public class OpenAIRunner : ILLMRunner
                 }
                 else
                 {
-                    responseServiceObj.LlmMessage = "<Assistant:>"+responseChoiceStr + "\n";
+                    responseServiceObj.LlmMessage = "<Assistant:>" + responseChoiceStr + "\n";
                     if (!_isStream) await _responseProcessor.ProcessLLMOutputInChunks(responseServiceObj);
 
                 }
@@ -665,7 +688,6 @@ public class OpenAIRunner : ILLMRunner
             history.Insert(0, systemMessage);
 
             // Update the session history
-            _sessionHistories[serviceObj.SessionId] = history;
             _logger.LogInformation($"History truncated to {tokenCount} tokens.");
         }
     }
@@ -842,6 +864,75 @@ public class OpenAIRunner : ILLMRunner
         return Task.CompletedTask;
     }
 
+    public async Task ReplayHistory(string sessionId)
+    {
 
+
+        _isStateReady = false;
+
+        try
+        {
+            await _openAIRunnerSemaphore.WaitAsync();
+
+            // Iterate through the history and replay each message
+            foreach (var message in _history)
+            {
+                var responseServiceObj = new LLMServiceObj
+                {
+                    SessionId = sessionId,
+                    LlmMessage = "",
+                    TokensUsed = 0
+                };
+
+                switch (message.Role)
+                {
+                    case "user":
+                        responseServiceObj.LlmMessage = "<User:> " + message.Content + "\n\n";
+                        await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+                        break;
+
+                    case "assistant":
+                        if (message.ToolCalls != null && message.ToolCalls.Any())
+                        {
+                            // Handle tool calls
+                            foreach (var toolCall in message.ToolCalls)
+                            {
+                                if (toolCall.FunctionCall != null)
+                                {
+                                    responseServiceObj.LlmMessage = $"<Function Call:> {toolCall.FunctionCall.Name} {toolCall.FunctionCall.Arguments}\n";
+                                    await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            // Handle assistant response
+                            responseServiceObj.LlmMessage = "<Assistant:> " + message.Content + "\n";
+                            await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+                        }
+                        break;
+
+                    case "tool":
+                        // Handle tool responses
+                        responseServiceObj.LlmMessage = $"<Function Response:> {message.Content}\n\n";
+                        await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+                        break;
+
+                    default:
+                        _logger.LogWarning($"Unsupported message role: {message.Role}");
+                        break;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"Error replaying history for session {sessionId}: {ex.Message}");
+        }
+        finally
+        {
+            _openAIRunnerSemaphore.Release();
+            _isStateReady = true;
+        }
+    }
 
 }
