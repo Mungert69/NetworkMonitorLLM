@@ -50,7 +50,7 @@ public class LLMService : ILLMService
     }
     public async Task<LLMServiceObj> StartProcess(LLMServiceObj llmServiceObj)
     {
-        llmServiceObj.SessionId = llmServiceObj.RequestSessionId+":"+llmServiceObj.LLMRunnerType;
+        llmServiceObj.SessionId = llmServiceObj.RequestSessionId+"¿"+llmServiceObj.LLMRunnerType;
         try
         {
 
