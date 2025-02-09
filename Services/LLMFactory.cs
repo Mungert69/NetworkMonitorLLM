@@ -67,7 +67,7 @@ public class LLMFactory : ILLMFactory
         try
         {
             string userId = "";
-            var sessionIdParts = sessionId.Split(':'); // Split the key on '-'
+            var sessionIdParts = sessionId.Split('¿'); // Split the key on '-'
 
             if (sessionIdParts.Length >= 3) // Ensure we have enough parts to extract data
             {
@@ -77,7 +77,7 @@ public class LLMFactory : ILLMFactory
             {
                 return historyDisplayNames;
             }
-            var historyKeys = _sessionHistories.Keys.Where(w => w.Contains($":{userId}:")).ToList();
+            var historyKeys = _sessionHistories.Keys.Where(w => w.Contains($"¿{userId}¿")).ToList();
 
             foreach (var historyKey in historyKeys)
             {
