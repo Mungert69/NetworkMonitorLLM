@@ -77,7 +77,7 @@ public class LLMFactory : ILLMFactory
             {
                 return historyDisplayNames;
             }
-            var historyKeys = _sessionHistories.Keys.Where(w => w.Contains($"-{userId}-")).ToList();
+            var historyKeys = _sessionHistories.Keys.Where(w => w.Contains($":{userId}:")).ToList();
 
             foreach (var historyKey in historyKeys)
             {
