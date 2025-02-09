@@ -110,7 +110,7 @@ public class LLMFactory : ILLMFactory
     {
         if (_sessionHistories.TryGetValue(sessionId, out var history))
         {
-            await _historyStorage.SaveHistoryAsync(sessionId, history);
+            if (history!=null && history.Count>0) await _historyStorage.SaveHistoryAsync(sessionId, history);
         }
     }
 
@@ -119,13 +119,14 @@ public class LLMFactory : ILLMFactory
         if (_sessionHistories.TryRemove(sessionId, out _))
         {
             await _historyStorage.DeleteHistoryAsync(sessionId);
+            await SaveHistoryForSessionAsync(sessionId);
         }
     }
 
     public ILLMRunner CreateRunner(string runnerType, LLMServiceObj obj)
     {
         var history = _sessionHistories.GetOrAdd(obj.SessionId, _ => new List<ChatMessage>());
-
+        var historyDisplayNames=new List<HistoryDisplayName>();
         // Load history from storage if not in memory
         if (history.Count == 0)
         {
@@ -133,7 +134,7 @@ public class LLMFactory : ILLMFactory
             if (historyStorage != null && historyStorage.Count > 0) history.AddRange(historyStorage);
 
         }
-        var historyDisplayNames = GetHistoriesForUser(obj.SessionId);
+        if (obj.IsPrimaryLlm) historyDisplayNames = GetHistoriesForUser(obj.SessionId);
         ILLMRunner runner = runnerType switch
         {
             "TurboLLM" => _openAIRunnerFactory.CreateRunner(_serviceProvider, obj, new SemaphoreSlim(1), history, historyDisplayNames),

@@ -383,6 +383,13 @@ public class LLMProcessRunner : ILLMRunner
 
     public async Task SendInputAndGetResponse(LLMServiceObj serviceObj)
     {
+         if (serviceObj.UserInput == "<|REPLAY_HISTORY|>")
+        {
+            // TODO implement a caching mech for getting previoud contexts
+            //await ReplayHistory(serviceObj.SessionId);
+            _logger.LogInformation($" Replayed history for sessionId {serviceObj.SessionId}");
+            return;
+        }
         if (serviceObj.UserInput.Contains("<|START_AUDIO|>") || serviceObj.UserInput.Contains("<|STOP_AUDIO|>")) {
                throw new Exception($"Audio is not available for the FreeLLM. Switch to another LLM if you need audio output.");
          
