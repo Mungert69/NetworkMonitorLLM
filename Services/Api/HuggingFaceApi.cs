@@ -129,7 +129,7 @@ public class HuggingFaceApi : ILLMApi
             string responseContent = "";
             HuggingFaceChatResponse responseObject;
              string payloadJson = JsonConvert.SerializeObject(payload, Formatting.Indented);
-             _logger.LogInformation($"{payloadJson}");
+             //_logger.LogInformation($"{payloadJson}");
                
             if (!_isStream)
             {

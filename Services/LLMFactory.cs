@@ -63,7 +63,7 @@ public class LLMFactory : ILLMFactory
         try
         {
             string userId = "";
-            var sessionIdParts = sessionId.Split('¿'); // Split the key on '-'
+            var sessionIdParts = sessionId.Split('_'); // Split the key on '-'
 
             if (sessionIdParts.Length >= 3) // Ensure we have enough parts to extract data
             {
@@ -74,7 +74,7 @@ public class LLMFactory : ILLMFactory
                 return historyDisplayNames;
             }
             historyDisplayNames = _sessions
-            .Where(kvp => kvp.Key.Contains($"¿{userId}¿"))
+            .Where(kvp => kvp.Key.Contains($"_{userId}_"))
             .Select(kvp => kvp.Value.HistoryDisplayName) // Get HistoryDisplayName
             .Where(hdn => hdn != null) // Ensure it's not null
             .Select(hdn => new HistoryDisplayName
@@ -118,6 +118,7 @@ public class LLMFactory : ILLMFactory
             {
                 session.HistoryDisplayName = historyDisplayName;
             }
+            _logger.LogInformation($" Success : loaded history for sessionId {sessionId}  Name {historyDisplayName.Name} History Count {historyDisplayName.History.Count} ");
 
 
         }
@@ -163,7 +164,7 @@ public class LLMFactory : ILLMFactory
                 historyDisplayName.Name = message;
             }
             // it may be bad for performance to do this
-            //await _historyStorage.SaveHistoryAsync(historyDisplayName);
+            _ = SaveHistoryForSessionAsync(sessionId);
         }
     }
 
@@ -190,7 +191,7 @@ public class LLMFactory : ILLMFactory
         {
             "TurboLLM" => _openAIRunnerFactory.CreateRunner(_serviceProvider, obj, new SemaphoreSlim(1), history, historyDisplayNames),
             "HugLLM" => _hfRunnerFactory.CreateRunner(_serviceProvider, obj, new SemaphoreSlim(1), history, historyDisplayNames),
-            "FreeLLM" => _processRunnerFactory.CreateRunner(_serviceProvider, obj, _processRunnerSemaphore, history, historyDisplayNames),
+            //"FreeLLM" => _processRunnerFactory.CreateRunner(_serviceProvider, obj, _processRunnerSemaphore, history, historyDisplayNames),
             _ => throw new ArgumentException($"Invalid runner type: {runnerType}")
         };
 

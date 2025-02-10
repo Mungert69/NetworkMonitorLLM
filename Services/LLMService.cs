@@ -50,7 +50,7 @@ public class LLMService : ILLMService
     }
     public async Task<LLMServiceObj> StartProcess(LLMServiceObj llmServiceObj)
     {
-        llmServiceObj.SessionId = llmServiceObj.RequestSessionId + "¿" + llmServiceObj.LLMRunnerType;
+        llmServiceObj.SessionId = llmServiceObj.RequestSessionId + "_" + llmServiceObj.LLMRunnerType;
         try
         {
 
@@ -88,7 +88,7 @@ public class LLMService : ILLMService
                     {
                         StartUnixTime = llmServiceObj.GetClientStartUnixTime(),
                         SessionId=llmServiceObj.SessionId,
-                        Name="Not yet set"
+                        Name=""
                     }
                 };
 
