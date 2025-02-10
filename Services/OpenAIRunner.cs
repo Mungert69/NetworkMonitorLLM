@@ -71,6 +71,7 @@ public class OpenAIRunner : ILLMRunner
     public bool IsStateFailed { get => _isStateFailed; }
     public bool IsEnabled { get => _isEnabled; }
     public event Action<int, string> LoadChanged;
+    public event Action<string, string> OnUserMessage;
     public int LlmLoad { get => _llmLoad; set => _llmLoad = value; }
     private readonly ILLMApi _llmApi;
     private bool _useHF = false;
@@ -127,13 +128,13 @@ public class OpenAIRunner : ILLMRunner
 
     }
 #pragma warning restore CS8618
-    public async Task StartProcess(LLMServiceObj serviceObj, DateTime currentTime)
+    public async Task StartProcess(LLMServiceObj serviceObj)
     {
         _isStateStarting = true;
         _isStateReady = false;
         _responseProcessor.IsManagedMultiFunc = true;
 
-        var systemPrompt = _llmApi.GetSystemPrompt(currentTime.ToString("yyyy-MM-ddTHH:mm:ss"), serviceObj);
+        var systemPrompt = _llmApi.GetSystemPrompt(serviceObj.GetClientStartTime().ToString("yyyy-MM-ddTHH:mm:ss"), serviceObj);
 
         if (_history.Count == 0)
         {
@@ -151,7 +152,7 @@ public class OpenAIRunner : ILLMRunner
 
         await SendHistoryDisplayNames(serviceObj);
 
-        _logger.LogInformation($"Started {_type} {_serviceID} Assistant with session id {serviceObj.SessionId} at {currentTime}. with CTX size {_maxTokens} and Response tokens {_responseTokens}");
+        _logger.LogInformation($"Started {_type} {_serviceID} Assistant with session id {serviceObj.SessionId} at {serviceObj.GetClientStartTime()}. with CTX size {_maxTokens} and Response tokens {_responseTokens}");
 
         _isStateStarting = false;
         _isStateReady = true;
@@ -167,8 +168,8 @@ public class OpenAIRunner : ILLMRunner
                 string payload = JsonSerializer.Serialize(_historyDisplayNames);
                 var responseServiceObj = new LLMServiceObj(serviceObj);
                 responseServiceObj.LlmMessage = $"<history-display-name>{payload}</history-display-name>";
-                await  _responseProcessor.ProcessLLMOutput(responseServiceObj);
-        }
+                await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+            }
         }
         catch (Exception e)
         {
@@ -256,7 +257,9 @@ public class OpenAIRunner : ILLMRunner
             }
             else
             {
-                chatMessage = ChatMessage.FromUser(serviceObj.UserInput);
+                int wordLimit = 5;
+                string truncatedUserInput = string.Join(" ", serviceObj.UserInput.Split(' ').Take(wordLimit));
+                OnUserMessage?.Invoke(truncatedUserInput, serviceObj.SessionId); chatMessage = ChatMessage.FromUser(serviceObj.UserInput);
                 responseServiceObj.LlmMessage = "<User:> " + serviceObj.UserInput + "\n\n";
                 if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
                 localHistory.Add(chatMessage);

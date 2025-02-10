@@ -22,7 +22,7 @@ namespace NetworkMonitor.LLM.Services;
 
 public interface ILLMFactory
 {
-    ILLMRunner CreateRunner(string runnerType, LLMServiceObj obj);
+    Task<ILLMRunner> CreateRunner(string runnerType, LLMServiceObj obj);
     void OnRunnerLoadChanged(int delta, string llmType);
     ConcurrentDictionary<string, Session> Sessions { set; }
     Task DeleteHistoryForSessionAsync(string sessionId);
@@ -58,8 +58,8 @@ public class LLMFactory : ILLMFactory
 
     public List<HistoryDisplayName> GetHistoriesForUser(string sessionId)
     {
-           var historyDisplayNames = new List<HistoryDisplayName>();
-         
+        var historyDisplayNames = new List<HistoryDisplayName>();
+
         try
         {
             string userId = "";
@@ -73,23 +73,17 @@ public class LLMFactory : ILLMFactory
             {
                 return historyDisplayNames;
             }
-            var historyKeys = _sessionHistories.Keys.Where(w => w.Contains($"¿{userId}¿")).ToList();
-
-            foreach (var historyKey in historyKeys)
+            historyDisplayNames = _sessions
+            .Where(kvp => kvp.Key.Contains($"¿{userId}¿"))
+            .Select(kvp => kvp.Value.HistoryDisplayName) // Get HistoryDisplayName
+            .Where(hdn => hdn != null) // Ensure it's not null
+            .Select(hdn => new HistoryDisplayName
             {
-                var parts = historyKey.Split('¿'); // Split the key on '-'
-
-                if (parts.Length >= 3) // Ensure we have enough parts to extract data
-                {
-                    var historyDisplayName = new HistoryDisplayName
-                    {
-                        Name = historyKey,  // Map the full key to Name
-                        SessionId = parts[0] // Map the SessionId
-                    };
-
-                    historyDisplayNames.Add(historyDisplayName);
-                }
-            }
+                SessionId = hdn.SessionId, // Copy properties
+                Name = hdn.Name,
+                StartUnixTime = hdn.StartUnixTime
+            })
+            .ToList();
 
         }
         catch { }
@@ -97,20 +91,49 @@ public class LLMFactory : ILLMFactory
         return historyDisplayNames;
     }
 
+    public async Task<List<HistoryDisplayName>> GetHistoryDisplayNamesForUserAsync(string userId)
+    {
+        return await _historyStorage.GetHistoryDisplayNamesAsync(userId);
+    }
+
     public async Task LoadHistoryForSessionAsync(string sessionId)
     {
-        if (!_sessionHistories.ContainsKey(sessionId))
+        if (!_sessions.ContainsKey(sessionId))
         {
-            var history = await _historyStorage.LoadHistoryAsync(sessionId);
-            _sessionHistories[sessionId] = history ?? new List<ChatMessage>();
+            // Load the HistoryDisplayName object from storage
+            var historyDisplayName = await _historyStorage.LoadHistoryAsync(sessionId);
+
+            // If no history exists, create a new HistoryDisplayName object with an empty History
+            if (historyDisplayName == null)
+            {
+                _logger.LogWarning($" Warning : no historyDisplayName object found for sessionsId {sessionId}");
+                return;
+            }
+
+            // Update or create the entry in _sessionHistories
+            _sessionHistories[sessionId] = historyDisplayName.History;
+
+            // Store the HistoryDisplayName object in _sessions
+            if (_sessions.TryGetValue(sessionId, out var session))
+            {
+                session.HistoryDisplayName = historyDisplayName;
+            }
+
+
         }
     }
 
+
     public async Task SaveHistoryForSessionAsync(string sessionId)
     {
-        if (_sessionHistories.TryGetValue(sessionId, out var history))
+
+        if (_sessions.TryGetValue(sessionId, out var session))
         {
-            if (history!=null && history.Count>0) await _historyStorage.SaveHistoryAsync(sessionId, history);
+             // Update the History property of the HistoryDisplayName object
+            session.HistoryDisplayName!.History = _sessionHistories[sessionId];
+
+            // Save the updated HistoryDisplayName object
+            await _historyStorage.SaveHistoryAsync(session.HistoryDisplayName);
         }
     }
 
@@ -119,34 +142,64 @@ public class LLMFactory : ILLMFactory
         if (_sessionHistories.TryRemove(sessionId, out _))
         {
             await _historyStorage.DeleteHistoryAsync(sessionId);
-            await SaveHistoryForSessionAsync(sessionId);
         }
     }
 
-    public ILLMRunner CreateRunner(string runnerType, LLMServiceObj obj)
+    public void OnUserMessage(string message, string sessionId)
     {
+        // Check if the session exists in _sessions
+        if (_sessions.TryGetValue(sessionId, out var session))
+        {
+            var historyDisplayName = session.HistoryDisplayName!;
+            // Update the History property with the chat history from _sessionHistories
+            if (_sessionHistories.TryGetValue(sessionId, out var history))
+            {
+                historyDisplayName.History = history;
+            }
+
+            // Update the Name property if it is empty
+            if (string.IsNullOrEmpty(historyDisplayName.Name))
+            {
+                historyDisplayName.Name = message;
+            }
+            // it may be bad for performance to do this
+            //await _historyStorage.SaveHistoryAsync(historyDisplayName);
+        }
+    }
+
+    public async Task<ILLMRunner> CreateRunner(string runnerType, LLMServiceObj obj)
+    {
+
         var history = _sessionHistories.GetOrAdd(obj.SessionId, _ => new List<ChatMessage>());
-        var historyDisplayNames=new List<HistoryDisplayName>();
-        // Load history from storage if not in memory
+        var historyDisplayNames = new List<HistoryDisplayName>();
+        // If the history is empty, attempt to load it from storage asynchronously
         if (history.Count == 0)
         {
-            var historyStorage = _historyStorage.LoadHistoryAsync(obj.SessionId).Result;
-            if (historyStorage != null && historyStorage.Count > 0) history.AddRange(historyStorage);
+            // Asynchronously load the history
+            await LoadHistoryForSessionAsync(obj.SessionId);
 
+            // After loading, ensure the session history is updated
+            if (_sessionHistories.TryGetValue(obj.SessionId, out var loadedHistory))
+            {
+                history.AddRange(loadedHistory);
+            }
         }
+
         if (obj.IsPrimaryLlm) historyDisplayNames = GetHistoriesForUser(obj.SessionId);
         ILLMRunner runner = runnerType switch
         {
             "TurboLLM" => _openAIRunnerFactory.CreateRunner(_serviceProvider, obj, new SemaphoreSlim(1), history, historyDisplayNames),
             "HugLLM" => _hfRunnerFactory.CreateRunner(_serviceProvider, obj, new SemaphoreSlim(1), history, historyDisplayNames),
-            //"FreeLLM" => _processRunnerFactory.CreateRunner(_serviceProvider, obj, _processRunnerSemaphore, history, historyDisplayNames),
+            "FreeLLM" => _processRunnerFactory.CreateRunner(_serviceProvider, obj, _processRunnerSemaphore, history, historyDisplayNames),
             _ => throw new ArgumentException($"Invalid runner type: {runnerType}")
         };
 
         runner.LoadChanged += OnRunnerLoadChanged;
+        runner.OnUserMessage += OnUserMessage;
 
         return runner;
     }
+
     public void OnRunnerLoadChanged(int delta, string llmType)
     {
         // Update the load count for the respective runner type
@@ -196,7 +249,7 @@ public class LLMFactory : ILLMFactory
 // LLMProcessRunner.cs
 public interface ILLMRunner
 {
-    Task StartProcess(LLMServiceObj serviceObj, DateTime currentTime);
+    Task StartProcess(LLMServiceObj serviceObj);
     Task SendInputAndGetResponse(LLMServiceObj serviceObj);
     Task RemoveProcess(string sessionId);
     Task StopRequest(string sessionId);
@@ -208,6 +261,7 @@ public interface ILLMRunner
     bool IsEnabled { get; }
     int LlmLoad { get; set; }
     event Action<int, string> LoadChanged;
+    event Action<string, string> OnUserMessage;
 
 }
 

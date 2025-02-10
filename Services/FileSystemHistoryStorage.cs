@@ -6,46 +6,72 @@ using System.Threading.Tasks;
 using Betalgo.Ranul.OpenAI.ObjectModels.RequestModels;
 
 namespace NetworkMonitor.LLM.Services;
+
 public interface IHistoryStorage
 {
-    Task SaveHistoryAsync(string sessionId, List<ChatMessage> history);
-    Task<List<ChatMessage>> LoadHistoryAsync(string sessionId);
+    Task SaveHistoryAsync(HistoryDisplayName historyDisplayName);
+    Task<HistoryDisplayName> LoadHistoryAsync(string sessionId);
     Task DeleteHistoryAsync(string sessionId);
+    Task<List<HistoryDisplayName>> GetHistoryDisplayNamesAsync(string userId);
 }
+
 public class FileSystemHistoryStorage : IHistoryStorage
 {
-    private readonly string _storagePath="histories";
+    private readonly string _storagePath = "histories";
 
     public FileSystemHistoryStorage()
     {
         Directory.CreateDirectory(_storagePath); // Ensure the directory exists
     }
 
-    public async Task SaveHistoryAsync(string sessionId, List<ChatMessage> history)
+    public async Task<List<HistoryDisplayName>> GetHistoryDisplayNamesAsync(string userId)
     {
-        var filePath = Path.Combine(_storagePath, $"{sessionId}.json");
-        var json = JsonSerializer.Serialize(history);
+        var historyDisplayNames = new List<HistoryDisplayName>();
+        var files = Directory.GetFiles(_storagePath, $"*¿*¿{userId}¿*.json");
+
+        foreach (var file in files)
+        {
+            var json = await File.ReadAllTextAsync(file);
+            var historyDisplayName = JsonSerializer.Deserialize<HistoryDisplayName>(json);
+            if (historyDisplayName != null)
+            {
+                historyDisplayNames.Add(historyDisplayName);
+            }
+        }
+
+        return historyDisplayNames;
+    }
+
+    public async Task SaveHistoryAsync(HistoryDisplayName historyDisplayName)
+    {
+        var filePath = Path.Combine(_storagePath, $"{historyDisplayName.StartUnixTime}¿{historyDisplayName.SessionId}.json");
+        var json = JsonSerializer.Serialize(historyDisplayName);
         await File.WriteAllTextAsync(filePath, json);
     }
 
-    public async Task<List<ChatMessage>> LoadHistoryAsync(string sessionId)
+    public async Task<HistoryDisplayName> LoadHistoryAsync(string sessionId)
     {
-        var filePath = Path.Combine(_storagePath, $"{sessionId}.json");
-        if (!File.Exists(filePath))
+        var files = Directory.GetFiles(_storagePath, $"*¿{sessionId}.json");
+        if (files.Length == 0)
         {
-            return new List<ChatMessage>();
+            return null;
         }
 
+        var filePath = files[0]; // Assuming sessionId is unique
         var json = await File.ReadAllTextAsync(filePath);
-        return JsonSerializer.Deserialize<List<ChatMessage>>(json);
+        return JsonSerializer.Deserialize<HistoryDisplayName>(json);
     }
 
     public async Task DeleteHistoryAsync(string sessionId)
     {
-        var filePath = Path.Combine(_storagePath, $"{sessionId}.json");
-        if (File.Exists(filePath))
+        var files = Directory.GetFiles(_storagePath, $"*¿{sessionId}.json");
+        if (files.Length > 0)
         {
-            File.Delete(filePath);
+            var filePath = files[0]; // Assuming sessionId is unique
+            if (File.Exists(filePath))
+            {
+                File.Delete(filePath);
+            }
         }
     }
 }

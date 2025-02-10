@@ -46,6 +46,7 @@ public class LLMProcessRunner : ILLMRunner
     public int LlmLoad { get => _llmLoad; set => _llmLoad = value; }
 
     public event Action<int, string> LoadChanged;
+     public event Action<string, string> OnUserMessage;
     private IAudioGenerator _audioGenerator;
 
     private ConcurrentDictionary<string, StringBuilder?> _assistantMessages = new ConcurrentDictionary<string, StringBuilder?>();
@@ -119,7 +120,7 @@ public class LLMProcessRunner : ILLMRunner
         startInfo.RedirectStandardOutput = true;
         startInfo.CreateNoWindow = true;
     }
-    public async Task StartProcess(LLMServiceObj serviceObj, DateTime currentTime)
+    public async Task StartProcess(LLMServiceObj serviceObj)
     {
          _config = LLMConfigFactory.GetConfig(_mlParams.LlmVersion);
 
@@ -178,7 +179,7 @@ public class LLMProcessRunner : ILLMRunner
             PrintPropertiesAsJson.PrintUserInfoPropertiesWithDate(
                 userInfo,
                 serviceObj.IsUserLoggedIn,
-                currentTime.ToString("yyyy-MM-ddTHH:mm:ss"),
+                serviceObj.GetClientStartTime().ToString("yyyy-MM-ddTHH:mm:ss"),
                 false
             )
         );

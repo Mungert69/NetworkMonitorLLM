@@ -31,7 +31,7 @@ public class LLMService : ILLMService
 
     private readonly IServiceProvider _serviceProvider;
     private readonly IRabbitRepo _rabbitRepo;
-        private ILLMFactory _llmFactory;
+    private ILLMFactory _llmFactory;
 
     private MLParams _mlParams;
     private string _serviceID;
@@ -39,22 +39,21 @@ public class LLMService : ILLMService
 
     public LLMService(ILogger<LLMService> logger, IRabbitRepo rabbitRepo, ISystemParamsHelper systemParamsHelper, IServiceProvider serviceProvider, ILLMFactory llmFactory)
     {
-       
+
         _serviceProvider = serviceProvider;
         _rabbitRepo = rabbitRepo;
         _mlParams = systemParamsHelper.GetMLParams();
         _serviceID = systemParamsHelper.GetSystemParams().ServiceID!;
         _logger = logger;
-        _llmFactory=llmFactory;
-        _llmFactory.Sessions=_sessions;
+        _llmFactory = llmFactory;
+        _llmFactory.Sessions = _sessions;
     }
     public async Task<LLMServiceObj> StartProcess(LLMServiceObj llmServiceObj)
     {
-        llmServiceObj.SessionId = llmServiceObj.RequestSessionId+"¿"+llmServiceObj.LLMRunnerType;
+        llmServiceObj.SessionId = llmServiceObj.RequestSessionId + "¿" + llmServiceObj.LLMRunnerType;
         try
         {
 
-            DateTime usersCurrentTime = GetClientTime(llmServiceObj.TimeZone);
             bool exists = _sessions.TryGetValue(llmServiceObj.SessionId, out var checkSession);
             //bool isSwapLLMType = false;
             bool isRunnerNull = checkSession == null || checkSession.Runner == null || string.IsNullOrEmpty(checkSession?.Runner?.Type);
@@ -62,14 +61,14 @@ public class LLMService : ILLMService
             //if (!isRunnerNull && checkSession.Runner.Type != llmServiceObj.LLMRunnerType) isSwapLLMType = true;
 
             // Create a new runner if there is not one . Or the RunnerType needs to be swapped. Or is the type is the same but its is a failed State
-            bool isCreateNewRunner = isRunnerNull ||  checkSession?.Runner?.IsStateFailed == true;
+            bool isCreateNewRunner = isRunnerNull || checkSession?.Runner?.IsStateFailed == true;
 
             if (isCreateNewRunner)
             {
                 if (!isRunnerNull)
                     await SafeRemoveRunnerProcess(checkSession, llmServiceObj.SessionId);
 
-                ILLMRunner runner = _llmFactory.CreateRunner(llmServiceObj.LLMRunnerType, llmServiceObj);
+                ILLMRunner runner = await _llmFactory.CreateRunner(llmServiceObj.LLMRunnerType, llmServiceObj);
                 if (!runner.IsEnabled)
                 {
                     //await SetResultMessageAsync(llmServiceObj, $"{llmServiceObj.LLMRunnerType} {_serviceID} not started as it is disabled.", true, "llmServiceMessage");
@@ -81,8 +80,17 @@ public class LLMService : ILLMService
                     : "";
                 await SetResultMessageAsync(llmServiceObj, $"Starting {llmServiceObj.LLMRunnerType} {_serviceID} Assistant{extraMessage}", true, "llmServiceMessage", true);
 
-                await runner.StartProcess(llmServiceObj, usersCurrentTime);
-                _sessions[llmServiceObj.SessionId] = new Session { Runner = runner };
+                await runner.StartProcess(llmServiceObj);
+                _sessions[llmServiceObj.SessionId] = new Session
+                {
+                    Runner = runner,
+                    HistoryDisplayName = new HistoryDisplayName
+                    {
+                        StartUnixTime = llmServiceObj.GetClientStartUnixTime(),
+                        SessionId=llmServiceObj.SessionId,
+                        Name="Not yet set"
+                    }
+                };
 
                 await SetResultMessageAsync(llmServiceObj, $"Success {runner.Type} {_serviceID} Assistant Started", true, "llmServiceMessage", true);
             }
@@ -133,7 +141,7 @@ public class LLMService : ILLMService
 
         try
         {
-             // Save the conversation history before removing the session
+            // Save the conversation history before removing the session
             await _llmFactory.SaveHistoryForSessionAsync(llmServiceObj.SessionId);
 
             session.Runner.LoadChanged -= _llmFactory.OnRunnerLoadChanged;
@@ -322,8 +330,8 @@ public class LLMService : ILLMService
     }
 
 
-   
-   
+
+
     private int _load; // Tracks the total load across all sessions
 
 
@@ -333,18 +341,7 @@ public class LLMService : ILLMService
         catch { /* Suppress errors */ }
     }
 
-    private DateTime GetClientTime(string? timeZoneId)
-    {
-        try
-        {
-            var timeZone = timeZoneId != null ? TimeZoneInfo.FindSystemTimeZoneById(timeZoneId) : TimeZoneInfo.Utc;
-            return TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZone);
-        }
-        catch
-        {
-            return DateTime.UtcNow;
-        }
-    }
+
     public void EndSession(string sessionId)
     {
         _sessions.TryRemove(sessionId, out _);
@@ -360,4 +357,5 @@ public class Session
 {
     public List<string> Responses { get; } = new List<string>();
     public ILLMRunner? Runner { get; set; }
+    public HistoryDisplayName HistoryDisplayName { get; set; } = new HistoryDisplayName();
 }
