@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 using System.Threading.Tasks;
 using Betalgo.Ranul.OpenAI.ObjectModels.RequestModels;
 
@@ -46,7 +47,12 @@ public class FileSystemHistoryStorage : IHistoryStorage
     public async Task SaveHistoryAsync(HistoryDisplayName historyDisplayName)
     {
         var filePath = Path.Combine(_storagePath, $"{historyDisplayName.StartUnixTime}_{historyDisplayName.SessionId}.json");
-         var json = JsonConvert.SerializeObject(historyDisplayName); 
+       var json = JsonConvert.SerializeObject(historyDisplayName, new JsonSerializerSettings
+{
+    ContractResolver = new CamelCasePropertyNamesContractResolver(),
+    Formatting = Formatting.Indented
+});
+
        await File.WriteAllTextAsync(filePath, json);
     }
 
