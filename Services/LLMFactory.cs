@@ -180,8 +180,9 @@ public class LLMFactory : ILLMFactory
         if (_sessionHistories.TryRemove(fullSessionId, out _))
         {
             await _historyStorage.DeleteHistoryAsync(fullSessionId);
+            await SendHistoryDisplayNames(serviceObj);
         }
-        await SendHistoryDisplayNames(serviceObj);
+
     }
 
     public void OnUserMessage(string message, LLMServiceObj serviceObj)
@@ -228,6 +229,7 @@ public class LLMFactory : ILLMFactory
                     history.AddRange(loadedHistory);
                 }
             }
+            await SendHistoryDisplayNames(serviceObj);
         }
         catch (Exception e)
         {

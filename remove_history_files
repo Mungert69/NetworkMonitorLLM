@@ -1,0 +1,2 @@
+find ./ -name '*_*.json' -exec sudo rm {} +
+
