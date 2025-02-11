@@ -30,6 +30,7 @@ public interface ILLMFactory
     Task DeleteHistoryForSessionAsync(string sessionId, LLMServiceObj serviceObj);
     Task SaveHistoryForSessionAsync(LLMServiceObj serviceObj);
     Task LoadHistoryForSessionAsync(string sessionId);
+     Task SendHistoryDisplayNames(LLMServiceObj serviceObj);
     Task<ConcurrentDictionary<string, Session>> LoadAllSessionsAsync();
 }
 public class LLMFactory : ILLMFactory
@@ -272,7 +273,7 @@ public class LLMFactory : ILLMFactory
         {
             "TurboLLM" => _openAIRunnerFactory.CreateRunner(_serviceProvider, serviceObj, new SemaphoreSlim(1), history),
             "HugLLM" => _hfRunnerFactory.CreateRunner(_serviceProvider, serviceObj, new SemaphoreSlim(1), history),
-            "FreeLLM" => _processRunnerFactory.CreateRunner(_serviceProvider, obj, _processRunnerSemaphore, history),
+            "FreeLLM" => _processRunnerFactory.CreateRunner(_serviceProvider, serviceObj, _processRunnerSemaphore, history),
             _ => throw new ArgumentException($"Invalid runner type: {runnerType}")
         };
 
