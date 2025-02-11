@@ -272,7 +272,7 @@ public class LLMFactory : ILLMFactory
         {
             "TurboLLM" => _openAIRunnerFactory.CreateRunner(_serviceProvider, serviceObj, new SemaphoreSlim(1), history),
             "HugLLM" => _hfRunnerFactory.CreateRunner(_serviceProvider, serviceObj, new SemaphoreSlim(1), history),
-            //"FreeLLM" => _processRunnerFactory.CreateRunner(_serviceProvider, obj, _processRunnerSemaphore, history),
+            "FreeLLM" => _processRunnerFactory.CreateRunner(_serviceProvider, obj, _processRunnerSemaphore, history),
             _ => throw new ArgumentException($"Invalid runner type: {runnerType}")
         };
 

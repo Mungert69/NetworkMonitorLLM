@@ -105,6 +105,7 @@ public class LLMService : ILLMService
             }
             else
             {
+                await _llmFactory.SendHistoryDisplayNames(serviceObj);
                 await SetResultMessageAsync(llmServiceObj, $"Info: {llmServiceObj.LLMRunnerType} {_serviceID} Assistant already running so it was not reloaded", true, "llmServiceMessage", true);
             }
             await PublishToRabbitMQAsync("llmServiceStarted", llmServiceObj, false);
