@@ -68,10 +68,10 @@ public class LLMFactory : ILLMFactory
     public List<HistoryDisplayName> GetHistoriesForUser(string sessionId)
     {
         var historyDisplayNames = new List<HistoryDisplayName>();
-
+        string userId = "";
         try
         {
-            string userId = "";
+            
             var sessionIdParts = sessionId.Split('_'); // Split the key on '-'
 
             if (sessionIdParts.Length >= 3) // Ensure we have enough parts to extract data
@@ -97,7 +97,9 @@ public class LLMFactory : ILLMFactory
             .ToList();
 
         }
-        catch { }
+        catch(Exception e) {
+             _logger.LogError($" Error : can not get histories for userId {userId} . Error was {e.Message}");
+         }
 
         return historyDisplayNames;
     }
@@ -109,30 +111,38 @@ public class LLMFactory : ILLMFactory
 
     public async Task LoadHistoryForSessionAsync(string sessionId)
     {
-        if (!_sessions.ContainsKey(sessionId))
+        try
         {
-            // Load the HistoryDisplayName object from storage
-            var historyDisplayName = await _historyStorage.LoadHistoryAsync(sessionId);
-
-            // If no history exists, create a new HistoryDisplayName object with an empty History
-            if (historyDisplayName == null)
+            if (!_sessions.ContainsKey(sessionId))
             {
-                _logger.LogWarning($" Warning : no historyDisplayName object found for sessionsId {sessionId}");
-                return;
+                // Load the HistoryDisplayName object from storage
+                var historyDisplayName = await _historyStorage.LoadHistoryAsync(sessionId);
+
+                // If no history exists, create a new HistoryDisplayName object with an empty History
+                if (historyDisplayName == null)
+                {
+                    _logger.LogWarning($" Warning : no historyDisplayName object found for sessionsId {sessionId}");
+                    return;
+                }
+
+                // Update or create the entry in _sessionHistories
+                _sessionHistories[sessionId] = historyDisplayName.History;
+
+                // Store the HistoryDisplayName object in _sessions
+                if (_sessions.TryGetValue(sessionId, out var session))
+                {
+                    session.HistoryDisplayName = historyDisplayName;
+                }
+                _logger.LogInformation($" Success : loaded history for sessionId {sessionId}  Name {historyDisplayName.Name} History Count {historyDisplayName.History.Count} ");
+
+
             }
-
-            // Update or create the entry in _sessionHistories
-            _sessionHistories[sessionId] = historyDisplayName.History;
-
-            // Store the HistoryDisplayName object in _sessions
-            if (_sessions.TryGetValue(sessionId, out var session))
-            {
-                session.HistoryDisplayName = historyDisplayName;
-            }
-            _logger.LogInformation($" Success : loaded history for sessionId {sessionId}  Name {historyDisplayName.Name} History Count {historyDisplayName.History.Count} ");
-
-
         }
+        catch (Exception e)
+        {
+            _logger.LogError($" Error : can not load session history for sessionId {sessionId} Error was : {e.Message}");
+        }
+
     }
 
     public async Task SendHistoryDisplayNames(LLMServiceObj serviceObj)
@@ -162,31 +172,53 @@ public class LLMFactory : ILLMFactory
 
     public async Task SaveHistoryForSessionAsync(LLMServiceObj serviceObj)
     {
-
-        if (_sessions.TryGetValue(serviceObj.SessionId, out var session))
+        try
         {
-            // Update the History property of the HistoryDisplayName object
-            session.HistoryDisplayName!.History = _sessionHistories[serviceObj.SessionId];
+            if (_sessions.TryGetValue(serviceObj.SessionId, out var session))
+            {
+                // Update the History property of the HistoryDisplayName object
+                session.HistoryDisplayName!.History = _sessionHistories[serviceObj.SessionId];
 
-            // Save the updated HistoryDisplayName object
-            await _historyStorage.SaveHistoryAsync(session.HistoryDisplayName);
-            await SendHistoryDisplayNames(serviceObj);
+                // Save the updated HistoryDisplayName object
+                await _historyStorage.SaveHistoryAsync(session.HistoryDisplayName);
+                await SendHistoryDisplayNames(serviceObj);
 
+            }
         }
+        catch (Exception e)
+        {
+            _logger.LogError($" Error : Ca not save sesssion for sessionId {serviceObj.SessionId}. Error was : {e.Message}");
+        }
+
     }
 
     public async Task DeleteHistoryForSessionAsync(string fullSessionId, LLMServiceObj serviceObj)
     {
-        if (_sessionHistories.TryRemove(fullSessionId, out _))
+        try
         {
             await _historyStorage.DeleteHistoryAsync(fullSessionId);
+            _sessions.TryRemove(fullSessionId ,out _);
+            _sessionHistories.TryRemove(fullSessionId, out _);
             await SendHistoryDisplayNames(serviceObj);
+            _sessionHistories.TryRemove(fullSessionId, out _);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError($" Error : can not delete history for fullSesionId {fullSessionId}. Error was : {e.Message}");
         }
 
     }
 
     public void OnUserMessage(string message, LLMServiceObj serviceObj)
     {
+        try
+        {
+
+        }
+        catch (Exception e)
+        {
+            _logger.LogError($" Error : . Error was : {e.Message}");
+        }
         string sessionId = serviceObj.SessionId;
         if (!serviceObj.IsPrimaryLlm) return;
 
