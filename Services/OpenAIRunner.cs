@@ -71,19 +71,20 @@ public class OpenAIRunner : ILLMRunner
     public bool IsStateFailed { get => _isStateFailed; }
     public bool IsEnabled { get => _isEnabled; }
     public event Action<int, string> LoadChanged;
-    public event Action<string, string> OnUserMessage;
+    public event Action<string, LLMServiceObj> OnUserMessage;
+    public event Func<string, LLMServiceObj, Task> RemoveSavedSession;
     public int LlmLoad { get => _llmLoad; set => _llmLoad = value; }
     private readonly ILLMApi _llmApi;
     private bool _useHF = false;
     private bool _createAudio = false;
-    private List<HistoryDisplayName> _historyDisplayNames = new();
+
     private IAudioGenerator _audioGenerator;
     private HashSet<string> _ignoreParameters => LLMConfigFactory.IgnoreParameters;
 
     public string Type { get => _type; set => _type = value; }
 
 #pragma warning disable CS8618
-    public OpenAIRunner(ILogger<OpenAIRunner> logger, ILLMResponseProcessor responseProcessor, OpenAIService openAiService, ISystemParamsHelper systemParamsHelper, LLMServiceObj serviceObj, SemaphoreSlim openAIRunnerSemaphore, IAudioGenerator audioGenerator, bool useHF, List<ChatMessage> history, List<HistoryDisplayName> historyDisplaysNames)
+    public OpenAIRunner(ILogger<OpenAIRunner> logger, ILLMResponseProcessor responseProcessor, OpenAIService openAiService, ISystemParamsHelper systemParamsHelper, LLMServiceObj serviceObj, SemaphoreSlim openAIRunnerSemaphore, IAudioGenerator audioGenerator, bool useHF, List<ChatMessage> history)
     {
         _logger = logger;
         _responseProcessor = responseProcessor;
@@ -92,7 +93,6 @@ public class OpenAIRunner : ILLMRunner
         _serviceID = systemParamsHelper.GetSystemParams().ServiceID!;
         _mlParams = systemParamsHelper.GetMLParams();
         _history = history;
-        _historyDisplayNames = historyDisplaysNames;
 
         _useHF = useHF;
         IToolsBuilder? toolsBuilder = null;
@@ -150,8 +150,6 @@ public class OpenAIRunner : ILLMRunner
             _history.InsertRange(0, systemPrompt);
         }
 
-        await SendHistoryDisplayNames(serviceObj);
-
         _logger.LogInformation($"Started {_type} {_serviceID} Assistant with session id {serviceObj.SessionId} at {serviceObj.GetClientStartTime()}. with CTX size {_maxTokens} and Response tokens {_responseTokens}");
 
         _isStateStarting = false;
@@ -159,25 +157,6 @@ public class OpenAIRunner : ILLMRunner
         _isStateFailed = false;
     }
 
-    public async Task SendHistoryDisplayNames(LLMServiceObj serviceObj)
-    {
-        try
-        {
-            if (_historyDisplayNames != null && _historyDisplayNames.Count > 0)
-            {
-                string payload = JsonSerializer.Serialize(_historyDisplayNames);
-                var responseServiceObj = new LLMServiceObj(serviceObj);
-                responseServiceObj.LlmMessage = $"<history-display-name>{payload}</history-display-name>";
-                await _responseProcessor.ProcessLLMOutput(responseServiceObj);
-            }
-        }
-        catch (Exception e)
-        {
-            _logger.LogError($" Error : failed to send History Display Names. Error was : {e.Message}");
-        }
-
-
-    }
 
     public Task RemoveProcess(string sessionId)
     {
@@ -201,7 +180,22 @@ public class OpenAIRunner : ILLMRunner
         var assistantChatMessage = ChatMessage.FromAssistant("");
         bool isFuncMessage = false;
 
+        if (serviceObj.UserInput.StartsWith("<|REMOVE_SAVED_SESSION|>"))
+        {
+            string fullSessionId = serviceObj.UserInput.Replace("<|REMOVE_SAVED_SESSION|>", string.Empty).Trim();
+             if (!string.IsNullOrEmpty(fullSessionId) && RemoveSavedSession != null)
+            {
 
+                 await RemoveSavedSession.Invoke(fullSessionId, serviceObj);
+
+                _logger.LogInformation($"Success: Removed saved sessionId {fullSessionId}");
+            }
+            else
+            {
+                _logger.LogWarning("Warning: Empty or invalid session ID after removing prefix.");
+            }
+            return;
+        }
         if (serviceObj.UserInput == "<|REPLAY_HISTORY|>")
         {
             await ReplayHistory(serviceObj.SessionId);
@@ -259,7 +253,7 @@ public class OpenAIRunner : ILLMRunner
             {
                 int wordLimit = 5;
                 string truncatedUserInput = string.Join(" ", serviceObj.UserInput.Split(' ').Take(wordLimit));
-                OnUserMessage?.Invoke(truncatedUserInput, serviceObj.SessionId); chatMessage = ChatMessage.FromUser(serviceObj.UserInput);
+                OnUserMessage?.Invoke(truncatedUserInput, serviceObj); chatMessage = ChatMessage.FromUser(serviceObj.UserInput);
                 responseServiceObj.LlmMessage = "<User:> " + serviceObj.UserInput + "\n\n";
                 if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
                 localHistory.Add(chatMessage);

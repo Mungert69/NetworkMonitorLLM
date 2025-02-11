@@ -69,7 +69,7 @@ namespace NetworkMonitor.LLM
             services.AddTransient<ILLMResponseProcessor, LLMResponseProcessor>();
             services.AddSingleton<ILLMService, LLMService>();
             services.AddSingleton<ILLMFactory, LLMFactory>();
-             services.AddSingleton<IHistoryStorage, FileSystemHistoryStorage>();
+            services.AddSingleton<IHistoryStorage, FileSystemHistoryStorage>();
 
 
             services.AddSingleton(_cancellationTokenSource);
@@ -79,11 +79,17 @@ namespace NetworkMonitor.LLM
                     {
                         await rabbitRepo.ConnectAndSetUp();
                     })
-                .AddInitAction<IRabbitListener>(async (rabbitListener) =>
+                    .AddInitAction<IRabbitListener>(async (rabbitListener) =>
                     {
                         await rabbitListener.Setup();
 
+                    })
+                    .AddInitAction<ILLMService>(async (llmService) =>
+                    {
+                        await llmService.Init();
+
                     });
+
         }
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IHostApplicationLifetime appLifetime)

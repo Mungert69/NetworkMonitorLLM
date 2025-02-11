@@ -4,6 +4,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Threading;
 using System.Linq;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 using NetworkMonitor.LLM.Services;
 using NetworkMonitor.Objects.ServiceMessage;
 using NetworkMonitor.Objects;
@@ -25,9 +27,10 @@ public interface ILLMFactory
     Task<ILLMRunner> CreateRunner(string runnerType, LLMServiceObj obj);
     void OnRunnerLoadChanged(int delta, string llmType);
     ConcurrentDictionary<string, Session> Sessions { set; }
-    Task DeleteHistoryForSessionAsync(string sessionId);
-    Task SaveHistoryForSessionAsync(string sessionId);
+    Task DeleteHistoryForSessionAsync(string sessionId, LLMServiceObj serviceObj);
+    Task SaveHistoryForSessionAsync(LLMServiceObj serviceObj);
     Task LoadHistoryForSessionAsync(string sessionId);
+    Task<ConcurrentDictionary<string, Session>> LoadAllSessionsAsync();
 }
 public class LLMFactory : ILLMFactory
 {
@@ -39,13 +42,14 @@ public class LLMFactory : ILLMFactory
     private readonly ILogger _logger;
     private readonly IServiceProvider _serviceProvider;
     private readonly SemaphoreSlim _processRunnerSemaphore = new SemaphoreSlim(1, 1);
+    private readonly ILLMResponseProcessor _responseProcessor;
     private ConcurrentDictionary<string, Session> _sessions;
     public ConcurrentDictionary<string, Session> Sessions { set => _sessions = value; }
 
 
     private readonly ConcurrentDictionary<string, List<ChatMessage>> _sessionHistories = new();
 
-    public LLMFactory(ILogger<LLMFactory> logger, IServiceProvider serviceProvider, IHistoryStorage historyStorage)
+    public LLMFactory(ILogger<LLMFactory> logger, IServiceProvider serviceProvider, IHistoryStorage historyStorage, ILLMResponseProcessor responseProcessor)
     {
         _logger = logger;
         _serviceProvider = serviceProvider;
@@ -53,9 +57,14 @@ public class LLMFactory : ILLMFactory
         _processRunnerFactory = new LLMProcessRunnerFactory();
         _openAIRunnerFactory = new OpenAIRunnerFactory();
         _hfRunnerFactory = new HFRunnerFactory();
+        _responseProcessor = responseProcessor;
+
     }
 
-
+    public Task<ConcurrentDictionary<string, Session>> LoadAllSessionsAsync()
+    {
+        return _historyStorage.LoadAllSessionsAsync();
+    }
     public List<HistoryDisplayName> GetHistoriesForUser(string sessionId)
     {
         var historyDisplayNames = new List<HistoryDisplayName>();
@@ -67,7 +76,7 @@ public class LLMFactory : ILLMFactory
 
             if (sessionIdParts.Length >= 3) // Ensure we have enough parts to extract data
             {
-                userId = sessionIdParts[1]; // Map the SessionId
+                userId = sessionIdParts[1];
             }
             if (userId == "")
             {
@@ -79,9 +88,11 @@ public class LLMFactory : ILLMFactory
             .Where(hdn => hdn != null) // Ensure it's not null
             .Select(hdn => new HistoryDisplayName
             {
-                SessionId = hdn.SessionId, // Copy properties
+                SessionId = hdn.SessionId.Split('_')[0],
                 Name = hdn.Name,
-                StartUnixTime = hdn.StartUnixTime
+                StartUnixTime = hdn.StartUnixTime,
+                LlmType = hdn.LlmType,
+                UserId = hdn.UserId
             })
             .ToList();
 
@@ -124,30 +135,60 @@ public class LLMFactory : ILLMFactory
         }
     }
 
+    public async Task SendHistoryDisplayNames(LLMServiceObj serviceObj)
+    {
+        try
+        {
+            var historyDisplayNames = GetHistoriesForUser(serviceObj.SessionId);
+            if (historyDisplayNames != null && historyDisplayNames.Count > 0)
+            {
+                var payload = JsonConvert.SerializeObject(historyDisplayNames, new JsonSerializerSettings
+                {
+                    ContractResolver = new CamelCasePropertyNamesContractResolver(),
+                    Formatting = Formatting.Indented
+                });
+                var responseServiceObj = new LLMServiceObj(serviceObj);
+                responseServiceObj.LlmMessage = $"<history-display-name>{payload}</history-display-name>";
+                await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+            }
+        }
+        catch (Exception e)
+        {
+            _logger.LogError($" Error : failed to send History Display Names. Error was : {e.Message}");
+        }
 
-    public async Task SaveHistoryForSessionAsync(string sessionId)
+
+    }
+
+    public async Task SaveHistoryForSessionAsync(LLMServiceObj serviceObj)
     {
 
-        if (_sessions.TryGetValue(sessionId, out var session))
+        if (_sessions.TryGetValue(serviceObj.SessionId, out var session))
         {
-             // Update the History property of the HistoryDisplayName object
-            session.HistoryDisplayName!.History = _sessionHistories[sessionId];
+            // Update the History property of the HistoryDisplayName object
+            session.HistoryDisplayName!.History = _sessionHistories[serviceObj.SessionId];
 
             // Save the updated HistoryDisplayName object
             await _historyStorage.SaveHistoryAsync(session.HistoryDisplayName);
+            await SendHistoryDisplayNames(serviceObj);
+
         }
     }
 
-    public async Task DeleteHistoryForSessionAsync(string sessionId)
+    public async Task DeleteHistoryForSessionAsync(string fullSessionId, LLMServiceObj serviceObj)
     {
-        if (_sessionHistories.TryRemove(sessionId, out _))
+        if (_sessionHistories.TryRemove(fullSessionId, out _))
         {
-            await _historyStorage.DeleteHistoryAsync(sessionId);
+            await _historyStorage.DeleteHistoryAsync(fullSessionId);
         }
+        await SendHistoryDisplayNames(serviceObj);
     }
 
-    public void OnUserMessage(string message, string sessionId)
+    public void OnUserMessage(string message, LLMServiceObj serviceObj)
     {
+        string sessionId = serviceObj.SessionId;
+        if (!serviceObj.IsPrimaryLlm) return;
+
         // Check if the session exists in _sessions
         if (_sessions.TryGetValue(sessionId, out var session))
         {
@@ -163,40 +204,50 @@ public class LLMFactory : ILLMFactory
             {
                 historyDisplayName.Name = message;
             }
-            // it may be bad for performance to do this
-            _ = SaveHistoryForSessionAsync(sessionId);
+
+            _ = SaveHistoryForSessionAsync(serviceObj);
         }
     }
 
-    public async Task<ILLMRunner> CreateRunner(string runnerType, LLMServiceObj obj)
+    public async Task<ILLMRunner> CreateRunner(string runnerType, LLMServiceObj serviceObj)
     {
-
-        var history = _sessionHistories.GetOrAdd(obj.SessionId, _ => new List<ChatMessage>());
-        var historyDisplayNames = new List<HistoryDisplayName>();
-        // If the history is empty, attempt to load it from storage asynchronously
-        if (history.Count == 0)
+        var history = new List<ChatMessage>();
+        try
         {
-            // Asynchronously load the history
-            await LoadHistoryForSessionAsync(obj.SessionId);
-
-            // After loading, ensure the session history is updated
-            if (_sessionHistories.TryGetValue(obj.SessionId, out var loadedHistory))
+            history = _sessionHistories.GetOrAdd(serviceObj.SessionId, _ => new List<ChatMessage>());
+            var historyDisplayNames = new List<HistoryDisplayName>();
+            // If the history is empty, attempt to load it from storage asynchronously
+            if (history.Count == 0)
             {
-                history.AddRange(loadedHistory);
+                // Asynchronously load the history
+                await LoadHistoryForSessionAsync(serviceObj.SessionId);
+
+                // After loading, ensure the session history is updated
+                if (_sessionHistories.TryGetValue(serviceObj.SessionId, out var loadedHistory))
+                {
+                    history.AddRange(loadedHistory);
+                }
             }
         }
+        catch (Exception e)
+        {
+            _logger.LogError($" Error : while setting up history and sending history display names in CreateRunner. Error was : {e.Message}");
+        }
 
-        if (obj.IsPrimaryLlm) historyDisplayNames = GetHistoriesForUser(obj.SessionId);
         ILLMRunner runner = runnerType switch
         {
-            "TurboLLM" => _openAIRunnerFactory.CreateRunner(_serviceProvider, obj, new SemaphoreSlim(1), history, historyDisplayNames),
-            "HugLLM" => _hfRunnerFactory.CreateRunner(_serviceProvider, obj, new SemaphoreSlim(1), history, historyDisplayNames),
-            //"FreeLLM" => _processRunnerFactory.CreateRunner(_serviceProvider, obj, _processRunnerSemaphore, history, historyDisplayNames),
+            "TurboLLM" => _openAIRunnerFactory.CreateRunner(_serviceProvider, serviceObj, new SemaphoreSlim(1), history),
+            "HugLLM" => _hfRunnerFactory.CreateRunner(_serviceProvider, serviceObj, new SemaphoreSlim(1), history),
+            //"FreeLLM" => _processRunnerFactory.CreateRunner(_serviceProvider, obj, _processRunnerSemaphore, history),
             _ => throw new ArgumentException($"Invalid runner type: {runnerType}")
         };
 
         runner.LoadChanged += OnRunnerLoadChanged;
         runner.OnUserMessage += OnUserMessage;
+        runner.RemoveSavedSession += async (sessionId, serviceObj) =>
+     {
+         await DeleteHistoryForSessionAsync(sessionId, serviceObj);
+     };
 
         return runner;
     }
@@ -262,7 +313,8 @@ public interface ILLMRunner
     bool IsEnabled { get; }
     int LlmLoad { get; set; }
     event Action<int, string> LoadChanged;
-    event Action<string, string> OnUserMessage;
+    event Action<string, LLMServiceObj> OnUserMessage;
+    event Func<string, LLMServiceObj, Task> RemoveSavedSession;
 
 }
 
@@ -279,7 +331,7 @@ public abstract class LLMRunnerFactoryBase : ILLMRunnerFactory
         }
     }
 
-    public abstract ILLMRunner CreateRunner(IServiceProvider serviceProvider, LLMServiceObj serviceObj, SemaphoreSlim runnerSemaphore, List<ChatMessage> history, List<HistoryDisplayName> historyDisplaysNames);
+    public abstract ILLMRunner CreateRunner(IServiceProvider serviceProvider, LLMServiceObj serviceObj, SemaphoreSlim runnerSemaphore, List<ChatMessage> history);
 
 }
 
@@ -287,7 +339,7 @@ public abstract class LLMRunnerFactoryBase : ILLMRunnerFactory
 public interface ILLMRunnerFactory
 {
     int LoadCount { get; set; }
-    ILLMRunner CreateRunner(IServiceProvider serviceProvider, LLMServiceObj serviceObj, SemaphoreSlim runnerSemaphore, List<ChatMessage> history, List<HistoryDisplayName> historyDisplaysNames);
+    ILLMRunner CreateRunner(IServiceProvider serviceProvider, LLMServiceObj serviceObj, SemaphoreSlim runnerSemaphore, List<ChatMessage> history);
 
 }
 
@@ -295,7 +347,7 @@ public interface ILLMRunnerFactory
 public class LLMProcessRunnerFactory : LLMRunnerFactoryBase
 {
 
-    public override ILLMRunner CreateRunner(IServiceProvider serviceProvider, LLMServiceObj serviceObj, SemaphoreSlim runnerSemaphore, List<ChatMessage> history, List<HistoryDisplayName> historyDisplaysNames)
+    public override ILLMRunner CreateRunner(IServiceProvider serviceProvider, LLMServiceObj serviceObj, SemaphoreSlim runnerSemaphore, List<ChatMessage> history)
     {
         return new LLMProcessRunner(serviceProvider.GetRequiredService<ILogger<LLMProcessRunner>>(), serviceProvider.GetRequiredService<ILLMResponseProcessor>(), serviceProvider.GetRequiredService<ISystemParamsHelper>(), serviceObj, runnerSemaphore, serviceProvider.GetRequiredService<IAudioGenerator>());
     }
@@ -304,9 +356,9 @@ public class LLMProcessRunnerFactory : LLMRunnerFactoryBase
 public class OpenAIRunnerFactory : LLMRunnerFactoryBase
 {
 
-    public override ILLMRunner CreateRunner(IServiceProvider serviceProvider, LLMServiceObj serviceObj, SemaphoreSlim runnerSemaphore, List<ChatMessage> history, List<HistoryDisplayName> historyDisplaysNames)
+    public override ILLMRunner CreateRunner(IServiceProvider serviceProvider, LLMServiceObj serviceObj, SemaphoreSlim runnerSemaphore, List<ChatMessage> history)
     {
-        return new OpenAIRunner(serviceProvider.GetRequiredService<ILogger<OpenAIRunner>>(), serviceProvider.GetRequiredService<ILLMResponseProcessor>(), serviceProvider.GetRequiredService<OpenAIService>(), serviceProvider.GetRequiredService<ISystemParamsHelper>(), serviceObj, runnerSemaphore, serviceProvider.GetRequiredService<IAudioGenerator>(), false, history, historyDisplaysNames);
+        return new OpenAIRunner(serviceProvider.GetRequiredService<ILogger<OpenAIRunner>>(), serviceProvider.GetRequiredService<ILLMResponseProcessor>(), serviceProvider.GetRequiredService<OpenAIService>(), serviceProvider.GetRequiredService<ISystemParamsHelper>(), serviceObj, runnerSemaphore, serviceProvider.GetRequiredService<IAudioGenerator>(), false, history);
     }
 }
 
@@ -314,8 +366,8 @@ public class HFRunnerFactory : LLMRunnerFactoryBase
 {
 
 
-    public override ILLMRunner CreateRunner(IServiceProvider serviceProvider, LLMServiceObj serviceObj, SemaphoreSlim runnerSemaphore, List<ChatMessage> history, List<HistoryDisplayName> historyDisplaysNames)
+    public override ILLMRunner CreateRunner(IServiceProvider serviceProvider, LLMServiceObj serviceObj, SemaphoreSlim runnerSemaphore, List<ChatMessage> history)
     {
-        return new OpenAIRunner(serviceProvider.GetRequiredService<ILogger<OpenAIRunner>>(), serviceProvider.GetRequiredService<ILLMResponseProcessor>(), serviceProvider.GetRequiredService<OpenAIService>(), serviceProvider.GetRequiredService<ISystemParamsHelper>(), serviceObj, runnerSemaphore, serviceProvider.GetRequiredService<IAudioGenerator>(), true, history, historyDisplaysNames);
+        return new OpenAIRunner(serviceProvider.GetRequiredService<ILogger<OpenAIRunner>>(), serviceProvider.GetRequiredService<ILLMResponseProcessor>(), serviceProvider.GetRequiredService<OpenAIService>(), serviceProvider.GetRequiredService<ISystemParamsHelper>(), serviceObj, runnerSemaphore, serviceProvider.GetRequiredService<IAudioGenerator>(), true, history);
     }
 }

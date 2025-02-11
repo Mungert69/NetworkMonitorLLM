@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.IO;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
@@ -10,6 +11,7 @@ namespace NetworkMonitor.LLM.Services;
 
 public interface IHistoryStorage
 {
+    Task<ConcurrentDictionary<string, Session>> LoadAllSessionsAsync();
     Task SaveHistoryAsync(HistoryDisplayName historyDisplayName);
     Task<HistoryDisplayName> LoadHistoryAsync(string sessionId);
     Task DeleteHistoryAsync(string sessionId);
@@ -24,7 +26,43 @@ public class FileSystemHistoryStorage : IHistoryStorage
     {
         Directory.CreateDirectory(_storagePath); // Ensure the directory exists
     }
+    public async Task<ConcurrentDictionary<string, Session>> LoadAllSessionsAsync()
+    {
+        var sessions = new ConcurrentDictionary<string, Session>();
 
+        // Get all history files in the storage directory
+        var files = Directory.GetFiles(_storagePath, "*.json");
+
+        foreach (var file in files)
+        {
+            try
+            {
+                // Read and deserialize the file
+                var json = await File.ReadAllTextAsync(file);
+                var historyDisplayName = JsonConvert.DeserializeObject<HistoryDisplayName>(json);
+
+                if (historyDisplayName != null)
+                {
+                    // Create a new Session object
+                    var session = new Session
+                    {
+                        HistoryDisplayName = historyDisplayName,
+                        Runner = null // Set the runner if applicable
+                    };
+
+                    // Add the session to the dictionary
+                    sessions.TryAdd(historyDisplayName.SessionId, session);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log or handle the error as needed
+                Console.WriteLine($"Error loading session from file {file}: {ex.Message}");
+            }
+        }
+
+        return sessions;
+    }
     public async Task<List<HistoryDisplayName>> GetHistoryDisplayNamesAsync(string userId)
     {
         var historyDisplayNames = new List<HistoryDisplayName>();

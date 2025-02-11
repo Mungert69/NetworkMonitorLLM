@@ -20,6 +20,8 @@ namespace NetworkMonitor.LLM.Services
 
         [JsonProperty("userId")]
         public string UserId { get; set; } = "";
+         [JsonProperty("llmType")]
+         public string LlmType{ get; set; } = "";
     }
 
 }

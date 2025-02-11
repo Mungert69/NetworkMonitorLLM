@@ -46,7 +46,8 @@ public class LLMProcessRunner : ILLMRunner
     public int LlmLoad { get => _llmLoad; set => _llmLoad = value; }
 
     public event Action<int, string> LoadChanged;
-     public event Action<string, string> OnUserMessage;
+     public event Action<string, LLMServiceObj> OnUserMessage;
+    public event Func<string, LLMServiceObj, Task> RemoveSavedSession;
     private IAudioGenerator _audioGenerator;
 
     private ConcurrentDictionary<string, StringBuilder?> _assistantMessages = new ConcurrentDictionary<string, StringBuilder?>();

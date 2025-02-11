@@ -23,6 +23,7 @@ public interface ILLMService
     Task<ResultObj> RemoveProcess(LLMServiceObj llmServiceObj);
     Task<ResultObj> StopRequest(LLMServiceObj llmServiceObj);
     Task<ResultObj> SendInputAndGetResponse(LLMServiceObj serviceObj);
+    Task Init();
 }
 
 public class LLMService : ILLMService
@@ -35,7 +36,7 @@ public class LLMService : ILLMService
 
     private MLParams _mlParams;
     private string _serviceID;
-    private readonly ConcurrentDictionary<string, Session> _sessions = new ConcurrentDictionary<string, Session>();
+    private  ConcurrentDictionary<string, Session> _sessions = new ConcurrentDictionary<string, Session>();
 
     public LLMService(ILogger<LLMService> logger, IRabbitRepo rabbitRepo, ISystemParamsHelper systemParamsHelper, IServiceProvider serviceProvider, ILLMFactory llmFactory)
     {
@@ -46,6 +47,12 @@ public class LLMService : ILLMService
         _serviceID = systemParamsHelper.GetSystemParams().ServiceID!;
         _logger = logger;
         _llmFactory = llmFactory;
+
+    }
+
+    public async Task Init()
+    {
+        _sessions= await  _llmFactory.LoadAllSessionsAsync();
         _llmFactory.Sessions = _sessions;
     }
     public async Task<LLMServiceObj> StartProcess(LLMServiceObj llmServiceObj)
@@ -88,7 +95,9 @@ public class LLMService : ILLMService
                     {
                         StartUnixTime = llmServiceObj.GetClientStartUnixTime(),
                         SessionId=llmServiceObj.SessionId,
-                        Name=""
+                        Name="",
+                        LlmType=llmServiceObj.LLMRunnerType,
+                        UserId=llmServiceObj.UserInfo?.UserID
                     }
                 };
 
@@ -142,7 +151,7 @@ public class LLMService : ILLMService
         try
         {
             // Save the conversation history before removing the session
-            await _llmFactory.SaveHistoryForSessionAsync(llmServiceObj.SessionId);
+            await _llmFactory.SaveHistoryForSessionAsync(llmServiceObj);
 
             session.Runner.LoadChanged -= _llmFactory.OnRunnerLoadChanged;
             await session.Runner.RemoveProcess(llmServiceObj.SessionId);
