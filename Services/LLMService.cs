@@ -106,6 +106,9 @@ public class LLMService : ILLMService
                         }
                     };
                 }
+                else {
+                    checkSession.Runner=runner;
+                }
                 await SetResultMessageAsync(llmServiceObj, $"Success {runner.Type} {_serviceID} Assistant Started", true, "llmServiceMessage", true);
             }
             else
