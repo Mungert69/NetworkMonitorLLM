@@ -253,9 +253,7 @@ public class OpenAIRunner : ILLMRunner
             }
             else
             {
-                int wordLimit = 5;
-                string truncatedUserInput = string.Join(" ", serviceObj.UserInput.Split(' ').Take(wordLimit));
-                await OnUserMessage?.Invoke(truncatedUserInput, serviceObj); chatMessage = ChatMessage.FromUser(serviceObj.UserInput);
+                chatMessage = ChatMessage.FromUser(serviceObj.UserInput);
                 responseServiceObj.LlmMessage = "<User:> " + serviceObj.UserInput + "\n\n";
                 if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
                 localHistory.Add(chatMessage);
@@ -298,6 +296,9 @@ public class OpenAIRunner : ILLMRunner
                 _history.AddRange(localHistory);
                 TruncateTokens(_history, serviceObj);
                 await _responseProcessor.UpdateTokensUsed(responseServiceObj);
+                 int wordLimit = 5;
+                string truncatedUserInput = string.Join(" ", serviceObj.UserInput.Split(' ').Take(wordLimit));
+                await OnUserMessage?.Invoke(truncatedUserInput, serviceObj);              
             }
 
         }
