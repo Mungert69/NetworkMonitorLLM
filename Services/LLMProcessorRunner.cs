@@ -50,10 +50,11 @@ public class LLMProcessRunner : ILLMRunner
      public event Func<LLMServiceObj, Task> SendHistory;
     public event Func<string, LLMServiceObj, Task> RemoveSavedSession;
     private IAudioGenerator _audioGenerator;
+    private ICpuUsageMonitor _cpuUsageMonitor;
 
     private ConcurrentDictionary<string, StringBuilder?> _assistantMessages = new ConcurrentDictionary<string, StringBuilder?>();
 
-    public LLMProcessRunner(ILogger<LLMProcessRunner> logger, ILLMResponseProcessor responseProcessor, ISystemParamsHelper systemParamsHelper, LLMServiceObj startServiceObj, SemaphoreSlim processRunnerSemaphore, IAudioGenerator audioGenerator)
+    public LLMProcessRunner(ILogger<LLMProcessRunner> logger, ILLMResponseProcessor responseProcessor, ISystemParamsHelper systemParamsHelper, LLMServiceObj startServiceObj, SemaphoreSlim processRunnerSemaphore, IAudioGenerator audioGenerator, ICpuUsageMonitor cpuUsageMonitor)
     {
         _logger = logger;
         _responseProcessor = responseProcessor;
@@ -62,6 +63,7 @@ public class LLMProcessRunner : ILLMRunner
         _serviceID = systemParamsHelper.GetSystemParams().ServiceID!;
         _processRunnerSemaphore = processRunnerSemaphore;
         _audioGenerator= audioGenerator;
+        _cpuUsageMonitor=cpuUsageMonitor;
         _idleCheckTimer = new Timer(async _ => await CheckAndTerminateIdleProcesses(), null, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
         _isEnabled = _mlParams.StartThisFreeLLM;
     }
@@ -83,7 +85,8 @@ public class LLMProcessRunner : ILLMRunner
     {
         string promptPrefix = "";
         string promptSuffix=$" --in-suffix \"{_config.EOTToken}{_config.AssistantHeader}\" ";
-
+        int recommendedCpuCount= _cpuUsageMonitor.RecommendCpuCount(mlParams.LlmThreads,  80f);
+        _logger.LogInformation($" CPU Usage using {recommendedCpuCount} from the configured {mlParams.LlmThreads} threads");
         if (_startServiceoObj.UserInfo.AccountType == null)
         {
             _startServiceoObj.UserInfo.AccountType = "Free";
@@ -115,7 +118,7 @@ public class LLMProcessRunner : ILLMRunner
         string reversePrompt=$"-r \"{_config.EOTToken}\" ";
         if (!string.IsNullOrEmpty(_config.EOMToken)) reversePrompt+=$"-r \"{_config.EOMToken}\" ";
         startInfo.FileName = $"{mlParams.LlmModelPath}llama.cpp/llama-cli";
-        startInfo.Arguments = $" -c {mlParams.LlmCtxSize} -n {mlParams.LlmPromptTokens} -m {mlParams.LlmModelPath + mlParams.LlmModelFileName}  --prompt-cache {mlParams.LlmModelPath + contextFileName} --prompt-cache-ro  -f {mlParams.LlmModelPath + promptName} {mlParams.LlmPromptMode} {reversePrompt} {promptSuffix} --keep -1 --temp {mlParams.LlmTemp} -t {mlParams.LlmThreads} -tb {mlParams.LlmThreads} {promptPrefix}";
+        startInfo.Arguments = $" -c {mlParams.LlmCtxSize} -n {mlParams.LlmPromptTokens} -m {mlParams.LlmModelPath + mlParams.LlmModelFileName}  --prompt-cache {mlParams.LlmModelPath + contextFileName} --prompt-cache-ro  -f {mlParams.LlmModelPath + promptName} {mlParams.LlmPromptMode} {reversePrompt} {promptSuffix} --keep -1 --temp {mlParams.LlmTemp} -t {recommendedCpuCount} -tb {recommendedCpuCount} {promptPrefix}";
         _logger.LogInformation($"Running command : {startInfo.FileName}{startInfo.Arguments}");
         startInfo.UseShellExecute = false;
         startInfo.RedirectStandardInput = true;

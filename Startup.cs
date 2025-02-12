@@ -70,10 +70,12 @@ namespace NetworkMonitor.LLM
             services.AddSingleton<ILLMService, LLMService>();
             services.AddSingleton<ILLMFactory, LLMFactory>();
             services.AddSingleton<IHistoryStorage, FileSystemHistoryStorage>();
-
-
             services.AddSingleton(_cancellationTokenSource);
             services.Configure<HostOptions>(s => s.ShutdownTimeout = TimeSpan.FromMinutes(5));
+            services.AddSingleton<ICpuUsageMonitor, CpuUsageMonitor>();
+
+            services.AddHostedService<CpuUsageMonitor>();
+            
             services.AddAsyncServiceInitialization()
                 .AddInitAction<IRabbitRepo>(async (rabbitRepo) =>
                     {
