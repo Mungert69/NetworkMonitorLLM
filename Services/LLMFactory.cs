@@ -30,7 +30,7 @@ public interface ILLMFactory
     Task DeleteHistoryForSessionAsync(string sessionId, LLMServiceObj serviceObj);
     Task SaveHistoryForSessionAsync(LLMServiceObj serviceObj);
     Task LoadHistoryForSessionAsync(string sessionId);
-     Task SendHistoryDisplayNames(LLMServiceObj serviceObj);
+    Task SendHistoryDisplayNames(LLMServiceObj serviceObj);
     Task<ConcurrentDictionary<string, Session>> LoadAllSessionsAsync();
 }
 public class LLMFactory : ILLMFactory
@@ -72,7 +72,7 @@ public class LLMFactory : ILLMFactory
         string userId = "";
         try
         {
-            
+
             var sessionIdParts = sessionId.Split('_'); // Split the key on '-'
 
             if (sessionIdParts.Length >= 3) // Ensure we have enough parts to extract data
@@ -98,9 +98,10 @@ public class LLMFactory : ILLMFactory
             .ToList();
 
         }
-        catch(Exception e) {
-             _logger.LogError($" Error : can not get histories for userId {userId} . Error was {e.Message}");
-         }
+        catch (Exception e)
+        {
+            _logger.LogError($" Error : can not get histories for userId {userId} . Error was {e.Message}");
+        }
 
         return historyDisplayNames;
     }
@@ -198,7 +199,7 @@ public class LLMFactory : ILLMFactory
         try
         {
             await _historyStorage.DeleteHistoryAsync(fullSessionId);
-            _sessions.TryRemove(fullSessionId ,out _);
+            _sessions.TryRemove(fullSessionId, out _);
             _sessionHistories.TryRemove(fullSessionId, out _);
             await SendHistoryDisplayNames(serviceObj);
             _sessionHistories.TryRemove(fullSessionId, out _);
@@ -214,33 +215,33 @@ public class LLMFactory : ILLMFactory
     {
         try
         {
+            string sessionId = serviceObj.SessionId;
+            if (!serviceObj.IsPrimaryLlm) return;
 
+            // Check if the session exists in _sessions
+            if (_sessions.TryGetValue(sessionId, out var session))
+            {
+                var historyDisplayName = session.HistoryDisplayName!;
+                // Update the History property with the chat history from _sessionHistories
+                if (_sessionHistories.TryGetValue(sessionId, out var history))
+                {
+                    historyDisplayName.History = history;
+                }
+
+                // Update the Name property if it is empty
+                if (string.IsNullOrEmpty(historyDisplayName.Name))
+                {
+                    historyDisplayName.Name = message;
+                }
+
+                _ = SaveHistoryForSessionAsync(serviceObj);
+            }
         }
         catch (Exception e)
         {
-            _logger.LogError($" Error : . Error was : {e.Message}");
+            _logger.LogError($" Error : unable to run On user Message . Error was : {e.Message}");
         }
-        string sessionId = serviceObj.SessionId;
-        if (!serviceObj.IsPrimaryLlm) return;
 
-        // Check if the session exists in _sessions
-        if (_sessions.TryGetValue(sessionId, out var session))
-        {
-            var historyDisplayName = session.HistoryDisplayName!;
-            // Update the History property with the chat history from _sessionHistories
-            if (_sessionHistories.TryGetValue(sessionId, out var history))
-            {
-                historyDisplayName.History = history;
-            }
-
-            // Update the Name property if it is empty
-            if (string.IsNullOrEmpty(historyDisplayName.Name))
-            {
-                historyDisplayName.Name = message;
-            }
-
-            _ = SaveHistoryForSessionAsync(serviceObj);
-        }
     }
 
     public async Task<ILLMRunner> CreateRunner(string runnerType, LLMServiceObj serviceObj)
