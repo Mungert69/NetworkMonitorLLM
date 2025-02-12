@@ -127,7 +127,7 @@ public class LLMProcessRunner : ILLMRunner
     }
     public async Task StartProcess(LLMServiceObj serviceObj)
     {
-        if (_cpuUsageMonitor.IsSwapTooHigh(50f) && _cpuUsageMonitor.IsMemoryTooLow(10f)) {
+        if (_cpuUsageMonitor.IsMemoryAvailable(5000)) {
                throw new Exception(" Free LLM is running low on memory resources. Please switch to TurboLLM or HugLLM.");
         }
          _config = LLMConfigFactory.GetConfig(_mlParams.LlmVersion);

@@ -22,10 +22,11 @@ public interface ICpuUsageMonitor
     /// <param name="maxCpu">The maximum number of CPUs available for scaling.</param>
     /// <param name="targetCpuUsage">The target CPU usage percentage (default is 80%).</param>
     /// <returns>The recommended number of CPUs to use.</returns>
-    int RecommendCpuCount(int maxCpu, float targetCpuUsage = 80f);
+    int RecommendCpuCount(int maxCpu, float targetCpuUsage = 50f);
 
-    bool IsMemoryTooLow(float minFreeMemoryPercentage = 10f);
+    bool IsMemoryTooLow(float minFreeMemoryPercentage = 50f);
      bool IsSwapTooHigh(float maxSwapUsagePercentage = 50f);
+     bool IsMemoryAvailable(int memory);
 }
 
 public class CpuUsageMonitor : ICpuUsageMonitor, IHostedService, IDisposable
@@ -47,7 +48,7 @@ public class CpuUsageMonitor : ICpuUsageMonitor, IHostedService, IDisposable
         return _currentAverageCpuUsage;
     }
 
-public int RecommendCpuCount(int maxCpu, float targetCpuUsage = 80f)
+public int RecommendCpuCount(int maxCpu, float targetCpuUsage = 50f)
 {
     if (_currentAverageCpuUsage <= 1) // If CPU usage is very low, use max available CPUs
     {
@@ -268,7 +269,7 @@ private float GetLinuxMacSwapUsage()
    /// <summary>
 /// Checks if memory is too low to safely run a process.
 /// </summary>
-public bool IsMemoryTooLow(float minFreeMemoryPercentage = 10f)
+public bool IsMemoryTooLow(float minFreeMemoryPercentage = 50f)
 {
     // Get the percentage of "truly" free memory (MemFree + Buffers + Cached).
     float freeMemoryPercentage = GetFreeMemoryPercentage();
@@ -295,6 +296,33 @@ private float GetFreeMemoryPercentage()
     }
 }
 
+
+public bool IsMemoryAvailable(int memory)
+{
+    try
+    {
+           var lines = File.ReadAllLines("/proc/meminfo");
+      
+       var freeLine = lines.FirstOrDefault(l => l.StartsWith("MemAvailable"));
+       var swapFree = lines.FirstOrDefault(l => l.StartsWith("SwapFree"));
+       
+        if (freeLine == null )
+        {
+            _logger.LogWarning("Could not read memory info from /proc/meminfo.");
+            return false; 
+        }
+
+        long freeMemory = long.Parse(Regex.Match(freeLine, @"\d+").Value);
+        long needMemory=memory*1000;
+
+        return needMemory>(freeMemory+swapFree);
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError($"Error reading memory info: {ex.Message}");
+        return false; 
+    }
+}
 /// <summary>
 /// Gets free memory percentage on Linux/macOS.
 /// </summary>
