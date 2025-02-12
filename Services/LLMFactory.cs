@@ -29,7 +29,6 @@ public interface ILLMFactory
     ConcurrentDictionary<string, Session> Sessions { set; }
     Task DeleteHistoryForSessionAsync(string sessionId, LLMServiceObj serviceObj);
     Task SaveHistoryForSessionAsync(string sessionId);
-    Task LoadHistoryForSessionAsync(string sessionId);
     Task SendHistoryDisplayNames(LLMServiceObj serviceObj);
     Task<ConcurrentDictionary<string, Session>> LoadAllSessionsAsync();
 }
@@ -111,42 +110,7 @@ public class LLMFactory : ILLMFactory
         return await _historyStorage.GetHistoryDisplayNamesAsync(userId);
     }
 
-    public async Task LoadHistoryForSessionAsync(string sessionId)
-    {
-        try
-        {
-            if (!_sessions.ContainsKey(sessionId))
-            {
-                // Load the HistoryDisplayName object from storage
-                var historyDisplayName = await _historyStorage.LoadHistoryAsync(sessionId);
-
-                // If no history exists, create a new HistoryDisplayName object with an empty History
-                if (historyDisplayName == null)
-                {
-                    _logger.LogWarning($" Warning : no historyDisplayName object found for sessionsId {sessionId}");
-                    return;
-                }
-
-                // Update or create the entry in _sessionHistories
-                _sessionHistories[sessionId] = historyDisplayName.History;
-
-                // Store the HistoryDisplayName object in _sessions
-                if (_sessions.TryGetValue(sessionId, out var session))
-                {
-                    session.HistoryDisplayName = historyDisplayName;
-                }
-                _logger.LogInformation($" Success : loaded history for sessionId {sessionId}  Name {historyDisplayName.Name} History Count {historyDisplayName.History.Count} ");
-
-
-            }
-        }
-        catch (Exception e)
-        {
-            _logger.LogError($" Error : can not load session history for sessionId {sessionId} Error was : {e.Message}");
-        }
-
-    }
-
+ 
     public async Task SendHistoryDisplayNames(LLMServiceObj serviceObj)
     {
         if (!serviceObj.IsPrimaryLlm) return;
@@ -274,14 +238,9 @@ public class LLMFactory : ILLMFactory
             // If the history is empty, attempt to load it from storage asynchronously
             if (history.Count == 0)
             {
-                // Asynchronously load the history
-                await LoadHistoryForSessionAsync(serviceObj.SessionId);
-
-                // After loading, ensure the session history is updated
-                if (_sessionHistories.TryGetValue(serviceObj.SessionId, out var loadedHistory))
-                {
-                    history.AddRange(loadedHistory);
-                }
+                var historyDisplayName = await _historyStorage.LoadHistoryAsync(serviceObj.SessionId);
+                history.AddRange(historyDisplayName.History);
+                
             }
             //await SendHistoryDisplayNames(serviceObj);
         }
