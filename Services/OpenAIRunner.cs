@@ -71,8 +71,9 @@ public class OpenAIRunner : ILLMRunner
     public bool IsStateFailed { get => _isStateFailed; }
     public bool IsEnabled { get => _isEnabled; }
     public event Action<int, string> LoadChanged;
-    public event Action<string, LLMServiceObj> OnUserMessage;
+    public event Func<string, LLMServiceObj, Task> OnUserMessage;
     public event Func<string, LLMServiceObj, Task> RemoveSavedSession;
+    public event Func<LLMServiceObj, Task> SendHistory;
     public int LlmLoad { get => _llmLoad; set => _llmLoad = value; }
     private readonly ILLMApi _llmApi;
     private bool _useHF = false;
@@ -199,6 +200,7 @@ public class OpenAIRunner : ILLMRunner
         if (serviceObj.UserInput == "<|REPLAY_HISTORY|>")
         {
             await ReplayHistory(serviceObj.SessionId);
+            await SendHistory?.Invoke(serviceObj);
             _logger.LogInformation($" Replayed history for sessionId {serviceObj.SessionId}");
             return;
         }
@@ -253,7 +255,7 @@ public class OpenAIRunner : ILLMRunner
             {
                 int wordLimit = 5;
                 string truncatedUserInput = string.Join(" ", serviceObj.UserInput.Split(' ').Take(wordLimit));
-                OnUserMessage?.Invoke(truncatedUserInput, serviceObj); chatMessage = ChatMessage.FromUser(serviceObj.UserInput);
+                await OnUserMessage?.Invoke(truncatedUserInput, serviceObj); chatMessage = ChatMessage.FromUser(serviceObj.UserInput);
                 responseServiceObj.LlmMessage = "<User:> " + serviceObj.UserInput + "\n\n";
                 if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
                 localHistory.Add(chatMessage);

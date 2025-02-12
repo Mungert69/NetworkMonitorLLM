@@ -89,27 +89,30 @@ public class LLMService : ILLMService
                 await SetResultMessageAsync(llmServiceObj, $"Starting {llmServiceObj.LLMRunnerType} {_serviceID} Assistant{extraMessage}", true, "llmServiceMessage", true);
 
                 await runner.StartProcess(llmServiceObj);
-                _sessions[llmServiceObj.SessionId] = new Session
+                // Only add a new session if it does not exist
+                if (!_sessions.ContainsKey(llmServiceObj.SessionId))
                 {
-                    Runner = runner,
-                    FullSessionId = llmServiceObj.SessionId,
-                    HistoryDisplayName = new HistoryDisplayName
+                    _sessions[llmServiceObj.SessionId] = new Session
                     {
-                        StartUnixTime = llmServiceObj.GetClientStartUnixTime(),
-                        SessionId = llmServiceObj.SessionId,
-                        Name = "",
-                        LlmType = llmServiceObj.LLMRunnerType,
-                        UserId = llmServiceObj.UserInfo?.UserID
-                    }
-                };
-
+                        Runner = runner,
+                        FullSessionId = llmServiceObj.SessionId,
+                        HistoryDisplayName = new HistoryDisplayName
+                        {
+                            StartUnixTime = llmServiceObj.GetClientStartUnixTime(),
+                            SessionId = llmServiceObj.SessionId,
+                            Name = "",
+                            LlmType = llmServiceObj.LLMRunnerType,
+                            UserId = llmServiceObj.UserInfo?.UserID
+                        }
+                    };
+                }
                 await SetResultMessageAsync(llmServiceObj, $"Success {runner.Type} {_serviceID} Assistant Started", true, "llmServiceMessage", true);
             }
             else
             {
-                await _llmFactory.SendHistoryDisplayNames(llmServiceObj);
-                await SetResultMessageAsync(llmServiceObj, $"Info: {llmServiceObj.LLMRunnerType} {_serviceID} Assistant already running so it was not reloaded", true, "llmServiceMessage", true);
+                    await SetResultMessageAsync(llmServiceObj, $"Info: {llmServiceObj.LLMRunnerType} {_serviceID} Assistant already running so it was not reloaded", true, "llmServiceMessage", true);
             }
+            
             await PublishToRabbitMQAsync("llmServiceStarted", llmServiceObj, false);
         }
         catch (Exception e)

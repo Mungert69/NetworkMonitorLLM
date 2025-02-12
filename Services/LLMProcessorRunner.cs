@@ -46,7 +46,8 @@ public class LLMProcessRunner : ILLMRunner
     public int LlmLoad { get => _llmLoad; set => _llmLoad = value; }
 
     public event Action<int, string> LoadChanged;
-     public event Action<string, LLMServiceObj> OnUserMessage;
+     public event Func<string, LLMServiceObj, Task> OnUserMessage;
+     public event Func<LLMServiceObj, Task> SendHistory;
     public event Func<string, LLMServiceObj, Task> RemoveSavedSession;
     private IAudioGenerator _audioGenerator;
 

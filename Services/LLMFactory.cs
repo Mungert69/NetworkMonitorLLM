@@ -28,7 +28,7 @@ public interface ILLMFactory
     void OnRunnerLoadChanged(int delta, string llmType);
     ConcurrentDictionary<string, Session> Sessions { set; }
     Task DeleteHistoryForSessionAsync(string sessionId, LLMServiceObj serviceObj);
-    Task SaveHistoryForSessionAsync(string sessionId,LLMServiceObj serviceObj=null);
+    Task SaveHistoryForSessionAsync(string sessionId);
     Task LoadHistoryForSessionAsync(string sessionId);
     Task SendHistoryDisplayNames(LLMServiceObj serviceObj);
     Task<ConcurrentDictionary<string, Session>> LoadAllSessionsAsync();
@@ -149,6 +149,7 @@ public class LLMFactory : ILLMFactory
 
     public async Task SendHistoryDisplayNames(LLMServiceObj serviceObj)
     {
+        if (!serviceObj.IsPrimaryLlm) return;
         try
         {
             var historyDisplayNames = GetHistoriesForUser(serviceObj.SessionId);
@@ -172,7 +173,15 @@ public class LLMFactory : ILLMFactory
 
     }
 
-    public async Task SaveHistoryForSessionAsync(string sessionId, LLMServiceObj serviceObj=null)
+    private async Task SaveAndSendForSessionAsync(LLMServiceObj serviceObj, bool send)
+    {
+
+        await SaveHistoryForSessionAsync(serviceObj.SessionId);
+        if (send) await SendHistoryDisplayNames(serviceObj);
+
+    }
+
+    public async Task SaveHistoryForSessionAsync(string sessionId)
     {
         try
         {
@@ -183,8 +192,6 @@ public class LLMFactory : ILLMFactory
 
                 // Save the updated HistoryDisplayName object
                 await _historyStorage.SaveHistoryAsync(session.HistoryDisplayName);
-                if (serviceObj!=null) await SendHistoryDisplayNames(serviceObj);
-
             }
         }
         catch (Exception e)
@@ -210,11 +217,23 @@ public class LLMFactory : ILLMFactory
         }
 
     }
-
-    public void OnUserMessage(string message, LLMServiceObj serviceObj)
+    public async Task SendHistoryAsync(LLMServiceObj serviceObj)
     {
         try
         {
+            await SendHistoryDisplayNames( serviceObj);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError($" Error : send History Async . Error was : {e.Message}");
+        }
+    }
+
+    public async Task OnUserMessageAsync(string message, LLMServiceObj serviceObj)
+    {
+        try
+        {
+            bool send = false;
             string sessionId = serviceObj.SessionId;
             if (!serviceObj.IsPrimaryLlm) return;
 
@@ -232,9 +251,10 @@ public class LLMFactory : ILLMFactory
                 if (string.IsNullOrEmpty(historyDisplayName.Name))
                 {
                     historyDisplayName.Name = message;
+                    send = true;
                 }
 
-                _ = SaveHistoryForSessionAsync(serviceObj.SessionId, serviceObj);
+                await SaveAndSendForSessionAsync(serviceObj, send);
             }
         }
         catch (Exception e)
@@ -263,7 +283,7 @@ public class LLMFactory : ILLMFactory
                     history.AddRange(loadedHistory);
                 }
             }
-            await SendHistoryDisplayNames(serviceObj);
+            //await SendHistoryDisplayNames(serviceObj);
         }
         catch (Exception e)
         {
@@ -279,10 +299,17 @@ public class LLMFactory : ILLMFactory
         };
 
         runner.LoadChanged += OnRunnerLoadChanged;
-        runner.OnUserMessage += OnUserMessage;
+        runner.OnUserMessage += async (sessionId, serviceObj) =>
+     {
+         await OnUserMessageAsync(sessionId, serviceObj);
+     };
         runner.RemoveSavedSession += async (sessionId, serviceObj) =>
      {
          await DeleteHistoryForSessionAsync(sessionId, serviceObj);
+     };
+      runner.SendHistory += async (serviceObj) =>
+     {
+         await SendHistoryAsync( serviceObj);
      };
 
         return runner;
@@ -349,7 +376,8 @@ public interface ILLMRunner
     bool IsEnabled { get; }
     int LlmLoad { get; set; }
     event Action<int, string> LoadChanged;
-    event Action<string, LLMServiceObj> OnUserMessage;
+    event Func<string, LLMServiceObj, Task> OnUserMessage;
+    event Func<LLMServiceObj, Task> SendHistory;
     event Func<string, LLMServiceObj, Task> RemoveSavedSession;
 
 }
