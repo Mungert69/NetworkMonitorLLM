@@ -386,6 +386,29 @@ public class LLMProcessRunner : ILLMRunner
 
     public async Task SendInputAndGetResponse(LLMServiceObj serviceObj)
     {
+          if (serviceObj.UserInput.StartsWith("<|REMOVE_SAVED_SESSION|>"))
+        {
+            string fullSessionId = serviceObj.UserInput.Replace("<|REMOVE_SAVED_SESSION|>", string.Empty).Trim();
+             if (!string.IsNullOrEmpty(fullSessionId) && RemoveSavedSession != null)
+            {
+
+                 await RemoveSavedSession.Invoke(fullSessionId, serviceObj);
+
+                _logger.LogInformation($"Success: Removed saved sessionId {fullSessionId}");
+            }
+            else
+            {
+                _logger.LogWarning("Warning: Empty or invalid session ID after removing prefix.");
+            }
+            return;
+        }
+         if (serviceObj.UserInput == "<|REPLAY_HISTORY|>")
+        {
+            // TODO implement a caching mech for getting previoud contexts
+            //await ReplayHistory(serviceObj.SessionId);
+            _logger.LogInformation($" Replay history  not yet implemented for sessionId {serviceObj.SessionId}");
+            return;
+        }
          if (serviceObj.UserInput == "<|REPLAY_HISTORY|>")
         {
             // TODO implement a caching mech for getting previoud contexts
