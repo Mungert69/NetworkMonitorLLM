@@ -6,6 +6,7 @@ using System.Threading;
 using System.Diagnostics;
 using System.Text.Json;
 using System.Collections.Generic;
+using System.Linq;
 using System.Collections.Concurrent;
 using Microsoft.Extensions.Logging;
 using NetworkMonitor.Objects;
@@ -20,7 +21,7 @@ namespace NetworkMonitor.LLM.Services;
 public interface ILLMService
 {
     Task<LLMServiceObj> StartProcess(LLMServiceObj llmServiceObj);
-    Task<ResultObj> RemoveProcess(LLMServiceObj llmServiceObj);
+    Task<ResultObj> RemoveAllSessionIdProcesses(LLMServiceObj llmServiceObj);
     Task<ResultObj> StopRequest(LLMServiceObj llmServiceObj);
     Task<ResultObj> SendInputAndGetResponse(LLMServiceObj serviceObj);
     Task Init();
@@ -36,7 +37,7 @@ public class LLMService : ILLMService
 
     private MLParams _mlParams;
     private string _serviceID;
-    private  ConcurrentDictionary<string, Session> _sessions = new ConcurrentDictionary<string, Session>();
+    private ConcurrentDictionary<string, Session> _sessions = new ConcurrentDictionary<string, Session>();
 
     public LLMService(ILogger<LLMService> logger, IRabbitRepo rabbitRepo, ISystemParamsHelper systemParamsHelper, IServiceProvider serviceProvider, ILLMFactory llmFactory)
     {
@@ -52,7 +53,7 @@ public class LLMService : ILLMService
 
     public async Task Init()
     {
-        _sessions= await  _llmFactory.LoadAllSessionsAsync();
+        _sessions = await _llmFactory.LoadAllSessionsAsync();
         _llmFactory.Sessions = _sessions;
     }
     public async Task<LLMServiceObj> StartProcess(LLMServiceObj llmServiceObj)
@@ -91,13 +92,14 @@ public class LLMService : ILLMService
                 _sessions[llmServiceObj.SessionId] = new Session
                 {
                     Runner = runner,
+                    FullSessionId = llmServiceObj.SessionId,
                     HistoryDisplayName = new HistoryDisplayName
                     {
                         StartUnixTime = llmServiceObj.GetClientStartUnixTime(),
-                        SessionId=llmServiceObj.SessionId,
-                        Name="",
-                        LlmType=llmServiceObj.LLMRunnerType,
-                        UserId=llmServiceObj.UserInfo?.UserID
+                        SessionId = llmServiceObj.SessionId,
+                        Name = "",
+                        LlmType = llmServiceObj.LLMRunnerType,
+                        UserId = llmServiceObj.UserInfo?.UserID
                     }
                 };
 
@@ -127,59 +129,89 @@ public class LLMService : ILLMService
     }
 
 
-    public async Task<ResultObj> RemoveProcess(LLMServiceObj llmServiceObj)
+    public async Task<ResultObj> RemoveAllSessionIdProcesses(LLMServiceObj llmServiceObj)
     {
-        if (!_sessions.TryGetValue(llmServiceObj.SessionId, out var session))
+        if (string.IsNullOrEmpty(llmServiceObj.SessionId))
         {
             return await SetResultMessageAsync(
                 llmServiceObj,
-                $"Error: Could not find session {llmServiceObj.SessionId} to remove the process.",
+                "Error: SessionId is null or empty.",
                 false,
                 "llmServiceMessage"
             );
         }
 
-        if (session.Runner == null)
+        var sessionId = llmServiceObj.SessionId.Split('_')[0];
+        var removeSessions = _sessions
+            .Where(kvp => kvp.Key.StartsWith($"{sessionId}_"))
+            .Select(kvp => kvp.Value)
+            .ToList();
+
+        if (removeSessions == null || removeSessions.Count == 0)
         {
             return await SetResultMessageAsync(
                 llmServiceObj,
-                $"Error: Runner is already null for session {llmServiceObj.SessionId}.",
+                $"Error: No sessions running for sessionId {sessionId}.",
                 false,
                 "llmServiceMessage"
             );
         }
 
-        try
+        var success = true;
+        var messageBuilder = new StringBuilder();
+
+        foreach (var session in removeSessions)
         {
-            // Save the conversation history before removing the session
-            await _llmFactory.SaveHistoryForSessionAsync(llmServiceObj);
+            var fullSessionId = session.FullSessionId;
+            if (!_sessions.TryGetValue(fullSessionId, out var sessionToRemove))
+            {
+                continue;
+            }
 
-            session.Runner.LoadChanged -= _llmFactory.OnRunnerLoadChanged;
-            await session.Runner.RemoveProcess(llmServiceObj.SessionId);
-            session.Runner=null;
-            //_sessions.TryRemove(llmServiceObj.SessionId, out _);
+            if (sessionToRemove.Runner == null)
+            {
+                continue;
+            }
 
+            try
+            {
+                // Save the conversation history before removing the session
+                await _llmFactory.SaveHistoryForSessionAsync(fullSessionId);
+
+                sessionToRemove.Runner.LoadChanged -= _llmFactory.OnRunnerLoadChanged;
+                await sessionToRemove.Runner.RemoveProcess(fullSessionId);
+                sessionToRemove.Runner = null;
+
+                messageBuilder.Append($" {sessionToRemove.HistoryDisplayName?.LlmType} ");
+            }
+            catch (Exception e)
+            {
+                success = false;
+                messageBuilder.Append($" Error removing process for sessionId {fullSessionId}: {e.Message} ");
+            }
+        }
+
+        if (success)
+        {
             return await SetResultMessageAsync(
                 llmServiceObj,
-                $"Success {session.Runner.Type} {_serviceID} Assistant stopped",
-                true,
+                $"Success: Removed sessions for {messageBuilder.ToString()}",
+                success,
                 "llmSessionMessage",
                 true
             );
         }
-        catch (Exception e)
+        else
         {
-            string message = $"Error removing process for session {llmServiceObj.SessionId}";
-            _logger.LogError(e, message);
+            _logger.LogError(messageBuilder.ToString());
             return await SetResultMessageAsync(
                 llmServiceObj,
-                message,
-                false,
+                messageBuilder.ToString(),
+                success,
                 "llmServiceMessage"
             );
         }
     }
-
     public async Task<ResultObj> StopRequest(LLMServiceObj llmServiceObj)
     {
         try
@@ -348,7 +380,14 @@ public class LLMService : ILLMService
 
     private async Task SafeRemoveRunnerProcess(Session? checkSession, string sessionId)
     {
-        try { await checkSession?.Runner?.RemoveProcess(sessionId); }
+        try
+        {
+            if (checkSession != null)
+            {
+                await checkSession.Runner?.RemoveProcess(sessionId);
+                checkSession.Runner = null;
+            }
+        }
         catch { /* Suppress errors */ }
     }
 
@@ -366,6 +405,7 @@ public enum ResponseState { Initial, AwaitingInput, FunctionCallProcessed, Compl
 
 public class Session
 {
+    public string FullSessionId { get; set; } = "";
     public List<string> Responses { get; } = new List<string>();
     public ILLMRunner? Runner { get; set; }
     public HistoryDisplayName HistoryDisplayName { get; set; } = new HistoryDisplayName();

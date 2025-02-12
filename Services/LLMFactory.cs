@@ -28,7 +28,7 @@ public interface ILLMFactory
     void OnRunnerLoadChanged(int delta, string llmType);
     ConcurrentDictionary<string, Session> Sessions { set; }
     Task DeleteHistoryForSessionAsync(string sessionId, LLMServiceObj serviceObj);
-    Task SaveHistoryForSessionAsync(LLMServiceObj serviceObj);
+    Task SaveHistoryForSessionAsync(string sessionId,LLMServiceObj serviceObj=null);
     Task LoadHistoryForSessionAsync(string sessionId);
     Task SendHistoryDisplayNames(LLMServiceObj serviceObj);
     Task<ConcurrentDictionary<string, Session>> LoadAllSessionsAsync();
@@ -172,24 +172,24 @@ public class LLMFactory : ILLMFactory
 
     }
 
-    public async Task SaveHistoryForSessionAsync(LLMServiceObj serviceObj)
+    public async Task SaveHistoryForSessionAsync(string sessionId, LLMServiceObj serviceObj=null)
     {
         try
         {
-            if (_sessions.TryGetValue(serviceObj.SessionId, out var session))
+            if (_sessions.TryGetValue(sessionId, out var session))
             {
                 // Update the History property of the HistoryDisplayName object
-                session.HistoryDisplayName!.History = _sessionHistories[serviceObj.SessionId];
+                session.HistoryDisplayName!.History = _sessionHistories[sessionId];
 
                 // Save the updated HistoryDisplayName object
                 await _historyStorage.SaveHistoryAsync(session.HistoryDisplayName);
-                await SendHistoryDisplayNames(serviceObj);
+                if (serviceObj!=null) await SendHistoryDisplayNames(serviceObj);
 
             }
         }
         catch (Exception e)
         {
-            _logger.LogError($" Error : Ca not save sesssion for sessionId {serviceObj.SessionId}. Error was : {e.Message}");
+            _logger.LogError($" Error : Ca not save sesssion for sessionId {sessionId}. Error was : {e.Message}");
         }
 
     }
@@ -234,7 +234,7 @@ public class LLMFactory : ILLMFactory
                     historyDisplayName.Name = message;
                 }
 
-                _ = SaveHistoryForSessionAsync(serviceObj);
+                _ = SaveHistoryForSessionAsync(serviceObj.SessionId, serviceObj);
             }
         }
         catch (Exception e)

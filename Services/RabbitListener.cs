@@ -224,7 +224,7 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
 
         try
         {
-            result = await _llmService.RemoveProcess(llmServiceObj);
+            result = await _llmService.RemoveAllSessionIdProcesses(llmServiceObj);
 
         }
         catch (Exception e)
