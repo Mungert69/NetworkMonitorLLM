@@ -112,7 +112,7 @@ public class LLMService : ILLMService
             {
                     await SetResultMessageAsync(llmServiceObj, $"Info: {llmServiceObj.LLMRunnerType} {_serviceID} Assistant already running so it was not reloaded", true, "llmServiceMessage", true);
             }
-            
+
             await PublishToRabbitMQAsync("llmServiceStarted", llmServiceObj, false);
         }
         catch (Exception e)
@@ -292,7 +292,7 @@ public class LLMService : ILLMService
             {
                 return await SetResultMessageAsync(
                     llmServiceObj,
-                    "Error: The assistant has no running process",
+                    "Error: The assistant has no running process. Try starting a new chat.",
                     false,
                     "llmServiceMessage"
                 );
