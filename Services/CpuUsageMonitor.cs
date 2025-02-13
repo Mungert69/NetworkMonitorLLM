@@ -48,23 +48,44 @@ public class CpuUsageMonitor : ICpuUsageMonitor, IHostedService, IDisposable
         return _currentAverageCpuUsage;
     }
 
-public int RecommendCpuCount(int maxCpu, float targetCpuUsage = 50f)
-{
-    if (_currentAverageCpuUsage <= 1) // If CPU usage is very low, use max available CPUs
+
+    public int RecommendCpuCount(int maxCpu, float targetCpuUsage = 50f)
     {
-        return maxCpu;
+        // If CPU usage is very low, start with half the available CPUs
+        if (_currentAverageCpuUsage <= 1)
+        {
+            return Math.Max(maxCpu / 2, 1);
+        }
+
+        // Calculate the ratio of current usage to target usage
+        float usageRatio = _currentAverageCpuUsage / targetCpuUsage;
+
+        // If we're using more CPU than target, reduce cores
+        // If we're using less CPU than target, increase cores
+        int recommendedCpuCount;
+        if (usageRatio > 1) // Using more CPU than target
+        {
+            // Reduce cores proportionally to how much we're over
+            recommendedCpuCount = (int)Math.Max(1, maxCpu / usageRatio);
+        }
+        else // Using less CPU than target
+        {
+            // Increase cores proportionally, but more conservatively
+            recommendedCpuCount = (int)Math.Min(maxCpu, maxCpu * (0.8f + (1 - usageRatio) * 0.4f));
+        }
+
+        // Ensure it's within bounds and apply smoothing
+        recommendedCpuCount = Math.Clamp(recommendedCpuCount, 1, maxCpu);
+
+        _logger.LogInformation(
+            $"Current CPU Usage: {_currentAverageCpuUsage:F1}%, " +
+            $"Target: {targetCpuUsage:F1}%, " +
+            $"Usage Ratio: {usageRatio:F2}, " +
+            $"Recommended CPUs: {recommendedCpuCount}/{maxCpu}"
+        );
+
+        return recommendedCpuCount;
     }
-
-    // Flip the calculation: higher CPU usage → fewer recommended CPUs
-    int recommendedCpuCount = (int)Math.Ceiling((targetCpuUsage * maxCpu) / (_currentAverageCpuUsage + 1));
-
-    // Ensure it's within a valid range
-    recommendedCpuCount = Math.Clamp(recommendedCpuCount, 1, maxCpu);
-
-    _logger.LogInformation($"Current CPU Usage: {_currentAverageCpuUsage}%, Recommended CPU Count: {recommendedCpuCount}");
-
-    return recommendedCpuCount;
-}
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
@@ -303,19 +324,15 @@ public bool IsMemoryAvailable(int memory)
     {
            var lines = File.ReadAllLines("/proc/meminfo");
       
-       var freeLine = lines.FirstOrDefault(l => l.StartsWith("MemAvailable"));
-       var swapFree = lines.FirstOrDefault(l => l.StartsWith("SwapFree"));
-       
-        if (freeLine == null )
-        {
-            _logger.LogWarning("Could not read memory info from /proc/meminfo.");
-            return false; 
-        }
-
-        long freeMemory = long.Parse(Regex.Match(freeLine, @"\d+").Value);
-        long needMemory=memory*1000;
-
-        return needMemory>(freeMemory+swapFree);
+       var availLine = lines.FirstOrDefault(l => l.StartsWith("MemAvailable"));
+       var swapLine = lines.FirstOrDefault(l => l.StartsWith("SwapFree"));
+	
+       long  swap=long.Parse(Regex.Match(swapLine, @"\d+").Value);
+        long avail=long.Parse(Regex.Match(availLine, @"\d+").Value);
+        long total=swap+avail;
+        long needMemory=memory*1000000;
+        _logger.LogInformation($" Needed memory {needMemory} available {total}");
+        return needMemory<total;
     }
     catch (Exception ex)
     {
