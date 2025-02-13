@@ -278,6 +278,7 @@ public class LLMService : ILLMService
     {
         try
         {
+            _logger.LogInformation($" ENTERED Send with message {llmServiceObj.UserInput}");
             // Check if session is valid
             if (string.IsNullOrEmpty(llmServiceObj.SessionId) || !_sessions.TryGetValue(llmServiceObj.SessionId, out var session))
             {
