@@ -268,6 +268,8 @@ public class OpenAIRunner : ILLMRunner
 
             if (completionSuccess)
             {
+                int tokensUsed=completionResult.Usage.TotalTokens;
+                if (_useHF) tokensUsed=tokensUsed/5;
                 responseServiceObj.TokensUsed = completionResult.Usage.TotalTokens;
                 if (completionResult.Usage != null && completionResult.Usage.PromptTokensDetails != null) _logger.LogInformation($"Cached Prompt Tokens {completionResult.Usage.PromptTokensDetails.CachedTokens}");
                 ChatChoiceResponse choice = completionResult.Choices.First();
