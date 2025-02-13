@@ -112,7 +112,7 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
                 {
                     try
                     {
-                        result = await StartSession(ConvertToObject<LLMServiceObj>(model, ea));
+                        _ =  StartSession(ConvertToObject<LLMServiceObj>(model, ea));
                         await rabbitMQObj.ConnectChannel.BasicAckAsync(ea.DeliveryTag, false);
                     }
                     catch (Exception ex)
@@ -127,7 +127,7 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
                 {
                     try
                     {
-                        result = await StopRequest(ConvertToObject<LLMServiceObj>(model, ea));
+                        _ =  StopRequest(ConvertToObject<LLMServiceObj>(model, ea));
                         await rabbitMQObj.ConnectChannel.BasicAckAsync(ea.DeliveryTag, false);
                     }
                     catch (Exception ex)
@@ -142,7 +142,7 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
                 {
                     try
                     {
-                        result = await RemoveSession(ConvertToObject<LLMServiceObj>(model, ea));
+                        _ =  RemoveSession(ConvertToObject<LLMServiceObj>(model, ea));
                         await rabbitMQObj.ConnectChannel.BasicAckAsync(ea.DeliveryTag, false);
                     }
                     catch (Exception ex)
@@ -157,7 +157,7 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
                 {
                     try
                     {
-                        result = await UserInput(ConvertToObject<LLMServiceObj>(model, ea));
+                        _ =  UserInput(ConvertToObject<LLMServiceObj>(model, ea));
                         await rabbitMQObj.ConnectChannel.BasicAckAsync(ea.DeliveryTag, false);
                     }
                     catch (Exception ex)
