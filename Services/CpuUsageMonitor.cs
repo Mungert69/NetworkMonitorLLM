@@ -107,7 +107,7 @@ public class CpuUsageMonitor : ICpuUsageMonitor, IHostedService, IDisposable
 
         // Calculate rolling average
         _currentAverageCpuUsage = _cpuUsageSamples.Count > 0 ? _cpuUsageSamples.Average() : 0;
-        _logger.LogDebug($"Sampled CPU Usage: {cpuUsage:F2}%, Rolling Average: {_currentAverageCpuUsage:F2}%");
+        //_logger.LogDebug($"Sampled CPU Usage: {cpuUsage:F2}%, Rolling Average: {_currentAverageCpuUsage:F2}%");
     }
 
     private float GetTotalSystemCpuUsage()
