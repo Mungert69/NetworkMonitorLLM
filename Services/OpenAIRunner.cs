@@ -184,10 +184,10 @@ public class OpenAIRunner : ILLMRunner
         if (serviceObj.UserInput.StartsWith("<|REMOVE_SAVED_SESSION|>"))
         {
             string fullSessionId = serviceObj.UserInput.Replace("<|REMOVE_SAVED_SESSION|>", string.Empty).Trim();
-             if (!string.IsNullOrEmpty(fullSessionId) && RemoveSavedSession != null)
+            if (!string.IsNullOrEmpty(fullSessionId) && RemoveSavedSession != null)
             {
 
-                 await RemoveSavedSession.Invoke(fullSessionId, serviceObj);
+                await RemoveSavedSession.Invoke(fullSessionId, serviceObj);
 
                 _logger.LogInformation($"Success: Removed saved sessionId {fullSessionId}");
             }
@@ -248,8 +248,9 @@ public class OpenAIRunner : ILLMRunner
             }
             else if (serviceObj.IsFunctionCallResponse)
             {
-                localHistory = HandleFunctionCallResponse(serviceObj, responseServiceObj);
+                localHistory = await HandleFunctionCallResponse(serviceObj, responseServiceObj);
                 if (localHistory.Count > 0) isFuncMessage = true;
+                else return;
             }
             else
             {
@@ -268,8 +269,8 @@ public class OpenAIRunner : ILLMRunner
 
             if (completionSuccess)
             {
-                int tokensUsed=completionResult.Usage.TotalTokens;
-                if (_useHF) tokensUsed=tokensUsed/5;
+                int tokensUsed = completionResult.Usage.TotalTokens;
+                if (_useHF) tokensUsed = tokensUsed / 5;
                 responseServiceObj.TokensUsed = completionResult.Usage.TotalTokens;
                 if (completionResult.Usage != null && completionResult.Usage.PromptTokensDetails != null) _logger.LogInformation($"Cached Prompt Tokens {completionResult.Usage.PromptTokensDetails.CachedTokens}");
                 ChatChoiceResponse choice = completionResult.Choices.First();
@@ -298,9 +299,9 @@ public class OpenAIRunner : ILLMRunner
                 _history.AddRange(localHistory);
                 TruncateTokens(_history, serviceObj);
                 await _responseProcessor.UpdateTokensUsed(responseServiceObj);
-                 int wordLimit = 5;
+                int wordLimit = 5;
                 string truncatedUserInput = string.Join(" ", serviceObj.UserInput.Split(' ').Take(wordLimit));
-                await OnUserMessage?.Invoke(truncatedUserInput, serviceObj);              
+                await OnUserMessage?.Invoke(truncatedUserInput, serviceObj);
             }
 
         }
@@ -325,7 +326,7 @@ public class OpenAIRunner : ILLMRunner
         // if (!_useHF)
         //{
         var fakeFunctionCallId = "call_" + StringUtils.GetNanoid();
-        var fakeFunctionCallMessage = ChatMessage.FromAssistant("I have received an are_functions_running auto-check status update.");
+        var fakeFunctionCallMessage = ChatMessage.FromAssistant("");
         fakeFunctionCallMessage.ToolCalls = new List<ToolCall>()
                     {
                         new ToolCall
@@ -359,7 +360,7 @@ public class OpenAIRunner : ILLMRunner
     }
 
 
-    private List<ChatMessage> HandleFunctionCallResponse(LLMServiceObj serviceObj, LLMServiceObj responseServiceObj)
+    private async Task<List<ChatMessage>> HandleFunctionCallResponse(LLMServiceObj serviceObj, LLMServiceObj responseServiceObj)
     {
         ChatMessage funcResponseChatMessage;
         var localHistory = new List<ChatMessage>();
@@ -389,13 +390,8 @@ public class OpenAIRunner : ILLMRunner
             }
 
 
-            responseServiceObj.LlmMessage = "<Function Response:> " + serviceObj.UserInput + "\n\n";
-
-            // Process the LLM output if it's the primary LLM
-            if (_isPrimaryLlm) _responseProcessor.ProcessLLMOutput(responseServiceObj);
-
             bool allResponsesReceived = funcCallChatMessage.ToolCalls
-                .All(tc => _pendingFunctionResponses.ContainsKey(tc.Id!));
+              .All(tc => _pendingFunctionResponses.ContainsKey(tc.Id!));
 
 
             if (allResponsesReceived)
@@ -408,7 +404,8 @@ public class OpenAIRunner : ILLMRunner
                 {
                     if (_pendingFunctionResponses.TryGetValue(toolCall.Id!, out var response))
                     {
-
+                        responseServiceObj.LlmMessage = "<Function Response:> " + response.Content + "\n\n";
+                        if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
                         localHistory.Add(response);
                         _pendingFunctionResponses.TryRemove(toolCall.Id!, out _);
                         count++;
@@ -464,12 +461,28 @@ public class OpenAIRunner : ILLMRunner
                 } : null
             }).ToList()
         };
+        bool usePlaceHolder = true;
+        string messageIdStr = "";
+        string messageIdJson = "";
+
+        if (serviceObj.IsPrimaryLlm)
+        {
+            messageIdStr = $"using message_id {serviceObj.MessageID}";
+            messageIdJson = " , \"message_id\" : \"" + serviceObj.MessageID + "\"";
+        }
+        if (choiceMessageCopy.ToolCalls != null && choiceMessageCopy.ToolCalls.Count > 0)
+        {
+            if (choiceMessageCopy.ToolCalls.Any(fnCall => fnCall.FunctionCall.Name.Equals("are_functions_running"))) usePlaceHolder = false;
+        }
 
         // Store the original message content
         string origMessage = choiceMessageCopy.Content;
+        string pluralCall = "call";
+        string plural = "is";
+        if (choiceMessage.ToolCalls != null && choiceMessage.ToolCalls.Count > 1) { plural = "are"; pluralCall = "calls"; }
 
         // Update the copy's content for the pending function call
-        choiceMessageCopy.Content = $"The function call with message_id {serviceObj.MessageID} has now completed.";
+        choiceMessageCopy.Content = $"The function {pluralCall} {messageIdStr} has now completed.";
         _pendingFunctionCalls.TryAdd(serviceObj.MessageID, choiceMessageCopy);
         //TODO make a copy of the choiceMesage and use that instead 
         var toolResponces = new List<ChatMessage>();
@@ -478,21 +491,28 @@ public class OpenAIRunner : ILLMRunner
             if (fnCall.FunctionCall != null)
             {
                 var funcName = fnCall.FunctionCall.Name;
-                var funcArgs = fnCall.FunctionCall.Arguments;
+                //var funcArgs = fnCall.FunctionCall.Arguments;
                 var funcId = fnCall.Id;
                 await HandleFunctionCallAsync(serviceObj, fnCall, responseServiceObj, assistantChatMessage);
                 await Task.Delay(500);
-                var toolResponse = ChatMessage.FromTool($"The function {funcName} has been called, waiting for the result. DO NOT call are_functions_running unless the user asks you to.", funcId);
+                var toolResponse = ChatMessage.FromTool("{\"message\" : \"The function call " + funcName + " is currently running. There is no need to call are_functions_running because the system is actively monitoring the status and you will be informed as soon as the function completes..\"" + messageIdJson + "}", funcId);
                 toolResponse.Role = "tool";
                 toolResponse.Name = funcName;
                 toolResponces.Add(toolResponse);
             }
         }
-        choiceMessage.Content = $"{origMessage} . I have called the functions using message_id {serviceObj.MessageID} . Please wait it may take some time to complete.";
+        choiceMessage.Content = origMessage;
 
         // OpenAI models we also add a assistant message with no func calls to the history.
-        localHistory.Add(choiceMessage);
-        localHistory.AddRange(toolResponces);
+        if (usePlaceHolder)
+        {
+            _pendingFunctionCalls.TryAdd(serviceObj.MessageID, choiceMessageCopy);
+            localHistory.Add(choiceMessage);
+            localHistory.AddRange(toolResponces);
+            var assistantResponse = ChatMessage.FromAssistant($"Function {pluralCall} {messageIdStr} {plural} running. I will inform you of the result when it completes");
+            localHistory.Add(assistantResponse);
+        }
+        else _pendingFunctionCalls.TryAdd(serviceObj.MessageID, choiceMessage);
 
         return;
     }

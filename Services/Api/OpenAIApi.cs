@@ -19,6 +19,7 @@ using NetworkMonitor.Objects;
 using NetworkMonitor.Utils.Helpers;
 using NetworkMonitor.Objects.Factory;
 using NetworkMonitor.Utils;
+using Newtonsoft.Json;
 
 namespace NetworkMonitor.LLM.Services;
 
@@ -78,6 +79,9 @@ public class OpenAIApi : ILLMApi
     {
         try
         {
+               string payloadJson = JsonConvert.SerializeObject(messages, Formatting.Indented);
+             _logger.LogInformation($"{payloadJson}");
+          
             var chatResponse = await _openAiService.ChatCompletion.CreateCompletion(new ChatCompletionCreateRequest
             {
                 Messages = messages,
