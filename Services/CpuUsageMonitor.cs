@@ -52,9 +52,9 @@ public class CpuUsageMonitor : ICpuUsageMonitor, IHostedService, IDisposable
     public int RecommendCpuCount(int maxCpu, float targetCpuUsage = 50f)
     {
         // If CPU usage is very low, start with half the available CPUs
-        if (_currentAverageCpuUsage <= 1)
+        if (_currentAverageCpuUsage <= 5)
         {
-            return Math.Max(maxCpu / 2, 1);
+            return maxCpu;
         }
 
         // Calculate the ratio of current usage to target usage
@@ -66,7 +66,7 @@ public class CpuUsageMonitor : ICpuUsageMonitor, IHostedService, IDisposable
         if (usageRatio > 1) // Using more CPU than target
         {
             // Reduce cores proportionally to how much we're over
-            recommendedCpuCount = (int)Math.Max(1, maxCpu / usageRatio);
+            recommendedCpuCount = (int)Math.Max(1, maxCpu / (usageRatio * 2.0f));
         }
         else // Using less CPU than target
         {
