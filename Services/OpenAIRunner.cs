@@ -90,7 +90,7 @@ public class OpenAIRunner : ILLMRunner
         _logger = logger;
         _responseProcessor = responseProcessor;
         _openAiService = openAiService;
-        _openAIRunnerSemaphore = openAIRunnerSemaphore;
+        _openAIRunnerSemaphore = new SemaphoreSlim(1);
         _serviceID = systemParamsHelper.GetSystemParams().ServiceID!;
         _mlParams = systemParamsHelper.GetMLParams();
         _history = history;
