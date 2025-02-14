@@ -72,9 +72,11 @@ namespace NetworkMonitor.LLM.Services
 
         private readonly List<ToolDefinition> _tools;
 
-public List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
-{
-    string content = @$"# Metasploit Security Assistant (v2.4)
+        public List<ToolDefinition> Tools => _tools;
+
+        public List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
+        {
+            string content = @$"# Metasploit Security Assistant (v2.4)
 **System Time:** {currentTime}
 
 ## Core Defaults (Hardcoded Safeguards)
@@ -166,8 +168,20 @@ User Request: ""Check EternalBlue vulnerability""
 
         target: 192.168.1.150";
 
-    return new List<ChatMessage> { ChatMessage.FromSystem(content) };
-    }
+            var chatMessage = new ChatMessage()
+            {
+                Role = "system",
+                Content = content
+            };
+
+            var chatMessages = new List<ChatMessage>
+            {
+                chatMessage
+            };
+
+
+            return chatMessages;
+        }
 
     }
 }
