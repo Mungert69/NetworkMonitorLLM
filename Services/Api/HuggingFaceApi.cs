@@ -126,15 +126,15 @@ public class HuggingFaceApi : ILLMApi
                 temperture = _temperture
             };
 
-            string responseContent = "";
-            HuggingFaceChatResponse responseObject;
+            string? responseContent = null;
+            HuggingFaceChatResponse? responseObject=null;
              string payloadJson = JsonConvert.SerializeObject(payload, Formatting.Indented);
              //_logger.LogInformation($"{payloadJson}");
                
             if (!_isStream)
             {
                 responseContent = await SendHttpRequestAsync(payloadJson);
-                responseObject = JsonConvert.DeserializeObject<HuggingFaceChatResponse>(responseContent);
+                if (responseContent!=null) responseObject = JsonConvert.DeserializeObject<HuggingFaceChatResponse>(responseContent);
 
             }
             else
@@ -165,7 +165,7 @@ public class HuggingFaceApi : ILLMApi
 
             }
             if (responseObject==null) throw new Exception(" Reponse is null");
-            var chatResponseBuilder = new ChatResponseBuilder(_config, _isXml, _logger);
+            var chatResponseBuilder = new ChatResponseBuilder(_responseProcessor,_config, _isXml, _logger);
             var chatResponse = chatResponseBuilder.BuildResponse(responseObject);
 
             return new ChatCompletionCreateResponseSuccess { Success = true, Response = chatResponse };
@@ -203,7 +203,7 @@ public class HuggingFaceApi : ILLMApi
 
 
     }
-    private async Task<string> SendHttpRequestAsync(string payloadJson)
+    private async Task<string?> SendHttpRequestAsync(string payloadJson)
     {
         const int maxRetries = 3;
         const int delayBetweenRetries = 10000;

@@ -156,7 +156,7 @@ namespace NetworkMonitor.LLM.Services
             return string.Empty;
         }
 
-        private async Task<string> PostToAudioApiAsync(object payload)
+        private async Task<string?> PostToAudioApiAsync(object payload)
         {
             try
             {
@@ -173,7 +173,7 @@ namespace NetworkMonitor.LLM.Services
                     var result = await response.Content.ReadAsStringAsync();
                     var responseData = JsonSerializer.Deserialize<Dictionary<string, string>>(result);
 
-                    if (responseData != null && responseData.TryGetValue("output_path", out string outputPath))
+                    if (responseData != null && responseData.TryGetValue("output_path", out string? outputPath))
                     {
                         return outputPath; // Return actual output path
                     }

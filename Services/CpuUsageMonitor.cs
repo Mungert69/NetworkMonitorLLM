@@ -168,7 +168,7 @@ public class CpuUsageMonitor : ICpuUsageMonitor, IHostedService, IDisposable
         }
     }
 
-    private async Task<CpuTimes> ReadCpuStats()
+    private async Task<CpuTimes?> ReadCpuStats()
     {
         try
         {
@@ -326,7 +326,7 @@ public class CpuUsageMonitor : ICpuUsageMonitor, IHostedService, IDisposable
 
             var availLine = lines.FirstOrDefault(l => l.StartsWith("MemAvailable"));
             var swapLine = lines.FirstOrDefault(l => l.StartsWith("SwapFree"));
-
+            if (availLine==null || swapLine==null ) return true;
             long swap = long.Parse(Regex.Match(swapLine, @"\d+").Value);
             long avail = long.Parse(Regex.Match(availLine, @"\d+").Value);
             long total = swap + avail;

@@ -34,13 +34,15 @@ public class OpenAIApi : ILLMApi
     private readonly LLMConfig _config;
     private readonly string _modelVersion;
     private string _serviceID;
+       private ILLMResponseProcessor _responseProcessor;
 
 
-    public OpenAIApi(ILogger logger, MLParams mlParams, IToolsBuilder toolsBuilder, string serviceID, OpenAIService openAiService)
+    public OpenAIApi(ILogger logger, MLParams mlParams, IToolsBuilder toolsBuilder, string serviceID,ILLMResponseProcessor responseProcessor, OpenAIService openAiService)
     {
         _mlParams = mlParams;
         _gptModel = mlParams.LlmGptModel;
         _serviceID = serviceID;
+        _responseProcessor=responseProcessor;
         _logger = logger;
         _openAiService = openAiService;
         _toolsBuilder = toolsBuilder;
@@ -92,7 +94,7 @@ public class OpenAIApi : ILLMApi
             });
             if (_isXml)
             {
-                var chatResponseBuilder = new ChatResponseBuilder(_config, _isXml, _logger);
+                var chatResponseBuilder = new ChatResponseBuilder(_responseProcessor,_config, _isXml, _logger);
                 chatResponse = chatResponseBuilder.BuildResponseFromOpenAI(chatResponse);
             }
             return new ChatCompletionCreateResponseSuccess() { Success = chatResponse.Successful, Response = chatResponse };

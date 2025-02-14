@@ -33,11 +33,11 @@ public class ChatResponseBuilder
     private ITokenBroadcaster _tokenBroadcaster;
     private ILogger _logger;
     private bool _isXml;
-    public ChatResponseBuilder(LLMConfig config, bool isXml, ILogger logger)
+    public ChatResponseBuilder(ILLMResponseProcessor responseProcessor,LLMConfig config, bool isXml, ILogger logger)
     {
         _logger = logger;
         _isXml = isXml;
-        _tokenBroadcaster = config.CreateBroadcaster(null, _logger, false);
+        _tokenBroadcaster = config!.CreateBroadcaster(responseProcessor, _logger, false);
     }
 
     // Add this method to the ChatResponseBuilder class
@@ -45,7 +45,8 @@ public class ChatResponseBuilder
     {
         foreach (var choice in openAIResponse.Choices)
         {
-            var message = choice.Message;
+            if (choice.Message==null) continue;
+            var message = choice.Message ;
             if (message == null) continue;
 
             // Parse the content for XML function calls
@@ -133,8 +134,8 @@ public class ChatResponseBuilder
                         Id = toolCall.Id,
                         FunctionCall = new FunctionCall
                         {
-                            Name = toolCall.FunctionCall.Name,
-                            Arguments = toolCall.FunctionCall.Arguments
+                            Name = toolCall?.FunctionCall?.Name ?? "",
+                            Arguments = toolCall?.FunctionCall?.Arguments ?? ""
                         }
                     }).ToList() // Explicitly map each ToolCall and its FunctionCall
                 },

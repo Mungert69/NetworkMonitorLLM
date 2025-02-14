@@ -85,6 +85,11 @@ public static class ProcessKiller
             };
 
             using var killProcess = Process.Start(startInfo);
+             if (killProcess==null) 
+             {
+                Console.WriteLine($"killProcess failed for PID={processId}. Process.Start(startInfo) is null");
+                return;
+            }
             killProcess.WaitForExit();
 
             if (killProcess.ExitCode != 0)

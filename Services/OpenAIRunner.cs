@@ -110,7 +110,7 @@ public class OpenAIRunner : ILLMRunner
         if (!_useHF)
         {
             _type = "TurboLLM";
-            _llmApi = new OpenAIApi(_logger, _mlParams, toolsBuilder, _serviceID, _openAiService);
+            _llmApi = new OpenAIApi(_logger, _mlParams, toolsBuilder, _serviceID, _responseProcessor,_openAiService);
         }
         else
         {
@@ -291,7 +291,7 @@ public class OpenAIRunner : ILLMRunner
             {
                 if (completionResult.Error != null)
                 {
-                    await HandleOpenAIError(serviceObj, completionResult.Error.Message, localHistory, _history);
+                    await HandleOpenAIError(serviceObj, completionResult?.Error?.Message ?? "", localHistory, _history);
                     localHistory = new List<ChatMessage>();
                 }
             }
