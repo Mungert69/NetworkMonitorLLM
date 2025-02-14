@@ -241,7 +241,7 @@ public class LLMFactory : ILLMFactory
             if (history.Count == 0)
             {
                 var historyDisplayName = await _historyStorage.LoadHistoryAsync(serviceObj.SessionId);
-                history.AddRange(historyDisplayName.History);
+                if (historyDisplayName!=null) history.AddRange(historyDisplayName.History);
                 
             }
             //await SendHistoryDisplayNames(serviceObj);
@@ -356,7 +356,7 @@ public abstract class LLMRunnerFactoryBase : ILLMRunnerFactory
         }
     }
 
-    public abstract ILLMRunner CreateRunner(IServiceProvider serviceProvider, LLMServiceObj serviceObj, SemaphoreSlim runnerSemaphore, List<ChatMessage> history, ICpuUsageMonitor cpuUsageMonitor);
+    public abstract ILLMRunner CreateRunner(IServiceProvider serviceProvider, LLMServiceObj serviceObj, SemaphoreSlim? runnerSemaphore, List<ChatMessage> history, ICpuUsageMonitor cpuUsageMonitor);
 
 }
 
@@ -364,7 +364,7 @@ public abstract class LLMRunnerFactoryBase : ILLMRunnerFactory
 public interface ILLMRunnerFactory
 {
     int LoadCount { get; set; }
-    ILLMRunner CreateRunner(IServiceProvider serviceProvider, LLMServiceObj serviceObj, SemaphoreSlim runnerSemaphore, List<ChatMessage> history, ICpuUsageMonitor cpuUsageMonitor);
+    ILLMRunner CreateRunner(IServiceProvider serviceProvider, LLMServiceObj serviceObj, SemaphoreSlim? runnerSemaphore, List<ChatMessage> history, ICpuUsageMonitor cpuUsageMonitor);
 
 }
 
@@ -372,7 +372,7 @@ public interface ILLMRunnerFactory
 public class LLMProcessRunnerFactory : LLMRunnerFactoryBase
 {
 
-    public override ILLMRunner CreateRunner(IServiceProvider serviceProvider, LLMServiceObj serviceObj, SemaphoreSlim runnerSemaphore, List<ChatMessage> history, ICpuUsageMonitor cpuUsageMonitor)
+    public override ILLMRunner CreateRunner(IServiceProvider serviceProvider, LLMServiceObj serviceObj, SemaphoreSlim? runnerSemaphore, List<ChatMessage> history, ICpuUsageMonitor cpuUsageMonitor)
     {
         return new LLMProcessRunner(serviceProvider.GetRequiredService<ILogger<LLMProcessRunner>>(), serviceProvider.GetRequiredService<ILLMResponseProcessor>(), serviceProvider.GetRequiredService<ISystemParamsHelper>(), serviceObj, runnerSemaphore, serviceProvider.GetRequiredService<IAudioGenerator>(), cpuUsageMonitor);
     }
@@ -381,7 +381,7 @@ public class LLMProcessRunnerFactory : LLMRunnerFactoryBase
 public class OpenAIRunnerFactory : LLMRunnerFactoryBase
 {
 
-    public override ILLMRunner CreateRunner(IServiceProvider serviceProvider, LLMServiceObj serviceObj, SemaphoreSlim runnerSemaphore, List<ChatMessage> history, ICpuUsageMonitor cpuUsageMonitor)
+    public override ILLMRunner CreateRunner(IServiceProvider serviceProvider, LLMServiceObj serviceObj, SemaphoreSlim? runnerSemaphore, List<ChatMessage> history, ICpuUsageMonitor cpuUsageMonitor)
     {
         return new OpenAIRunner(serviceProvider.GetRequiredService<ILogger<OpenAIRunner>>(), serviceProvider.GetRequiredService<ILLMResponseProcessor>(), serviceProvider.GetRequiredService<OpenAIService>(), serviceProvider.GetRequiredService<ISystemParamsHelper>(), serviceObj, null, serviceProvider.GetRequiredService<IAudioGenerator>(), false, history);
     }
@@ -391,7 +391,7 @@ public class HFRunnerFactory : LLMRunnerFactoryBase
 {
 
 
-    public override ILLMRunner CreateRunner(IServiceProvider serviceProvider, LLMServiceObj serviceObj, SemaphoreSlim runnerSemaphore, List<ChatMessage> history, ICpuUsageMonitor cpuUsageMonitor)
+    public override ILLMRunner CreateRunner(IServiceProvider serviceProvider, LLMServiceObj serviceObj, SemaphoreSlim? runnerSemaphore, List<ChatMessage> history, ICpuUsageMonitor cpuUsageMonitor)
     {
         return new OpenAIRunner(serviceProvider.GetRequiredService<ILogger<OpenAIRunner>>(), serviceProvider.GetRequiredService<ILLMResponseProcessor>(), serviceProvider.GetRequiredService<OpenAIService>(), serviceProvider.GetRequiredService<ISystemParamsHelper>(), serviceObj, null, serviceProvider.GetRequiredService<IAudioGenerator>(), true, history);
     }

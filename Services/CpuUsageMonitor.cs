@@ -128,15 +128,7 @@ public class CpuUsageMonitor : ICpuUsageMonitor, IHostedService, IDisposable
         }
     }
 
-    private float GetWindowsCpuUsage()
-    {
-        using (var cpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total"))
-        {
-            cpuCounter.NextValue(); // First call gives 0, discard it
-            Thread.Sleep(500); // Wait before fetching valid data
-            return cpuCounter.NextValue();
-        }
-    }
+
 
   private float GetLinuxMacCpuUsage()
 {

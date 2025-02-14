@@ -85,7 +85,7 @@ public class OpenAIRunner : ILLMRunner
     public string Type { get => _type; set => _type = value; }
 
 #pragma warning disable CS8618
-    public OpenAIRunner(ILogger<OpenAIRunner> logger, ILLMResponseProcessor responseProcessor, OpenAIService openAiService, ISystemParamsHelper systemParamsHelper, LLMServiceObj serviceObj, SemaphoreSlim openAIRunnerSemaphore, IAudioGenerator audioGenerator, bool useHF, List<ChatMessage> history)
+    public OpenAIRunner(ILogger<OpenAIRunner> logger, ILLMResponseProcessor responseProcessor, OpenAIService openAiService, ISystemParamsHelper systemParamsHelper, LLMServiceObj serviceObj, SemaphoreSlim? openAIRunnerSemaphore, IAudioGenerator audioGenerator, bool useHF, List<ChatMessage> history)
     {
         _logger = logger;
         _responseProcessor = responseProcessor;
@@ -200,7 +200,7 @@ public class OpenAIRunner : ILLMRunner
         if (serviceObj.UserInput == "<|REPLAY_HISTORY|>")
         {
             await ReplayHistory(serviceObj.SessionId);
-            await SendHistory?.Invoke(serviceObj);
+            if (SendHistory!=null) await SendHistory.Invoke(serviceObj);
             _logger.LogInformation($" Replayed history for sessionId {serviceObj.SessionId}");
             return;
         }
@@ -271,8 +271,8 @@ public class OpenAIRunner : ILLMRunner
             {
                 int tokensUsed = completionResult.Usage.TotalTokens;
                 if (_useHF) tokensUsed = tokensUsed / 5;
-                 _logger.LogInformation($"TOKENS USED {tokensUsed} useHF is set to {_useHF}");
-               
+                _logger.LogInformation($"TOKENS USED {tokensUsed} useHF is set to {_useHF}");
+
                 responseServiceObj.TokensUsed = completionResult.Usage.TotalTokens;
                 if (completionResult.Usage != null && completionResult.Usage.PromptTokensDetails != null) _logger.LogInformation($"Cached Prompt Tokens {completionResult.Usage.PromptTokensDetails.CachedTokens}");
                 ChatChoiceResponse choice = completionResult.Choices.First();
@@ -446,7 +446,7 @@ public class OpenAIRunner : ILLMRunner
     private async Task HandleFunctionProcessing(LLMServiceObj serviceObj, ChatMessage choiceMessage, List<ChatMessage> localHistory, LLMServiceObj responseServiceObj, ChatMessage assistantChatMessage, bool isFuncMessage)
     {
 
-
+        if (choiceMessage == null) return;
         // Create a deep copy of the choiceMessage to avoid modifying the original
         var choiceMessageCopy = new ChatMessage
         {
@@ -474,8 +474,13 @@ public class OpenAIRunner : ILLMRunner
         }
         if (choiceMessageCopy.ToolCalls != null && choiceMessageCopy.ToolCalls.Count > 0)
         {
-            if (choiceMessageCopy.ToolCalls.Any(fnCall => fnCall.FunctionCall.Name.Equals("are_functions_running"))) usePlaceHolder = false;
+            if (choiceMessageCopy.ToolCalls.Any(fnCall => fnCall.FunctionCall?.Name != null &&
+                                                          fnCall.FunctionCall.Name.Equals("are_functions_running")))
+            {
+                usePlaceHolder = false;
+            }
         }
+
 
         // Store the original message content
         string origMessage = choiceMessageCopy.Content;
@@ -497,7 +502,7 @@ public class OpenAIRunner : ILLMRunner
                 var funcId = fnCall.Id;
                 await HandleFunctionCallAsync(serviceObj, fnCall, responseServiceObj, assistantChatMessage);
                 await Task.Delay(500);
-                var toolResponse = ChatMessage.FromTool("{\"message\" : \"The function call " + funcName + " is currently running. There is no need to call are_functions_running because the system is actively monitoring the status and you will be informed as soon as the function completes..\"" + messageIdJson + "}", funcId);
+                var toolResponse = ChatMessage.FromTool("{\"message\" : \"The function call " + funcName + " is currently running. There is no need to call are_functions_running because the system is actively monitoring the status and you will be informed as soon as the function completes..\"" + messageIdJson + "}", funcId!);
                 toolResponse.Role = "tool";
                 toolResponse.Name = funcName;
                 toolResponces.Add(toolResponse);
@@ -542,7 +547,7 @@ public class OpenAIRunner : ILLMRunner
         }
         catch (JsonException e)
         {
-            var (failed, returnJson) = AttemptJsonRepair(fn, e);
+            var (failed, returnJson) = AttemptJsonRepair(fn!, e);
             isValidJson = !failed;
             json = returnJson;
         }
@@ -585,8 +590,9 @@ public class OpenAIRunner : ILLMRunner
     {
         try
         {
-            string input = fn.Arguments;
-            string field = e.Path.Replace("$.", "");
+            if (fn==null) throw new Exception(" fn is null");
+            string input = fn.Arguments ?? "";
+            string field = e?.Path?.Replace("$.", "") ?? "";
             if (!_ignoreParameters.Contains(field))
             {
                 _logger.LogInformation("\n\nrepair => " + field + " \n\n");
@@ -609,7 +615,7 @@ public class OpenAIRunner : ILLMRunner
 
         return (true, JsonSerializer.Serialize(new
         {
-            invalid_json_error = e.Message,
+            invalid_json_error = e?.Message ?? "Json Exception error message missing",
             path = e.Path,
             line_number = e.LineNumber,
             byte_position_in_line = e.BytePositionInLine,

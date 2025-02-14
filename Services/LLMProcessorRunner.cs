@@ -46,9 +46,12 @@ public class LLMProcessRunner : ILLMRunner
     public int LlmLoad { get => _llmLoad; set => _llmLoad = value; }
 
     public event Action<int, string> LoadChanged;
+ #pragma warning disable CS0067  
      public event Func<string, LLMServiceObj, Task> OnUserMessage;
+
      public event Func<LLMServiceObj, Task> SendHistory;
     public event Func<string, LLMServiceObj, Task> RemoveSavedSession;
+#pragma warning restore CS0067 
     private IAudioGenerator _audioGenerator;
     private ICpuUsageMonitor _cpuUsageMonitor;
 
@@ -427,7 +430,6 @@ public class LLMProcessRunner : ILLMRunner
          
         }
         _isStateReady = false;
-        string tokenBroadcasterMessage = "";
         int sendLlmLoad = 0;
         if (_llmLoad > 0)
         {
@@ -563,7 +565,7 @@ public class LLMProcessRunner : ILLMRunner
             {
                 // Task completed within timeout
                 await broadcastTask;
-                if (tokenBroadcaster.AssistantMessage != null)
+                if (tokenBroadcaster!=null && tokenBroadcaster.AssistantMessage != null)
                 {
                     if (tokenBroadcaster.AssistantMessage != null) _assistantMessages.TryAdd(serviceObj.MessageID, tokenBroadcaster.AssistantMessage);
                     tokenBroadcaster.AssistantMessage = null;

@@ -94,7 +94,7 @@ public class FileSystemHistoryStorage : IHistoryStorage
        await File.WriteAllTextAsync(filePath, json);
     }
 
-    public async Task<HistoryDisplayName> LoadHistoryAsync(string sessionId)
+    public async Task<HistoryDisplayName?> LoadHistoryAsync(string sessionId)
     {
     var searchPattern = $"*_{sessionId}.json";
 
@@ -112,16 +112,17 @@ public class FileSystemHistoryStorage : IHistoryStorage
         return JsonConvert.DeserializeObject<HistoryDisplayName>(json); 
     }
 
-    public async Task DeleteHistoryAsync(string sessionId)
+   public async Task DeleteHistoryAsync(string sessionId)
+{
+    var files = await Task.Run(() => Directory.GetFiles(_storagePath, $"*_{sessionId}.json"));
+
+    foreach (var filePath in files)
     {
-        var files = Directory.GetFiles(_storagePath, $"*_{sessionId}.json");
-        if (files.Length > 0)
+        if (File.Exists(filePath))
         {
-            var filePath = files[0]; // Assuming sessionId is unique
-            if (File.Exists(filePath))
-            {
-                File.Delete(filePath);
-            }
+            await Task.Run(() => File.Delete(filePath)); // Offload file deletion to another thread
         }
     }
+}
+
 }

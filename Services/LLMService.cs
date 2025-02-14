@@ -90,7 +90,7 @@ public class LLMService : ILLMService
 
                 await runner.StartProcess(llmServiceObj);
                 // Only add a new session if it does not exist
-                if (!_sessions.ContainsKey(llmServiceObj.SessionId))
+                if (checkSession==null)
                 {
                     _sessions[llmServiceObj.SessionId] = new Session
                     {
@@ -245,7 +245,7 @@ public class LLMService : ILLMService
             }
 
             // Stop the Runner
-            session.Runner.StopRequest(llmServiceObj.SessionId);
+            await session.Runner.StopRequest(llmServiceObj.SessionId);
 
             // Publish success message
             return await SetResultMessageAsync(
@@ -379,18 +379,13 @@ public class LLMService : ILLMService
     }
 
 
-
-
-    private int _load; // Tracks the total load across all sessions
-
-
     private async Task SafeRemoveRunnerProcess(Session? checkSession, string sessionId)
     {
         try
         {
-            if (checkSession != null)
+            if (checkSession != null && checkSession.Runner!=null)
             {
-                await checkSession.Runner?.RemoveProcess(sessionId);
+                await checkSession.Runner.RemoveProcess(sessionId);
                 checkSession.Runner = null;
             }
         }

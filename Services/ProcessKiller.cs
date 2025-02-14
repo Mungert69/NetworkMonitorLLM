@@ -27,7 +27,6 @@ public static class ProcessKiller
                 // Fallback to .NET Kill if OS is not specifically handled
                 process.Kill();
                 process.Dispose();
-                process=null;
             }
         }
         catch (Exception ex)
@@ -52,6 +51,11 @@ public static class ProcessKiller
             };
 
             using var taskKillProcess = Process.Start(startInfo);
+            if (taskKillProcess==null) 
+             {
+                Console.WriteLine($"taskkill failed for PID={processId}. Process.Start(startInfo) is null");
+                return;
+            }
             taskKillProcess.WaitForExit();
 
             if (taskKillProcess.ExitCode != 0)

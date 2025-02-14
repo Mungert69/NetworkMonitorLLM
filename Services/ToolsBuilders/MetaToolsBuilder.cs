@@ -15,9 +15,7 @@ namespace NetworkMonitor.LLM.Services
     {
         private readonly FunctionDefinition fn_run_metasploit;
         private readonly FunctionDefinition fn_search_metasploit_modules;
-        private readonly FunctionDefinition fn_get_user_info;
-        private readonly FunctionDefinition fn_run_busybox;
-        private readonly FunctionDefinition fn_get_metasploit_module_info;
+           private readonly FunctionDefinition fn_get_metasploit_module_info;
 
         public MetaToolsBuilder()
         {

@@ -144,7 +144,7 @@ public class HuggingFaceApi : ILLMApi
                 var tokenBroadcaster = _config.CreateBroadcaster(_responseProcessor, _logger, false);
                 tokenBroadcaster.UseHttpProcess=true;
                 tokenBroadcaster.IsAddAssistant=true;
-                tokenBroadcaster.SetUp(serviceObj, true, 1);
+                await tokenBroadcaster.SetUp(serviceObj, true, 1);
 
                 await tokenBroadcaster.BroadcastAsync(process, serviceObj, "");
                 responseObject = new HuggingFaceChatResponse
@@ -164,7 +164,7 @@ public class HuggingFaceApi : ILLMApi
 
 
             }
-            
+            if (responseObject==null) throw new Exception(" Reponse is null");
             var chatResponseBuilder = new ChatResponseBuilder(_config, _isXml, _logger);
             var chatResponse = chatResponseBuilder.BuildResponse(responseObject);
 

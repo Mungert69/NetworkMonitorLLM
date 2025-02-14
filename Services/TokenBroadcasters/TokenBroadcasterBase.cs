@@ -21,7 +21,7 @@ namespace NetworkMonitor.LLM.Services
         void Init(LLMConfig config);
         Task ReInit(string sessionId);
         Task SetUp(LLMServiceObj serviceObj, bool sendOutput, int llmLoad);
-        StringBuilder AssistantMessage { get; set; }
+        StringBuilder? AssistantMessage { get; set; }
         Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput);
         List<(string json, string functionName)> ParseInputForJson(string input);
         List<(string json, string functionName)> ParseInputForXml(string input);
@@ -151,7 +151,7 @@ namespace NetworkMonitor.LLM.Services
             await SendLLMPrimaryChunk(serviceObj, "</llm-busy>");
             if (llmLoad > 0)
             {
-                SendLLMPrimaryChunk(serviceObj, $"<load-count>{llmLoad}</load-count>");
+                await SendLLMPrimaryChunk(serviceObj, $"<load-count>{llmLoad}</load-count>");
                 _logger.LogInformation($"<load-count>{llmLoad}</load-count>");
             }
 
@@ -191,7 +191,7 @@ namespace NetworkMonitor.LLM.Services
             try
             {
                 var partialResponse = JsonConvert.DeserializeObject<StreamingChatCompletionChunk>(jsonContent);
-                var contentChunk = partialResponse?.Choices?.FirstOrDefault()?.Delta?.Content;
+                var contentChunk = partialResponse?.Choices?.FirstOrDefault()?.Delta?.Content ?? "";
                 return contentChunk;
             }
             catch { 
@@ -322,7 +322,7 @@ namespace NetworkMonitor.LLM.Services
             {
                 if (!string.IsNullOrWhiteSpace(jsonArguments))
                 {
-                    if (makeAssistantMessage) _assistantMessage.Append($" {functionName} ");
+                    if (makeAssistantMessage && _assistantMessage!=null) _assistantMessage.Append($" {functionName} ");
 
                     _logger.LogInformation($"ProcessLLMOutput(call_func) -> {jsonArguments}");
                     responseServiceObj.LlmMessage = "</functioncall>";
@@ -337,7 +337,7 @@ namespace NetworkMonitor.LLM.Services
 
                 }
             }
-            if (makeAssistantMessage) _assistantMessage.Append($" using message_id {serviceObj.MessageID}");
+            if (makeAssistantMessage && _assistantMessage!=null) _assistantMessage.Append($" using message_id {serviceObj.MessageID}");
 
             responseServiceObj.LlmMessage = "<end-of-line>";
             await SendLLMPrimary(responseServiceObj);
@@ -369,8 +369,7 @@ namespace NetworkMonitor.LLM.Services
                 string jsonParameters = JsonConvert.SerializeXmlNode(doc.DocumentElement, Newtonsoft.Json.Formatting.None, true);
 
                 // Parse the JSON back into an object to manipulate the structure
-                var parsedParameters = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonParameters);
-
+                var parsedParameters = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonParameters) ?? new ();
                 // Check for "source_code" with a "#cdata-section" field
                 if (parsedParameters.TryGetValue("source_code", out var sourceCodeNode) && sourceCodeNode is Newtonsoft.Json.Linq.JObject sourceCodeObj)
                 {
