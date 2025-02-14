@@ -79,8 +79,8 @@ public class OpenAIApi : ILLMApi
     {
         try
         {
-               string payloadJson = JsonConvert.SerializeObject(messages, Formatting.Indented);
-             _logger.LogInformation($"{payloadJson}");
+             //  string payloadJson = JsonConvert.SerializeObject(messages, Formatting.Indented);
+             //_logger.LogInformation($"{payloadJson}");
           
             var chatResponse = await _openAiService.ChatCompletion.CreateCompletion(new ChatCompletionCreateRequest
             {
