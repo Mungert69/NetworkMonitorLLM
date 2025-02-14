@@ -299,6 +299,8 @@ public class OpenAIRunner : ILLMRunner
                 _history.AddRange(localHistory);
                 TruncateTokens(_history, serviceObj);
                 await _responseProcessor.UpdateTokensUsed(responseServiceObj);
+                string payloadJson = JsonConvert.SerializeObject(responseServiceObj, Formatting.Indented);
+                _logger.LogInformation($"{payloadJson}");
                 int wordLimit = 5;
                 string truncatedUserInput = string.Join(" ", serviceObj.UserInput.Split(' ').Take(wordLimit));
                 await OnUserMessage?.Invoke(truncatedUserInput, serviceObj);
