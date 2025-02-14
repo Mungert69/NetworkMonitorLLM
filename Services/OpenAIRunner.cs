@@ -128,7 +128,7 @@ public class OpenAIRunner : ILLMRunner
 
 
     }
-#pragma warning restore CS8618
+#pragma warning restore CS8618 
     public async Task StartProcess(LLMServiceObj serviceObj)
     {
         _isStateStarting = true;
@@ -303,7 +303,7 @@ public class OpenAIRunner : ILLMRunner
                 await _responseProcessor.UpdateTokensUsed(responseServiceObj);
                 int wordLimit = 5;
                 string truncatedUserInput = string.Join(" ", serviceObj.UserInput.Split(' ').Take(wordLimit));
-                await OnUserMessage?.Invoke(truncatedUserInput, serviceObj);
+                if (OnUserMessage!=null) await OnUserMessage.Invoke(truncatedUserInput, serviceObj);
             }
 
         }
@@ -426,7 +426,7 @@ public class OpenAIRunner : ILLMRunner
 
                 // Mark the function call as complete
                 responseServiceObj.LlmMessage = "</functioncall-complete>";
-                if (_isPrimaryLlm) _responseProcessor.ProcessLLMOutput(responseServiceObj);
+                if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
 
             }
         }
@@ -435,7 +435,7 @@ public class OpenAIRunner : ILLMRunner
             responseServiceObj.LlmMessage = $"Function Error: No pending function call found for Message ID: {serviceObj.MessageID}\n\n";
 
             // Process the LLM output if it's the primary LLM
-            if (_isPrimaryLlm || _isSystemLlm) _responseProcessor.ProcessLLMOutputError(responseServiceObj);
+            if (_isPrimaryLlm || _isSystemLlm) await  _responseProcessor.ProcessLLMOutputError(responseServiceObj);
 
             _logger.LogWarning($"No pending function call found for Message ID: {serviceObj.MessageID}");
         }
@@ -483,7 +483,7 @@ public class OpenAIRunner : ILLMRunner
 
 
         // Store the original message content
-        string origMessage = choiceMessageCopy.Content;
+        string origMessage = choiceMessageCopy.Content ?? "";
         string pluralCall = "call";
         string plural = "is";
         if (choiceMessage.ToolCalls != null && choiceMessage.ToolCalls.Count > 1) { plural = "are"; pluralCall = "calls"; }
@@ -493,7 +493,7 @@ public class OpenAIRunner : ILLMRunner
         _pendingFunctionCalls.TryAdd(serviceObj.MessageID, choiceMessageCopy);
         //TODO make a copy of the choiceMesage and use that instead 
         var toolResponces = new List<ChatMessage>();
-        foreach (ToolCall fnCall in choiceMessage.ToolCalls)
+        foreach (ToolCall fnCall in choiceMessage!.ToolCalls)
         {
             if (fnCall.FunctionCall != null)
             {
@@ -616,10 +616,10 @@ public class OpenAIRunner : ILLMRunner
         return (true, JsonSerializer.Serialize(new
         {
             invalid_json_error = e?.Message ?? "Json Exception error message missing",
-            path = e.Path,
-            line_number = e.LineNumber,
-            byte_position_in_line = e.BytePositionInLine,
-            hint = $"Check the structure and format of the JSON data. Check the '{e.Path}' parameter value."
+            path = e?.Path ?? "",
+            line_number = e?.LineNumber ,
+            byte_position_in_line = e?.BytePositionInLine,
+            hint = $"Check the structure and format of the JSON data. Check the '{e?.Path}' parameter value."
         }));
 
     }
