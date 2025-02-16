@@ -47,6 +47,7 @@ public class OpenAIRunner : ILLMRunner
     private int _maxTokens = 32000;
     private int _responseTokens = 4000;
     private int _promptTokens = 28000;
+    private int _systemPromptTokens = 0;
     private MLParams _mlParams;
     private int _llmLoad;
     private List<ChatMessage> _systemPrompt = new List<ChatMessage>
@@ -110,7 +111,7 @@ public class OpenAIRunner : ILLMRunner
         if (!_useHF)
         {
             _type = "TurboLLM";
-            _llmApi = new OpenAIApi(_logger, _mlParams, toolsBuilder, _serviceID, _responseProcessor,_openAiService);
+            _llmApi = new OpenAIApi(_logger, _mlParams, toolsBuilder, _serviceID, _responseProcessor, _openAiService);
         }
         else
         {
@@ -136,7 +137,7 @@ public class OpenAIRunner : ILLMRunner
         _responseProcessor.IsManagedMultiFunc = true;
 
         var systemPrompt = _llmApi.GetSystemPrompt(serviceObj.GetClientStartTime().ToString("yyyy-MM-ddTHH:mm:ss"), serviceObj);
-
+        _systemPromptTokens = CalculateTokens(systemPrompt);
         if (_history.Count == 0)
         {
             _history.AddRange(systemPrompt);
@@ -200,7 +201,7 @@ public class OpenAIRunner : ILLMRunner
         if (serviceObj.UserInput == "<|REPLAY_HISTORY|>")
         {
             await ReplayHistory(serviceObj.SessionId);
-            if (SendHistory!=null) await SendHistory.Invoke(serviceObj);
+            if (SendHistory != null) await SendHistory.Invoke(serviceObj);
             _logger.LogInformation($" Replayed history for sessionId {serviceObj.SessionId}");
             return;
         }
@@ -303,7 +304,7 @@ public class OpenAIRunner : ILLMRunner
                 await _responseProcessor.UpdateTokensUsed(responseServiceObj);
                 int wordLimit = 5;
                 string truncatedUserInput = string.Join(" ", serviceObj.UserInput.Split(' ').Take(wordLimit));
-                if (OnUserMessage!=null) await OnUserMessage.Invoke(truncatedUserInput, serviceObj);
+                if (OnUserMessage != null) await OnUserMessage.Invoke(truncatedUserInput, serviceObj);
             }
 
         }
@@ -435,7 +436,7 @@ public class OpenAIRunner : ILLMRunner
             responseServiceObj.LlmMessage = $"Function Error: No pending function call found for Message ID: {serviceObj.MessageID}\n\n";
 
             // Process the LLM output if it's the primary LLM
-            if (_isPrimaryLlm || _isSystemLlm) await  _responseProcessor.ProcessLLMOutputError(responseServiceObj);
+            if (_isPrimaryLlm || _isSystemLlm) await _responseProcessor.ProcessLLMOutputError(responseServiceObj);
 
             _logger.LogWarning($"No pending function call found for Message ID: {serviceObj.MessageID}");
         }
@@ -590,7 +591,7 @@ public class OpenAIRunner : ILLMRunner
     {
         try
         {
-            if (fn==null) throw new Exception(" fn is null");
+            if (fn == null) throw new Exception(" fn is null");
             string input = fn.Arguments ?? "";
             string field = e?.Path?.Replace("$.", "") ?? "";
             if (!_ignoreParameters.Contains(field))
@@ -617,7 +618,7 @@ public class OpenAIRunner : ILLMRunner
         {
             invalid_json_error = e?.Message ?? "Json Exception error message missing",
             path = e?.Path ?? "",
-            line_number = e?.LineNumber ,
+            line_number = e?.LineNumber,
             byte_position_in_line = e?.BytePositionInLine,
             hint = $"Check the structure and format of the JSON data. Check the '{e?.Path}' parameter value."
         }));
@@ -694,7 +695,7 @@ public class OpenAIRunner : ILLMRunner
             history = history.Skip(1).ToList();
 
             // Remove messages until the token count is under the limit
-            while (tokenCount > _promptTokens)
+            while (tokenCount > (_promptTokens-_systemPromptTokens))
             {
                 var firstMessage = history[0];
                 if (firstMessage.ToolCalls != null && firstMessage.ToolCalls.Any())
