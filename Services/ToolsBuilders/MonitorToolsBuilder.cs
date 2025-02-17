@@ -28,6 +28,7 @@ public class MonitorToolsBuilder : IToolsBuilder
     private readonly FunctionDefinition fn_get_agents;
     private readonly FunctionDefinition fn_call_search_expert;
     private readonly FunctionDefinition fn_call_cmd_processor_expert;
+     private readonly FunctionDefinition fn_call_quantum_expert;
 
     public MonitorToolsBuilder(UserInfo userInfo)
     {
@@ -45,6 +46,7 @@ public class MonitorToolsBuilder : IToolsBuilder
         fn_get_agents = BuildGetAgentsFunction();
         fn_call_search_expert = BuildCallSearchWebFunction();
         fn_call_cmd_processor_expert = BuildCallCmdProcessorFunction();
+           fn_call_quantum_expert = BuildCallQuantumFunction();
 
 
         // Assuming these function references are defined in the current context
@@ -244,6 +246,21 @@ public class MonitorToolsBuilder : IToolsBuilder
             .Validate()
             .Build();
     }
+
+    private FunctionDefinition BuildCallQuantumFunction()
+{
+    return new FunctionDefinitionBuilder("call_quantum_expert", "Communicate a quantum security assessment request to a remote quantum cryptography expert LLM. You will craft a detailed message describing the user's request for quantum safety validation, which may involve testing post-quantum cryptographic algorithms, scanning quantum-vulnerable ports, or validating quantum-resistant configurations. The message should specify target servers, ports to test, algorithms to verify (e.g., Kyber512, Dilithium2), and any special parameters. If the quantum expert requires additional information, present these queries to the user in simple terms and assist in formulating appropriate responses.")
+        .AddParameter("message", PropertyDefinition.DefineString("""
+            The message to send to the quantum expert LLM should include:
+            1. Target server(s) or IP addresses to assess
+            2. Specific quantum algorithms to test, or do not specify to test all quantum tls kems.
+            3. Ports to scan for quantum vulnerabilities
+            Example: "Test example.com:443 for Kyber512 support, scan ports 443 and 8443 for quantum-vulnerable services"
+            """))
+        .AddParameter("agent_location", PropertyDefinition.DefineString("The agent location that will execute the quantum assessment. Quantum tests require specialized agents - verify availability first using get_agents."))
+        .Validate()
+        .Build();
+}
 
     private readonly List<ToolDefinition> _tools;
 
