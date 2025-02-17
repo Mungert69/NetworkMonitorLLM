@@ -138,6 +138,7 @@ public class OpenAIRunner : ILLMRunner
         _responseProcessor.IsManagedMultiFunc = true;
 
         var systemPrompt = _llmApi.GetSystemPrompt(serviceObj.GetClientStartTime().ToString("yyyy-MM-ddTHH:mm:ss"), serviceObj);
+        
         _systemPromptTokens = CalculateTokens(systemPrompt);
         if (_history.Count == 0)
         {
@@ -145,12 +146,16 @@ public class OpenAIRunner : ILLMRunner
         }
         else
         {
-            // Remove the first 'systemPrompt.Count' items, if there are enough elements
+             var resumeSystemPrompt=_llmApi.GetResumeSystemPrompt(serviceObj.GetClientStartTime().ToString("yyyy-MM-ddTHH:mm:ss"), serviceObj);
+       
+           /* // Remove the first 'systemPrompt.Count' items, if there are enough elements
             int removeCount = Math.Min(systemPrompt.Count, _history.Count);
             _history.RemoveRange(0, removeCount);
 
             // Insert the new system prompt at the beginning
-            _history.InsertRange(0, systemPrompt);
+            _history.InsertRange(0, resumeSystemPrompt);*/
+            //Now we just add a system prompt with resume information
+            _history.AddRange(resumeSystemPrompt);
         }
 
         _logger.LogInformation($"Started {_type} {_serviceID} Assistant with session id {serviceObj.SessionId} at {serviceObj.GetClientStartTime()}. with CTX size {_maxTokens} and Response tokens {_responseTokens}");
@@ -907,7 +912,7 @@ public class OpenAIRunner : ILLMRunner
             await _openAIRunnerSemaphore.WaitAsync();
 
             // Iterate through the history and replay each message
-            foreach (var message in _history)
+            foreach (var message in _history.Skip(_llmApi.SystemPromptCount))
             {
                 var responseServiceObj = new LLMServiceObj
                 {

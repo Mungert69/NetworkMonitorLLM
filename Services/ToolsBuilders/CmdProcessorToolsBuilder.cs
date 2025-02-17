@@ -15,7 +15,7 @@ using System.IO;
 
 namespace NetworkMonitor.LLM.Services
 {
-    public class CmdProcessorToolsBuilder : IToolsBuilder
+    public class CmdProcessorToolsBuilder : ToolsBuilderBase
     {
         private readonly FunctionDefinition fn_get_cmd_processor_list;
         private readonly FunctionDefinition fn_get_cmd_processor_help;
@@ -24,9 +24,6 @@ namespace NetworkMonitor.LLM.Services
         private readonly FunctionDefinition fn_delete_cmd_processor;
         private readonly FunctionDefinition fn_get_cmd_processor_source_code;
 
-        private readonly List<ToolDefinition> _tools;
-
-        public List<ToolDefinition> Tools => _tools;
 
         public CmdProcessorToolsBuilder(UserInfo userInfo)
         {
@@ -93,7 +90,7 @@ namespace NetworkMonitor.LLM.Services
             };
         }
 
-        public List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
+        public override List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
         {
             // Construct the system content from the original prompt instructions
             string contentPart1 =

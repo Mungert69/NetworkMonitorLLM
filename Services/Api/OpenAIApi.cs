@@ -35,6 +35,9 @@ public class OpenAIApi : ILLMApi
     private readonly string _modelVersion;
     private string _serviceID;
        private ILLMResponseProcessor _responseProcessor;
+          private int _systemPromptCount;
+
+    public int SystemPromptCount { get => _systemPromptCount; }
 
 
     public OpenAIApi(ILogger logger, MLParams mlParams, IToolsBuilder toolsBuilder, string serviceID,ILLMResponseProcessor responseProcessor, OpenAIService openAiService)
@@ -68,12 +71,20 @@ public class OpenAIApi : ILLMApi
     public List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj)
     {
         string footer = PromptFooter();
-        var systemMessages = _toolsBuilder.GetSystemPrompt(currentTime, serviceObj, "TurboLLM");
+        var systemMessages = _toolsBuilder.GetSystemPrompt(currentTime, serviceObj, "TurboLLM") ?? new List<ChatMessage>() {ChatMessage.FromSystem("")};
+         _systemPromptCount=systemMessages.Count;
         systemMessages[0].Content = systemMessages[0].Content + footer;
 
         systemMessages.AddRange(NShotPromptFactory.GetPrompt(_serviceID, _mlParams.XmlFunctionParsing, currentTime, serviceObj, _config));
-
+         _systemPromptCount=systemMessages.Count;
         return systemMessages;
+
+    }
+      public List<ChatMessage> GetResumeSystemPrompt(string currentTime, LLMServiceObj serviceObj)
+    {
+        var resumeSystemMessages = _toolsBuilder.GetResumeSystemPrompt(currentTime, serviceObj, "TurboLLM");
+       
+        return resumeSystemMessages;
 
     }
 

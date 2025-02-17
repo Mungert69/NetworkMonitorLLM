@@ -45,6 +45,9 @@ public class HuggingFaceApi : ILLMApi
 
     private IToolsBuilder _toolsBuilder;
     private ILLMResponseProcessor _responseProcessor;
+    private int _systemPromptCount;
+
+    public int SystemPromptCount { get => _systemPromptCount; }
 
     public HuggingFaceApi(ILogger logger, MLParams mlParams, IToolsBuilder toolsBuilder, string serviceID, ILLMResponseProcessor responseProcessor, bool isStream = false)
     {
@@ -100,13 +103,22 @@ public class HuggingFaceApi : ILLMApi
         string toolsJson = ToolsWrapper(JsonToolsBuilder.BuildToolsJson(_toolsBuilder.Tools));
         // List<ChatMessage> systemPrompt=_toolsBuilder.GetSystemPrompt(currentTime, serviceObj);
         string footer = PromptFooter();
-        var systemMessages = _toolsBuilder.GetSystemPrompt(currentTime, serviceObj, "HugLLM");
+        var systemMessages = _toolsBuilder.GetSystemPrompt(currentTime, serviceObj, "HugLLM") ?? new List<ChatMessage>() {ChatMessage.FromSystem("")};
+
         systemMessages[0].Content = toolsJson + systemMessages[0].Content + footer;
         _logger.LogInformation($" Using SYSTEM prompt\n\n{systemMessages[0].Content}");
         systemMessages.AddRange(NShotPromptFactory.GetPrompt(_serviceID, _isXml, currentTime, serviceObj, _config));
+        _systemPromptCount=systemMessages.Count;
         return systemMessages;
     }
 
+ public List<ChatMessage> GetResumeSystemPrompt(string currentTime, LLMServiceObj serviceObj)
+    {
+        var resumeSystemMessages = _toolsBuilder.GetResumeSystemPrompt(currentTime, serviceObj, "HugLLM");
+       
+        return resumeSystemMessages;
+
+    }
     public async Task<ChatCompletionCreateResponseSuccess> CreateCompletionAsync(List<ChatMessage> messages, int maxTokens, LLMServiceObj serviceObj)
     {
         var toolsJson = JsonToolsBuilder.BuildToolsJson(_toolsBuilder.Tools);
