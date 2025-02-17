@@ -8,4 +8,5 @@ sudo ./publish-eu-search
 sudo ./publish-eu-cmdprocessor
 sudo ./publish-eu-reportdata
 sudo ./publish-eu-blogmonitor
+sudo ./publish-eu-quantum
 sudo ./publish-eu-monitor

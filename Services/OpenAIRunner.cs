@@ -103,6 +103,7 @@ public class OpenAIRunner : ILLMRunner
         if (_serviceID == "nmap") toolsBuilder = new NmapToolsBuilder();
         if (_serviceID == "meta") toolsBuilder = new MetaToolsBuilder();
         if (_serviceID == "search") toolsBuilder = new SearchToolsBuilder();
+          if (_serviceID == "quantum") toolsBuilder = new QuantumToolsBuilder();
 
         if (_serviceID == "blogmonitor") toolsBuilder = new BlogMonitorToolsBuilder(serviceObj.UserInfo);
         if (_serviceID == "reportdata") toolsBuilder = new ReportDataToolsBuilder();
