@@ -64,6 +64,7 @@ public class MonitorToolsBuilder : IToolsBuilder
             fn_call_penetration_expert,
             fn_call_search_expert,
             fn_call_cmd_processor_expert,
+            fn_call_quantum_expert,
             fn_run_busybox
         );
 
