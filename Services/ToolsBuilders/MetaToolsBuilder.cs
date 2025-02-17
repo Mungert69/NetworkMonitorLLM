@@ -11,7 +11,7 @@ using System.Collections.Generic;
 
 namespace NetworkMonitor.LLM.Services
 {
-    public class MetaToolsBuilder : IToolsBuilder
+    public class MetaToolsBuilder : ToolsBuilderBase
     {
         private readonly FunctionDefinition fn_run_metasploit;
         private readonly FunctionDefinition fn_search_metasploit_modules;
@@ -68,11 +68,8 @@ namespace NetworkMonitor.LLM.Services
 
         }
 
-        private readonly List<ToolDefinition> _tools;
 
-        public List<ToolDefinition> Tools => _tools;
-
-        public List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
+        public override List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
         {
             string content = @$"# Metasploit Security Assistant (v2.4)
 **System Time:** {currentTime}

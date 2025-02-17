@@ -11,7 +11,7 @@ using System.Collections.Generic;
 
 namespace NetworkMonitor.LLM.Services
 {
-    public class QuantumToolsBuilder : IToolsBuilder
+    public class QuantumToolsBuilder : ToolsBuilderBase
     {
         private readonly FunctionDefinition fn_test_quantum_safety;
         private readonly FunctionDefinition fn_scan_quantum_ports;
@@ -63,11 +63,7 @@ namespace NetworkMonitor.LLM.Services
             };
         }
 
-        private readonly List<ToolDefinition> _tools;
-
-        public List<ToolDefinition> Tools => _tools;
-
-        public List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
+        public override List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
         {
             string content = @$"# Quantum Security Expert (v1.0)
 **System Time:** {currentTime}

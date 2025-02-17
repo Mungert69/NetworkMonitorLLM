@@ -11,7 +11,7 @@ using System.Collections.Generic;
 
 namespace NetworkMonitor.LLM.Services
 {
-    public class ReportDataToolsBuilder : IToolsBuilder
+    public class ReportDataToolsBuilder : ToolsBuilderBase
     {
 
         public ReportDataToolsBuilder()
@@ -20,11 +20,8 @@ namespace NetworkMonitor.LLM.Services
             _tools = new List<ToolDefinition>();
         }
 
-        private readonly List<ToolDefinition> _tools;
 
-        public List<ToolDefinition> Tools => _tools;
-
-        public List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
+        public override List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
         {
             string content = @"You are a network monitoring analysis expert. Your task is to provide a high-level JSON summary of the input report data, focusing on 'Performance Assessment' and 'Expert Recommendations' in a structured and objective manner.
 

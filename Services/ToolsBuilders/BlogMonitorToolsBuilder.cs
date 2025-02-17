@@ -72,4 +72,18 @@ Instructions for Generating a Blog-Style Conversation Demonstrating Function Cal
     return chatMessages;
 }
 
+  public override List<ChatMessage> GetResumeSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
+        {
+           
+            string content = $"The latest time is {currentTime}";
+
+            var chatMessage = new ChatMessage()
+            {
+                Role = "system",
+                Content = content
+            };
+
+            return new List<ChatMessage> { chatMessage };
+        }
+
 }

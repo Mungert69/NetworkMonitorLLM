@@ -12,7 +12,7 @@ using System.Net.Mime;
 
 namespace NetworkMonitor.LLM.Services
 {
-    public class NmapToolsBuilder : IToolsBuilder
+    public class NmapToolsBuilder : ToolsBuilderBase
     {
         private readonly FunctionDefinition fn_run_nmap;
         private readonly FunctionDefinition fn_run_openssl;
@@ -45,11 +45,8 @@ namespace NetworkMonitor.LLM.Services
             };
         }
 
-        private readonly List<ToolDefinition> _tools;
-
-        public List<ToolDefinition> Tools => _tools;
-
-        public List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
+      
+        public override List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
         {
             string content =   @"
 ### Error Recovery:

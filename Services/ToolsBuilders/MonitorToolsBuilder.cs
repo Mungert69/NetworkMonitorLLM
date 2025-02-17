@@ -13,7 +13,7 @@ using System.Collections.Generic;
 using System.Net.Mime;
 
 namespace NetworkMonitor.LLM.Services;
-public class MonitorToolsBuilder : IToolsBuilder
+public class MonitorToolsBuilder : ToolsBuilderBase
 {
     private readonly FunctionDefinition fn_are_functions_running;
     private readonly FunctionDefinition fn_cancel_functions;
@@ -263,11 +263,7 @@ public class MonitorToolsBuilder : IToolsBuilder
         .Build();
 }
 
-    private readonly List<ToolDefinition> _tools;
-
-    public List<ToolDefinition> Tools => _tools;
-
-    public virtual List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
+    public override  List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
     {
         string content = $"You are a network monitoring and security assistant. Use the tools where necessary to assist the user. Your name is {llmType}, and you are faster than FreeLLM.";
 
@@ -290,4 +286,31 @@ public class MonitorToolsBuilder : IToolsBuilder
         return chatMessages;
     }
 
+       public override List<ChatMessage> GetResumeSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
+        {
+            string userStr = "";
+
+            if (serviceObj.UserInfo.UserID != "default")
+            {
+                if (!string.IsNullOrEmpty(serviceObj.UserInfo.Name)) 
+                {
+                    userStr = $" The user's name is {serviceObj.UserInfo.Name}.";
+                }
+            }
+            else
+            {
+                userStr = " Remind the user that if they login, they get access to more features."; 
+            }
+
+            string content = $"A new session has started. Some time has passed since the last user's interaction. The latest time is {currentTime}. {userStr} Welcome the user back and give them a summary of what you did in the last session.";
+
+            var chatMessage = new ChatMessage()
+            {
+                Role = "system",
+                Content = content
+            };
+
+            return new List<ChatMessage> { chatMessage };
+        }
+   
 }

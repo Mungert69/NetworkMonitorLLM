@@ -11,7 +11,7 @@ using System.Collections.Generic;
 
 namespace NetworkMonitor.LLM.Services
 {
-    public class SearchToolsBuilder : IToolsBuilder
+    public class SearchToolsBuilder : ToolsBuilderBase
     {
 
         private readonly FunctionDefinition fn_run_search_web;
@@ -51,12 +51,9 @@ namespace NetworkMonitor.LLM.Services
             };
         }
 
-        private readonly List<ToolDefinition> _tools;
-
-        public List<ToolDefinition> Tools => _tools;
 
 
-        public List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
+        public override List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
         {
             string content = @"You are an AI-powered web research assistant specializing in gathering and analyzing information from the internet. Your primary responsibility is to help users by performing web searches, crawling relevant web pages, and providing comprehensive insights based on the collected data.
 
