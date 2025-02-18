@@ -23,15 +23,20 @@ namespace NetworkMonitor.LLM.Services
 
     public abstract class ToolsBuilderBase : IToolsBuilder
     {
-        protected  List<ToolDefinition> _tools;
+        protected List<ToolDefinition> _tools;
         public List<ToolDefinition> Tools => _tools;
+
+        public void ParseToolsFromJson(string json)
+        {
+            _tools = ToolDefinitionParser.ParseFromJson(json);
+        }
 
         // Abstract method must be inside an abstract class
         public abstract List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType);
 
         public virtual List<ChatMessage> GetResumeSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
         {
-           
+
             string content = $"The latest time is {currentTime}";
 
             var chatMessage = new ChatMessage()
