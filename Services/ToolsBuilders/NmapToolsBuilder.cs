@@ -84,12 +84,10 @@ Nmap Errors:
 
 - OpenSSL Errors:
     Connection Failed:
-      First try: Verify that target follows the format <hostname>:<port> (e.g., example.com:443).
-      Second try: Use the -servername option (e.g., -servername example.com).
-      Last resort: Try a different agent_location.
+      Verify that target follows the format <hostname>:<port> (e.g., example.com:443).
 
 - Certificate Validation Error:
-   First try: Use `-partial_chain` to allow incomplete chains.
+   Try using `-partial_chain` to allow incomplete chains.
 
 - Protocol Handshake Failed:
    First try: Specify protocol (e.g., `-tls1_2`).
