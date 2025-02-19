@@ -49,57 +49,57 @@ namespace NetworkMonitor.LLM.Services
         public override List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
         {
             string content =   @"
-### Error Recovery:
-#### Nmap Errors:
+Error Recovery:
+Nmap Errors:
 
- **Failed to resolve**
+ Failed to resolve
  - check the target format
-  * DMake sure hosts have a space between them
-  * Check the host and port are seperate hostname -p port
+    Make sure hosts have a space between them
+    Check the host and port are seperate hostname -p port
 
-- **Timeout**:
-  * Add `-Pn` to `scan_options` (skip host discovery).
-  * Reduce timing with `-T4` → `-T3` → `-T2`.
+- Timeout:
+   Add `-Pn` to `scan_options` (skip host discovery).
+   Reduce timing with `-T4` → `-T3` → `-T2`.
 
-- **Root Permission Needed**:
-  * First try: Replace `-sS` with `-sT` (TCP connect scan).
-  * Last resort: Use non-root options:
+- Root Permission Needed:
+   First try: Replace `-sS` with `-sT` (TCP connect scan).
+   Last resort: Use non-root options:
     - Remove `-O` (OS detection).
     - Add `--version-intensity 2` (reduce probe intensity).
 
-- **Blocked**:
-  * First try: Switch `agent_location` to another region.
-  * Second try: Add `-f` (fragment packets) to `scan_options`.
-  * Last resort: Add `--data-length 16` (randomize packet size).
+- Blocked:
+   First try: Switch `agent_location` to another region.
+   Second try: Add `-f` (fragment packets) to `scan_options`.
+   Last resort: Add `--data-length 16` (randomize packet size).
 
-- **Truncated Output**:
-  * First try: `page=page+1`.
-  * Second try: `number_lines=number_lines+20`.
-  * Last resort: Add `-d` (less verbose) to `scan_options`.
+- Truncated Output:
+   First try: `page=page+1`.
+   Second try: `number_lines=number_lines+20`.
+   Last resort: Add `-d` (less verbose) to `scan_options`.
 
-- **Connection Refused**:
-  * Add `-Pn` to `scan_options` (treat hosts as online).
-  * Add `--max-retries 2` to `scan_options`.
-  * Reduce timing with `-T4` → `-T2`.
+- Connection Refused:
+   Add `-Pn` to `scan_options` (treat hosts as online).
+   Add `--max-retries 2` to `scan_options`.
+   Reduce timing with `-T4` → `-T2`.
 
-#### OpenSSL Errors:
-- **Connection Failed**:
-  * First try: Verify `target` format (e.g., `example.com:443`
-  * Second try: Use `-servername` option (e.g., `-servername example.com`).
-  * Last resort: Try a different `agent_location`.
+- OpenSSL Errors:
+    Connection Failed:
+      First try: Verify that target follows the format <hostname>:<port> (e.g., example.com:443).
+      Second try: Use the -servername option (e.g., -servername example.com).
+      Last resort: Try a different agent_location.
 
-- **Certificate Validation Error**:
-  * First try: Use `-partial_chain` to allow incomplete chains.
+- Certificate Validation Error:
+   First try: Use `-partial_chain` to allow incomplete chains.
 
-- **Protocol Handshake Failed**:
-  * First try: Specify protocol (e.g., `-tls1_2`).
-  * Second try: Add `-no_ssl3 -no_tls1 -no_tls1_1` to disable weak protocols.
-  * Last resort: Use `-bugs` option to work around server bugs.
+- Protocol Handshake Failed:
+   First try: Specify protocol (e.g., `-tls1_2`).
+   Second try: Add `-no_ssl3 -no_tls1 -no_tls1_1` to disable weak protocols.
+   Last resort: Use `-bugs` option to work around server bugs.
 
-- **Truncated Output**:
-  * First try: Increase `number_lines` by 10 (e.g., 50 → 60 → 70).
-  * Second try: Add `-showcerts` to capture full certificate chain.
-  * Last resort: Use `-msg` to display raw protocol messages.
+- Truncated Output:
+   First try: Increase `number_lines` by 10 (e.g., 50 → 60 → 70).
+   Second try: Add `-showcerts` to capture full certificate chain.
+   Last resort: Use `-msg` to display raw protocol messages.
 
 run_namp Help:
 
