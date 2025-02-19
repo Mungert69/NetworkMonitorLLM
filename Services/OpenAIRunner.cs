@@ -85,6 +85,9 @@ public class OpenAIRunner : ILLMRunner
 
     public string Type { get => _type; set => _type = value; }
 
+    private readonly Queue<(string FunctionName, string ArgumentsJson)> _recentFunctionCalls = new Queue<(string, string)>();
+    private const int MaxRecentFunctionCalls = 5;
+
 #pragma warning disable CS8618
     public OpenAIRunner(ILogger<OpenAIRunner> logger, ILLMResponseProcessor responseProcessor, OpenAIService openAiService, ISystemParamsHelper systemParamsHelper, LLMServiceObj serviceObj, SemaphoreSlim? openAIRunnerSemaphore, IAudioGenerator audioGenerator, bool useHF, List<ChatMessage> history)
     {
@@ -103,7 +106,7 @@ public class OpenAIRunner : ILLMRunner
         if (_serviceID == "nmap") toolsBuilder = new NmapToolsBuilder();
         if (_serviceID == "meta") toolsBuilder = new MetaToolsBuilder();
         if (_serviceID == "search") toolsBuilder = new SearchToolsBuilder();
-          if (_serviceID == "quantum") toolsBuilder = new QuantumToolsBuilder();
+        if (_serviceID == "quantum") toolsBuilder = new QuantumToolsBuilder();
 
         if (_serviceID == "blogmonitor") toolsBuilder = new BlogMonitorToolsBuilder(serviceObj.UserInfo);
         if (_serviceID == "reportdata") toolsBuilder = new ReportDataToolsBuilder();
@@ -138,7 +141,7 @@ public class OpenAIRunner : ILLMRunner
         _responseProcessor.IsManagedMultiFunc = true;
 
         var systemPrompt = _llmApi.GetSystemPrompt(serviceObj.GetClientStartTime().ToString("yyyy-MM-ddTHH:mm:ss"), serviceObj);
-        
+
         _systemPromptTokens = CalculateTokens(systemPrompt);
         if (_history.Count == 0)
         {
@@ -146,14 +149,14 @@ public class OpenAIRunner : ILLMRunner
         }
         else
         {
-             var resumeSystemPrompt=_llmApi.GetResumeSystemPrompt(serviceObj.GetClientStartTime().ToString("yyyy-MM-ddTHH:mm:ss"), serviceObj);
-       
-           /* // Remove the first 'systemPrompt.Count' items, if there are enough elements
-            int removeCount = Math.Min(systemPrompt.Count, _history.Count);
-            _history.RemoveRange(0, removeCount);
+            var resumeSystemPrompt = _llmApi.GetResumeSystemPrompt(serviceObj.GetClientStartTime().ToString("yyyy-MM-ddTHH:mm:ss"), serviceObj);
 
-            // Insert the new system prompt at the beginning
-            _history.InsertRange(0, resumeSystemPrompt);*/
+            /* // Remove the first 'systemPrompt.Count' items, if there are enough elements
+             int removeCount = Math.Min(systemPrompt.Count, _history.Count);
+             _history.RemoveRange(0, removeCount);
+
+             // Insert the new system prompt at the beginning
+             _history.InsertRange(0, resumeSystemPrompt);*/
             //Now we just add a system prompt with resume information
             _history.AddRange(resumeSystemPrompt);
         }
@@ -500,12 +503,14 @@ public class OpenAIRunner : ILLMRunner
         _pendingFunctionCalls.TryAdd(serviceObj.MessageID, choiceMessageCopy);
         //TODO make a copy of the choiceMesage and use that instead 
         var toolResponces = new List<ChatMessage>();
+        bool isDuplicateSet = false;
+        bool isDuplicate = false;
         foreach (ToolCall fnCall in choiceMessage!.ToolCalls)
         {
             if (fnCall.FunctionCall != null)
             {
                 var funcName = fnCall.FunctionCall.Name;
-                //var funcArgs = fnCall.FunctionCall.Arguments;
+                var argumentsJson = fnCall.FunctionCall.Arguments;
                 var funcId = fnCall.Id;
                 await HandleFunctionCallAsync(serviceObj, fnCall, responseServiceObj, assistantChatMessage);
                 await Task.Delay(500);
@@ -513,6 +518,15 @@ public class OpenAIRunner : ILLMRunner
                 toolResponse.Role = "tool";
                 toolResponse.Name = funcName;
                 toolResponces.Add(toolResponse);
+
+                if (!isDuplicateSet) isDuplicate = _recentFunctionCalls.Any(f =>
+                f.FunctionName == funcName &&
+                f.ArgumentsJson == argumentsJson);
+
+                if (!isDuplicateSet && isDuplicate) isDuplicateSet = true;
+                _recentFunctionCalls.Enqueue((funcName, argumentsJson));
+
+
             }
         }
         choiceMessage.Content = origMessage;
@@ -527,7 +541,17 @@ public class OpenAIRunner : ILLMRunner
             localHistory.Add(assistantResponse);
         }
         else _pendingFunctionCalls.TryAdd(serviceObj.MessageID, choiceMessage);
-
+        if (isDuplicate)
+        {
+            _logger.LogWarning($"Possible loop detected when calling functions");
+            var duplicateMessage = ChatMessage.FromSystem(
+                $" You are possibly stuck in a loop. Stop calling functions! Take a summary of what you have been doing and give the user feedback before continuing.");
+            localHistory.Add(duplicateMessage);
+        }
+        while (_recentFunctionCalls.Count > MaxRecentFunctionCalls)
+        {
+            _recentFunctionCalls.Dequeue(); // Maintain queue size
+        }
         return;
     }
     private async Task HandleFunctionCallAsync(LLMServiceObj serviceObj, ToolCall fnCall, LLMServiceObj responseServiceObj, ChatMessage assistantChatMessage)
@@ -701,7 +725,7 @@ public class OpenAIRunner : ILLMRunner
             history = history.Skip(1).ToList();
 
             // Remove messages until the token count is under the limit
-            while (tokenCount > (_promptTokens-_systemPromptTokens))
+            while (tokenCount > (_promptTokens - _systemPromptTokens))
             {
                 var firstMessage = history[0];
                 if (firstMessage.ToolCalls != null && firstMessage.ToolCalls.Any())
