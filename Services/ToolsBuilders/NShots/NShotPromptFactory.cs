@@ -452,7 +452,7 @@ namespace NetworkMonitor.Connection
             }
 
             // Single N-shot example: Request user info
-            string assistantStr = string.Format(config.FunctionBuilder, "call_monitor_llm", @"{""message"": ""What's my user info?""}");
+            string assistantStr = string.Format(config.FunctionBuilder, "call_monitor_sys", @"{""message"": ""What's my user info?""}");
 
             AddAssistantMessageWithToolCall(
                 messages,
@@ -461,12 +461,12 @@ namespace NetworkMonitor.Connection
                 // assistantPrompt (function call response)
                 funcResponse,
                 // functionName
-                "call_monitor_llm"
+                "call_monitor_sys"
             );
 
 
 
-            string assistantStr2 = string.Format(config.FunctionBuilder, "call_monitor_llm", @"{""message"": ""What can you do?""}");
+            string assistantStr2 = string.Format(config.FunctionBuilder, "call_monitor_sys", @"{""message"": ""What can you do?""}");
             string funcResponse2 = @"I am a network monitoring and security assistant designed to help you manage and secure your network infrastructure. Here's what I can do:
 
 1. **Host Monitoring**  
@@ -521,7 +521,7 @@ If you need help with any of these tasks, just let me know! You can also visit h
                 // assistantPrompt (function call response)
                 funcResponse2,
                 // functionName
-                "call_monitor_llm"
+                "call_monitor_sys"
             );
 
 

@@ -295,7 +295,7 @@ public class LLMService : ILLMService
             {
                 return await SetResultMessageAsync(
                     llmServiceObj,
-                    "Error: The assistant has no running process. Try starting a new chat.",
+                    $"Error: SessionId {llmServiceObj.SessionId} has no running process. Try starting a new chat.",
                     false,
                     "llmServiceMessage"
                 );
