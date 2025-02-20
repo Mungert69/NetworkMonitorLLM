@@ -16,16 +16,16 @@ namespace NetworkMonitor.LLM.Services
         // Factory method to return the appropriate prompt by name
         public static List<ChatMessage> GetPrompt(string name, bool isXml = false, params object[] args)
         {
-           if (isXml) name += "xml";
+            if (isXml) name += "xml";
             switch (name.ToLower())
             {
                 case "cmdprocessorxml":
                     return GetCmdProcessorXml(args);
-                // Add more cases here for additional prompt types
-                // case "anotherprompt":
-                //     return GetAnotherPrompt();
+                case "monitor" :
+                    return GetUserSimulatorPrompt(args);
                 default:
                     return GetDefaultPrompt(args);
+
             }
         }
 
@@ -44,7 +44,7 @@ namespace NetworkMonitor.LLM.Services
         /// <param name="toolCallType">"function" by default, can be changed if needed.</param>
         private static void AddAssistantMessageWithToolCall(
             List<ChatMessage> messages,
-            string userPrompt,
+            string? userPrompt,
             string assistantPrompt,
             string toolResponse,
             string functionName,
@@ -52,7 +52,7 @@ namespace NetworkMonitor.LLM.Services
             string toolCallType = "function")
         {
             // 1) Add user message
-            messages.Add(ChatMessage.FromUser(userPrompt));
+           if (userPrompt!=null) messages.Add(ChatMessage.FromUser(userPrompt));
 
             // 2) Create assistant message with a ToolCall
             var toolCallId = "call_" + StringUtils.GetNanoid();
@@ -389,9 +389,9 @@ namespace NetworkMonitor.Connection
                           $"They don't need to be logged in, but to add hosts they will need to supply an email address. " +
                           $"All other functions can be called with or without an email address.";
             }
-            string parameters=@"{""detail_response"" : false}";
-            string assistantStr=  string.Format(config.FunctionBuilder, "get_user_info", parameters);
-          
+            string parameters = @"{""detail_response"" : false}";
+            string assistantStr = string.Format(config.FunctionBuilder, "get_user_info", parameters);
+
             // Add messages using the helper method
             AddAssistantMessageWithToolCall(
                 messages,
@@ -413,9 +413,117 @@ namespace NetworkMonitor.Connection
                 "get_user_info"
             );
 
-              messages.Add(ChatMessage.FromAssistant(
-                content
-            ));
+            messages.Add(ChatMessage.FromAssistant(
+              content
+          ));
+
+            return messages;
+        }
+        private static List<ChatMessage> GetUserSimulatorPrompt(params object[] args)
+        {
+            var messages = new List<ChatMessage>();
+
+            if (args.Length < 3)
+            {
+                throw new ArgumentException("GetUserSimulatorPrompt requires at least three arguments: current time, LLMServiceObj instance, and LLMConfig.");
+            }
+
+            // Extract arguments
+            string currentTime = args[0]?.ToString() ?? "unknown";
+            var serviceObj = args.Length > 1 && args[1] is LLMServiceObj obj ? obj : new LLMServiceObj();
+            var config = args.Length > 2 && args[2] is LLMConfig lmobj ? lmobj : new LLMConfig();
+
+            // Initialize the content variable
+            string funcResponse;
+
+            // Determine if the user is logged in and generate content accordingly
+            if (serviceObj.IsUserLoggedIn)
+            {
+                funcResponse = $"The user logged in at {currentTime} with email {serviceObj.UserInfo.Email}. " +
+                          $"Users account type is {serviceObj.UserInfo.AccountType}. They have {serviceObj.UserInfo.TokensUsed} available tokens. " +
+                          $"Remind the user that upgrading accounts gives more tokens and access to more functions. " +
+                          $"See https://freenetworkmonitor.click/subscription for details.";
+            }
+            else
+            {
+                funcResponse = $"The user is not logged in, the time is {currentTime}. " +
+                          $"They don't need to be logged in, but to add hosts they will need to supply an email address. " +
+                          $"All other functions can be called with or without an email address.";
+            }
+
+            // Single N-shot example: Request user info
+            string assistantStr = string.Format(config.FunctionBuilder, "call_monitor_llm", @"{""message"": ""What's my user info?""}");
+
+            AddAssistantMessageWithToolCall(
+                messages,
+                null,
+                assistantStr,
+                // assistantPrompt (function call response)
+                funcResponse,
+                // functionName
+                "call_monitor_llm"
+            );
+
+
+
+            string assistantStr2 = string.Format(config.FunctionBuilder, "call_monitor_llm", @"{""message"": ""What can you do?""}");
+            string funcResponse2 = @"I am a network monitoring and security assistant designed to help you manage and secure your network infrastructure. Here's what I can do:
+
+1. **Host Monitoring**  
+   - Add, edit, and monitor hosts for uptime, SSL certificates, and more.  
+   - Monitor endpoints like HTTP, HTTPS, DNS, SMTP, and ICMP.  
+   - Perform simulated user crawls to test website performance.  
+
+2. **Security Assessments**  
+   - Run vulnerability scans using Nmap.  
+   - Test SSL/TLS configurations for weaknesses.  
+   - Perform penetration testing with Metasploit.  
+
+3. **Quantum Security**  
+   - Validate quantum-safe encryption on your servers.  
+   - Test post-quantum cryptographic algorithms like Kyber512 and Dilithium2.  
+
+4. **Network Diagnostics**  
+   - Run BusyBox commands for network troubleshooting (e.g., ping, ifconfig).  
+   - Gather real-time network performance data.  
+
+5. **Custom Command Processors**  
+   - Create, manage, and run custom .NET command processors on your agents.  
+   - View and modify source code for custom processors.  
+
+6. **Search and Information Retrieval**  
+   - Perform web searches and retrieve information from URLs.  
+   - Read and summarize web page content.  
+
+7. **Alert Management**  
+   - Configure email alerts for host downtime or security issues.  
+   - Update alert settings and notification preferences.  
+
+8. **Agent Management**  
+   - Retrieve details about monitoring agents.  
+   - Assign tasks to specific agents based on location or capability.  
+
+9. **User and Account Management**  
+   - Provide user information, including account type and token usage.  
+   - Guide users on upgrading their accounts for additional features.  
+
+10. **Real-time Monitoring and Reporting**  
+    - Provide detailed monitoring data for hosts.  
+    - Generate reports on network performance and security status.  
+
+If you need help with any of these tasks, just let me know! You can also visit https://freenetworkmonitor.click/subscription to upgrade your account and unlock more features.";
+
+
+            AddAssistantMessageWithToolCall(
+                messages,
+                null,
+                assistantStr2,
+                // assistantPrompt (function call response)
+                funcResponse2,
+                // functionName
+                "call_monitor_llm"
+            );
+
 
             return messages;
         }

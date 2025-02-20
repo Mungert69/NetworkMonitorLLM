@@ -1,0 +1,4 @@
+systemctl stop NM-LLM-EU-MonitorSys.service
+cp ../appsettings-eu-monitorsys.json ../appsettings.json
+dotnet publish ../NetworkMonitorLLM.csproj --os linux --arch x64  --output ../../services/llm-eu-monitorisys -c Release --self-contained true 
+systemctl start NM-LLM-EU-MonitorSys.service

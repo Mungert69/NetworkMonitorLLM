@@ -1,2 +1,2 @@
 cd publish-scripts
-sudo ./publish-dev
+sudo ./publish

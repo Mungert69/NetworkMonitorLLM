@@ -5,4 +5,5 @@ sudo ./publish-eu-cmdprocessor
 #sudo ./publish-eu-reportdata-dev
 sudo ./publish-eu-blogmonitor
 sudo ./publish-eu-quantum
+sudo ./publish-eu-monitorsys
 sudo ./publish-eu-monitor
