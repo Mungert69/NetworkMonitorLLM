@@ -101,8 +101,9 @@ public class OpenAIRunner : ILLMRunner
 
         _useHF = useHF;
         IToolsBuilder? toolsBuilder = null;
-        if (_serviceID == "monitor") toolsBuilder = new UserToolsBuilder(serviceObj.UserInfo);
+        if (_serviceID == "monitor") toolsBuilder = new MonitorToolsBuilder(serviceObj.UserInfo);
         if (_serviceID == "monitorsys") toolsBuilder = new MonitorToolsBuilder(serviceObj.UserInfo);
+        if (_serviceID == "user") toolsBuilder = new UserToolsBuilder(serviceObj.UserInfo);
        
         if (_serviceID == "cmdprocessor") toolsBuilder = new CmdProcessorToolsBuilder(serviceObj.UserInfo);
         if (_serviceID == "nmap") toolsBuilder = new NmapToolsBuilder();

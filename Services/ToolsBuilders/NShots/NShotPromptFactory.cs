@@ -21,7 +21,7 @@ namespace NetworkMonitor.LLM.Services
             {
                 case "cmdprocessorxml":
                     return GetCmdProcessorXml(args);
-                case "monitor" :
+                case "user" :
                     return GetUserSimulatorPrompt(args);
                 default:
                     return GetDefaultPrompt(args);
