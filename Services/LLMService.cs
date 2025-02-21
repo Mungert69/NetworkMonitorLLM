@@ -83,7 +83,7 @@ public class LLMService : ILLMService
                     return llmServiceObj;
                 }
 
-                string extraMessage = llmServiceObj.LLMRunnerType == "FreeLLM"
+                string extraMessage = llmServiceObj.LLMRunnerType == "TestLLM"
                     ? $" , this can take up to {_mlParams.LlmSystemPromptTimeout} seconds..."
                     : "";
                 await SetResultMessageAsync(llmServiceObj, $"Starting {llmServiceObj.LLMRunnerType} {_serviceID} Assistant{extraMessage}", true, "llmServiceMessage", true);

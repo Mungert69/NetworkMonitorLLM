@@ -30,7 +30,7 @@ public class LLMProcessRunner : ILLMRunner
     private int _llmLoad;
     private SemaphoreSlim _processRunnerSemaphore;
 
-    public string Type { get => "FreeLLM"; }
+    public string Type { get => "TestLLM"; }
     private bool _isStateReady = false;
     private bool _isStateStarting = false;
     private bool _isStateFailed = false;
@@ -69,7 +69,7 @@ public class LLMProcessRunner : ILLMRunner
         _audioGenerator= audioGenerator;
         _cpuUsageMonitor=cpuUsageMonitor;
         _idleCheckTimer = new Timer(async _ => await CheckAndTerminateIdleProcesses(), null, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
-        _isEnabled = _mlParams.StartThisFreeLLM;
+        _isEnabled = _mlParams.StartThisTestLLM;
     }
 
 
@@ -100,7 +100,7 @@ public class LLMProcessRunner : ILLMRunner
         string permissionSuffix = "";
         // Old way of doing permission is to load different context. new way is to let the api deal with it
         /*string permissionSuffix = "_free";
-        if (!_mlParams.StartThisFreeLLM) permissionSuffix = AccountTypeFactory.GetPermissionSuffix(
+        if (!_mlParams.StartThisTestLLM) permissionSuffix = AccountTypeFactory.GetPermissionSuffix(
             _startServiceoObj.UserInfo.AccountType,
             _startServiceoObj.LlmSessionStartName,
             _startServiceoObj.LlmChainStartName
@@ -132,11 +132,11 @@ public class LLMProcessRunner : ILLMRunner
     public async Task StartProcess(LLMServiceObj serviceObj)
     {
         if (!_cpuUsageMonitor.IsMemoryAvailable(6)) {
-               throw new Exception(" Free LLM is running low on memory resources. Please switch to TurboLLM or HugLLM.");
+               throw new Exception(" Test LLM is running low on memory resources. Please switch to TurboLLM");
         }
          _config = LLMConfigFactory.GetConfig(_mlParams.LlmVersion);
 
-        if (!_mlParams.StartThisFreeLLM || _isStateStarting) return;
+        if (!_mlParams.StartThisTestLLM || _isStateStarting) return;
         _isStateStarting = true;
         _isStateReady = false;
         _isStateFailed = false;
@@ -156,7 +156,7 @@ public class LLMProcessRunner : ILLMRunner
         {
             _responseProcessor.IsManagedMultiFunc = false;
             if (_processes.ContainsKey(serviceObj.SessionId))
-                throw new Exception("FreeLLM Assistant already running");
+                throw new Exception("TestLLM Assistant already running");
             _logger.LogInformation($" LLM Service : Start Process for sessionsId {serviceObj.SessionId}");
             ProcessWrapper process;
             process = new ProcessWrapper();
@@ -364,7 +364,7 @@ public class LLMProcessRunner : ILLMRunner
         }
         if (!isReady)
         {
-            throw new Exception("FreeLLM Assistant is currently handling a high volume of requests. Please try again later or consider switching to TurboLLM Assistant for a super fast uninterrupted service.");
+            throw new Exception("TestLLM Assistant is currently handling a high volume of requests. Please try again later or consider switching to TurboLLM Assistant for a super fast uninterrupted service.");
         }
         _logger.LogInformation($" LLMService Process Started ");
     }
@@ -427,7 +427,7 @@ public class LLMProcessRunner : ILLMRunner
             return;
         }
         if (serviceObj.UserInput.Contains("<|START_AUDIO|>") || serviceObj.UserInput.Contains("<|STOP_AUDIO|>")) {
-               throw new Exception($"Audio is not available for the FreeLLM. Switch to another LLM if you need audio output.");
+               throw new Exception($"Audio is not available for the TestLLM. Switch to another LLM if you need audio output.");
          
         }
         _isStateReady = false;
@@ -450,11 +450,11 @@ public class LLMProcessRunner : ILLMRunner
             if (process == null || process.HasExited)
             {
                 _isStateFailed = true;
-                throw new InvalidOperationException("FreeLLM Assistant is not running.  Try reloading the Assistant or refreshing the page. If the problems persists contact support@freenetworkmontior.click");
+                throw new InvalidOperationException("TestLLM Assistant is not running.  Try reloading the Assistant or refreshing the page. If the problems persists contact support@freenetworkmontior.click");
             }
             if (_isStateFailed)
             {
-                throw new InvalidOperationException("FreeLLM Assistant is in a failed state.  Try reloading the Assistant or refreshing the page. If the problems persists contact support@freenetworkmontior.click");
+                throw new InvalidOperationException("TestLLM Assistant is in a failed state.  Try reloading the Assistant or refreshing the page. If the problems persists contact support@freenetworkmontior.click");
             }
             process.LastActivity = DateTime.UtcNow;
             ITokenBroadcaster? tokenBroadcaster;
@@ -579,7 +579,7 @@ public class LLMProcessRunner : ILLMRunner
                 await RemoveProcess(serviceObj.SessionId);
                 _isStateFailed = true;
                 _isStateReady = true;
-                throw new Exception("FreeLLM Assistant is currently handling a high volume of requests. Please try again later or consider switching to TurboLLM Assistant for a super fast uninterrupted service.");
+                throw new Exception("TestLLM Assistant is currently handling a high volume of requests. Please try again later or consider switching to TurboLLM Assistant for a super fast uninterrupted service.");
 
             }
         }

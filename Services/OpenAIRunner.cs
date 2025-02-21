@@ -121,7 +121,7 @@ public class OpenAIRunner : ILLMRunner
         }
         else
         {
-            _type = "HugLLM";
+            _type = "FreeLLM";
             _isStream = _mlParams.IsStream;
             _llmApi = new HuggingFaceApi(_logger, _mlParams, toolsBuilder, _serviceID, _responseProcessor, _isStream);
         }
