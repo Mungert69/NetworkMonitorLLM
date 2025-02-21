@@ -283,7 +283,7 @@ public class OpenAIRunner : ILLMRunner
             if (completionSuccess)
             {
                 int tokensUsed = completionResult.Usage.TotalTokens;
-                if (_useHF) tokensUsed = tokensUsed / 5;
+                if (_useHF) tokensUsed = 0;
                 _logger.LogInformation($"TOKENS USED {tokensUsed} useHF is set to {_useHF}");
 
                 responseServiceObj.TokensUsed = completionResult.Usage.TotalTokens;
