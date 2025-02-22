@@ -151,8 +151,8 @@ public class ChatResponseBuilder
             Id = responseObject.Id,
             Model = responseObject.Model
         };
-        string payloadJson = JsonConvert.SerializeObject(chatResponse, Formatting.Indented);
-        _logger.LogInformation($"{payloadJson}");
+        //string payloadJson = JsonConvert.SerializeObject(chatResponse, Formatting.Indented);
+        //_logger.LogInformation($"{payloadJson}");
         return chatResponse;
     }
 
