@@ -276,6 +276,7 @@ public class OpenAIRunner : ILLMRunner
 
 
             var currentHistory = new List<ChatMessage>(_history.Concat(localHistory));
+            TruncateTokens(_history, serviceObj);
             var completionSuccessResult = await _llmApi.CreateCompletionAsync(currentHistory, _responseTokens, serviceObj);
             var completionResult = completionSuccessResult.Response;
             var completionSuccess = completionSuccessResult.Success;
@@ -312,7 +313,6 @@ public class OpenAIRunner : ILLMRunner
             if (localHistory.Count > 0)
             {
                 _history.AddRange(localHistory);
-                TruncateTokens(_history, serviceObj);
                 await _responseProcessor.UpdateTokensUsed(responseServiceObj);
                 int wordLimit = 5;
                 string truncatedUserInput = string.Join(" ", serviceObj.UserInput.Split(' ').Take(wordLimit));
