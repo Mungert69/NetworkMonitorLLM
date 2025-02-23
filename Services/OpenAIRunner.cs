@@ -684,6 +684,7 @@ public class OpenAIRunner : ILLMRunner
                         }
 
                         responseServiceObj.LlmMessage = $"</audio>{audioFileUrl}";
+                        _logger.LogInformation(responseServiceObj.LlmMessage);
                         await _responseProcessor.ProcessLLMOutput(responseServiceObj);
 
                     }
