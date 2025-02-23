@@ -162,7 +162,7 @@ namespace NetworkMonitor.LLM.Services
             {
                 using var client = new HttpClient
                 {
-                    Timeout = TimeSpan.FromSeconds(5) // Set the timeout to 5 seconds
+                    Timeout = TimeSpan.FromSeconds(60) 
                 };
                 var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
 
