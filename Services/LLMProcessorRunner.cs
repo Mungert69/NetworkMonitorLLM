@@ -54,10 +54,11 @@ public class LLMProcessRunner : ILLMRunner
 #pragma warning restore CS0067 
     private IAudioGenerator _audioGenerator;
     private ICpuUsageMonitor _cpuUsageMonitor;
+       private readonly IQueryCoordinator _queryCoordinator;
 
     private ConcurrentDictionary<string, StringBuilder?> _assistantMessages = new ConcurrentDictionary<string, StringBuilder?>();
 
-    public LLMProcessRunner(ILogger<LLMProcessRunner> logger, ILLMResponseProcessor responseProcessor, ISystemParamsHelper systemParamsHelper, LLMServiceObj startServiceObj, SemaphoreSlim? processRunnerSemaphore, IAudioGenerator audioGenerator, ICpuUsageMonitor cpuUsageMonitor)
+    public LLMProcessRunner(ILogger<LLMProcessRunner> logger, ILLMResponseProcessor responseProcessor, ISystemParamsHelper systemParamsHelper, LLMServiceObj startServiceObj, SemaphoreSlim? processRunnerSemaphore, IAudioGenerator audioGenerator, ICpuUsageMonitor cpuUsageMonitor, IQueryCoordinator queryCoordinator;)
     {
         _logger = logger;
         _responseProcessor = responseProcessor;
@@ -70,6 +71,7 @@ public class LLMProcessRunner : ILLMRunner
         _cpuUsageMonitor=cpuUsageMonitor;
         _idleCheckTimer = new Timer(async _ => await CheckAndTerminateIdleProcesses(), null, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
         _isEnabled = _mlParams.StartThisTestLLM;
+        _queryCoordinator=queryCoordinator;
     }
 
 

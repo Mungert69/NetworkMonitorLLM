@@ -46,11 +46,12 @@ public class LLMFactory : ILLMFactory
     private ConcurrentDictionary<string, Session> _sessions;
     public ConcurrentDictionary<string, Session> Sessions { set => _sessions = value; }
     private readonly ICpuUsageMonitor _cpuUsageMonitor;
+    private readonly IQueryCoordinator _queryCoordinator;
 
 
     private readonly ConcurrentDictionary<string, List<ChatMessage>> _sessionHistories = new();
 
-    public LLMFactory(ILogger<LLMFactory> logger, IServiceProvider serviceProvider, IHistoryStorage historyStorage, ILLMResponseProcessor responseProcessor,  ICpuUsageMonitor cpuUsageMonitor)
+    public LLMFactory(ILogger<LLMFactory> logger, IServiceProvider serviceProvider, IHistoryStorage historyStorage, ILLMResponseProcessor responseProcessor,  ICpuUsageMonitor cpuUsageMonitor, IQueryCoordinator queryCoordinator)
     {
         _logger = logger;
         _serviceProvider = serviceProvider;
@@ -60,6 +61,7 @@ public class LLMFactory : ILLMFactory
         _openAIRunnerFactory = new OpenAIRunnerFactory();
         _hfRunnerFactory = new HFRunnerFactory();
         _responseProcessor = responseProcessor;
+        _queryCoordinator=queryCoordinator;
 
     }
 
@@ -253,9 +255,9 @@ public class LLMFactory : ILLMFactory
 
         ILLMRunner runner = runnerType switch
         {
-            "TurboLLM" => _openAIRunnerFactory.CreateRunner(_serviceProvider, serviceObj, null, history,_cpuUsageMonitor),
-            "FreeLLM" => _hfRunnerFactory.CreateRunner(_serviceProvider, serviceObj, null, history,_cpuUsageMonitor),
-            "TestLLM" => _processRunnerFactory.CreateRunner(_serviceProvider, serviceObj, _processRunnerSemaphore, history, _cpuUsageMonitor),
+            "TurboLLM" => _openAIRunnerFactory.CreateRunner(_serviceProvider, serviceObj, null, history,_cpuUsageMonitor, _queryCoordinator),
+            "FreeLLM" => _hfRunnerFactory.CreateRunner(_serviceProvider, serviceObj, null, history,_cpuUsageMonitor, _queryCoordinator),
+            "TestLLM" => _processRunnerFactory.CreateRunner(_serviceProvider, serviceObj, _processRunnerSemaphore, history, _cpuUsageMonitor, _queryCoordinator),
             _ => throw new ArgumentException($"Invalid runner type: {runnerType}")
         };
 

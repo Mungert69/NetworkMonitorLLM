@@ -33,12 +33,14 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
 {
     protected ILLMService _llmService;
     private string _serviceID = "monitor";
+       private readonly IQueryCoordinator _queryCoordinator;
 
-    public RabbitListener(ILLMService llmService, ILogger<RabbitListenerBase> logger, ISystemParamsHelper systemParamsHelper) : base(logger, DeriveSystemUrl(systemParamsHelper))
+    public RabbitListener(ILLMService llmService, ILogger<RabbitListenerBase> logger, ISystemParamsHelper systemParamsHelper, IQueryCoordinator queryCoordinator) : base(logger, DeriveSystemUrl(systemParamsHelper))
     {
 
         _llmService = llmService;
         _serviceID = systemParamsHelper.GetSystemParams().ServiceID ?? "monitor";
+        _queryCoordinator=queryCoordinator;
         Setup();
     }
 
@@ -76,7 +78,12 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
             FuncName = "llmStopRequest",
             MessageTimeout = 60000
         });
-
+        _rabbitMQObjs.Add(new RabbitMQObj()
+        {
+            ExchangeName = "queryIndexResult" + _serviceID,
+            FuncName = "queryIndexResult",
+            MessageTimeout = 60000
+        });
 
 
     }
@@ -172,6 +179,21 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
                             _logger.LogError(" Error : RabbitListener.DeclareConsumers.llmUserInput " + ex.Message);
                         }
                     };
+                        break;
+                    case "queryIndexResult":
+                        await rabbitMQObj.ConnectChannel.BasicQosAsync(prefetchSize: 0, prefetchCount: 1, global: false);
+                        rabbitMQObj.Consumer.ReceivedAsync += async (model, ea) =>
+                        {
+                            try
+                            {
+                                _ = QueryIndexResult(ConvertToObject<QueryIndexRequest>(model, ea));
+                                await rabbitMQObj.ConnectChannel.BasicAckAsync(ea.DeliveryTag, false);
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogError(" Error : RabbitListener.DeclareConsumers.queryIndexResult " + ex.Message);
+                            }
+                        };
                         break;
 
                 }
@@ -323,6 +345,46 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
             result.Success = false;
 
         }
+        if (!result.Success) _logger.LogError(result.Message);
+        return result;
+    }
+
+        public async Task<ResultObj> QueryIndexResult(QueryIndexRequest queryIndexRequest)
+    {
+        var result = new ResultObj();
+        result.Success = false;
+        result.Message = "MessageAPI : QueryIndexResult : ";
+
+        if (queryIndexRequest == null)
+        {
+            result.Message += " Error : queryIndexRequest is null.";
+            _logger.LogError(result.Message);
+            result.Success = false;
+            return result;
+        }
+
+        try
+        {
+            // Extract the RAG data from the QueryResults
+            var ragData = string.Join("\n", queryIndexRequest.QueryResults.Select(qr => qr.Output));
+
+            // Set the result
+            result.Success = queryIndexRequest.Success;
+            result.Message = queryIndexRequest.Message;
+            result.Data = ragData; // Store the RAG data in the ResultObj
+
+            // Signal the completion of the query
+            _queryCoordinator.CompleteQuery(queryIndexRequest.MessageID, result);
+        }
+        catch (Exception e)
+        {
+            result.Message = e.Message;
+            result.Success = false;
+
+            // Signal the completion of the query even if it fails
+            _queryCoordinator.CompleteQuery(queryIndexRequest.MessageID, result);
+        }
+
         if (!result.Success) _logger.LogError(result.Message);
         return result;
     }

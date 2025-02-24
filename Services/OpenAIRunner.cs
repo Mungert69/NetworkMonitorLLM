@@ -88,8 +88,10 @@ public class OpenAIRunner : ILLMRunner
     private readonly Queue<(string FunctionName, string ArgumentsJson)> _recentFunctionCalls = new Queue<(string, string)>();
     private const int MaxRecentFunctionCalls = 5;
 
+     private readonly IQueryCoordinator _queryCoordinator;
+
 #pragma warning disable CS8618
-    public OpenAIRunner(ILogger<OpenAIRunner> logger, ILLMResponseProcessor responseProcessor, OpenAIService openAiService, ISystemParamsHelper systemParamsHelper, LLMServiceObj serviceObj, SemaphoreSlim? openAIRunnerSemaphore, IAudioGenerator audioGenerator, bool useHF, List<ChatMessage> history)
+    public OpenAIRunner(ILogger<OpenAIRunner> logger, ILLMResponseProcessor responseProcessor, OpenAIService openAiService, ISystemParamsHelper systemParamsHelper, LLMServiceObj serviceObj, SemaphoreSlim? openAIRunnerSemaphore, IAudioGenerator audioGenerator, bool useHF, List<ChatMessage> history,IQueryCoordinator queryCoordinator)
     {
         _logger = logger;
         _responseProcessor = responseProcessor;
@@ -98,6 +100,7 @@ public class OpenAIRunner : ILLMRunner
         _serviceID = systemParamsHelper.GetSystemParams().ServiceID!;
         _mlParams = systemParamsHelper.GetMLParams();
         _history = history;
+        _queryCoordinator=queryCoordinator;
 
         _useHF = useHF;
         IToolsBuilder? toolsBuilder = null;
@@ -267,7 +270,13 @@ public class OpenAIRunner : ILLMRunner
             }
             else
             {
-                chatMessage = ChatMessage.FromUser(serviceObj.UserInput);
+                string ragResult = await _queryCoordinator. ExecuteQueryAsync(serviceObj.UserInput, serviceObj.MessageID);
+                string userInputWithRag = serviceObj.UserInput;
+
+                if (!string.IsNullOrEmpty(ragResult)) userInputWithRag = serviceObj.UserInput+ "\n\nMITRE ATT&CK Context:\n" + ragResult;
+
+                chatMessage = ChatMessage.FromUser(userInputWithRag);
+
                 responseServiceObj.LlmMessage = "<User:> " + serviceObj.UserInput + "\n\n";
                 if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
                 localHistory.Add(chatMessage);
