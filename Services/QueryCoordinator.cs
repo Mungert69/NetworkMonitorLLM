@@ -2,6 +2,8 @@ using System;
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
 using NetworkMonitor.Objects;
+using NetworkMonitor.Utils.Helpers;
+using NetworkMonitor.Objects.Repository;
 using NetworkMonitor.Data.Services;
 
 namespace NetworkMonitor.LLM.Services
@@ -9,11 +11,11 @@ namespace NetworkMonitor.LLM.Services
 
      public interface IQueryCoordinator
     {
-        Task<string> ExecuteQueryAsync(string queryText, string messageId, TimeSpan? timeout = null);
+        Task<string> ExecuteQueryAsync(string queryText, string messageId, string llmType, TimeSpan? timeout = null);
         void CompleteQuery(string messageId, string result);
         void CancelQuery(string messageId);
     }
-    public class QueryCoordinator
+    public class QueryCoordinator :  IQueryCoordinator
     {
         private readonly ConcurrentDictionary<string, TaskCompletionSource<string>> _pendingQueries =
             new ConcurrentDictionary<string, TaskCompletionSource<string>>();
@@ -29,7 +31,7 @@ namespace NetworkMonitor.LLM.Services
       
         }
 
-        public async Task<string> ExecuteQueryAsync(string queryText, string messageId, TimeSpan? timeout = null)
+        public async Task<string> ExecuteQueryAsync(string queryText, string messageId, string llmType, TimeSpan? timeout = null)
         {
             var tcs = new TaskCompletionSource<string>();
             _pendingQueries[messageId] = tcs;
@@ -46,13 +48,14 @@ namespace NetworkMonitor.LLM.Services
             // Create the QueryIndexRequest
             var queryIndexRequest = new QueryIndexRequest
             {
+                IndexName="documents",
                 QueryText = queryText,
                 MessageID = messageId,
-                AppID = _serviceID
+                AppID = llmType
             };
 
             // Publish the query to RabbitMQ
-            await _rabbitRepo.PublishAsync("queryIndexResult" + _serviceID, queryIndexRequest);
+            await _rabbitRepo.PublishAsync("queryIndex" , queryIndexRequest);
 
             // Wait for the RAG result
             return await tcs.Task;

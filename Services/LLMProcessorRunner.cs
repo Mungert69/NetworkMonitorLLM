@@ -58,7 +58,7 @@ public class LLMProcessRunner : ILLMRunner
 
     private ConcurrentDictionary<string, StringBuilder?> _assistantMessages = new ConcurrentDictionary<string, StringBuilder?>();
 
-    public LLMProcessRunner(ILogger<LLMProcessRunner> logger, ILLMResponseProcessor responseProcessor, ISystemParamsHelper systemParamsHelper, LLMServiceObj startServiceObj, SemaphoreSlim? processRunnerSemaphore, IAudioGenerator audioGenerator, ICpuUsageMonitor cpuUsageMonitor, IQueryCoordinator queryCoordinator;)
+    public LLMProcessRunner(ILogger<LLMProcessRunner> logger, ILLMResponseProcessor responseProcessor, ISystemParamsHelper systemParamsHelper, LLMServiceObj startServiceObj, SemaphoreSlim? processRunnerSemaphore, IAudioGenerator audioGenerator, ICpuUsageMonitor cpuUsageMonitor, IQueryCoordinator queryCoordinator)
     {
         _logger = logger;
         _responseProcessor = responseProcessor;

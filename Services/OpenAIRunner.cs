@@ -270,7 +270,7 @@ public class OpenAIRunner : ILLMRunner
             }
             else
             {
-                string ragResult = await _queryCoordinator. ExecuteQueryAsync(serviceObj.UserInput, serviceObj.MessageID);
+                string ragResult = await _queryCoordinator. ExecuteQueryAsync(serviceObj.UserInput, serviceObj.MessageID, serviceObj.DestinationLlm);
                 string userInputWithRag = serviceObj.UserInput;
 
                 if (!string.IsNullOrEmpty(ragResult)) userInputWithRag = serviceObj.UserInput+ "\n\nMITRE ATT&CK Context:\n" + ragResult;

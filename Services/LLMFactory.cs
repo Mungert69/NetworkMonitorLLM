@@ -358,7 +358,7 @@ public abstract class LLMRunnerFactoryBase : ILLMRunnerFactory
         }
     }
 
-    public abstract ILLMRunner CreateRunner(IServiceProvider serviceProvider, LLMServiceObj serviceObj, SemaphoreSlim? runnerSemaphore, List<ChatMessage> history, ICpuUsageMonitor cpuUsageMonitor);
+    public abstract ILLMRunner CreateRunner(IServiceProvider serviceProvider, LLMServiceObj serviceObj, SemaphoreSlim? runnerSemaphore, List<ChatMessage> history, ICpuUsageMonitor cpuUsageMonitor,IQueryCoordinator queryCoordinator);
 
 }
 
@@ -366,7 +366,7 @@ public abstract class LLMRunnerFactoryBase : ILLMRunnerFactory
 public interface ILLMRunnerFactory
 {
     int LoadCount { get; set; }
-    ILLMRunner CreateRunner(IServiceProvider serviceProvider, LLMServiceObj serviceObj, SemaphoreSlim? runnerSemaphore, List<ChatMessage> history, ICpuUsageMonitor cpuUsageMonitor);
+    ILLMRunner CreateRunner(IServiceProvider serviceProvider, LLMServiceObj serviceObj, SemaphoreSlim? runnerSemaphore, List<ChatMessage> history, ICpuUsageMonitor cpuUsageMonitor,IQueryCoordinator queryCoordinator);
 
 }
 
@@ -374,18 +374,18 @@ public interface ILLMRunnerFactory
 public class LLMProcessRunnerFactory : LLMRunnerFactoryBase
 {
 
-    public override ILLMRunner CreateRunner(IServiceProvider serviceProvider, LLMServiceObj serviceObj, SemaphoreSlim? runnerSemaphore, List<ChatMessage> history, ICpuUsageMonitor cpuUsageMonitor)
+    public override ILLMRunner CreateRunner(IServiceProvider serviceProvider, LLMServiceObj serviceObj, SemaphoreSlim? runnerSemaphore, List<ChatMessage> history, ICpuUsageMonitor cpuUsageMonitor,IQueryCoordinator queryCoordinator)
     {
-        return new LLMProcessRunner(serviceProvider.GetRequiredService<ILogger<LLMProcessRunner>>(), serviceProvider.GetRequiredService<ILLMResponseProcessor>(), serviceProvider.GetRequiredService<ISystemParamsHelper>(), serviceObj, runnerSemaphore, serviceProvider.GetRequiredService<IAudioGenerator>(), cpuUsageMonitor);
+        return new LLMProcessRunner(serviceProvider.GetRequiredService<ILogger<LLMProcessRunner>>(), serviceProvider.GetRequiredService<ILLMResponseProcessor>(), serviceProvider.GetRequiredService<ISystemParamsHelper>(), serviceObj, runnerSemaphore, serviceProvider.GetRequiredService<IAudioGenerator>(), cpuUsageMonitor,queryCoordinator);
     }
 }
 
 public class OpenAIRunnerFactory : LLMRunnerFactoryBase
 {
 
-    public override ILLMRunner CreateRunner(IServiceProvider serviceProvider, LLMServiceObj serviceObj, SemaphoreSlim? runnerSemaphore, List<ChatMessage> history, ICpuUsageMonitor cpuUsageMonitor)
+    public override ILLMRunner CreateRunner(IServiceProvider serviceProvider, LLMServiceObj serviceObj, SemaphoreSlim? runnerSemaphore, List<ChatMessage> history, ICpuUsageMonitor cpuUsageMonitor,IQueryCoordinator queryCoordinator)
     {
-        return new OpenAIRunner(serviceProvider.GetRequiredService<ILogger<OpenAIRunner>>(), serviceProvider.GetRequiredService<ILLMResponseProcessor>(), serviceProvider.GetRequiredService<OpenAIService>(), serviceProvider.GetRequiredService<ISystemParamsHelper>(), serviceObj, null, serviceProvider.GetRequiredService<IAudioGenerator>(), false, history);
+        return new OpenAIRunner(serviceProvider.GetRequiredService<ILogger<OpenAIRunner>>(), serviceProvider.GetRequiredService<ILLMResponseProcessor>(), serviceProvider.GetRequiredService<OpenAIService>(), serviceProvider.GetRequiredService<ISystemParamsHelper>(), serviceObj, null, serviceProvider.GetRequiredService<IAudioGenerator>(), false, history,queryCoordinator);
     }
 }
 
@@ -393,8 +393,8 @@ public class HFRunnerFactory : LLMRunnerFactoryBase
 {
 
 
-    public override ILLMRunner CreateRunner(IServiceProvider serviceProvider, LLMServiceObj serviceObj, SemaphoreSlim? runnerSemaphore, List<ChatMessage> history, ICpuUsageMonitor cpuUsageMonitor)
+    public override ILLMRunner CreateRunner(IServiceProvider serviceProvider, LLMServiceObj serviceObj, SemaphoreSlim? runnerSemaphore, List<ChatMessage> history, ICpuUsageMonitor cpuUsageMonitor,IQueryCoordinator queryCoordinator)
     {
-        return new OpenAIRunner(serviceProvider.GetRequiredService<ILogger<OpenAIRunner>>(), serviceProvider.GetRequiredService<ILLMResponseProcessor>(), serviceProvider.GetRequiredService<OpenAIService>(), serviceProvider.GetRequiredService<ISystemParamsHelper>(), serviceObj, null, serviceProvider.GetRequiredService<IAudioGenerator>(), true, history);
+        return new OpenAIRunner(serviceProvider.GetRequiredService<ILogger<OpenAIRunner>>(), serviceProvider.GetRequiredService<ILLMResponseProcessor>(), serviceProvider.GetRequiredService<OpenAIService>(), serviceProvider.GetRequiredService<ISystemParamsHelper>(), serviceObj, null, serviceProvider.GetRequiredService<IAudioGenerator>(), true, history,queryCoordinator);
     }
 }
