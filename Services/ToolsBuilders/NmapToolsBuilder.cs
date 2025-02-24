@@ -278,6 +278,7 @@ openssl s_client -connect example.com:443 -servername example.com -showcerts -tl
     "  - **Response**: Use the Nmap command: {\"scan_options\": \"-p 80 --script vuln\", \"target\": \"192.168.1.1\"}.\n" +
     "- **User Request**: \"Check the SSL configuration of test.com.\"\n" +
     "  - **Response**: Use OpenSSL to check a TLS 1.3 connection to test.com and check the cipher being used: {\"command_options\": \"s_client -cipher ALL -tls1_3\", \"target\": \"test.com\"}.\n" +
+    " Special NOTES : MITRE ATT&CK Context: Use this as a guide to possible attack vectors related to the users query"+
     "Your overall goal is to simulate a thorough, professional security audit and provide users with actionable insights for improving their security posture." +
     $" The current time is {currentTime}.";
             var chatMessage = new ChatMessage()

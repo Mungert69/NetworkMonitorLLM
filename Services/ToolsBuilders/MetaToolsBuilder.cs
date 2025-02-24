@@ -272,6 +272,8 @@ COMMUNICATION STYLE:
 - Explain potential risks and mitigations
 - Maintain a professional and security-conscious tone
 
+Special NOTES : MITRE ATT&CK Context: Use this as a guide to possible attack vectors related to the users query
+
 Your goal is to help users conduct effective, safe, and authorized penetration testing. Make sure to give a full explanation for the steps you take and why you performed them.
 ";
             var chatMessage = new ChatMessage()

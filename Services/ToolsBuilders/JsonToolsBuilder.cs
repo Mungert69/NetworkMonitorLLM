@@ -13,12 +13,15 @@ public static class JsonToolsBuilder
     {
         var toolJsonList = tools.Select(tool => new
         {
-            name = tool.Function.Name,
-            description = tool.Function.Description,
-            parameters = new
+            type = "function",
+            function = new
             {
-                type = "object",
-                properties = tool.Function.Parameters?.Properties?
+                name = tool.Function.Name,
+                description = tool.Function.Description,
+                parameters = new
+                {
+                    type = "object",
+                    properties = tool.Function.Parameters?.Properties?
                     .Where(p => p.Value != null) // Exclude null properties
                     .ToDictionary(
                         param => param.Key,
@@ -28,6 +31,7 @@ public static class JsonToolsBuilder
                             description = param.Value.Description
                         }
                     )
+                }
             }
         });
 

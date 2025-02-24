@@ -24,6 +24,7 @@ using NetworkMonitor.Objects.Factory;
 using NetworkMonitor.Utils;
 using NetworkMonitor.LLM.Services;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 namespace NetworkMonitor.LLM.Services;
 
@@ -103,19 +104,19 @@ public class HuggingFaceApi : ILLMApi
         string toolsJson = ToolsWrapper(JsonToolsBuilder.BuildToolsJson(_toolsBuilder.Tools));
         // List<ChatMessage> systemPrompt=_toolsBuilder.GetSystemPrompt(currentTime, serviceObj);
         string footer = PromptFooter();
-        var systemMessages = _toolsBuilder.GetSystemPrompt(currentTime, serviceObj, "FreeLLM") ?? new List<ChatMessage>() {ChatMessage.FromSystem("")};
+        var systemMessages = _toolsBuilder.GetSystemPrompt(currentTime, serviceObj, "FreeLLM") ?? new List<ChatMessage>() { ChatMessage.FromSystem("") };
 
         systemMessages[0].Content = toolsJson + systemMessages[0].Content + footer;
         //_logger.LogInformation($" Using SYSTEM prompt\n\n{systemMessages[0].Content}");
         systemMessages.AddRange(NShotPromptFactory.GetPrompt(_serviceID, _isXml, currentTime, serviceObj, _config));
-        _systemPromptCount=systemMessages.Count;
+        _systemPromptCount = systemMessages.Count;
         return systemMessages;
     }
 
- public List<ChatMessage> GetResumeSystemPrompt(string currentTime, LLMServiceObj serviceObj)
+    public List<ChatMessage> GetResumeSystemPrompt(string currentTime, LLMServiceObj serviceObj)
     {
         var resumeSystemMessages = _toolsBuilder.GetResumeSystemPrompt(currentTime, serviceObj, "FreeLLM");
-       
+
         return resumeSystemMessages;
 
     }
@@ -139,14 +140,19 @@ public class HuggingFaceApi : ILLMApi
             };
 
             string? responseContent = null;
-            HuggingFaceChatResponse? responseObject=null;
-             string payloadJson = JsonConvert.SerializeObject(payload, Formatting.Indented);
-             //_logger.LogInformation($"{payloadJson}");
-               
+            HuggingFaceChatResponse? responseObject = null;
+            string payloadJson = JsonConvert.SerializeObject(payload, Formatting.Indented, new JsonSerializerSettings
+            {
+                ContractResolver = new CamelCasePropertyNamesContractResolver(),
+                NullValueHandling = NullValueHandling.Ignore
+            });
+
+            _logger.LogInformation($"{payloadJson}");
+
             if (!_isStream)
             {
                 responseContent = await SendHttpRequestAsync(payloadJson);
-                if (responseContent!=null) responseObject = JsonConvert.DeserializeObject<HuggingFaceChatResponse>(responseContent);
+                if (responseContent != null) responseObject = JsonConvert.DeserializeObject<HuggingFaceChatResponse>(responseContent);
 
             }
             else
@@ -154,8 +160,8 @@ public class HuggingFaceApi : ILLMApi
                 var process = new HuggingFaceProcessWrapper(_httpClient);
                 await process.InitializeRequest(_apiUrl, payloadJson);
                 var tokenBroadcaster = _config.CreateBroadcaster(_responseProcessor, _logger, false);
-                tokenBroadcaster.UseHttpProcess=true;
-                tokenBroadcaster.IsAddAssistant=true;
+                tokenBroadcaster.UseHttpProcess = true;
+                tokenBroadcaster.IsAddAssistant = true;
                 await tokenBroadcaster.SetUp(serviceObj, true, 1);
 
                 await tokenBroadcaster.BroadcastAsync(process, serviceObj, "");
@@ -176,8 +182,8 @@ public class HuggingFaceApi : ILLMApi
 
 
             }
-            if (responseObject==null) throw new Exception(" Reponse is null");
-            var chatResponseBuilder = new ChatResponseBuilder(_responseProcessor,_config, _isXml, _logger);
+            if (responseObject == null) throw new Exception(" Reponse is null");
+            var chatResponseBuilder = new ChatResponseBuilder(_responseProcessor, _config, _isXml, _logger);
             var chatResponse = chatResponseBuilder.BuildResponse(responseObject);
 
             return new ChatCompletionCreateResponseSuccess { Success = true, Response = chatResponse };

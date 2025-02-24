@@ -270,12 +270,17 @@ public class OpenAIRunner : ILLMRunner
             }
             else
             {
+                
                 string ragResult = await _queryCoordinator. ExecuteQueryAsync(serviceObj.UserInput, serviceObj.MessageID, serviceObj.DestinationLlm);
                 string userInputWithRag = serviceObj.UserInput;
+                _logger.LogInformation($" RagResult {ragResult}");
 
-                if (!string.IsNullOrEmpty(ragResult)) userInputWithRag = serviceObj.UserInput+ "\n\nMITRE ATT&CK Context:\n" + ragResult;
-
-                chatMessage = ChatMessage.FromUser(userInputWithRag);
+                if (!string.IsNullOrEmpty(ragResult)) {
+                     var systemMessage=ChatMessage.FromSystem(" The following MITRE ATT&CK Context has been retreived that may be relavent to the User's query : "+ ragResult + "\n\nReminder only call functions that have been defined in the tools");
+                         localHistory.Add(systemMessage);
+               
+                }
+                chatMessage = ChatMessage.FromUser(serviceObj.UserInput );
 
                 responseServiceObj.LlmMessage = "<User:> " + serviceObj.UserInput + "\n\n";
                 if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
@@ -321,6 +326,9 @@ public class OpenAIRunner : ILLMRunner
 
             if (localHistory.Count > 0)
             {
+                /*if (localHistory[0].Role=="system"){
+                    localHistory.RemoveAt(0);
+                }*/
                 _history.AddRange(localHistory);
                 await _responseProcessor.UpdateTokensUsed(responseServiceObj);
                 int wordLimit = 5;
