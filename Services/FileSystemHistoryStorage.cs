@@ -13,7 +13,7 @@ public interface IHistoryStorage
 {
     Task<ConcurrentDictionary<string, Session>> LoadAllSessionsAsync();
     Task SaveHistoryAsync(HistoryDisplayName historyDisplayName);
-    Task<HistoryDisplayName> LoadHistoryAsync(string sessionId);
+    Task<HistoryDisplayName?> LoadHistoryAsync(string sessionId);
     Task DeleteHistoryAsync(string sessionId);
     Task<List<HistoryDisplayName>> GetHistoryDisplayNamesAsync(string userId);
 }

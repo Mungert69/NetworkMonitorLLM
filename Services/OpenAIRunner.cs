@@ -85,13 +85,13 @@ public class OpenAIRunner : ILLMRunner
 
     public string Type { get => _type; set => _type = value; }
 
-    private readonly Queue<(string FunctionName, string ArgumentsJson)> _recentFunctionCalls = new Queue<(string, string)>();
+    private readonly Queue<(string? FunctionName, string? ArgumentsJson)> _recentFunctionCalls = new Queue<(string?, string?)>();
     private const int MaxRecentFunctionCalls = 5;
 
-     private readonly IQueryCoordinator _queryCoordinator;
+    private readonly IQueryCoordinator _queryCoordinator;
 
 #pragma warning disable CS8618
-    public OpenAIRunner(ILogger<OpenAIRunner> logger, ILLMResponseProcessor responseProcessor, OpenAIService openAiService, ISystemParamsHelper systemParamsHelper, LLMServiceObj serviceObj, SemaphoreSlim? openAIRunnerSemaphore, IAudioGenerator audioGenerator, bool useHF, List<ChatMessage> history,IQueryCoordinator queryCoordinator)
+    public OpenAIRunner(ILogger<OpenAIRunner> logger, ILLMResponseProcessor responseProcessor, OpenAIService openAiService, ISystemParamsHelper systemParamsHelper, LLMServiceObj serviceObj, SemaphoreSlim? openAIRunnerSemaphore, IAudioGenerator audioGenerator, bool useHF, List<ChatMessage> history, IQueryCoordinator queryCoordinator)
     {
         _logger = logger;
         _responseProcessor = responseProcessor;
@@ -100,14 +100,14 @@ public class OpenAIRunner : ILLMRunner
         _serviceID = systemParamsHelper.GetSystemParams().ServiceID!;
         _mlParams = systemParamsHelper.GetMLParams();
         _history = history;
-        _queryCoordinator=queryCoordinator;
+        _queryCoordinator = queryCoordinator;
 
         _useHF = useHF;
         IToolsBuilder? toolsBuilder = null;
         if (_serviceID == "monitor") toolsBuilder = new MonitorToolsBuilder(serviceObj.UserInfo);
         if (_serviceID == "monitorsys") toolsBuilder = new MonitorToolsBuilder(serviceObj.UserInfo);
         if (_serviceID == "user") toolsBuilder = new UserToolsBuilder(serviceObj.UserInfo);
-       
+
         if (_serviceID == "cmdprocessor") toolsBuilder = new CmdProcessorToolsBuilder(serviceObj.UserInfo);
         if (_serviceID == "nmap") toolsBuilder = new NmapToolsBuilder();
         if (_serviceID == "meta") toolsBuilder = new MetaToolsBuilder();
@@ -140,7 +140,7 @@ public class OpenAIRunner : ILLMRunner
 
     }
 #pragma warning restore CS8618 
-    public async Task StartProcess(LLMServiceObj serviceObj)
+    public Task StartProcess(LLMServiceObj serviceObj)
     {
         _isStateStarting = true;
         _isStateReady = false;
@@ -172,6 +172,7 @@ public class OpenAIRunner : ILLMRunner
         _isStateStarting = false;
         _isStateReady = true;
         _isStateFailed = false;
+         return Task.CompletedTask;
     }
 
 
@@ -265,22 +266,20 @@ public class OpenAIRunner : ILLMRunner
             else if (serviceObj.IsFunctionCallResponse)
             {
                 localHistory = await HandleFunctionCallResponse(serviceObj, responseServiceObj);
-                if (localHistory.Count > 0) isFuncMessage = true;
+                if (localHistory.Count > 0)
+                {
+                    isFuncMessage = true;
+                    if (_mlParams.AddSystemRag)  await _queryCoordinator.AddSystemRag(serviceObj.MessageID, localHistory);
+                }
                 else return;
             }
             else
             {
-                
-                string ragResult = await _queryCoordinator. ExecuteQueryAsync(serviceObj.UserInput, serviceObj.MessageID, serviceObj.DestinationLlm);
-                string userInputWithRag = serviceObj.UserInput;
-                _logger.LogInformation($" RagResult {ragResult}");
 
-                if (!string.IsNullOrEmpty(ragResult)) {
-                     var systemMessage=ChatMessage.FromSystem(" The following MITRE ATT&CK Context has been retreived that may be relavent to the User's query : "+ ragResult + "\n\nIMPORTANT you can only call these functions : "+_llmApi.GetFunctionNamesAsString());
-                         localHistory.Add(systemMessage);
-               
-                }
-                chatMessage = ChatMessage.FromUser(serviceObj.UserInput );
+                if (_mlParams.AddSystemRag) _ = _queryCoordinator.ExecuteQueryAsync(serviceObj.UserInput, serviceObj.MessageID, serviceObj.DestinationLlm);
+
+
+                chatMessage = ChatMessage.FromUser(serviceObj.UserInput);
 
                 responseServiceObj.LlmMessage = "<User:> " + serviceObj.UserInput + "\n\n";
                 if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
@@ -326,9 +325,8 @@ public class OpenAIRunner : ILLMRunner
 
             if (localHistory.Count > 0)
             {
-                if (localHistory[0].Role=="system"){
-                    localHistory.RemoveAt(0);
-                }
+                if (_mlParams.AddSystemRag) _queryCoordinator.RemoveSystemRag(localHistory);
+
                 _history.AddRange(localHistory);
                 await _responseProcessor.UpdateTokensUsed(responseServiceObj);
                 int wordLimit = 5;
@@ -525,28 +523,31 @@ public class OpenAIRunner : ILLMRunner
         var toolResponces = new List<ChatMessage>();
         bool isDuplicateSet = false;
         bool isDuplicate = false;
-        foreach (ToolCall fnCall in choiceMessage!.ToolCalls)
+        if (choiceMessage!.ToolCalls != null)
         {
-            if (fnCall.FunctionCall != null)
+            foreach (ToolCall fnCall in choiceMessage.ToolCalls)
             {
-                var funcName = fnCall.FunctionCall.Name;
-                var argumentsJson = fnCall.FunctionCall.Arguments;
-                var funcId = fnCall.Id;
-                await HandleFunctionCallAsync(serviceObj, fnCall, responseServiceObj, assistantChatMessage);
-                await Task.Delay(500);
-                var toolResponse = ChatMessage.FromTool("{\"message\" : \"The function call " + funcName + " is currently running. There is no need to call are_functions_running because the system is actively monitoring the status and you will be informed as soon as the function completes..\"" + messageIdJson + "}", funcId!);
-                toolResponse.Role = "tool";
-                toolResponse.Name = funcName;
-                toolResponces.Add(toolResponse);
+                if (fnCall.FunctionCall != null)
+                {
+                    var funcName = fnCall.FunctionCall.Name;
+                    var argumentsJson = fnCall.FunctionCall.Arguments;
+                    var funcId = fnCall.Id;
+                    await HandleFunctionCallAsync(serviceObj, fnCall, responseServiceObj, assistantChatMessage);
+                    await Task.Delay(500);
+                    var toolResponse = ChatMessage.FromTool("{\"message\" : \"The function call " + funcName + " is currently running. There is no need to call are_functions_running because the system is actively monitoring the status and you will be informed as soon as the function completes..\"" + messageIdJson + "}", funcId!);
+                    toolResponse.Role = "tool";
+                    toolResponse.Name = funcName;
+                    toolResponces.Add(toolResponse);
 
-                if (!isDuplicateSet) isDuplicate = _recentFunctionCalls.Any(f =>
-                f.FunctionName == funcName &&
-                f.ArgumentsJson == argumentsJson);
+                    if (!isDuplicateSet) isDuplicate = _recentFunctionCalls.Any(f =>
+                    f.FunctionName == funcName &&
+                    f.ArgumentsJson == argumentsJson);
 
-                if (!isDuplicateSet && isDuplicate) isDuplicateSet = true;
-                _recentFunctionCalls.Enqueue((funcName, argumentsJson));
+                    if (!isDuplicateSet && isDuplicate) isDuplicateSet = true;
+                    _recentFunctionCalls.Enqueue((funcName, argumentsJson));
 
 
+                }
             }
         }
         choiceMessage.Content = origMessage;

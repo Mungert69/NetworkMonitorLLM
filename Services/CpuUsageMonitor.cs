@@ -93,7 +93,7 @@ public class CpuUsageMonitor : ICpuUsageMonitor, IHostedService, IDisposable
         return Task.CompletedTask;
     }
 
-    private async void SampleCpuUsage(object state)
+    private async void SampleCpuUsage(object? state)
     {
         float cpuUsage = await GetTotalSystemCpuUsage();
         _cpuUsageSamples.Enqueue(cpuUsage);

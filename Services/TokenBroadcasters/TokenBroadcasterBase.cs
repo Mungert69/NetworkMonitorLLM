@@ -19,7 +19,7 @@ namespace NetworkMonitor.LLM.Services
     public interface ITokenBroadcaster
     {
         void Init(LLMConfig config);
-        Task ReInit(string sessionId);
+         void ReInit(string sessionId);
         Task SetUp(LLMServiceObj serviceObj, bool sendOutput, int llmLoad);
         StringBuilder? AssistantMessage { get; set; }
         Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput);
@@ -57,7 +57,7 @@ namespace NetworkMonitor.LLM.Services
         public string ResponseContent => _responseContentBuilder.ToString();
 
 
-        public StringBuilder AssistantMessage { get => _assistantMessage; set => _assistantMessage = value; }
+        public StringBuilder? AssistantMessage { get => _assistantMessage; set => _assistantMessage = value; }
         public bool IsAddAssistant { get => _isAddAssistant; set => _isAddAssistant = value; }
         public bool UseHttpProcess { get => _useHttpProcess; set => _useHttpProcess = value; }
 
@@ -70,7 +70,7 @@ namespace NetworkMonitor.LLM.Services
             _cancellationTokenSource = new CancellationTokenSource();
         }
 
-        public async Task ReInit(string sessionId)
+        public void ReInit(string sessionId)
         {
             _logger.LogInformation("Cancel due to ReInit called");
             try

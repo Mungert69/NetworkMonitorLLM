@@ -64,14 +64,14 @@ public override List<(string json, string functionName)> ParseInputForJson(strin
             var root = document.RootElement;
 
             // Extract the function name
-            var functionName = root.GetProperty("name").GetString();
+            var functionName = root.GetProperty("name").GetString() ?? "";
 
             // Extract the parameters as JSON
             var parametersElement = root.GetProperty("parameters");
-            var parametersJson = parametersElement.GetRawText();
+            var parametersJson = parametersElement.GetRawText() ;
 
             // Optionally sanitize the JSON parameters
-            var sanitizedJson = JsonSanitizer.RepairJson(parametersJson, _ignoreParameters);
+            var sanitizedJson = JsonSanitizer.RepairJson(parametersJson, _ignoreParameters) ?? "";
 
             // Add the parsed result to the list
             functionCalls.Add((sanitizedJson, functionName));

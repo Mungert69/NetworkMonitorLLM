@@ -39,7 +39,7 @@ public class HuggingFaceChoice
     public HuggingFaceMessage Message { get; set; } = new HuggingFaceMessage(); // Maps to "message"
 
     [JsonProperty("logprobs")]
-    public object Logprobs { get; set; } = null; // Maps to "logprobs"
+    public object? Logprobs { get; set; } = null; // Maps to "logprobs"
 
     [JsonProperty("finish_reason")]
     public string FinishReason { get; set; } = string.Empty; // Maps to "finish_reason"

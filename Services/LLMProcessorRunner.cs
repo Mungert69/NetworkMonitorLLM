@@ -211,7 +211,7 @@ public class LLMProcessRunner : ILLMRunner
         _isStateFailed = false;
     }
 
-    public async Task RemoveProcess(string sessionId)
+    public Task RemoveProcess(string sessionId)
     {
         _isStateReady = false;
 
@@ -226,7 +226,7 @@ public class LLMProcessRunner : ILLMRunner
             try
             {
                 // Call ReInit to gracefully cancel any ongoing operations
-                await tokenBroadcaster.ReInit(sessionId);
+                tokenBroadcaster.ReInit(sessionId);
             }
             catch (Exception ex)
             {
@@ -296,10 +296,11 @@ public class LLMProcessRunner : ILLMRunner
         }
 
         _logger.LogInformation($"LLM process successfully removed for sessionId {sessionId}");
+            return Task.CompletedTask;
     }
 
 
-    public async Task StopRequest(string sessionId)
+    public Task StopRequest(string sessionId)
     {
         _isStateReady = false;
 
@@ -312,7 +313,7 @@ public class LLMProcessRunner : ILLMRunner
         {
             try
             {
-                await tokenBroadcaster.ReInit(sessionId);
+                tokenBroadcaster.ReInit(sessionId);
                 _logger.LogInformation($" Success : Stop tokenBroadCaster for sessionId {sessionId}");
 
             }
@@ -344,6 +345,7 @@ public class LLMProcessRunner : ILLMRunner
         }
 
         _isStateReady = true;
+            return Task.CompletedTask;
 
     }
 
@@ -490,7 +492,7 @@ public class LLMProcessRunner : ILLMRunner
 
             if (_tokenBroadcasters.TryGetValue(serviceObj.SessionId, out tokenBroadcaster))
             {
-                await tokenBroadcaster.ReInit(serviceObj.SessionId);
+                tokenBroadcaster.ReInit(serviceObj.SessionId);
             }
             else
             {

@@ -167,7 +167,7 @@ public class TokenBroadcasterFunc_2_4 : TokenBroadcasterBase
                 {
                     case "from":
                     
-                        if (currentSegment == null);
+                        if (currentSegment == null)
                         {
                             currentSegment = new MessageSegment();
                         }

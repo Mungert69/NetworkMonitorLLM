@@ -47,7 +47,7 @@ public class ChatResponseBuilder
         {
             if (choice.Message==null) continue;
             var message = choice.Message ;
-            if (message == null) continue;
+            if (message == null || message.Content==null) continue;
 
             // Parse the content for XML function calls
             var functionCalls = _tokenBroadcaster.ParseInputForXml(message.Content);

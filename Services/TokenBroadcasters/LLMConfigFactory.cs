@@ -265,7 +265,7 @@ Reminder:
             },
 
             // Configuration for standard
-            "standard" => new LLMConfig
+            _ => new LLMConfig
             {
                 UserReplace = "",
                 FunctionReplace = "Function Call :",

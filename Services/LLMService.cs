@@ -102,7 +102,7 @@ public class LLMService : ILLMService
                             SessionId = llmServiceObj.SessionId,
                             Name = "",
                             LlmType = llmServiceObj.LLMRunnerType,
-                            UserId = llmServiceObj.UserInfo?.UserID
+                            UserId = llmServiceObj.UserInfo?.UserID!
                         }
                     };
                 }

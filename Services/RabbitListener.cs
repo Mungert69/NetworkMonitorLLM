@@ -186,7 +186,7 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
                         {
                             try
                             {
-                                _ = QueryIndexResult(ConvertToObject<QueryIndexRequest>(model, ea));
+                                 QueryIndexResult(ConvertToObject<QueryIndexRequest>(model, ea));
                                 await rabbitMQObj.ConnectChannel.BasicAckAsync(ea.DeliveryTag, false);
                             }
                             catch (Exception ex)
@@ -349,7 +349,7 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
         return result;
     }
 
-        public async Task<ResultObj> QueryIndexResult(QueryIndexRequest queryIndexRequest)
+        public ResultObj QueryIndexResult(QueryIndexRequest? queryIndexRequest)
     {
         var result = new ResultObj();
         result.Success = false;
