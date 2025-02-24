@@ -25,6 +25,7 @@ public interface ILLMApi
 {
     Task<ChatCompletionCreateResponseSuccess> CreateCompletionAsync(List<ChatMessage> messages, int maxTokens, LLMServiceObj serviceObj);
     List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj);
+    string GetFunctionNamesAsString(string separator = ", ");
      List<ChatMessage> GetResumeSystemPrompt(string currentTime, LLMServiceObj serviceObj);
       int SystemPromptCount { get ; }
     string WrapFunctionResponse(string name, string funcStr);

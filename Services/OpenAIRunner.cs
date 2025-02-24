@@ -276,7 +276,7 @@ public class OpenAIRunner : ILLMRunner
                 _logger.LogInformation($" RagResult {ragResult}");
 
                 if (!string.IsNullOrEmpty(ragResult)) {
-                     var systemMessage=ChatMessage.FromSystem(" The following MITRE ATT&CK Context has been retreived that may be relavent to the User's query : "+ ragResult + "\n\nReminder only call functions that have been defined in the tools");
+                     var systemMessage=ChatMessage.FromSystem(" The following MITRE ATT&CK Context has been retreived that may be relavent to the User's query : "+ ragResult + "\n\nIMPORTANT you can only call these functions : "+_llmApi.GetFunctionNamesAsString());
                          localHistory.Add(systemMessage);
                
                 }
@@ -326,9 +326,9 @@ public class OpenAIRunner : ILLMRunner
 
             if (localHistory.Count > 0)
             {
-                /*if (localHistory[0].Role=="system"){
+                if (localHistory[0].Role=="system"){
                     localHistory.RemoveAt(0);
-                }*/
+                }
                 _history.AddRange(localHistory);
                 await _responseProcessor.UpdateTokensUsed(responseServiceObj);
                 int wordLimit = 5;

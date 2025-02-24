@@ -19,6 +19,7 @@ namespace NetworkMonitor.LLM.Services
         List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType);
         List<ChatMessage> GetResumeSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType);
         List<ToolDefinition> Tools { get; }
+        string GetFunctionNamesAsString(string separator = ", ");
     }
 
     public abstract class ToolsBuilderBase : IToolsBuilder
@@ -47,5 +48,31 @@ namespace NetworkMonitor.LLM.Services
 
             return new List<ChatMessage> { chatMessage };
         }
+           public List<string> GetFunctionNames()
+        {
+            var functionNames = new List<string>();
+            foreach (var tool in _tools)
+            {
+                if (tool.Type == "function" && tool.Function != null)
+                {
+                    functionNames.Add(tool.Function.Name);
+                }
+            }
+            return functionNames;
+        }
+
+        // Method to return a list of function names as a single string
+public string GetFunctionNamesAsString(string separator = ", ")
+{
+    var functionNames = new List<string>();
+    foreach (var tool in _tools)
+    {
+        if (tool.Type == "function" && tool.Function != null)
+        {
+            functionNames.Add(tool.Function.Name);
+        }
+    }
+    return string.Join(separator, functionNames);
+}
     }
 }

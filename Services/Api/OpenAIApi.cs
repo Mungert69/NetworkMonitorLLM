@@ -80,6 +80,10 @@ public class OpenAIApi : ILLMApi
         return systemMessages;
 
     }
+
+     public string  GetFunctionNamesAsString(string separator = ", "){
+        return _toolsBuilder.GetFunctionNamesAsString();
+    }
       public List<ChatMessage> GetResumeSystemPrompt(string currentTime, LLMServiceObj serviceObj)
     {
         var resumeSystemMessages = _toolsBuilder.GetResumeSystemPrompt(currentTime, serviceObj, "TurboLLM");

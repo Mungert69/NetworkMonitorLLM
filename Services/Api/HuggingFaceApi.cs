@@ -98,6 +98,10 @@ public class HuggingFaceApi : ILLMApi
         else return _config.PromptFooter;
     }
 
+    public string  GetFunctionNamesAsString(string separator = ", "){
+        return _toolsBuilder.GetFunctionNamesAsString();
+    }
+
     public List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj)
     {
 
