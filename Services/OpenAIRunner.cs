@@ -810,7 +810,7 @@ public class OpenAIRunner : ILLMRunner
             LlmMessage = $"I encountered an error when calling {_type}.{extraMessage}\nError detail: {errorMessage}\n",
         };
         // If this is the “primary” or “system” LLM, do
-        await _responseProcessor.ProcessLLMOutputError(responseObj);
+        if (serviceObj.IsPrimaryLlm || serviceObj.IsSystemLlm) await _responseProcessor.ProcessLLMOutputError(responseObj);
         _logger.LogError($" {_serviceID} {responseObj.LlmMessage}");
     }
     private void RemoveUnansweredToolCalls(string sessionId, List<ChatMessage> sessionHistory)

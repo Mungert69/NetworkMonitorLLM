@@ -151,7 +151,7 @@ public class HuggingFaceApi : ILLMApi
                 NullValueHandling = NullValueHandling.Ignore
             });
 
-            _logger.LogInformation($"{payloadJson}");
+            //_logger.LogInformation($"{payloadJson}");
 
             if (!_isStream)
             {
@@ -186,7 +186,9 @@ public class HuggingFaceApi : ILLMApi
 
 
             }
-            if (responseObject == null) throw new Exception(" Reponse is null");
+            if (responseObject == null) {
+                throw new Exception(" Reponse is null");
+            }
             var chatResponseBuilder = new ChatResponseBuilder(_responseProcessor, _config, _isXml, _logger);
             var chatResponse = chatResponseBuilder.BuildResponse(responseObject);
 
@@ -197,7 +199,19 @@ public class HuggingFaceApi : ILLMApi
             _logger.LogError($"Exception in CreateCompletionAsync: {ex.Message}");
 
             // Create a ChatCompletionCreateResponse with error details
-            var errorChatResponse = new ChatCompletionCreateResponse
+          var errorChatResponse =GetErrorResponse (ex.Message);
+            return new ChatCompletionCreateResponseSuccess
+            {
+                Success = false,
+                Response = errorChatResponse
+            };
+        }
+
+
+    }
+
+    private ChatCompletionCreateResponse GetErrorResponse (string message) =>
+          new ChatCompletionCreateResponse
             {
                 Id = Guid.NewGuid().ToString(),
                 Model = _modelID,
@@ -210,21 +224,13 @@ public class HuggingFaceApi : ILLMApi
                 },
                 Error = new Error
                 {
-                    MessageObject = ex.Message,
+                    MessageObject = message,
                     Type = "Exception",
                     Code = "500"
                 }
             };
 
-            return new ChatCompletionCreateResponseSuccess
-            {
-                Success = false,
-                Response = errorChatResponse
-            };
-        }
-
-
-    }
+    
     private async Task<string?> SendHttpRequestAsync(string payloadJson)
     {
         const int maxRetries = 3;
