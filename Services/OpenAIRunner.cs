@@ -559,7 +559,6 @@ public class OpenAIRunner : ILLMRunner
         }
         choiceMessage.Content = origMessage;
 
-        // OpenAI models we also add a assistant message with no func calls to the history.
         if (usePlaceHolder)
         {
             _pendingFunctionCalls.TryAdd(serviceObj.MessageID, choiceMessageCopy);
