@@ -172,7 +172,7 @@ public class OpenAIRunner : ILLMRunner
         _isStateStarting = false;
         _isStateReady = true;
         _isStateFailed = false;
-         return Task.CompletedTask;
+        return Task.CompletedTask;
     }
 
 
@@ -269,7 +269,7 @@ public class OpenAIRunner : ILLMRunner
                 if (localHistory.Count > 0)
                 {
                     isFuncMessage = true;
-                    if (_mlParams.AddSystemRag)  await _queryCoordinator.AddSystemRag(serviceObj.MessageID, localHistory);
+                    if (_mlParams.AddSystemRag) await _queryCoordinator.AddSystemRag(serviceObj.MessageID, localHistory);
                 }
                 else return;
             }
@@ -523,6 +523,7 @@ public class OpenAIRunner : ILLMRunner
         var toolResponces = new List<ChatMessage>();
         bool isDuplicateSet = false;
         bool isDuplicate = false;
+        int duplicateCount = 0;
         if (choiceMessage!.ToolCalls != null)
         {
             foreach (ToolCall fnCall in choiceMessage.ToolCalls)
@@ -543,7 +544,13 @@ public class OpenAIRunner : ILLMRunner
                     f.FunctionName == funcName &&
                     f.ArgumentsJson == argumentsJson);
 
-                    if (!isDuplicateSet && isDuplicate) isDuplicateSet = true;
+                    if (!isDuplicateSet && isDuplicate)
+                    {
+                        isDuplicateSet = true;
+                        duplicateCount = _recentFunctionCalls.Count(f =>
+                    f.FunctionName == funcName &&
+                    f.ArgumentsJson == argumentsJson);
+                    }
                     _recentFunctionCalls.Enqueue((funcName, argumentsJson));
 
 
