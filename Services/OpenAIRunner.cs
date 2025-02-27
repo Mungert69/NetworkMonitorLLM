@@ -566,7 +566,7 @@ public class OpenAIRunner : ILLMRunner
         {
             _logger.LogWarning($"Possible loop detected when calling functions");
             var duplicateMessage = ChatMessage.FromSystem(
-                $" You are possibly stuck in a loop. Stop calling functions! Take a summary of what you have been doing and give the user feedback before continuing.");
+                $" You are possibly stuck in a loop. Take a summary of what you have been doing and give the user feedback before continuing. If the user wants to call the same function again that is ok. Just check first.");
             localHistory.Add(duplicateMessage);
         }
         while (_recentFunctionCalls.Count > MaxRecentFunctionCalls)
