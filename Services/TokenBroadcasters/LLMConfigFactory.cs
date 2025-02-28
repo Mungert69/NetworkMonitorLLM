@@ -208,6 +208,31 @@ Reminder:
                     new TokenBroadcasterPhi_4(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
             },
 
+             "phi_4_mini" => new LLMConfig
+            {
+                UserReplace = "<|user|>\\\n",
+                FunctionReplace = "<|user|>\\\n<tool_response>\\\n",
+                AssistantHeader = "<|assistant|>\n",
+                UserInputTemplate = "<|user|>\\\n{0}",
+                AssistantMessageTemplate = "<|assistant|>\\\n{0}<|end|>",
+                EOTToken = "<|end|>",
+                FunctionResponseTemplate = "<|user|>\\\n<tool_response>\\\n{1}\\\n</tool_response>",
+
+                FunctionBuilder = "<tool_call>{1}</tool_call>",
+                FunctionResponse = "{1}",
+                FunctionDefsWrap = @"
+You are a helpful assistant with some tools.
+<|tool|>
+{0}
+<|/tool|>",
+                XmlPromptFooter = _xmlPromptFooter,
+                PromptFooter = @"",
+
+                CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
+                    new TokenBroadcasterQwen_2_5(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
+            },
+
+
             // Configuration for qwen_2.5
             "qwen_2.5" => new LLMConfig
             {
