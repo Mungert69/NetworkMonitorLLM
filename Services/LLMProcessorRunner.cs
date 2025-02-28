@@ -360,7 +360,7 @@ public class LLMProcessRunner : ILLMRunner
         {
             line = await process.StandardOutput.ReadLineAsync();
 
-            if (line != null && (line.Trim() == "<|eot_id|>" || line.Trim() == "<|im_end|>" || line.Trim() == "<|LLM_STARTED|>"))
+            if (line != null && (line.Trim() == _config.EOTToken || line.Trim() == "<|LLM_STARTED|>"))
             {
                 isReady = true;
                 break;
