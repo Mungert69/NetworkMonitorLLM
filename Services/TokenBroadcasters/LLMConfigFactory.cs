@@ -226,7 +226,17 @@ You are a helpful assistant with some tools.
 {0}
 <|/tool|>",
                 XmlPromptFooter = _xmlPromptFooter,
-                PromptFooter = @"",
+                  PromptFooter = @"For each function call, return a json object with function name and arguments within <tool_call></tool_call> XML tags:
+<tool_call>
+{""name"": <function-name>, ""arguments"": <args-json-object>}
+</tool_call>
+Reminder:
+- Function calls MUST follow the specified format : <tool_call> {""name"": <function-name>, ""arguments"": <args-json-object>} </tool_call>
+- The function call repsonses after the tag <tool_response>
+- Required parameters MUST be specified
+- Only call one function at a time
+- Important: You will call functions only when necessary. Checking with the user before calling more functions.
+",
 
                 CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
                     new TokenBroadcasterQwen_2_5(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
