@@ -1,0 +1,1 @@
+~/code/models/llama.cpp/llama-cli -c 12000  -m ~/code/models/phi-4-mini-q4_0.gguf  --prompt-cache context-phi-4-mini.gguf --prompt-cache-ro  -f system_prompt_phi_4_mini_run   -r "<|end|>"  -cnv -if --keep -1 --temp 0 --color --simple-io -sp --in-suffix "<|end|><|assistant|>"
