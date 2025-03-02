@@ -211,12 +211,12 @@ Reminder:
              "phi_4_mini" => new LLMConfig
             {
                 UserReplace = "<|user|>\\\n",
-                FunctionReplace = "<|user|>\\\n<tool_response>\\\n",
+                FunctionReplace = "<|user|>\\\n<tool_response|\\\n",
                 AssistantHeader = "<|assistant|>\n",
                 UserInputTemplate = "<|user|>\\\n{0}",
                 AssistantMessageTemplate = "<|assistant|>\\\n{0}<|end|>",
                 EOTToken = "<|end|>",
-                FunctionResponseTemplate = "<|user|>\\\n<tool_response>\\\n{1}\\\n</tool_response>",
+                FunctionResponseTemplate = "<|user|>\\\n<tool_response>\\\n{1}",
 
                 FunctionBuilder = "<tool_call>{1}</tool_call>",
                 FunctionResponse = "{1}",
