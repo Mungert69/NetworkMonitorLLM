@@ -115,7 +115,7 @@ public class MonitorToolsBuilder : ToolsBuilderBase
 
     private FunctionDefinition BuildGetHostDataFunction()
     {
-        return new FunctionDefinitionBuilder("get_host_data", "Retrieve collected monitoring data for a host. The parameters that are added act as filters so only lnclude them if the filter is required.")
+        return new FunctionDefinitionBuilder("get_host_data", "Retrieve collected monitoring data for a host. The parameters that are added act as filters so only lnclude them if the filter is required.  For example to see the host data for host with id 10 {\"id\":10}, to see only the latest data set (dataset_id 0 is the latest running data set) for this host {\"id\":10, \"dataset_id\":0}")
             .AddParameter("detail_response", PropertyDefinition.DefineBoolean("Will this function provide full detail, or a brief summary, for each hosts monitoring data."))
             .AddParameter("dataset_id", PropertyDefinition.DefineNumber("Filter on dataset_id. Return a set of statistical data. Data is arranged in 6-hour data sets. Set dataset_id to zero for the latest/current data. To view data older than the current dataset; set dataset_id to null and select a date range with date_start and date_end"))
             .AddParameter("id", PropertyDefinition.DefineNumber("Return only hosts with ID, optional"))
@@ -137,7 +137,7 @@ public class MonitorToolsBuilder : ToolsBuilderBase
     }
     private FunctionDefinition BuildGetHostListFunction()
     {
-        return new FunctionDefinitionBuilder("get_host_list", "Retrieve a list of host configurations. Only include fields that you want to filter on. To see all host configurations {}, to see the host configuration for host with id 10 {\"id\":10}")
+        return new FunctionDefinitionBuilder("get_host_list", "Retrieve a list of host configurations. Only include fields that you want to filter on. For example To see all host configurations {}, to see the host configuration for host with id 10 {\"id\":10}")
     .AddParameter("detail_response", PropertyDefinition.DefineBoolean("Will this function provide all host config detail. Set this to true if more than address and ID are required"))
     .AddParameter("id", PropertyDefinition.DefineNumber("Return host with ID, optional"))
     // Add a parameter for filtering hosts by address
