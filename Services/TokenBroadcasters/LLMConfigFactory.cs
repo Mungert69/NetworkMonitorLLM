@@ -211,7 +211,7 @@ Reminder:
              "phi_4_mini" => new LLMConfig
             {
                 UserReplace = "<|user|>\\\n",
-                FunctionReplace = "<|user|>\\\n<tool_response>",
+                FunctionReplace = "<|user|>\\\n<tool_response>\\\n",
                 AssistantHeader = "<|assistant|>\n",
                 UserInputTemplate = "<|user|>\\\n{0}",
                 AssistantMessageTemplate = "<|assistant|>\\\n{0}<|end|>",
