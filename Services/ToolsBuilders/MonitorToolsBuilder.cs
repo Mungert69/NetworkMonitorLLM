@@ -81,7 +81,7 @@ public class MonitorToolsBuilder : ToolsBuilderBase
     private FunctionDefinition BuildAddHostFunction()
     {
         return new FunctionDefinitionBuilder("add_host", "Add a new host to be monitored")
-    .AddParameter("detail_response", PropertyDefinition.DefineBoolean("Will this function echo all the values set or just necessary fields. The default is false for a faster response"))
+    .AddParameter("detail_response", PropertyDefinition.DefineBoolean("Will this function echo all the values set or just necessary parameters. The default is false for a faster response"))
     .AddParameter("address", PropertyDefinition.DefineString("The host address, required"))
     .AddParameter("endpoint", PropertyDefinition.DefineEnum(
         new List<string> { "quantum", "http", "https", "httphtml", "icmp", "dns", "smtp", "rawconnect", "nmapvuln", "nmap", "crawlsite" },
@@ -115,7 +115,7 @@ public class MonitorToolsBuilder : ToolsBuilderBase
 
     private FunctionDefinition BuildGetHostDataFunction()
     {
-        return new FunctionDefinitionBuilder("get_host_data", "Retrieve collected monitoring data for a host. The parameters that are added act as filters so only lnclude them if the filter is required.  For example to see the host data for host with id 10 {\"id\":10}, to see only the latest data set (dataset_id 0 is the latest running data set) for this host {\"id\":10, \"dataset_id\":0}")
+        return new FunctionDefinitionBuilder("get_host_data", "Retrieve collected monitoring data for a host. The parameters that are added act as filters so only lnclude them if the filter is required.  For example to see the host data for host with id 10 {\"id\":10}, to see only the latest data set (dataset_id 0 is the latest running data set) for this host {\"id\":10, \"dataset_id\":0}.  Do not include empty or null parameters")
             .AddParameter("detail_response", PropertyDefinition.DefineBoolean("Will this function provide full detail, or a brief summary, for each hosts monitoring data."))
             .AddParameter("dataset_id", PropertyDefinition.DefineNumber("Filter on dataset_id. Return a set of statistical data. Data is arranged in 6-hour data sets. Set dataset_id to zero for the latest/current data. To view data older than the current dataset; set dataset_id to null and select a date range with date_start and date_end"))
             .AddParameter("id", PropertyDefinition.DefineNumber("Return only hosts with ID, optional"))
@@ -137,7 +137,7 @@ public class MonitorToolsBuilder : ToolsBuilderBase
     }
     private FunctionDefinition BuildGetHostListFunction()
     {
-        return new FunctionDefinitionBuilder("get_host_list", "Retrieve a list of host configurations. Only include fields that you want to filter on. For example To see all host configurations {}, to see the host configuration for host with id 10 {\"id\":10}")
+        return new FunctionDefinitionBuilder("get_host_list", "Retrieve a list of host configurations. Do not include empty or null parameters. Only include parameters that you want to filter on. For example To see all host configurations {}, to see the host configuration for host with id 10 {\"id\":10}")
     .AddParameter("detail_response", PropertyDefinition.DefineBoolean("Will this function provide all host config detail. Set this to true if more than address and ID are required"))
     .AddParameter("id", PropertyDefinition.DefineNumber("Return host with ID, optional"))
     // Add a parameter for filtering hosts by address
@@ -252,7 +252,7 @@ public class MonitorToolsBuilder : ToolsBuilderBase
     {
         string content = $"You are a network monitoring and security assistant. Use the tools where necessary to assist the user. Your name is {llmType}, and you are faster than FreeLLM.";
 
-        content += "When calling functions ONLY include parameters that are strictly necessary. DO NOT include fields set to null or empty. ONLY include fields you set to to a value. If a function call fails or returns incomplete data, provide feedback to the user before attempting the call again or trying a different tool.";
+        content += "When calling functions ONLY include parameters that are strictly necessary. DO NOT include parameters set to null or empty. ONLY include parameters you set to to a value. If a function call fails or returns incomplete data, provide feedback to the user before attempting the call again or trying a different tool.";
         content += " Ensure that any function calls or tools you use align with the user's request. Use only the tools necessary for the task. For failed function calls, provide feedback about the issue before retrying or switching tools.";
         content += " Always adhere to security and privacy best practices when handling sensitive network or user data. Do not display or log confidential information unnecessarily.";
         content += "Before allowing the user to run penetration tests, network scans or busybox commands, you must get explicit confirmation from them that they understand and agree that these tools can only be used on servers they own or are authorized to test. Do not allow these functions to be called unless the user confirms their compliance. DO NOT keep asking the user for compliance once they have accepted it.";
