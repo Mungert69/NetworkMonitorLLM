@@ -28,7 +28,7 @@ public class MonitorToolsBuilder : ToolsBuilderBase
     private readonly FunctionDefinition fn_get_agents;
     private readonly FunctionDefinition fn_call_search_expert;
     private readonly FunctionDefinition fn_call_cmd_processor_expert;
-     private readonly FunctionDefinition fn_call_quantum_expert;
+    private readonly FunctionDefinition fn_call_quantum_expert;
 
     public MonitorToolsBuilder(UserInfo userInfo)
     {
@@ -46,7 +46,7 @@ public class MonitorToolsBuilder : ToolsBuilderBase
         fn_get_agents = BuildGetAgentsFunction();
         fn_call_search_expert = BuildCallSearchWebFunction();
         fn_call_cmd_processor_expert = BuildCallCmdProcessorFunction();
-           fn_call_quantum_expert = BuildCallQuantumFunction();
+        fn_call_quantum_expert = BuildCallQuantumFunction();
 
 
         // Assuming these function references are defined in the current context
@@ -117,25 +117,18 @@ public class MonitorToolsBuilder : ToolsBuilderBase
     {
         return new FunctionDefinitionBuilder("get_host_data", "Retrieve collected monitoring data for a host. The parameters that are added act as filters so only lnclude them if the filter is required.")
             .AddParameter("detail_response", PropertyDefinition.DefineBoolean("Will this function provide full detail, or a brief summary, for each hosts monitoring data."))
-            .AddParameter("dataset_id", PropertyDefinition.DefineNumber("Return a set of statistical data. Data is arranged in 6-hour data sets. Set dataset_id to zero for the latest/current data. To view data older than the current dataset; set dataset_id to null and select a date range with date_start and date_end"))
+            .AddParameter("dataset_id", PropertyDefinition.DefineNumber("Filter on dataset_id. Return a set of statistical data. Data is arranged in 6-hour data sets. Set dataset_id to zero for the latest/current data. To view data older than the current dataset; set dataset_id to null and select a date range with date_start and date_end"))
             .AddParameter("id", PropertyDefinition.DefineNumber("Return only hosts with ID, optional"))
-            // Add a parameter for filtering hosts by address
-            .AddParameter(
-             "address", // Parameter name
-             PropertyDefinition.DefineString(
-                "Return only hosts with address, optional. " +
-                "Supports wildcards: " +
-                "* matches any sequence of characters, " +
-                "? matches any single character. " +
-                "Example: '192.168.*' matches all addresses starting with '192.168.'."))
-            .AddParameter("email", PropertyDefinition.DefineString("Return only hosts with this email associated, optional"))
-            .AddParameter("enabled", PropertyDefinition.DefineBoolean("Return only hosts that are enabled, optional"))
-            .AddParameter("port", PropertyDefinition.DefineNumber("Return only hosts that are using this port, optional"))
-            .AddParameter("endpoint", PropertyDefinition.DefineString("Return only hosts that are using this endpoint type, optional"))
-            .AddParameter("alert_sent", PropertyDefinition.DefineBoolean("Return only hosts that have a host down alert sent, optional"))
-            .AddParameter("alert_flag", PropertyDefinition.DefineBoolean("Return only hosts that have a host down alert flag set, optional. This can be used to get hosts that are up or down"))
-            .AddParameter("date_start", PropertyDefinition.DefineString("Return only host data that Start from this date, optional. When used with date_end this gives a range of times to filter on"))
-            .AddParameter("date_end", PropertyDefinition.DefineString("Return only host data that ends on this date, optional"))
+          // Add a parameter for filtering hosts by address
+          .AddParameter("address", PropertyDefinition.DefineString("Filter on hosts with address, optional. Supports wildcards: * matches any sequence of characters, ? matches any single character. Example: '192.168.*' matches all addresses starting with '192.168.'."))
+            .AddParameter("email", PropertyDefinition.DefineString("Filter on hosts with this email associated, optional"))
+             .AddParameter("enabled", PropertyDefinition.DefineBoolean("Filter on hosts that are enabled for monitoring. Default is true, only change this if you really what to confirm a host is disabled and has no monitoring data, optional"))
+            .AddParameter("port", PropertyDefinition.DefineNumber("Filter on hosts that are using this port, optional"))
+            .AddParameter("endpoint", PropertyDefinition.DefineString("Filter hosts that are using this endpoint type, optional"))
+            .AddParameter("alert_sent", PropertyDefinition.DefineBoolean("Filter on hosts that have a host down alert sent, optional"))
+            .AddParameter("alert_flag", PropertyDefinition.DefineBoolean("Filter on hosts that have a host down alert flag set, optional. This can be used to get hosts that are up or down"))
+            .AddParameter("date_start", PropertyDefinition.DefineString("Filter on host data that Start from this date, optional. When used with date_end this gives a range of times to filter on"))
+            .AddParameter("date_end", PropertyDefinition.DefineString("Filter on host data that ends on this date, optional"))
             .AddParameter("page_size", PropertyDefinition.DefineNumber("The number of hosts to return on each page of data. Defaults to 4, optional"))
             .AddParameter("page_number", PropertyDefinition.DefineNumber("If not all data is returned then page the data with this page_number, optional"))
             .AddParameter("agent_location", PropertyDefinition.DefineString("The location of the agent monitoring this host, optional"))
@@ -144,23 +137,15 @@ public class MonitorToolsBuilder : ToolsBuilderBase
     }
     private FunctionDefinition BuildGetHostListFunction()
     {
-        return new FunctionDefinitionBuilder("get_host_list", "Retrieve a list of monitored hosts")
+        return new FunctionDefinitionBuilder("get_host_list", "Retrieve a list of host configurations. Only include fields that you want to filter on. To see all host configurations {}, to see the host configuration for host with id 10 {\"id\":10}")
     .AddParameter("detail_response", PropertyDefinition.DefineBoolean("Will this function provide all host config detail. Set this to true if more than address and ID are required"))
     .AddParameter("id", PropertyDefinition.DefineNumber("Return host with ID, optional"))
     // Add a parameter for filtering hosts by address
-    .AddParameter(
-    "address", // Parameter name
-    PropertyDefinition.DefineString(
-        "Return host with address, optional. " +
-        "Supports wildcards: " +
-        "* matches any sequence of characters, " +
-        "? matches any single character. " +
-        "Example: '192.168.*' matches all addresses starting with '192.168.'."
-    ))
-    .AddParameter("email", PropertyDefinition.DefineString("Return hosts with this email associated, optional"))
-    .AddParameter("enabled", PropertyDefinition.DefineBoolean("Return hosts with enabled, optional"))
-    .AddParameter("port", PropertyDefinition.DefineNumber("Return hosts with port, optional"))
-    .AddParameter("endpoint", PropertyDefinition.DefineString("Return hosts with endpoint type, optional"))
+    .AddParameter("address", PropertyDefinition.DefineString("Filter on hosts with address, optional. Supports wildcards: * matches any sequence of characters, ? matches any single character. Example: '192.168.*' matches all addresses starting with '192.168.'."))
+    .AddParameter("email", PropertyDefinition.DefineString("Filter on hosts with this email associated, optional"))
+    .AddParameter("enabled", PropertyDefinition.DefineBoolean("Filter on hosts that are enabled for monitoring. Default is true, only change this if you really what to confirm a host is disabled and has no monitoring data, optional"))
+    .AddParameter("port", PropertyDefinition.DefineNumber("Filter on hosts with port, optional"))
+    .AddParameter("endpoint", PropertyDefinition.DefineString("Filter on hosts with endpoint type, optional"))
     .AddParameter("page_size", PropertyDefinition.DefineNumber("The number of hosts to return on each page of data. Defaults to 4, optional"))
     .AddParameter("page_number", PropertyDefinition.DefineNumber("If not all data is returned then page the data, optional"))
     .AddParameter("agent_location", PropertyDefinition.DefineString("The location of the agent monitoring this host, optional"))
@@ -249,21 +234,21 @@ public class MonitorToolsBuilder : ToolsBuilderBase
     }
 
     private FunctionDefinition BuildCallQuantumFunction()
-{
-    return new FunctionDefinitionBuilder("call_quantum_expert", "Communicate a quantum security assessment request to a remote quantum cryptography expert LLM. You will craft a detailed message describing the user's request for quantum safety validation, which may involve testing post-quantum cryptographic algorithms, scanning quantum-vulnerable ports, or validating quantum-resistant configurations. The message should specify target servers, ports to test, algorithms to verify (e.g., Kyber512, Dilithium2), and any special parameters. If the quantum expert requires additional information, present these queries to the user in simple terms and assist in formulating appropriate responses.")
-        .AddParameter("message", PropertyDefinition.DefineString("""
+    {
+        return new FunctionDefinitionBuilder("call_quantum_expert", "Communicate a quantum security assessment request to a remote quantum cryptography expert LLM. You will craft a detailed message describing the user's request for quantum safety validation, which may involve testing post-quantum cryptographic algorithms, scanning quantum-vulnerable ports, or validating quantum-resistant configurations. The message should specify target servers, ports to test, algorithms to verify (e.g., Kyber512, Dilithium2), and any special parameters. If the quantum expert requires additional information, present these queries to the user in simple terms and assist in formulating appropriate responses.")
+            .AddParameter("message", PropertyDefinition.DefineString("""
             The message to send to the quantum expert LLM should include:
             1. Target server(s) or IP addresses to assess
             2. Specific quantum algorithms to test, or do not specify to test all quantum tls kems.
             3. Ports to scan for quantum vulnerabilities
             Example: "Test example.com:443 for Kyber512 support, scan ports 443 and 8443 for quantum-vulnerable services"
             """))
-        .AddParameter("agent_location", PropertyDefinition.DefineString("The agent location that will execute the quantum assessment. Quantum tests require specialized agents - verify availability first using get_agents."))
-        .Validate()
-        .Build();
-}
+            .AddParameter("agent_location", PropertyDefinition.DefineString("The agent location that will execute the quantum assessment. Quantum tests require specialized agents - verify availability first using get_agents."))
+            .Validate()
+            .Build();
+    }
 
-    public override  List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
+    public override List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
     {
         string content = $"You are a network monitoring and security assistant. Use the tools where necessary to assist the user. Your name is {llmType}, and you are faster than FreeLLM.";
 
@@ -274,7 +259,7 @@ public class MonitorToolsBuilder : ToolsBuilderBase
         content += "The available tools depend on the user's account type: Free users can manage hosts and view data; Standard users can additionally call security expert, search expert and create custom cmd processors on agents they own; Professional users can do the same plus call penetration experts; Enterprise users can run all previous functions, including BusyBox. If the user can not run a function because of their account type they can upgrade at https://freenetworkmonitor.click/subscription";
         content += "When calling the experts take note that the expert does not have access to your conversation with the user. The only context it has is the conversation with you so you must give it all the information it needs to perform the task you are requesting from it. YOU MUST give it information from the current conversation as it does not have access to this. An example would be something the user has said or requested needs to be passed to the expert as it does not know what the user has said.";
         content += "When choosing which tools to call be aware of the difference between ongoing monitoring tools like adding add_host, edit_host, get_host_data and get_host_list and tools that are run immediately like the call experts, run busybox, cancel and are functions running. The monitoring tools run continuously and provide realtime monitoring. The rest of the functions are, one hit, call and get result.  An example would be use the monitoring functions if the user wanted to monitor a website or keep checking if their server was quantum safe. If they wanted to perform a one of penetration test then call the experts. There are also tools to get the current user info and agents that are used for both monitoring and one hit calls";
-        content +=" DO NOT TAKE ACTIONS WITHOUT CONFIRMING WITH THE USER. Unless necessary call functons one at a time and give feedback before calling another.";
+        content += " DO NOT TAKE ACTIONS WITHOUT CONFIRMING WITH THE USER. Unless necessary call functons one at a time and give feedback before calling another.";
 
         var chatMessage = new ChatMessage()
         {
@@ -286,31 +271,31 @@ public class MonitorToolsBuilder : ToolsBuilderBase
         return chatMessages;
     }
 
-       public override List<ChatMessage> GetResumeSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
+    public override List<ChatMessage> GetResumeSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
+    {
+        string userStr = "";
+
+        if (serviceObj.UserInfo.UserID != "default")
         {
-            string userStr = "";
-
-            if (serviceObj.UserInfo.UserID != "default")
+            if (!string.IsNullOrEmpty(serviceObj.UserInfo.Name))
             {
-                if (!string.IsNullOrEmpty(serviceObj.UserInfo.Name)) 
-                {
-                    userStr = $" The user's name is {serviceObj.UserInfo.Name}.";
-                }
+                userStr = $" The user's name is {serviceObj.UserInfo.Name}.";
             }
-            else
-            {
-                userStr = " Remind the user that if they login, they get access to more features."; 
-            }
-
-            string content = $"A new session has started. Some time has passed since the last user's interaction. The latest time is {currentTime}. {userStr} Welcome the user back and give them a summary of what you did in the last session.";
-
-            var chatMessage = new ChatMessage()
-            {
-                Role = "system",
-                Content = content
-            };
-
-            return new List<ChatMessage> { chatMessage };
         }
-   
+        else
+        {
+            userStr = " Remind the user that if they login, they get access to more features.";
+        }
+
+        string content = $"A new session has started. Some time has passed since the last user's interaction. The latest time is {currentTime}. {userStr} Welcome the user back and give them a summary of what you did in the last session.";
+
+        var chatMessage = new ChatMessage()
+        {
+            Role = "system",
+            Content = content
+        };
+
+        return new List<ChatMessage> { chatMessage };
+    }
+
 }
