@@ -211,7 +211,7 @@ Reminder:
              "phi_4_mini" => new LLMConfig
             {
                 UserReplace = "<|user|>\\\n",
-                FunctionReplace = "<|user|>\\\n<tool_response>\\\n",
+                FunctionReplace = "<|user|>\\\n<tool_response>",
                 AssistantHeader = "<|assistant|>\n",
                 UserInputTemplate = "<|user|>\\\n{0}",
                 AssistantMessageTemplate = "<|assistant|>\\\n{0}<|end|>",
@@ -348,4 +348,3 @@ public class LLMConfig
             (_, _, _) => throw new InvalidOperationException("No broadcaster defined for this LLMConfig.");
 
 }
-
