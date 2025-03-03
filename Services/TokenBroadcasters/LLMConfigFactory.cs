@@ -219,7 +219,7 @@ Reminder:
                 FunctionResponseTemplate = "<|tool_response|>[{1}]",
 
                 FunctionBuilder = "<tool_call>{1}</tool_call>",
-                FunctionResponse = "{1}",
+                FunctionResponse = "<|tool_response|>[{1}]",
                 FunctionDefsWrap = @"
 You are a helpful assistant with some tools.
 <|tool|>

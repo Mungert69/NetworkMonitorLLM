@@ -46,15 +46,15 @@ public class LLMProcessRunner : ILLMRunner
     public int LlmLoad { get => _llmLoad; set => _llmLoad = value; }
 
     public event Action<int, string> LoadChanged;
- #pragma warning disable CS0067  
-     public event Func<string, LLMServiceObj, Task> OnUserMessage;
+#pragma warning disable CS0067
+    public event Func<string, LLMServiceObj, Task> OnUserMessage;
 
-     public event Func<LLMServiceObj, Task> SendHistory;
+    public event Func<LLMServiceObj, Task> SendHistory;
     public event Func<string, LLMServiceObj, Task> RemoveSavedSession;
 #pragma warning restore CS0067 
     private IAudioGenerator _audioGenerator;
     private ICpuUsageMonitor _cpuUsageMonitor;
-       private readonly IQueryCoordinator _queryCoordinator;
+    private readonly IQueryCoordinator _queryCoordinator;
 
     private ConcurrentDictionary<string, StringBuilder?> _assistantMessages = new ConcurrentDictionary<string, StringBuilder?>();
 
@@ -65,13 +65,13 @@ public class LLMProcessRunner : ILLMRunner
         _startServiceoObj = startServiceObj;
         _mlParams = systemParamsHelper.GetMLParams();
         _serviceID = systemParamsHelper.GetSystemParams().ServiceID!;
-        if (processRunnerSemaphore==null) throw new Exception (" Processor Runner Semaphore is null");
+        if (processRunnerSemaphore == null) throw new Exception(" Processor Runner Semaphore is null");
         _processRunnerSemaphore = processRunnerSemaphore;
-        _audioGenerator= audioGenerator;
-        _cpuUsageMonitor=cpuUsageMonitor;
+        _audioGenerator = audioGenerator;
+        _cpuUsageMonitor = cpuUsageMonitor;
         _idleCheckTimer = new Timer(async _ => await CheckAndTerminateIdleProcesses(), null, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
         _isEnabled = _mlParams.StartThisTestLLM;
-        _queryCoordinator=queryCoordinator;
+        _queryCoordinator = queryCoordinator;
     }
 
 
@@ -90,8 +90,8 @@ public class LLMProcessRunner : ILLMRunner
     public void SetStartInfo(ProcessStartInfo startInfo, MLParams mlParams)
     {
         string promptPrefix = "";
-        string promptSuffix=$" --in-suffix \"{_config.EOTToken}{_config.AssistantHeader}\" ";
-        int recommendedCpuCount= _cpuUsageMonitor.RecommendCpuCount(mlParams.LlmThreads,  80f);
+        string promptSuffix = $" --in-suffix \"{_config.EOTToken}{_config.AssistantHeader}\" ";
+        int recommendedCpuCount = _cpuUsageMonitor.RecommendCpuCount(mlParams.LlmThreads, 80f);
         _logger.LogInformation($" CPU Usage using {recommendedCpuCount} from the configured {mlParams.LlmThreads} threads");
         if (_startServiceoObj.UserInfo.AccountType == null)
         {
@@ -121,8 +121,8 @@ public class LLMProcessRunner : ILLMRunner
         {
             contextFileName = mlParams.LlmContextFileName + permissionSuffix;
         }
-        string reversePrompt=$"-r \"{_config.EOTToken}\" ";
-        if (!string.IsNullOrEmpty(_config.EOMToken)) reversePrompt+=$"-r \"{_config.EOMToken}\" ";
+        string reversePrompt = $"-r \"{_config.EOTToken}\" ";
+        if (!string.IsNullOrEmpty(_config.EOMToken)) reversePrompt += $"-r \"{_config.EOMToken}\" ";
         startInfo.FileName = $"{mlParams.LlmModelPath}llama.cpp/llama-cli";
         startInfo.Arguments = $" -c {mlParams.LlmCtxSize} -n {mlParams.LlmPromptTokens} -m {mlParams.LlmModelPath + mlParams.LlmModelFileName}  --prompt-cache {mlParams.LlmModelPath + contextFileName} --prompt-cache-ro  -f {mlParams.LlmModelPath + promptName} {mlParams.LlmPromptMode} {reversePrompt} {promptSuffix} --keep -1 --temp {mlParams.LlmTemp} -t {recommendedCpuCount} -tb {recommendedCpuCount} {promptPrefix}";
         _logger.LogInformation($"Running command : {startInfo.FileName}{startInfo.Arguments}");
@@ -133,10 +133,11 @@ public class LLMProcessRunner : ILLMRunner
     }
     public async Task StartProcess(LLMServiceObj serviceObj)
     {
-        if (!_cpuUsageMonitor.IsMemoryAvailable(6)) {
-               throw new Exception(" Test LLM is running low on memory resources. Please switch to TurboLLM");
+        if (!_cpuUsageMonitor.IsMemoryAvailable(6))
+        {
+            throw new Exception(" Test LLM is running low on memory resources. Please switch to TurboLLM");
         }
-         _config = LLMConfigFactory.GetConfig(_mlParams.LlmVersion);
+        _config = LLMConfigFactory.GetConfig(_mlParams.LlmVersion);
 
         if (!_mlParams.StartThisTestLLM || _isStateStarting) return;
         _isStateStarting = true;
@@ -182,7 +183,7 @@ public class LLMProcessRunner : ILLMRunner
         }
 
 
-       
+
         var userInfo = serviceObj.IsUserLoggedIn
             ? new UserInfo { Email = serviceObj.UserInfo.Email }
             : new UserInfo();
@@ -296,7 +297,7 @@ public class LLMProcessRunner : ILLMRunner
         }
 
         _logger.LogInformation($"LLM process successfully removed for sessionId {sessionId}");
-            return Task.CompletedTask;
+        return Task.CompletedTask;
     }
 
 
@@ -345,7 +346,7 @@ public class LLMProcessRunner : ILLMRunner
         }
 
         _isStateReady = true;
-            return Task.CompletedTask;
+        return Task.CompletedTask;
 
     }
 
@@ -400,13 +401,13 @@ public class LLMProcessRunner : ILLMRunner
 
     public async Task SendInputAndGetResponse(LLMServiceObj serviceObj)
     {
-          if (serviceObj.UserInput.StartsWith("<|REMOVE_SAVED_SESSION|>"))
+        if (serviceObj.UserInput.StartsWith("<|REMOVE_SAVED_SESSION|>"))
         {
             string fullSessionId = serviceObj.UserInput.Replace("<|REMOVE_SAVED_SESSION|>", string.Empty).Trim();
-             if (!string.IsNullOrEmpty(fullSessionId) && RemoveSavedSession != null)
+            if (!string.IsNullOrEmpty(fullSessionId) && RemoveSavedSession != null)
             {
 
-                 await RemoveSavedSession.Invoke(fullSessionId, serviceObj);
+                await RemoveSavedSession.Invoke(fullSessionId, serviceObj);
 
                 _logger.LogInformation($"Success: Removed saved sessionId {fullSessionId}");
             }
@@ -416,23 +417,24 @@ public class LLMProcessRunner : ILLMRunner
             }
             return;
         }
-         if (serviceObj.UserInput == "<|REPLAY_HISTORY|>")
+        if (serviceObj.UserInput == "<|REPLAY_HISTORY|>")
         {
             // TODO implement a caching mech for getting previoud contexts
             //await ReplayHistory(serviceObj.SessionId);
             _logger.LogInformation($" Replay history  not yet implemented for sessionId {serviceObj.SessionId}");
             return;
         }
-         if (serviceObj.UserInput == "<|REPLAY_HISTORY|>")
+        if (serviceObj.UserInput == "<|REPLAY_HISTORY|>")
         {
             // TODO implement a caching mech for getting previoud contexts
             //await ReplayHistory(serviceObj.SessionId);
             _logger.LogInformation($" Replayed history for sessionId {serviceObj.SessionId}");
             return;
         }
-        if (serviceObj.UserInput.Contains("<|START_AUDIO|>") || serviceObj.UserInput.Contains("<|STOP_AUDIO|>")) {
-               throw new Exception($"Audio is not available for the TestLLM. Switch to another LLM if you need audio output.");
-         
+        if (serviceObj.UserInput.Contains("<|START_AUDIO|>") || serviceObj.UserInput.Contains("<|STOP_AUDIO|>"))
+        {
+            throw new Exception($"Audio is not available for the TestLLM. Switch to another LLM if you need audio output.");
+
         }
         _isStateReady = false;
         int sendLlmLoad = 0;
@@ -522,13 +524,11 @@ public class LLMProcessRunner : ILLMRunner
                 userInput = userInput.Replace("\r\n", " ").Replace("\n", " ");
 
                 //userInput = userInput.Replace("\r\n", "\\\n").Replace("\n", "\\\n");
-                if (!serviceObj.IsFunctionCallResponse)
+                if (serviceObj.IsFunctionCallStatus)
                 {
-
-                    userInput = string.Format(_config.UserInputTemplate, userInput);
-
+                    functionStatusMessage = FunctionResponseBuilder(serviceObj) + EOTToken();
                 }
-                else if (!serviceObj.IsFunctionCallStatus)
+                else if (serviceObj.IsFunctionCallResponse)
                 {
                     var processedFunctionCalls = _responseProcessor.GetProcessedFunctionCalls(serviceObj.MessageID);
                     var constructedInputs = processedFunctionCalls.Select((pendingServiceObj, index) =>
@@ -549,7 +549,7 @@ public class LLMProcessRunner : ILLMRunner
                 }
                 else
                 {
-                    functionStatusMessage = FunctionResponseBuilder(serviceObj) + EOTToken();
+                    userInput = string.Format(_config.UserInputTemplate, userInput);
                 }
             }
 
@@ -560,7 +560,7 @@ public class LLMProcessRunner : ILLMRunner
                 _logger.LogWarning(" Warning : LLM Input is empty");
                 return;
             }
-            await tokenBroadcaster.SetUp( serviceObj, _sendOutput, sendLlmLoad);
+            await tokenBroadcaster.SetUp(serviceObj, _sendOutput, sendLlmLoad);
             await process.StandardInput.WriteLineAsync(llmInput);
             await process.StandardInput.FlushAsync();
             _logger.LogInformation($" LLM INPUT -> {llmInput}");
@@ -570,7 +570,7 @@ public class LLMProcessRunner : ILLMRunner
             {
                 // Task completed within timeout
                 await broadcastTask;
-                if (tokenBroadcaster!=null && tokenBroadcaster.AssistantMessage != null)
+                if (tokenBroadcaster != null && tokenBroadcaster.AssistantMessage != null)
                 {
                     if (tokenBroadcaster.AssistantMessage != null) _assistantMessages.TryAdd(serviceObj.MessageID, tokenBroadcaster.AssistantMessage);
                     tokenBroadcaster.AssistantMessage = null;
