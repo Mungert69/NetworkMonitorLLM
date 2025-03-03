@@ -20,31 +20,31 @@ public class TokenBroadcasterPhi_4_Mini : TokenBroadcasterBase
     }
 
 
-    public override List<(string json, string functionName)> ParseInputForJson(string input)
+   public override List<(string json, string functionName)> ParseInputForJson(string input)
+{
+    input = RemoveThinking(input, "think");
+    var functionCalls = new List<(string json, string functionName)>();
+    int tagStart = input.IndexOf("<|tool_call|>");
+    int tagEnd;
+
+    while (tagStart != -1)
     {
-        input=RemoveThinking(input,"think");
-        var functionCalls = new List<(string json, string functionName)>();
-        int tagStart = input.IndexOf("<tool_call>\n");
-        int tagEnd;
+        // Move the starting index after "<|tool_call|>"
+        tagStart += "<|tool_call|>".Length;
+        tagEnd = input.IndexOf("</|tool_call|>", tagStart);
 
-        while (tagStart != -1)
-        {
-            // Move the starting index after the "<tool_call>\n" tag
-            tagStart += "<tool_call>\n".Length;
-            tagEnd = input.IndexOf("\n</tool_call>", tagStart);
+        // If no matching end tag is found, break the loop
+        if (tagEnd == -1) break;
 
-            // If no matching end tag is found, break the loop
-            if (tagEnd == -1) break;
+        // Extract the JSON content between the tags and trim newlines & spaces
+        string jsonContent = input.Substring(tagStart, tagEnd - tagStart).Trim('\n', ' ', '\r');
 
-            // Extract the JSON content between the tags
-            string jsonContent = input.Substring(tagStart, tagEnd - tagStart).Trim();
-            functionCalls.Add((JsonSanitizer.RepairJson(jsonContent,_ignoreParameters), string.Empty));
+        functionCalls.Add((JsonSanitizer.RepairJson(jsonContent, _ignoreParameters), string.Empty));
 
-            // Look for the next "<tool_call>\n" tag after the current end tag
-            tagStart = input.IndexOf("<tool_call>\n", tagEnd + "</tool_call>".Length);
-        }
-
-        return functionCalls;
+        // Look for the next "<|tool_call|>" tag after the current end tag
+        tagStart = input.IndexOf("<|tool_call|>", tagEnd + "</|tool_call|>".Length);
     }
 
+    return functionCalls;
+}
 }

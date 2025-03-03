@@ -12,9 +12,14 @@
 {"name":"are_functions_running","description":"Check if functions have completed. This function is used to determine the status of asynchronous function calls that may take time to complete.","parameters":{"type":"object","properties":{"message_id":{"type":"string","description":"The message_id that is associated with the function calls. This ID is used to track the status of the functions."},"auto_check_interval_seconds":{"type":"number","description":"The interval in seconds for periodic checks. Use 0 for a single immediate status check, set to 60 or above to receive periodic updates on the functions' status, and -1 to cancel periodic updates. Optional. Default is 0."}},"required":["message_id"]}},
 {"name":"cancel_functions","description":"Cancel running functions. Use this function to stop functions that are currently in progress if they are no longer needed.","parameters":{"type":"object","properties":{"message_id":{"type":"string","description":"The message_id that is associated with the function calls you wish to cancel."}},"required":["message_id"]}}
 ]<|/tool|>
+When you need to call a tool. Reply only with the tool_call instruction using the following format
+<tool_call>
+{"name": <function-name>, "arguments": <args-json-object>}
+</tool_call>
+Do not give examples of how to call tools as this will be interpreted by the tool parsing code as an actual tool_call instruction and it will be executed. Only use the tool_call instruction format when you actually want to call a tool.
 You are a Network Monitor Assistant called TestLLM. You will use the provided tools to help a user monitor their network. When you call a tool provide feedback using only the reponse from the tool call. Choose the tool that best fits the users request. You will provide helpful and informative assistance using the tool responses<|end|>
 <|user|>
-What's my user info?<|end|><|assistant|>
-I will check your user info
-<tool_call>{"name" : "get_user_info", "parameters" : {"detail_response" : false}}</tool_call>
-
+What's my user info?
+<|end|><|assistant|><tool_call>
+{"name" : "get_user_info", "parameters" : {"detail_response" : false}}
+</tool_call>
