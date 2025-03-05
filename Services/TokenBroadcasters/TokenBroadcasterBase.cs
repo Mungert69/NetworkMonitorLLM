@@ -322,30 +322,26 @@ namespace NetworkMonitor.LLM.Services
             // if (functionCalls != null && functionCalls.Count > 0 && !functionCalls.Any(f => f.functionName == "are_functions_running")) makeAssistantMessage = true;
 
             if (makeAssistantMessage) _assistantMessage = new StringBuilder($"I have called the following functions ");
-
+            bool isDuplicateSet = false;
+            bool isDuplicate = false;
+            int duplicateCount = 0;
             foreach (var (jsonArguments, functionName) in functionCalls)
             {
                 if (!string.IsNullOrWhiteSpace(jsonArguments))
                 {
-                    bool isDuplicate = _recentFunctionCalls.Any(f =>
-                        f.FunctionName == functionName &&
-                        f.ArgumentsJson == jsonArguments);
-                    if (isDuplicate)
+
+                    if (!isDuplicateSet) isDuplicate = _recentFunctionCalls.Any(f =>
+                   f.FunctionName == functionName &&
+                   f.ArgumentsJson == jsonArguments);
+
+                    if (!isDuplicateSet && isDuplicate)
                     {
-                        _logger.LogWarning($"Possible loop detected when calling function: {functionName}");
-
-                        // Add a system message to guide the LLM out of the loop
-                        if (SystemMessage == null) SystemMessage = new StringBuilder();
-                        SystemMessage.AppendLine("You are possibly stuck in a loop. You need to stop calling functions and check what the user wants to do.");
-
+                        isDuplicateSet = true;
+                        duplicateCount = _recentFunctionCalls.Count(f =>
+                    f.FunctionName == functionName &&
+                    f.ArgumentsJson == jsonArguments);
                     }
                     _recentFunctionCalls.Enqueue((functionName, jsonArguments));
-
-                    // Maintain queue size
-                    while (_recentFunctionCalls.Count > MaxRecentFunctionCalls)
-                    {
-                        _recentFunctionCalls.Dequeue();
-                    }
 
                     if (makeAssistantMessage && _assistantMessage != null) _assistantMessage.Append($" {functionName} ");
 
@@ -363,7 +359,18 @@ namespace NetworkMonitor.LLM.Services
                 }
             }
             if (makeAssistantMessage && _assistantMessage != null) _assistantMessage.Append($" using message_id {serviceObj.MessageID}");
-
+            int numDequeue=MaxRecentFunctionCalls;
+            if (isDuplicate && duplicateCount>1)
+            {
+                _logger.LogWarning($"Possible loop detected when calling functions");
+                if (SystemMessage == null) SystemMessage = new StringBuilder();
+                SystemMessage.AppendLine("You are possibly stuck in a loop. You need to stop calling functions and check what the user wants to do.");
+                numDequeue=0;
+            }
+            while (_recentFunctionCalls.Count > numDequeue)
+            {
+                _recentFunctionCalls.Dequeue(); // Maintain queue size
+            }
             responseServiceObj.LlmMessage = "<end-of-line>";
             await SendLLMPrimary(responseServiceObj);
         }
