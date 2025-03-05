@@ -511,26 +511,10 @@ public class LLMProcessRunner : ILLMRunner
             }
             string userInput = serviceObj.UserInput;
             var preAssistantMessage = "";
-            var preSystemMessage="";
+            var preSystemMessage = "";
             var functionStatusMessage = "";
             if (_sendOutput)
             {
-                preAssistantMessage = string.Join("", _assistantMessages.Select(entry =>
-              {
-                  var assistantMessage = entry.Value?.ToString() ?? string.Empty;
-                  return string.Format(_config.AssistantMessageTemplate, assistantMessage);
-              }));
-
-
-                _assistantMessages.Clear();
-                 preSystemMessage = string.Join("", _systemMessages.Select(entry =>
-              {
-                  var systemMessage = entry.Value?.ToString() ?? string.Empty;
-                  return string.Format(_config.SystemMessageTemplate, systemMessage);
-              }));
-
-
-                _systemMessages.Clear();
                 userInput = userInput.Replace("\r\n", " ").Replace("\n", " ");
 
                 //userInput = userInput.Replace("\r\n", "\\\n").Replace("\n", "\\\n");
@@ -559,8 +543,26 @@ public class LLMProcessRunner : ILLMRunner
                 }
                 else
                 {
+                       preSystemMessage = string.Join("", _systemMessages.Select(entry =>
+             {
+                 var systemMessage = entry.Value?.ToString() ?? string.Empty;
+                 return string.Format(_config.SystemMessageTemplate, systemMessage);
+             }));
+
+
+                _systemMessages.Clear();
+                    preAssistantMessage = string.Join("", _assistantMessages.Select(entry =>
+                  {
+                      var assistantMessage = entry.Value?.ToString() ?? string.Empty;
+                      return string.Format(_config.AssistantMessageTemplate, assistantMessage);
+                  }));
+                    _assistantMessages.Clear();
+
+
                     userInput = string.Format(_config.UserInputTemplate, userInput);
                 }
+
+             
             }
 
 

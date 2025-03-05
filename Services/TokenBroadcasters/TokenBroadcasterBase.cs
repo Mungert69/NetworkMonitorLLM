@@ -336,7 +336,7 @@ namespace NetworkMonitor.LLM.Services
 
                         // Add a system message to guide the LLM out of the loop
                         if (SystemMessage == null) SystemMessage = new StringBuilder();
-                        SystemMessage.AppendLine("You are possibly stuck in a loop. Take a summary of what you have been doing and give the user feedback before continuing. If the user wants to call the same function again, that is okay. Just check first.");
+                        SystemMessage.AppendLine("You are possibly stuck in a loop. You need to stop calling functions and check what the user wants to do.");
 
                     }
                     _recentFunctionCalls.Enqueue((functionName, jsonArguments));
