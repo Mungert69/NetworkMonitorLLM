@@ -57,6 +57,7 @@ public class LLMProcessRunner : ILLMRunner
     private readonly IQueryCoordinator _queryCoordinator;
 
     private ConcurrentDictionary<string, StringBuilder?> _assistantMessages = new ConcurrentDictionary<string, StringBuilder?>();
+    private ConcurrentDictionary<string, StringBuilder?> _systemMessages = new ConcurrentDictionary<string, StringBuilder?>();
 
     public LLMProcessRunner(ILogger<LLMProcessRunner> logger, ILLMResponseProcessor responseProcessor, ISystemParamsHelper systemParamsHelper, LLMServiceObj startServiceObj, SemaphoreSlim? processRunnerSemaphore, IAudioGenerator audioGenerator, ICpuUsageMonitor cpuUsageMonitor, IQueryCoordinator queryCoordinator)
     {
@@ -510,6 +511,7 @@ public class LLMProcessRunner : ILLMRunner
             }
             string userInput = serviceObj.UserInput;
             var preAssistantMessage = "";
+            var preSystemMessage="";
             var functionStatusMessage = "";
             if (_sendOutput)
             {
@@ -521,6 +523,14 @@ public class LLMProcessRunner : ILLMRunner
 
 
                 _assistantMessages.Clear();
+                 preSystemMessage = string.Join("", _systemMessages.Select(entry =>
+              {
+                  var systemMessage = entry.Value?.ToString() ?? string.Empty;
+                  return string.Format(_config.SystemMessageTemplate, systemMessage);
+              }));
+
+
+                _systemMessages.Clear();
                 userInput = userInput.Replace("\r\n", " ").Replace("\n", " ");
 
                 //userInput = userInput.Replace("\r\n", "\\\n").Replace("\n", "\\\n");
@@ -554,7 +564,7 @@ public class LLMProcessRunner : ILLMRunner
             }
 
 
-            string llmInput = preAssistantMessage + functionStatusMessage + userInput;
+            string llmInput = preSystemMessage + preAssistantMessage + functionStatusMessage + userInput;
             if (string.IsNullOrEmpty(llmInput))
             {
                 _logger.LogWarning(" Warning : LLM Input is empty");
@@ -574,6 +584,11 @@ public class LLMProcessRunner : ILLMRunner
                 {
                     if (tokenBroadcaster.AssistantMessage != null) _assistantMessages.TryAdd(serviceObj.MessageID, tokenBroadcaster.AssistantMessage);
                     tokenBroadcaster.AssistantMessage = null;
+                }
+                if (tokenBroadcaster != null && tokenBroadcaster.SystemMessage != null)
+                {
+                    if (tokenBroadcaster.SystemMessage != null) _systemMessages.TryAdd(serviceObj.MessageID, tokenBroadcaster.SystemMessage);
+                    tokenBroadcaster.SystemMessage = null;
                 }
             }
             else

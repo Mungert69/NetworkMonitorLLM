@@ -36,6 +36,7 @@ Where:
                 AssistantHeader = "<|from|> assistant\\\n<|recipient|> all\\\n<|content|>",
                 UserInputTemplate = "<|from|> user\\\n<|recipient|> all\\\n<|content|>{0}",
                 AssistantMessageTemplate = "<|from|> assistant\\\n<|recipient|> all\\\n<|content|>{0}\\\n",
+                SystemMessageTemplate = "<|from|> system\\\n<|recipient|> all\\\n<|content|>{0}\\\n",
                 EOTToken = "<|stop|>",
                 FunctionResponseTemplate = "<|from|> {0}\\\n<|recipient|> all\\\n<|content|>{1}",
                 FunctionBuilder = "<|from|> {0}\\\n<|recipient|> all\\\n<|content|>{1}",
@@ -52,6 +53,7 @@ Where:
                 AssistantHeader = "<|start_header_id|>assistant<|end_header_id|>\n\n",
                 UserInputTemplate = "<|start_header_id|>user<|end_header_id|>\\\n\\\n{0}",
                 AssistantMessageTemplate = "<|start_header_id|>assistant<|end_header_id|>\\\n\\\n{0}<|eot_id|>",
+                SystemMessageTemplate = "<|start_header_id|>system<|end_header_id|>\\\n\\\n{0}<|eot_id|>",
                 EOTToken = "<|eot_id|>",
                 FunctionResponseTemplate = "<|start_header_id|>tool<|end_header_id|>\\\n\\\nname={0} {1}",
 
@@ -69,6 +71,7 @@ Where:
                 AssistantHeader = "<|start_header_id|>assistant<|end_header_id|>\n\n",
                 UserInputTemplate = "<|start_header_id|>user<|end_header_id|>\\\n\\\n{0}",
                 AssistantMessageTemplate = "<|start_header_id|>assistant<|end_header_id|>\\\n\\\n{0}<|eot_id|>",
+                SystemMessageTemplate = "<|start_header_id|>system<|end_header_id|>\\\n\\\n{0}<|eot_id|>",
                 EOTToken = "<|eot_id|>",
                 EOMToken = "<|eom_id|>",
                 FunctionResponseTemplate = "<|start_header_id|>ipython<|end_header_id|>\\\n\\\n{1}",
@@ -106,6 +109,7 @@ Reminder:
                 AssistantHeader = "<|start_header_id|>assistant<|end_header_id|>\n\n",
                 UserInputTemplate = "<|start_header_id|>user<|end_header_id|>\\\n\\\n{0}",
                 AssistantMessageTemplate = "<|start_header_id|>assistant<|end_header_id|>\\\n\\\n{0}<|eot_id|>",
+                SystemMessageTemplate = "<|start_header_id|>system<|end_header_id|>\\\n\\\n{0}<|eot_id|>",
                 EOTToken = "<|eot_id|>",
                 FunctionResponseTemplate = "<|start_header_id|>tool<|end_header_id|>\\\n\\\n{1}",
 
@@ -129,6 +133,7 @@ ${content}
                 AssistantHeader = "<|start_header_id|>assistant<|end_header_id|>\n\n",
                 UserInputTemplate = "<|start_header_id|>user<|end_header_id|>\\\n\\\n{0}",
                 AssistantMessageTemplate = "<|start_header_id|>assistant<|end_header_id|>\\\n\\\n{0}<|eot_id|>",
+                SystemMessageTemplate = "<|start_header_id|>system<|end_header_id|>\\\n\\\n{0}<|eot_id|>",
                 EOTToken = "<|eot_id|>",
                 EOMToken = "<|eom_id|>",
                 FunctionResponseTemplate = "<|start_header_id|>ipython<|end_header_id|>\\\n\\\n{1}",
@@ -176,6 +181,7 @@ VERY IMPORTANT : Only call functions using this format :  {""name"": ""function_
                 AssistantHeader = "<|im_start|>assistant<|im_sep|>\n",
                 UserInputTemplate = "<|im_start|>user<|im_sep|>\\\n{0}",
                 AssistantMessageTemplate = "<|im_start|>assistant<|im_sep|>\\\n{0}<|im_end|>",
+                SystemMessageTemplate = "<|im_start|>system<|im_sep|>\\\n{0}<|im_end|>",
                 EOTToken = "<|im_end|>",
                 FunctionResponseTemplate = "<|im_start|>user<|im_sep|>\\\n<function_response name={0}>\\\n{1}\\\n</function_response>",
 
@@ -215,6 +221,7 @@ Reminder:
                 AssistantHeader = "<|assistant|>\n",
                 UserInputTemplate = "<|user|>\\\n{0}",
                 AssistantMessageTemplate = "<|assistant|>\\\n{0}<|end|>",
+                SystemMessageTemplate = "<|system|>\\\n{0}<|end|>",
                 EOTToken = "<|end|>",
                 FunctionResponseTemplate = "<|tool_response|>[{1}]",
 
@@ -251,6 +258,7 @@ Reminder:
                 AssistantHeader = "<|im_start|>assistant\n",
                 UserInputTemplate = "<|im_start|>user\\\n{0}",
                 AssistantMessageTemplate = "<|im_start|>assistant\\\n{0}<|im_end|>",
+                SystemMessageTemplate = "<|im_start|>system\\\n{0}<|im_end|>",
                 EOTToken = "<|im_end|>",
                 FunctionResponseTemplate = "<|im_start|>assistant\\\n<tool_response>\\\n{1}\\\n</tool_response>",
 
@@ -288,6 +296,7 @@ Reminder:
                 AssistantHeader = "<start_of_turn>model\n",
                 UserInputTemplate = "<start_of_turn>user\\\n{0}",
                 AssistantMessageTemplate = "<start_of_turn>model\\\n{0}<end_of_turn>",
+                SystemMessageTemplate = "<start_of_turn>model\\\n{0}<end_of_turn>",
                 EOTToken = "<end_of_turn>",
                 FunctionResponseTemplate = "<start_of_turn>user\\\nFunction response: {1}",
 
@@ -306,7 +315,8 @@ Reminder:
                 FunctionReplace = "Function Call :",
                 AssistantHeader = "",
                 UserInputTemplate = "Function Call : {0}",
-                AssistantMessageTemplate = "Response : {0}",
+                AssistantMessageTemplate = "{0}",
+                SystemMessageTemplate = "{0}",
                 EOTToken = "",
                 FunctionResponseTemplate = "FUNCTION RESPONSE: {1}",
 
@@ -333,6 +343,7 @@ public class LLMConfig
     public string AssistantHeader { get; set; } = string.Empty;
     public string UserInputTemplate { get; set; } = string.Empty;
     public string AssistantMessageTemplate { get; set; } = string.Empty;
+    public string SystemMessageTemplate { get; set; } = string.Empty;
     public string EOTToken { get; set; } = string.Empty;
     public string EOMToken { get; set; } = string.Empty;
     public string FunctionResponseTemplate { get; set; } = string.Empty;

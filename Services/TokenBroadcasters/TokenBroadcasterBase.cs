@@ -19,16 +19,17 @@ namespace NetworkMonitor.LLM.Services
     public interface ITokenBroadcaster
     {
         void Init(LLMConfig config);
-         void ReInit(string sessionId);
+        void ReInit(string sessionId);
         Task SetUp(LLMServiceObj serviceObj, bool sendOutput, int llmLoad);
         StringBuilder? AssistantMessage { get; set; }
+        StringBuilder? SystemMessage { get; set; }
         Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput);
         List<(string json, string functionName)> ParseInputForJson(string input);
         List<(string json, string functionName)> ParseInputForXml(string input);
         string ResponseContent { get; }
         bool IsAddAssistant { get; set; }
         bool UseHttpProcess { get; set; }
-        
+
 
 
     }
@@ -42,6 +43,7 @@ namespace NetworkMonitor.LLM.Services
         protected bool _isSystemLlm;
         protected bool _isFuncCalled;
         StringBuilder? _assistantMessage = null;
+        StringBuilder? _systemMessage = null;
         protected bool _xmlFunctionParsing = false;
         private bool _disposed = false; // To detect redundant calls to Dispose
         protected string _userReplace = "";
@@ -52,11 +54,12 @@ namespace NetworkMonitor.LLM.Services
         protected LLMConfig _config;
         protected HashSet<string> _ignoreParameters;
         private bool _isAddAssistant = false;
-        private bool _useHttpProcess=false;
+        private bool _useHttpProcess = false;
         private StringBuilder _responseContentBuilder = new StringBuilder();
         public string ResponseContent => _responseContentBuilder.ToString();
-
-
+        private readonly Queue<(string? FunctionName, string? ArgumentsJson)> _recentFunctionCalls = new Queue<(string?, string?)>();
+        private const int MaxRecentFunctionCalls = 5; // Adjust as needed
+        public StringBuilder? SystemMessage { get => _systemMessage; set => _systemMessage = value; }
         public StringBuilder? AssistantMessage { get => _assistantMessage; set => _assistantMessage = value; }
         public bool IsAddAssistant { get => _isAddAssistant; set => _isAddAssistant = value; }
         public bool UseHttpProcess { get => _useHttpProcess; set => _useHttpProcess = value; }
@@ -194,8 +197,10 @@ namespace NetworkMonitor.LLM.Services
                 var contentChunk = partialResponse?.Choices?.FirstOrDefault()?.Delta?.Content ?? "";
                 return contentChunk;
             }
-            catch { 
-                return "<|Error|>";           }
+            catch
+            {
+                return "<|Error|>";
+            }
         }
 
         public virtual async Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput)
@@ -206,7 +211,7 @@ namespace NetworkMonitor.LLM.Services
 
             var lineBuilder = new StringBuilder();
             var llmOutFull = new StringBuilder();
-             _responseContentBuilder=new StringBuilder();
+            _responseContentBuilder = new StringBuilder();
             int stopCount = 0;
 
             try
@@ -223,8 +228,8 @@ namespace NetworkMonitor.LLM.Services
                         textChunk = ConvertToContent(textChunk);
                         if (textChunk == "<|DONE|>")
                         {
-                          _cancellationTokenSource.Cancel();
-                          break;
+                            _cancellationTokenSource.Cancel();
+                            break;
                         }
 
                     }
@@ -240,7 +245,7 @@ namespace NetworkMonitor.LLM.Services
                         _logger.LogInformation($" Stop count {stopCount} output is {llmOutStr} ");
 
                     }
-                    if (stopCount == _stopAfter )
+                    if (stopCount == _stopAfter)
                     {
                         await ProcessLine(llmOutStr, serviceObj);
                         _logger.LogInformation($" Cancel due to {stopCount} end tokens detected ");
@@ -304,7 +309,7 @@ namespace NetworkMonitor.LLM.Services
             return tokenBuilder.Length > 0 && char.IsWhiteSpace(tokenBuilder[^1]);
         }
 
-        protected virtual async Task ProcessLine(string line, LLMServiceObj serviceObj)
+        protected async Task ProcessLine(string line, LLMServiceObj serviceObj)
         {
             var responseServiceObj = new LLMServiceObj(serviceObj);
             if (serviceObj.IsFunctionCallResponse) await SendLLMPrimaryChunk(responseServiceObj, "</functioncall-complete>");
@@ -314,7 +319,7 @@ namespace NetworkMonitor.LLM.Services
             else functionCalls = ParseInputForJson(line);
 
             bool makeAssistantMessage = false;
-           // if (functionCalls != null && functionCalls.Count > 0 && !functionCalls.Any(f => f.functionName == "are_functions_running")) makeAssistantMessage = true;
+            // if (functionCalls != null && functionCalls.Count > 0 && !functionCalls.Any(f => f.functionName == "are_functions_running")) makeAssistantMessage = true;
 
             if (makeAssistantMessage) _assistantMessage = new StringBuilder($"I have called the following functions ");
 
@@ -322,7 +327,27 @@ namespace NetworkMonitor.LLM.Services
             {
                 if (!string.IsNullOrWhiteSpace(jsonArguments))
                 {
-                    if (makeAssistantMessage && _assistantMessage!=null) _assistantMessage.Append($" {functionName} ");
+                    bool isDuplicate = _recentFunctionCalls.Any(f =>
+                        f.FunctionName == functionName &&
+                        f.ArgumentsJson == jsonArguments);
+                    if (isDuplicate)
+                    {
+                        _logger.LogWarning($"Possible loop detected when calling function: {functionName}");
+
+                        // Add a system message to guide the LLM out of the loop
+                        if (SystemMessage == null) SystemMessage = new StringBuilder();
+                        SystemMessage.AppendLine("You are possibly stuck in a loop. Take a summary of what you have been doing and give the user feedback before continuing. If the user wants to call the same function again, that is okay. Just check first.");
+
+                    }
+                    _recentFunctionCalls.Enqueue((functionName, jsonArguments));
+
+                    // Maintain queue size
+                    while (_recentFunctionCalls.Count > MaxRecentFunctionCalls)
+                    {
+                        _recentFunctionCalls.Dequeue();
+                    }
+
+                    if (makeAssistantMessage && _assistantMessage != null) _assistantMessage.Append($" {functionName} ");
 
                     _logger.LogInformation($"ProcessLLMOutput(call_func) -> {jsonArguments}");
                     responseServiceObj.LlmMessage = "</functioncall>";
@@ -337,7 +362,7 @@ namespace NetworkMonitor.LLM.Services
 
                 }
             }
-            if (makeAssistantMessage && _assistantMessage!=null) _assistantMessage.Append($" using message_id {serviceObj.MessageID}");
+            if (makeAssistantMessage && _assistantMessage != null) _assistantMessage.Append($" using message_id {serviceObj.MessageID}");
 
             responseServiceObj.LlmMessage = "<end-of-line>";
             await SendLLMPrimary(responseServiceObj);
@@ -369,7 +394,7 @@ namespace NetworkMonitor.LLM.Services
                 string jsonParameters = JsonConvert.SerializeXmlNode(doc.DocumentElement, Newtonsoft.Json.Formatting.None, true);
 
                 // Parse the JSON back into an object to manipulate the structure
-                var parsedParameters = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonParameters) ?? new ();
+                var parsedParameters = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonParameters) ?? new();
                 // Check for "source_code" with a "#cdata-section" field
                 if (parsedParameters.TryGetValue("source_code", out var sourceCodeNode) && sourceCodeNode is Newtonsoft.Json.Linq.JObject sourceCodeObj)
                 {
