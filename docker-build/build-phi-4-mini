@@ -1,0 +1,1 @@
+~/code/models/llama.cpp/llama-cli -c 12000  -m ~/code/models/phi-4-mini-q3_k_l.gguf  --prompt-cache context-phi-4-mini.gguf  -f system_prompt_phi_4_mini   -r "<|end|>"  -no-cnv -sp  -i --temp 0 --simple-io -ctv q8_0 -ctk q8_0 -fa -ngl 33
