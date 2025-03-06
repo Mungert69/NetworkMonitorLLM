@@ -46,12 +46,13 @@ namespace NetworkMonitor.LLM.Services
                 .Build();
 
             // Define the validate_quantum_config function
+            /*
             fn_validate_quantum_config = new FunctionDefinitionBuilder("validate_quantum_config", "Validates a quantum-safe configuration for a target server. Use this to ensure that the server's configuration meets quantum-safe standards.")
                 .AddParameter("target", PropertyDefinition.DefineString("The target server IP or hostname, required. Example: 'example.com' or '192.168.1.1'."))
                 .AddParameter("port", PropertyDefinition.DefineInteger("The TLS port to validate, optional. Default is 443."))
                 .AddParameter("algorithms", PropertyDefinition.DefineArray(PropertyDefinition.DefineString("The list of quantum-safe algorithms to validate, optional. Examples include 'Kyber512', 'Dilithium2', 'Falcon512'. If not provided, all enabled algorithms will be validated.")))
                 .Validate()
-                .Build();
+                .Build();*/
 
             // Define the tools list
             _tools = new List<ToolDefinition>()
@@ -59,7 +60,7 @@ namespace NetworkMonitor.LLM.Services
                 new ToolDefinition() { Function = fn_test_quantum_safety, Type = "function" },
                 new ToolDefinition() { Function = fn_scan_quantum_ports, Type = "function" },
                 new ToolDefinition() { Function = fn_get_quantum_algorithm_info, Type = "function" },
-                new ToolDefinition() { Function = fn_validate_quantum_config, Type = "function" },
+               // new ToolDefinition() { Function = fn_validate_quantum_config, Type = "function" },
             };
         }
 
@@ -74,7 +75,7 @@ namespace NetworkMonitor.LLM.Services
 ```auto-params
 DEFAULT_PORT = 443
 DEFAULT_TIMEOUT = 59000
-DEFAULT_ALGORITHMS = Kyber512, Dilithium2, Falcon512
+DEFAULT_ALGORITHMS = kyber512, dilithium2, falcon512
 NMAP_OPTIONS = -T4 --open
 
 2. Algorithm Selection Rules
@@ -117,7 +118,7 @@ User Request: ""Check quantum safety of example.com""
 
         ports: [443, 8443]
 
-        algorithms: [Kyber512, Dilithium2]
+        algorithms: [kyber512, dilithium2]
 
         timeout: 60000
 
@@ -127,17 +128,14 @@ User Request: ""Check quantum safety of example.com""
 
         port: 443
 
-        algorithms: [Kyber512, Dilithium2]
+        algorithms: [kyber512, dilithium2]
 
         timeout: 30000
 
-    validate_quantum_config:
+    get_quantum_algorithm_info:
 
-        target: example.com
 
-        port: 443
-
-        algorithms: [Kyber512, Dilithium2]";
+        algorithm: mlkem";
             
 
                var chatMessage = new ChatMessage()
