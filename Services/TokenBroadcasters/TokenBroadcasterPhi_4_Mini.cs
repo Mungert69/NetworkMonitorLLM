@@ -31,7 +31,7 @@ public class TokenBroadcasterPhi_4_Mini : TokenBroadcasterBase
     {
         // Move the starting index after "<|tool_call|>"
         tagStart += "<|tool_call|>".Length;
-        tagEnd = input.IndexOf("</|tool_call|>", tagStart);
+        tagEnd = input.IndexOf("<|/tool_call|>", tagStart);
 
         // If no matching end tag is found, break the loop
         if (tagEnd == -1) break;
@@ -42,7 +42,7 @@ public class TokenBroadcasterPhi_4_Mini : TokenBroadcasterBase
         functionCalls.Add((JsonSanitizer.RepairJson(jsonContent, _ignoreParameters), string.Empty));
 
         // Look for the next "<|tool_call|>" tag after the current end tag
-        tagStart = input.IndexOf("<|tool_call|>", tagEnd + "</|tool_call|>".Length);
+        tagStart = input.IndexOf("<|tool_call|>", tagEnd + "<|/tool_call|>".Length);
     }
 
     return functionCalls;
