@@ -225,7 +225,7 @@ Reminder:
                 EOTToken = "<|end|>",
                 FunctionResponseTemplate = "<|tool_response|>[{1}]",
 
-                FunctionBuilder = "<|tool_call|>{1}<|/tool_call|>",
+                FunctionBuilder = "<tool_call>{1}</tool_call>",
                 FunctionResponse = "<|tool_response|>[{1}]",
                 FunctionDefsWrap = @"
 You are a helpful assistant with some tools.
@@ -233,13 +233,20 @@ You are a helpful assistant with some tools.
 {0}
 <|/tool|>",
                 XmlPromptFooter = _xmlPromptFooter,
-                  PromptFooter = @"When you need to call a tool. Reply only with the tool_call instruction using the following format
-<|tool_call|>{""name"": <function-name>, ""arguments"": <args-json-object>}<|/tool_call|>
-Do not give examples of how to call tools as this will be interpreted by the tool parsing code as an actual tool_call instruction and it will be executed. Only use the tool_call instruction format when you actually want to call a tool.
-You are a Network Monitor Assistant called TestLLM. You will use the provided tools to help a user monitor their network. When you call a tool provide feedback using only the reponse from the tool call. Choose the tool that best fits the users request. You will provide helpful and informative assistance using the tool responses",
+                  PromptFooter = @"For each function call, return a json object with function name and arguments within <tool_call></tool_call> XML tags:
+<tool_call>
+{""name"": <function-name>, ""arguments"": <args-json-object>}
+</tool_call>
+Reminder:
+- Function calls MUST follow the specified format : <tool_call> {""name"": <function-name>, ""arguments"": <args-json-object>} </tool_call>
+- The function call repsonses after the tag <tool_response>
+- Required parameters MUST be specified
+- Only call one function at a time
+- Important: You will call functions only when necessary. Checking with the user before calling more functions.
+",
 
                 CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
-                    new TokenBroadcasterPhi_4_Mini(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
+                    new TokenBroadcasterQwen_2_5(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
             },
 
 
