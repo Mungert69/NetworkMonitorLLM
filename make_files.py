@@ -31,7 +31,68 @@ QUANT_CONFIGS = [
     ("iq4_nl", "IQ4_NL", None, None, True, False),
     ("q4_0", "Q4_0", "Q8_0", "Q8_0", True, True),
     ("q4_1", "Q4_1", "Q8_0", "Q8_0", True, True),
+    ("iq2_xs", "IQ2_XS", None, None, True, False),
+    ("iq2_s", "IQ2_S", None, None, True, False),
+    ("iq2_m", "IQ2_M", None, None, True, False),
+    ("iq1_s", "IQ1_S", None, None, True, False),
+    ("iq1_m", "IQ1_M", None, None, True, False),
+    ("tq1_0", "TQ1_0", None, None, True, False),
+    ("tq2_0", "TQ2_0", None, None, True, False),
+    ("q2_k_s", "Q2_K_S", None, None, True, False),
+    ("iq3_xss", "IQ3_XSS", None, None, True, False),
+    ("iq3_s", "IQ3_S", None, None, True, False),
+    ("iq3_m", "IQ3_M", None, None, True, False)
 ]
+# Add this mapping at the top of your file
+QUANT_BIT_LEVELS = {
+    # 1-bit quantizations (very aggressive)
+    "IQ1_S": 1, "IQ1_M": 1, "TQ1_0": 1,
+    # 2-bit quantizations
+    "Q2_K": 2, "Q2_K_S": 2, "IQ2_XS": 2, "IQ2_S": 2, "IQ2_M": 2, "TQ2_0": 2,
+    # 3-bit quantizations
+    "Q3_K": 3, "Q3_K_S": 3, "Q3_K_M": 3, "IQ3_XS": 3, "IQ3_S": 3, "IQ3_M": 3, "IQ3_XSS": 3,
+    # 4-bit and up
+    "Q4_K": 4, "Q4_K_S": 4, "Q4_K_M": 4, "IQ4_XS": 4, "IQ4_NL": 4,
+    "Q5_K": 5, "Q5_K_S": 5, "Q5_K_M": 5,
+    "Q6_K": 6, "Q8_0": 8, "F16": 16, "BF16": 16
+}
+
+def get_model_size(base_name):
+    """Extract model size from name using common patterns"""
+    import re
+    # Look for patterns like 7b, 13b, 1.8b, 3b, 70b, etc.
+    match = re.search(r'(\d+\.?\d*)[bm]', base_name, re.IGNORECASE)
+    if match:
+        size = float(match.group(1))
+        return size * 1e9 if 'm' in match.group(0).lower() else size * 1e9
+    return None
+
+def filter_quant_configs(base_name, configs):
+    """Filter quantization configs based on model size"""
+    model_size = get_model_size(base_name)
+    
+    if not model_size:
+        print("⚠️ Couldn't determine model size from name. Using all quantizations.")
+        return configs
+
+    # Set minimum bit levels based on model size
+    min_bits = 3 if model_size < 3e9 else (  # <3B models
+                2 if model_size < 7e9 else   # 3-7B models
+                1)                           # 7B+ models
+
+    filtered = []
+    for config in configs:
+        quant_type = config[1]
+        bits = QUANT_BIT_LEVELS.get(quant_type, 16)
+        
+        if bits >= min_bits:
+            filtered.append(config)
+        else:
+            print(f"⚠️ Skipping {quant_type} ({bits}bit) for {base_name} "
+                  f"({model_size/1e9:.1f}B) - too aggressive")
+
+    return filtered
+
 IMATRIX_BASE_URL = "https://huggingface.co/bartowski/"
 
 def build_imatrix_urls(company_name, model_name):
@@ -157,8 +218,12 @@ def quantize_model(input_model, company_name, base_name):
         raise FileNotFoundError(f"BF16 model not found: {bf16_model_file}")
     
     os.makedirs(output_dir, exist_ok=True)  # Ensure output directory exists
+    # Get filtered configs based on model size
+    filtered_configs = filter_quant_configs(base_name, QUANT_CONFIGS)
     
-    for suffix, quant_type, tensor_type, embed_type, use_imatrix, use_pure in QUANT_CONFIGS:
+    print(f"🏗️ Selected {len(filtered_configs)} quantizations for {base_name}")
+    
+    for suffix, quant_type, tensor_type, embed_type, use_imatrix, use_pure in filtered_configs:
         output_file = f"{base_name}-{suffix}.gguf"
         output_path = os.path.join(output_dir, output_file)
         
