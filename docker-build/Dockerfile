@@ -24,15 +24,17 @@ RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86
     wget https://developer.download.nvidia.com/compute/cuda/12.8.0/local_installers/cuda-repo-ubuntu2404-12-8-local_12.8.0-570.86.10-1_amd64.deb && \
     dpkg -i cuda-repo-ubuntu2404-12-8-local_12.8.0-570.86.10-1_amd64.deb && \
     cp /var/cuda-repo-ubuntu2404-12-8-local/cuda-*-keyring.gpg /usr/share/keyrings/ && \
-    apt-get update
-# Install CUDA Toolkit and Libraries
-RUN apt-get install -y --no-install-recommends \
-    cuda-toolkit-12-8 \
-    cuda-libraries-12-8 \
-    cuda-libraries-dev-12-8 && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
+        cuda-toolkit-12-8 \
+        cuda-libraries-12-8 \
+        cuda-libraries-dev-12-8 && \
     rm -rf /var/lib/apt/lists/*
-# Set the library path for CUDA
-ENV LD_LIBRARY_PATH=/usr/local/cuda-12.8/lib64:$LD_LIBRARY_PATH
+
+# Set the library path and CUDA environment variables
+ENV CUDA_HOME=/usr/local/cuda-12.8
+ENV PATH=${CUDA_HOME}/bin:${PATH}
+ENV LD_LIBRARY_PATH=${CUDA_HOME}/lib64
 
 # Clone repositories
 RUN mkdir -p /root/code && \
@@ -51,11 +53,17 @@ COPY build-phi-4-mini /root/code/models/build-phi-4-mini
 RUN chmod +x /root/code/models/append_run.sh
 
 # Build llama.cpp with CUDA support
-RUN cd /root/code && \
+RUN ln -s /usr/local/cuda-12.8/targets/x86_64-linux/lib/stubs/libcuda.so /usr/local/cuda-12.8/targets/x86_64-linux/lib/stubs/libcuda.so.1 && \
+    mkdir -p /root/code && \
+    cd /root/code && \
     git clone https://github.com/ggerganov/llama.cpp && \
     cd llama.cpp && \
-    cmake -B build -DGGML_CUDA=ON -DCMAKE_CUDA_COMPILER=/usr/local/cuda-12.8/bin/nvcc -DCUDAToolkit_ROOT=/usr/local/cuda-12.8 -DCMAKE_CUDA_ARCHITECTURES=75 && \
+    cmake -B build -DGGML_CUDA=ON \
+        -DCMAKE_CUDA_COMPILER=${CUDA_HOME}/bin/nvcc \
+        -DCUDAToolkit_ROOT=${CUDA_HOME} \
+        -DCMAKE_CUDA_ARCHITECTURES=75 && \
     cmake --build build --config Release
+
 # Download the Phi-4-mini model
 RUN mkdir -p /root/code/models && \
     cd /root/code/models && \
