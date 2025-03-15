@@ -66,8 +66,22 @@ def download_imatrix(input_dir, company_name, model_name):
     """
     Attempt to download the .imatrix file from multiple possible locations.
     If download fails, generate it locally using llama-imatrix.
+    Save the generated imatrix file in both the model's folder and the 'imatrix-files' directory.
+    First, check if the imatrix file already exists in the 'imatrix-files' directory.
     """
-    imatrix_file = os.path.join(input_dir, f"{model_name}.imatrix")
+    # Define the paths for the imatrix file
+    imatrix_dir = os.path.join(input_dir, "imatrix-files")  # New directory for imatrix files
+    imatrix_file_copy = os.path.join(imatrix_dir, f"{model_name}.imatrix")  # Copy location
+    imatrix_file = os.path.join(input_dir, f"{model_name}.imatrix")  # Original location
+    
+    # Step 1: Check if the imatrix file already exists in the 'imatrix-files' directory
+    if os.path.exists(imatrix_file_copy):
+        print(f"Found existing .imatrix file in 'imatrix-files' directory: {imatrix_file_copy}")
+        # Copy the file to the model's folder for use
+        import shutil
+        shutil.copy(imatrix_file_copy, imatrix_file)
+        print(f"Copied .imatrix file to model's folder: {imatrix_file}")
+        return imatrix_file
     
     print(f"DEBUG: Checking for .imatrix file in directory: {input_dir}")
     print(f"DEBUG: Expected .imatrix file path: {imatrix_file}")
@@ -118,6 +132,11 @@ def download_imatrix(input_dir, company_name, model_name):
                 raise RuntimeError("Failed to generate imatrix file")
             else:
                 print("Successfully generated imatrix file")
+                
+                # Save a copy of the imatrix file in the 'imatrix-files' directory
+                os.makedirs(imatrix_dir, exist_ok=True)  # Create the directory if it doesn't exist
+                shutil.copy(imatrix_file, imatrix_file_copy)
+                print(f"Saved a copy of the imatrix file to: {imatrix_file_copy}")
     
     else:
         print(f"{imatrix_file} already exists. Skipping download.")
