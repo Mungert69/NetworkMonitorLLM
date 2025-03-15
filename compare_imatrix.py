@@ -144,7 +144,8 @@ def compare_imatrix(file1, file2):
         plt.xlabel("Index")
         plt.ylabel("Value")
         plt.legend()
-        plt.show()
+        plt.savefig(f"{name}_comparison.png")  # Save the plot to a file
+        plt.close()  # Close the figure to free memory
 
     # Print grand totals
     print("\n=== Grand Totals ===")
@@ -157,8 +158,8 @@ def compare_imatrix(file1, file2):
     print(f"Average Correlation: {total_corr / total_weights:.6f}")
 
 # Paths to the imatrix files
-imatrix_file1 = "./llama.cpp/google_gemma-3-4b-it.imatrix"
-imatrix_file2 = "./llama.cpp/imatrix.dat.at_420"
+imatrix_file1 = "./llama.cpp/imatrix.dat.q8_0"
+imatrix_file2 = "./llama.cpp/imatrix.dat.at_10"
 
 # Compare the imatrix files
 compare_imatrix(imatrix_file1, imatrix_file2)
