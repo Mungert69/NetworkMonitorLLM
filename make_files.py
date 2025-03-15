@@ -32,41 +32,99 @@ QUANT_CONFIGS = [
     ("q4_0", "Q4_0", "Q8_0", "Q8_0", True, True),
     ("q4_1", "Q4_1", "Q8_0", "Q8_0", True, True),
 ]
-def build_imatrix_url(model_name):
-    """
-    Build the URL for the .imatrix file using the model name and print the URL.
-    """
-    imatrix_url = f"{IMATRIX_BASE_URL}{model_name}-GGUF/resolve/main/{model_name}.imatrix"
-    
-    # Print the constructed URL for debugging purposes
-    print(f"Constructed imatrix URL: {imatrix_url}")
-    
-    return imatrix_url
+IMATRIX_BASE_URL = "https://huggingface.co/bartowski/"
 
-def download_imatrix(input_dir, model_name):
-    # Define the full path to the .imatrix file
+def build_imatrix_urls(company_name, model_name):
+    """
+    Build possible URLs for the .imatrix file using the company name and model name.
+    """
+    # Step 1: Split and capitalize the company name, use only the first part
+    company_name_parts = company_name.split("-")
+    first_part_company_name_cap = company_name_parts[0].capitalize()  # Only capitalize the first part
+    
+    # Step 2: Remove the second part of the company name from the start of the model name
+    model_name_parts = model_name.split("-")
+    
+    # Check if the model name starts with the capitalized first part of the company name
+    if model_name_parts[0] == first_part_company_name_cap:
+        # Remove the first part of the company name from the model name
+        model_name_corrected = "-".join(model_name_parts[1:])
+    else:
+        # No need to modify the model name
+        model_name_corrected = model_name
+    
+    # Step 3: Rebuild the model name using only the first part of the company name
+    model_name_final = f"{first_part_company_name_cap}-{model_name_corrected}"
+
+    # Step 4: Build the URLs
+    return [
+        f"{IMATRIX_BASE_URL}{model_name}-GGUF/resolve/main/{model_name}.imatrix",
+        f"{IMATRIX_BASE_URL}{model_name_final}-GGUF/resolve/main/{model_name_final}.imatrix"
+    ]
+
+def download_imatrix(input_dir, company_name, model_name):
+    """
+    Attempt to download the .imatrix file from multiple possible locations.
+    If download fails, generate it locally using llama-imatrix.
+    """
     imatrix_file = os.path.join(input_dir, f"{model_name}.imatrix")
     
+    print(f"DEBUG: Checking for .imatrix file in directory: {input_dir}")
+    print(f"DEBUG: Expected .imatrix file path: {imatrix_file}")
+    
     if not os.path.exists(imatrix_file):
-        print(f"{imatrix_file} not found. Downloading...")
+        print(f"{imatrix_file} not found. Attempting to download...")
+
+        urls = build_imatrix_urls(company_name, model_name)
         
-        # Build the URL for the imatrix file
-        imatrix_url = build_imatrix_url(model_name)
-        
-        # Download the imatrix file
-        try:
-            urllib.request.urlretrieve(imatrix_url, imatrix_file)
-            print(f"Successfully downloaded the .imatrix file to {imatrix_file}")
-        except Exception as e:
-            print(f"Failed to download the .imatrix file: {e}")
-            raise FileNotFoundError(f"Failed to download the imatrix file: {e}")
+        print("DEBUG: Trying the following URLs for .imatrix file:")
+        for url in urls:
+            print(f" - {url}")
+
+        downloaded = False
+        for url in urls:
+            try:
+                print(f"Trying: {url}")
+                urllib.request.urlretrieve(url, imatrix_file)
+                print(f"Successfully downloaded .imatrix from {url}")
+                downloaded = True
+                break
+            except Exception as e:
+                print(f"Failed to download from {url}: {e}")
+
+        if not downloaded:
+            print("All download attempts failed. Generating imatrix locally...")
+            # Path to the BF16 model required for imatrix generation
+            bf16_model_path = os.path.join(input_dir, f"{model_name}-bf16.gguf")
+            if not os.path.exists(bf16_model_path):
+                raise FileNotFoundError(f"Cannot generate imatrix: {bf16_model_path} not found")
+
+            # Path to training data - update this if needed
+            imatrix_train_set = "imatrix-train-set"  # Change this to your training data path
+            
+            command = [
+                "./llama.cpp/llama-imatrix",
+                "-m", bf16_model_path,
+                "-f", imatrix_train_set,
+                "-o", imatrix_file
+            ]
+            
+            print("Running:", " ".join(command))
+            result = subprocess.run(command, capture_output=True, text=True)
+            
+            if result.returncode != 0:
+                print("Error generating imatrix:")
+                print(result.stderr)
+                raise RuntimeError("Failed to generate imatrix file")
+            else:
+                print("Successfully generated imatrix file")
+    
     else:
         print(f"{imatrix_file} already exists. Skipping download.")
     
     return imatrix_file
 
-
-def quantize_model(input_model, base_name):
+def quantize_model(input_model, company_name, base_name):
     # Get the directory from the full input model path
     input_dir = os.path.dirname(input_model)  # Directory where the model is located
     output_dir = input_dir  # Keep output in the same folder
@@ -74,8 +132,8 @@ def quantize_model(input_model, base_name):
     # Construct paths for BF16 model and imatrix file based on the base model name
     bf16_model_file = os.path.join(input_dir, f"{base_name}-bf16.gguf")
     # Download the imatrix file if not already present
-    imatrix_file = download_imatrix(input_dir, base_name)
-     
+    imatrix_file = download_imatrix(input_dir, company_name, base_name)
+
     if not os.path.exists(bf16_model_file):
         raise FileNotFoundError(f"BF16 model not found: {bf16_model_file}")
     
@@ -113,16 +171,20 @@ def quantize_model(input_model, base_name):
 
 def main():
     parser = argparse.ArgumentParser(description="Automate GGUF model quantization")
-    parser.add_argument("base_name", help="Base model name (without file extension, e.g., 'google/gemma-3-1b')")
+    parser.add_argument("model_id", help="Full Hugging Face model ID (e.g., 'company/model')")
     
     args = parser.parse_args()
-    
-    # Manually specify the full model directory path
-    model_dir = os.path.join(os.getcwd(), args.base_name)  # Now points to the correct model directory
-    
-    # Quantize the model based on the provided base name
-    quantize_model(os.path.join(model_dir, f"{args.base_name}-bf16.gguf"), args.base_name)
+
+    # Extract company_name and model_name from model_id
+    if "/" not in args.model_id:
+        print("Error: Model ID must be in the format 'company_name/model_name'.")
+        exit(1)
+
+    company_name, model_name = args.model_id.split("/", 1)
+
+    model_dir = os.path.join(os.getcwd(), model_name)
+
+    quantize_model(os.path.join(model_dir, f"{model_name}-bf16.gguf"), company_name, model_name)
 
 if __name__ == "__main__":
     main()
-

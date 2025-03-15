@@ -5,18 +5,26 @@ import os
 import shutil
 
 def run_script(script_name, args):
-    """Runs a script with arguments and checks for success."""
+    """Runs a script with arguments and streams output in real time."""
     script_path = os.path.join(os.getcwd(), script_name)  # Ensure absolute path
     if not os.path.exists(script_path):
         print(f"Error: Script {script_name} not found at {script_path}")
         sys.exit(1)
 
-    print(f"Running {script_name} with arguments: {args}")
-    result = subprocess.run(["python3", script_path] + args, capture_output=True, text=True)
+    print(f"\nRunning {script_name} with arguments: {args}")
 
-    if result.returncode != 0:
-        print(f"Error running {script_name}: {result.stderr}")
-        sys.exit(1)
+    # Run the script with real-time output streaming
+    process = subprocess.Popen(
+        ["python3", script_path] + args,
+        stdout=sys.stdout,
+        stderr=sys.stderr
+    )
+    
+    exit_code = process.wait()  # Wait for script to finish
+
+    if exit_code != 0:
+        print(f"\nError running {script_name}, exited with code {exit_code}")
+        sys.exit(exit_code)
     else:
         print(f"Successfully ran {script_name}")
 
@@ -25,7 +33,7 @@ def cleanup_model_dir(model_name):
     model_dir = os.path.join("./", model_name)  # Directly use model's folder name
     
     if os.path.exists(model_dir):
-        print(f"Cleaning up directory: {model_dir}")
+        print(f"\nCleaning up directory: {model_dir}")
         shutil.rmtree(model_dir)  # Remove the entire directory and its contents
         print(f"Successfully cleaned up {model_dir}")
     else:
@@ -35,15 +43,19 @@ def process_model(model_id):
     """Process a single model: download, convert, quantize, and upload."""
     print(f"\nProcessing model: {model_id}")
 
-    # Extract model name (folder)
-    model_name = model_id.split("/")[-1]  
+    # Extract company name and model name
+    if "/" not in model_id:
+        print("Error: Model ID must be in the format 'company_name/model_name'.")
+        sys.exit(1)
+
+    company_name, model_name = model_id.split("/", 1)
 
     # 1. Download and Convert (download_convert.py)
     download_convert_args = [model_id, model_name]  # Store in model_name directory
     run_script("download_convert.py", download_convert_args)
 
     # 2. Quantize model (make_files.py)
-    make_files_args = [model_name]
+    make_files_args = [model_id]  # Fix: Pass only full model_id
     run_script("make_files.py", make_files_args)
 
     # 3. Upload files (upload-files.py)
@@ -75,7 +87,7 @@ def main():
     for model_id in model_ids:
         process_model(model_id)
 
-    print("All models processed successfully.")
+    print("\nAll models processed successfully.")
 
 if __name__ == "__main__":
     main()
