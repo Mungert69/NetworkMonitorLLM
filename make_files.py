@@ -8,6 +8,7 @@ import shutil
 IMATRIX_BASE_URL = "https://huggingface.co/bartowski/"
 
 QUANT_CONFIGS = [
+    ("f16","F16","F16","F16",False,False),
     ("f16-q8_0", "Q8_0", "F16", "F16", False, False),
     ("bf16-q8_0", "Q8_0", "BF16", "BF16", False, False),
     ("f16-q6_k", "Q6_K", "F16", "F16", True, False),
