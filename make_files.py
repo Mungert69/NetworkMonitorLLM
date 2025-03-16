@@ -67,13 +67,18 @@ QUANT_BIT_LEVELS = {
 }
 
 def get_model_size(base_name):
-    """Extract model size from name using common patterns"""
+    """Extract model size from name using common patterns for both billion and million sizes."""
     import re
-    # Look for patterns like 7b, 13b, 1.8b, 3b, 70b, etc.
-    match = re.search(r'(\d+\.?\d*)[bm]', base_name, re.IGNORECASE)
+    # Look for patterns like 7b, 13b, 1.8b, 3b, 70b, etc., and 1.2m, 10m, etc.
+    match = re.search(r'(\d+\.?\d*)\s*([bm])', base_name, re.IGNORECASE)
     if match:
         size = float(match.group(1))
-        return size * 1e9 if 'm' in match.group(0).lower() else size * 1e9
+        size_unit = match.group(2).lower()
+
+        if size_unit == 'b':  # Billion
+            return size * 1e9
+        elif size_unit == 'm':  # Million
+            return size * 1e6
     return None
 
 def filter_quant_configs(base_name, configs):
