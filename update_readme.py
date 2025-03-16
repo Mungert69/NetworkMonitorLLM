@@ -1,3 +1,5 @@
+import os
+
 def update_readme(model_dir, base_name):
     readme_file = os.path.join(model_dir, "README.md")
     
