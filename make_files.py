@@ -30,9 +30,16 @@ QUANT_CONFIGS = [
     ("iq4_xs", "IQ4_XS", None, None, True, False),
     ("iq3_xs", "IQ3_XS", None, None, True, False),
     ("iq4_nl", "IQ4_NL", None, None, True, False),
-    ("q4_0", "Q4_0", "Q8_0", "Q8_0", True, True),
-    ("q4_1", "Q4_1", "Q8_0", "Q8_0", True, True),
+    ("q4_0", "Q4_0", None, None, True, True),
+    ("q4_1", "Q4_1", None, None, True, True),
+    ("q4_0_l", "Q4_0", "Q8_0", "Q8_0", True, True),
+    ("q4_1_l", "Q4_1", "Q8_0", "Q8_0", True, True),
+    ("q5_0", "Q5_0", None, None, True, True),
+    ("q5_1", "Q5_1", None, None, True, True),
+    ("q5_0_l", "Q5_0", "Q8_0", "Q8_0", True, True),
+    ("q5_1_l", "Q5_1", "Q8_0", "Q8_0", True, True),
     ("iq2_xs", "IQ2_XS", None, None, True, False),
+    ("iq2_xxs", "IQ2_XXS", None, None, True, False),
     ("iq2_s", "IQ2_S", None, None, True, False),
     ("iq2_m", "IQ2_M", None, None, True, False),
     ("iq1_s", "IQ1_S", None, None, True, False),
@@ -40,7 +47,7 @@ QUANT_CONFIGS = [
     ("tq1_0", "TQ1_0", None, None, True, False),
     ("tq2_0", "TQ2_0", None, None, True, False),
     ("q2_k_s", "Q2_K_S", None, None, True, False),
-    ("iq3_xss", "IQ3_XSS", None, None, True, False),
+    ("iq3_xxs", "IQ3_XXS", None, None, True, False),
     ("iq3_s", "IQ3_S", None, None, True, False),
     ("iq3_m", "IQ3_M", None, None, True, False)
 ]
@@ -49,12 +56,12 @@ QUANT_BIT_LEVELS = {
     # 1-bit quantizations (very aggressive)
     "IQ1_S": 1, "IQ1_M": 1, "TQ1_0": 1,
     # 2-bit quantizations
-    "Q2_K": 2, "Q2_K_S": 2, "IQ2_XS": 2, "IQ2_S": 2, "IQ2_M": 2, "TQ2_0": 2,
+    "Q2_K": 2, "Q2_K_S": 2, "Q2_K_M": 2, "IQ2_XS": 2, "IQ2_S": 2, "IQ2_M": 2, "IQ2_XXS": 2, "TQ2_0": 2,
     # 3-bit quantizations
-    "Q3_K": 3, "Q3_K_S": 3, "Q3_K_M": 3, "IQ3_XS": 3, "IQ3_S": 3, "IQ3_M": 3, "IQ3_XSS": 3,
+    "Q3_K": 3, "Q3_K_S": 3, "Q3_K_M": 3, "IQ3_XS": 3, "IQ3_S": 3, "IQ3_M": 3, "IQ3_XXS": 3,
     # 4-bit and up
-    "Q4_K": 4, "Q4_K_S": 4, "Q4_K_M": 4, "IQ4_XS": 4, "IQ4_NL": 4,
-    "Q5_K": 5, "Q5_K_S": 5, "Q5_K_M": 5,
+    "Q4_K": 4, "Q4_K_S": 4, "Q4_K_M": 4, "IQ4_XS": 4, "IQ4_NL": 4, "Q4_0": 4, "Q4_1": 4,
+    "Q5_K": 5, "Q5_K_S": 5, "Q5_K_M": 5, "Q5_0": 5, "Q5_1" : 5,
     "Q6_K": 6, "Q8_0": 8, "F16": 16, "BF16": 16
 }
 
