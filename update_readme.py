@@ -1,6 +1,3 @@
-import os
-
-# Function to update the README.md file with the new section
 def update_readme(model_dir, base_name):
     readme_file = os.path.join(model_dir, "README.md")
     
@@ -73,16 +70,40 @@ Quantization reduces model size and memory usage while maintaining as much accur
 
 ---
 
+### **Very Low-Bit Quantization (IQ3_XS, IQ3_S, IQ3_M, Q4_K, Q4_0)**  
+These models are optimized for **extreme memory efficiency**, making them ideal for **low-power devices** or **large-scale deployments** where memory is a critical constraint.  
+
+- **IQ3_XS**: Ultra-low-bit quantization (3-bit) with **extreme memory efficiency**.  
+  - **Use case**: Best for **ultra-low-memory devices** where even Q4_K is too large.  
+  - **Trade-off**: Lower accuracy compared to higher-bit quantizations.  
+
+- **IQ3_S**: Small block size for **maximum memory efficiency**.  
+  - **Use case**: Best for **low-memory devices** where **IQ3_XS** is too aggressive.  
+
+- **IQ3_M**: Medium block size for better accuracy than **IQ3_S**.  
+  - **Use case**: Suitable for **low-memory devices** where **IQ3_S** is too limiting.  
+
+- **Q4_K**: 4-bit quantization with **block-wise optimization** for better accuracy.  
+  - **Use case**: Best for **low-memory devices** where **Q6_K** is too large.  
+
+- **Q4_0**: Pure 4-bit quantization, optimized for **ARM devices**.  
+  - **Use case**: Best for **ARM-based devices** or **low-memory environments**.  
+
+---
+
 ### **Summary Table: Model Format Selection**  
 
 | Model Format  | Precision  | Memory Usage  | Device Requirements  | Best Use Case  |  
 |--------------|------------|---------------|----------------------|---------------|  
-| **BF16**     | Highest       | High      | BF16-supported GPU/CPUs  | High-speed inference with reduced memory |  
-| **F16**      | High     | High           | FP16-supported devices | GPU inference when BF16 isn’t available |  
-| **Q4_K**     | Low        | Very Low      | CPU or Low-VRAM devices | Best for memory-constrained environments |  
-| **Q6_K**     | Medium Low     | Low      | CPU with more memory | Better accuracy while still being quantized |  
-| **Q8**       | Medium       | Moderate        | CPU or GPU with enough VRAM | Best accuracy among quantized models |  
+| **BF16**     | Highest    | High          | BF16-supported GPU/CPUs  | High-speed inference with reduced memory |  
+| **F16**      | High       | High          | FP16-supported devices | GPU inference when BF16 isn’t available |  
+| **Q4_K**     | Medium Low | Low           | CPU or Low-VRAM devices | Best for memory-constrained environments |  
+| **Q6_K**     | Medium     | Moderate      | CPU with more memory | Better accuracy while still being quantized |  
+| **Q8_0**     | High       | Moderate      | CPU or GPU with enough VRAM | Best accuracy among quantized models |  
+| **IQ3_XS**   | Very Low   | Very Low      | Ultra-low-memory devices | Extreme memory efficiency and low accuracy |  
+| **Q4_0**     | Low        | Low           | ARM or low-memory devices | llama.cpp can optimize for ARM devices |  
 
+---
 
 ## **Included Files & Details**  
 
@@ -117,10 +138,22 @@ Quantization reduces model size and memory usage while maintaining as much accur
 - **Output & embeddings** quantized to **Q8_0**.  
 - All other layers quantized to **Q6_K** .  
 
-
 ### `{base_name}-q8_0.gguf`  
 - Fully **Q8** quantized model for better accuracy.  
-- Requires **more memory** but offers higher precision
+- Requires **more memory** but offers higher precision.  
+
+### `{base_name}-iq3_xs.gguf`  
+- **IQ3_XS** quantization, optimized for **extreme memory efficiency**.  
+- Best for **ultra-low-memory devices**.  
+
+### `{base_name}-iq3_m.gguf`  
+- **IQ3_M** quantization, offering a **medium block size** for better accuracy.  
+- Suitable for **low-memory devices**.  
+
+### `{base_name}-q4_0.gguf`  
+- Pure **Q4_0** quantization, optimized for **ARM devices**.  
+- Best for **low-memory environments**.
+- Prefer IQ4_NL for better accuracy.
 
 # <span id="testllm" style="color: #7F7FFF;">🚀 If you find these models useful</span>
 
@@ -151,28 +184,3 @@ I'm experimenting with **function calling** against my network monitoring servic
         file.write(updated_content)
 
     print(f"README.md updated successfully for {base_name}.")
-
-# Main function for quantization
-def quantize_model(model_path, output_dir, base_name):
-    print("Starting quantization process...")
-
-    # Here you should include your existing quantization logic
-    # For example:
-    # - Load the model
-    # - Apply quantization
-    # - Save the quantized models in the output_dir
-
-    # Example (replace with actual quantization logic):
-    # quantized_model = apply_quantization(model_path)
-    # save_model(quantized_model, output_dir)
-    
-    # After quantization, update the README.md
-    update_readme(output_dir, base_name)
-
-# Example usage
-if __name__ == "__main__":
-    model_path = "/path/to/your/model"  # Replace with the model path
-    output_dir = "/path/to/output/folder"  # Replace with the output directory path
-    base_name = "Gemma-3-1B-Instruct"  # Replace with the base name of the model
-    quantize_model(model_path, output_dir, base_name)
-
