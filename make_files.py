@@ -3,6 +3,7 @@ import subprocess
 import argparse
 import urllib.request
 from update_readme import update_readme  # Importing the update_readme function
+import shutil
 
 IMATRIX_BASE_URL = "https://huggingface.co/bartowski/"
 
@@ -115,12 +116,13 @@ def build_imatrix_urls(company_name, model_name):
         model_name_corrected = model_name
     
     # Step 3: Rebuild the model name using only the first part of the company name
-    model_name_final = f"{first_part_company_name_cap}-{model_name_corrected}"
-
+    model_name_1 = f"{first_part_company_name_cap}-{model_name_corrected}"
+    model_name_2 = f"{company_name}_{model_name}"
     # Step 4: Build the URLs
     return [
         f"{IMATRIX_BASE_URL}{model_name}-GGUF/resolve/main/{model_name}.imatrix",
-        f"{IMATRIX_BASE_URL}{model_name_final}-GGUF/resolve/main/{model_name_final}.imatrix"
+        f"{IMATRIX_BASE_URL}{model_name_1}-GGUF/resolve/main/{model_name_1}.imatrix",
+        f"{IMATRIX_BASE_URL}{model_name_2}-GGUF/resolve/main/{model_name_2}.imatrix"
     ]
 
 def download_imatrix(input_dir, company_name, model_name):
@@ -139,7 +141,6 @@ def download_imatrix(input_dir, company_name, model_name):
     if os.path.exists(imatrix_file_copy):
         print(f"Found existing .imatrix file in 'imatrix-files' directory: {imatrix_file_copy}")
         # Copy the file to the model's folder for use
-        import shutil
         shutil.copy(imatrix_file_copy, imatrix_file)
         print(f"Copied .imatrix file to model's folder: {imatrix_file}")
         return imatrix_file
