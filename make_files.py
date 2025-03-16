@@ -55,9 +55,9 @@ QUANT_CONFIGS = [
 # Add this mapping at the top of your file
 QUANT_BIT_LEVELS = {
     # 1-bit quantizations (very aggressive)
-    "IQ1_S": 1, "IQ1_M": 1, "TQ1_0": 1,
+    "IQ1_S": 1, "IQ1_M": 1, 
     # 2-bit quantizations
-    "Q2_K": 2, "Q2_K_S": 2, "Q2_K_M": 2, "IQ2_XS": 2, "IQ2_S": 2, "IQ2_M": 2, "IQ2_XXS": 2, "TQ2_0": 2,
+    "Q2_K": 2, "Q2_K_S": 2, "Q2_K_M": 2, "IQ2_XS": 2, "IQ2_S": 2, "IQ2_M": 2, "IQ2_XXS": 2, 
     # 3-bit quantizations
     "Q3_K": 3, "Q3_K_S": 3, "Q3_K_M": 3, "IQ3_XS": 3, "IQ3_S": 3, "IQ3_M": 3, "IQ3_XXS": 3,
     # 4-bit and up
@@ -77,11 +77,11 @@ def get_model_size(base_name):
     return None
 
 def filter_quant_configs(base_name, configs):
-    """Filter quantization configs based on model size"""
+    """Filter quantization configs based on model size, adding TQ quants if 'TriLM' is in the name."""
     model_size = get_model_size(base_name)
     
     if not model_size:
-        print("⚠️ Couldn't determine model size from name. Using all quantizations.")
+        print("⚠ Couldn't determine model size from name. Using all quantizations.")
         return configs
 
     # Set minimum bit levels based on model size
@@ -94,10 +94,10 @@ def filter_quant_configs(base_name, configs):
         quant_type = config[1]
         bits = QUANT_BIT_LEVELS.get(quant_type, 16)
         
-        if bits >= min_bits:
+        if bits >= min_bits or ("TriLM" in base_name and quant_type.startswith("TQ")):
             filtered.append(config)
         else:
-            print(f"⚠️ Skipping {quant_type} ({bits}bit) for {base_name} "
+            print(f"⚠ Skipping {quant_type} ({bits}bit) for {base_name} "
                   f"({model_size/1e9:.1f}B) - too aggressive")
 
     return filtered
