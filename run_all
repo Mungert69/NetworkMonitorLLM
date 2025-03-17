@@ -1,4 +1,4 @@
 python3 -m venv venv
 source venv/bin/activate
-pip install python-dotenv huggingface_hub
+pip install python-dotenv huggingface_hub llama-cpp-python
 nohup python3 run_all_from_json.py  models.json &
