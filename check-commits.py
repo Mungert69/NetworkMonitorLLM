@@ -15,12 +15,10 @@ logging.basicConfig(
 GITHUB_REPO = "ggml-org/llama.cpp"
 GITHUB_API_URL = f"https://api.github.com/repos/{GITHUB_REPO}/commits"
 LAST_COMMIT_FILE = "last_commit.txt"
-COMMITS_CACHE_FILE = "commits_cache.json"  # File to cache fetched commits
-GITHUB_TOKEN = "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"  # Add your token here
+GITHUB_TOKEN = "your_personal_access_token_here"  # Add your token here
 HEADERS = {"Authorization": f"Bearer {GITHUB_TOKEN}"}
-
 # Local GGUF model
-LOCAL_MODEL_PATH = "./Qwen2.5-1.5B-Instruct-q8_0.gguf"
+LOCAL_MODEL_PATH = "./Llama-3.1-8B-Instruct-q4_k_l.gguf"
 GRAMMAR_FILE_PATH = "./llama.cpp/grammars/json.gbnf"  # Path to your JSON grammar file
 
 # Load quantized GGUF model using llama-cpp-python
@@ -52,7 +50,7 @@ def fetch_latest_commit():
     logging.info(f"Fetching latest commit from {GITHUB_REPO}...")
     try:
         # Fetch the latest commit SHA
-        response = requests.get(GITHUB_API_URL, headers=HEADERS, timeout=10)
+        response = requests.get(GITHUB_API_URL, timeout=10)
         response.raise_for_status()
         commits = response.json()
         if not commits:
@@ -62,7 +60,7 @@ def fetch_latest_commit():
 
         # Fetch the commit details, including file changes and diffs
         commit_url = f"https://api.github.com/repos/{GITHUB_REPO}/commits/{latest_commit_sha}"
-        commit_response = requests.get(commit_url, headers=HEADERS, timeout=10)
+        commit_response = requests.get(commit_url, timeout=10)
         commit_response.raise_for_status()
         latest_commit = commit_response.json()
 
@@ -93,19 +91,19 @@ def analyze_commit(commit):
 
     # Prepare the prompt with only the commit message, file names, and diffs
     prompt = (
-        "You are an AI assistant. Analyze the following commit message and file changes to determine if it adds a new AI model.\n"
+        "Commit message:\n\"{message}\"\n"
+        "File changes:\n{file_changes}\n"
+        "---\n"
+        "You are an AI assistant. Analyze the above commit message and file changes to determine if it adds a new AI model.\n"
         "Respond ONLY in valid JSON format. Your response must be a complete JSON object with no extra text.\n"
         "The response should look like this:\n"
         "{{\n"
         '  "is_new_model": true/false,\n'
         '  "model_name_if_found": "Name of the model if detected, otherwise null",\n'
         '  "reason_for_answer": "Explain why or why not."\n'
-        "}}\n"
-        "Return only the JSON structure, without any extra words, explanations, or formatting.\n"
-        "Commit message:\n\"{message}\"\n"
-        "File changes:\n{file_changes}"
+        "}}"
     ).format(message=message, file_changes=json.dumps(file_changes, indent=2))
-
+   
     try:
         llm_response = llm(
             prompt,
@@ -173,40 +171,82 @@ def download_model(huggingface_model_id):
     except Exception as e:
         logging.error(f"Model download or conversion failed: {e}")
 
+def fetch_last_50_commits():
+    """Fetch the last 50 commits from GitHub API and return their details, including file changes and diffs."""
+    logging.info(f"Fetching last 50 commits from {GITHUB_REPO}...")
+    try:
+        # Fetch the last 50 commits
+        params = {"per_page": 50}  # Fetch up to 50 commits
+        response = requests.get(GITHUB_API_URL, params=params, timeout=10)
+        response.raise_for_status()
+        commits = response.json()
+        if not commits:
+            logging.warning("No commits found!")
+            return None
+
+        logging.info(f"Fetched {len(commits)} commits from GitHub API.")
+
+        # Fetch details for each commit
+        commit_details = []
+        for commit in commits:
+            commit_sha = commit["sha"]
+            commit_url = f"https://api.github.com/repos/{GITHUB_REPO}/commits/{commit_sha}"
+            commit_response = requests.get(commit_url, timeout=10)
+            commit_response.raise_for_status()
+            commit_details.append(commit_response.json())
+
+        logging.info(f"Fetched details for {len(commit_details)} commits.")
+        return commit_details
+
+    except requests.RequestException as e:
+        logging.error(f"GitHub API error: {e}")
+        return None
 def main():
     """Main monitoring function."""
     last_commit = None
     if os.path.exists(LAST_COMMIT_FILE):
         with open(LAST_COMMIT_FILE, "r") as f:
             last_commit = f.read().strip()
-
-    commit = fetch_latest_commit()
-    if not commit:
-        logging.info("No new commits found.")
-        return
-
-    commit_sha = commit.get("sha", "UNKNOWN_SHA")
-    if commit_sha == last_commit:
-        logging.info("No new commits since last check.")
-        return
-
-    logging.info(f"Checking commit {commit_sha}...")
-
-    is_new_model, model_name = analyze_commit(commit)
-    if is_new_model and model_name:
-        huggingface_model_id = find_huggingface_model(model_name)
-        if huggingface_model_id:
-            logging.info(f"Found Hugging Face model ID: {huggingface_model_id}")
-            with open("huggingface_model_id.txt", "w") as f:
-                f.write(huggingface_model_id)
-            logging.info("New model detected! Downloading and converting...")
-            download_model(huggingface_model_id)
-            with open(LAST_COMMIT_FILE, "w") as f:
-                f.write(commit_sha)
-        else:
-            logging.info(f"No Hugging Face model found for {model_name}.")
+        logging.info(f"Last processed commit SHA: {last_commit}")
     else:
-        logging.info("No model-related changes detected.")
+        logging.info("No last processed commit found. Starting from the latest commit.")
 
+    # Fetch the last 50 commits
+    commits = fetch_last_50_commits()
+    if not commits:
+        logging.info("No commits found.")
+        return
+
+    logging.info(f"Processing {len(commits)} commits...")
+
+    # Process each commit
+    for commit in commits:
+        commit_sha = commit.get("sha", "UNKNOWN_SHA")
+        logging.info(f"Processing commit: {commit_sha}")
+
+        # Skip if this commit has already been processed
+        if commit_sha == last_commit:
+            logging.info(f"Reached previously processed commit: {commit_sha}. Stopping further checks.")
+            break
+
+        logging.info(f"Checking commit {commit_sha}...")
+
+        # Analyze the commit
+        is_new_model, model_name = analyze_commit(commit)
+        if is_new_model and model_name:
+            huggingface_model_id = find_huggingface_model(model_name)
+            if huggingface_model_id:
+                logging.info(f"Found Hugging Face model ID: {huggingface_model_id}")
+                with open("huggingface_model_id.txt", "w") as f:
+                    f.write(huggingface_model_id)
+                logging.info("New model detected! Downloading and converting...")
+                download_model(huggingface_model_id)
+                with open(LAST_COMMIT_FILE, "w") as f:
+                    f.write(commit_sha)
+                break  # Stop after processing the first new model
+            else:
+                logging.info(f"No Hugging Face model found for {model_name}.")
+        else:
+            logging.info("No model-related changes detected in this commit.")
 if __name__ == "__main__":
     main()
