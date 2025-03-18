@@ -3,6 +3,10 @@ import json
 import logging
 import requests
 import re
+import subprocess
+import shutil
+import sys
+import time
 from datetime import datetime
 from llama_cpp import Llama, LlamaGrammar
 from huggingface_hub import HfApi
@@ -25,6 +29,20 @@ MAX_TOKENS = 2048
 # Local GGUF model
 LOCAL_MODEL_PATH = "./Qwen2.5-1.5B-Instruct-q8_0.gguf"
 GRAMMAR_FILE_PATH = "./llama.cpp/grammars/json.gbnf"  # Path to your JSON grammar file
+
+def is_conversion_in_progress():
+    """Check if a model conversion is already in progress."""
+    return os.path.exists(LOCK_FILE)
+
+def start_conversion():
+    """Mark the start of a model conversion by creating a lock file."""
+    with open(LOCK_FILE, "w") as f:
+        f.write("conversion in progress")
+
+def end_conversion():
+    """Mark the end of a model conversion by deleting the lock file."""
+    if os.path.exists(LOCK_FILE):
+        os.remove(LOCK_FILE)
 
 # Load quantized GGUF model using llama-cpp-python
 logging.info("Loading quantized GGUF model...")
@@ -267,8 +285,73 @@ def find_huggingface_model(model_name, max_parameters=15):
         "num_parameters": num_parameters  # Include the number of parameters
     }
 
+def run_script(script_name, args):
+    """Runs a script with arguments and streams output in real time."""
+    script_path = os.path.join(os.getcwd(), script_name)  # Ensure absolute path
+    if not os.path.exists(script_path):
+        logging.error(f"Error: Script {script_name} not found at {script_path}")
+        sys.exit(1)
+
+    logging.info(f"\nRunning {script_name} with arguments: {args}")
+
+    # Run the script with real-time output streaming
+    process = subprocess.Popen(
+        ["python3", script_path] + args,
+        stdout=sys.stdout,
+        stderr=sys.stderr
+    )
+    
+    exit_code = process.wait()  # Wait for script to finish
+
+    if exit_code != 0:
+        logging.error(f"\nError running {script_name}, exited with code {exit_code}")
+        sys.exit(exit_code)
+    else:
+        logging.info(f"Successfully ran {script_name}")
+
+def cleanup_model_dir(model_name):
+    """Clean up the model directory to free up disk space."""
+    model_dir = os.path.join("./", model_name)  # Directly use model's folder name
+    
+    if os.path.exists(model_dir):
+        logging.info(f"\nCleaning up directory: {model_dir}")
+        shutil.rmtree(model_dir)  # Remove the entire directory and its contents
+        logging.info(f"Successfully cleaned up {model_dir}")
+    else:
+        logging.info(f"Directory {model_dir} not found, skipping cleanup.")
+
+def process_model(model_id):
+    """Process a single model: download, convert, quantize, and upload."""
+    logging.info(f"\nProcessing model: {model_id}")
+
+    # Extract company name and model name
+    if "/" not in model_id:
+        logging.error("Error: Model ID must be in the format 'company_name/model_name'.")
+        sys.exit(1)
+
+    company_name, model_name = model_id.split("/", 1)
+
+    # 1. Download and Convert (download_convert.py)
+    download_convert_args = [model_id, model_name]  # Store in model_name directory
+    run_script("download_convert.py", download_convert_args)
+
+    # 2. Quantize model (make_files.py)
+    make_files_args = [model_id]  # Fix: Pass only full model_id
+    run_script("make_files.py", make_files_args)
+
+    # 3. Upload files (upload-files.py)
+    upload_files_args = [model_name]
+    run_script("upload-files.py", upload_files_args)
+
+    # Cleanup after processing this model
+    cleanup_model_dir(model_name)
+
 def main():
     """Main monitoring function."""
+    # Skip if a model conversion is already in progress
+    if is_conversion_in_progress():
+        logging.info("Model conversion is already in progress. Skipping Git repo check.")
+        return
     last_commit = None
     if os.path.exists(LAST_COMMIT_FILE):
         with open(LAST_COMMIT_FILE, "r") as f:
@@ -319,6 +402,20 @@ def main():
                     logging.info(f"Base model: {model_info['base_model']}")
                 else:
                     logging.info("No base model information available.")
+                try:
+                    # Mark the start of the model conversion
+                    start_conversion()
+
+                    # Auto-build the GGUF model
+                    process_model(model_info['model_id'])
+
+                except Exception as e:
+                    # Log any errors that occur during the model conversion
+                    logging.error(f"An error occurred during model conversion: {e}")
+
+                finally:
+                    # Mark the end of the model conversion (clean up the lock file)
+                    end_conversion()
             else:
                 logging.info("Model not found on Hugging Face.")
 
@@ -330,4 +427,24 @@ def main():
             logging.info("No model-related changes detected in this commit.")
 
 if __name__ == "__main__":
-    main()
+    logging.info("Starting script in a loop with a 10-minute interval.")
+    while True:
+        try:
+            # Log the start of the iteration
+            logging.info(f"Starting new iteration at {datetime.now()}")
+
+            # Call the main function
+            main()
+
+            # Log the end of the iteration
+            logging.info(f"Iteration completed at {datetime.now()}. Sleeping for 10 minutes...")
+
+            # Sleep for 10 minutes
+            time.sleep(600)
+
+        except Exception as e:
+            # Log any exceptions that occur
+            logging.error(f"An error occurred during the iteration: {e}")
+            logging.error("Restarting the loop in 10 minutes...")
+            time.sleep(600)  # Sleep before restarting the loop
+
