@@ -24,12 +24,12 @@ LAST_COMMIT_FILE = "last_commit.txt"
 COMMITS_CACHE_FILE = "commits_cache.json"  # File to cache fetched commits
 GITHUB_TOKEN = "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"  # Add your token here
 HEADERS = {"Authorization": f"Bearer {GITHUB_TOKEN}"}
-MAX_TOKENS = 2048
-
+MAX_TOKENS = 1024
+MODELS_JSON_PATH = "models-complete.json"
 # Local GGUF model
 LOCAL_MODEL_PATH = "./Qwen2.5-1.5B-Instruct-q8_0.gguf"
 GRAMMAR_FILE_PATH = "./llama.cpp/grammars/json.gbnf"  # Path to your JSON grammar file
-
+LOCK_FILE = "model_conversion.lock"
 def is_conversion_in_progress():
     """Check if a model conversion is already in progress."""
     return os.path.exists(LOCK_FILE)
@@ -43,6 +43,22 @@ def end_conversion():
     """Mark the end of a model conversion by deleting the lock file."""
     if os.path.exists(LOCK_FILE):
         os.remove(LOCK_FILE)
+
+def load_models_json():
+    """Load existing models from models-complete.json."""
+    if os.path.exists(MODELS_JSON_PATH):
+        with open(MODELS_JSON_PATH, "r") as file:
+            try:
+                return json.load(file)
+            except json.JSONDecodeError:
+                logging.error("Failed to parse models-complete.json. Using empty list.")
+                return {"models": []}
+    return {"models": []}
+
+def save_models_json(models_data):
+    """Save updated models to models-complete.json."""
+    with open(MODELS_JSON_PATH, "w") as file:
+        json.dump(models_data, file, indent=2)
 
 # Load quantized GGUF model using llama-cpp-python
 logging.info("Loading quantized GGUF model...")
@@ -162,7 +178,7 @@ def analyze_commit(commit):
 
     # Add file changes context if available
     if file_changes:
-        file_context = "File changes:\n" + "\n".join([f["filename"] for f in file_changes])
+        file_context = "Model building files have been changed. This may indicate a new model has been added : File changes:\n" + "\n".join([f["filename"] for f in file_changes])
     else:
         file_context = "No relevant file changes were found."
 
@@ -191,6 +207,7 @@ def analyze_commit(commit):
 
         # Log the raw LLM response
         response_text = llm_response.get("choices", [{}])[0].get("text", "").strip()
+        logging.info(f"LLM Prompt was: {prompt}")
         logging.info(f"Raw LLM Response: {response_text}")
 
         # Clean the response to ensure it's valid JSON
@@ -321,15 +338,21 @@ def cleanup_model_dir(model_name):
         logging.info(f"Directory {model_dir} not found, skipping cleanup.")
 
 def process_model(model_id):
-    """Process a single model: download, convert, quantize, and upload."""
-    logging.info(f"\nProcessing model: {model_id}")
-
+    """Check and add a new model to models-complete.json if it's not already listed."""
     # Extract company name and model name
     if "/" not in model_id:
         logging.error("Error: Model ID must be in the format 'company_name/model_name'.")
         sys.exit(1)
 
     company_name, model_name = model_id.split("/", 1)
+
+    models_data = load_models_json()
+    existing_models = set(models_data["models"])
+
+    if model_id in existing_models:
+        logging.info(f"Model {model_id} is already in models-complete.json. Skipping update.")
+        return
+    logging.info(f"\nProcessing model: {model_id}")
 
     # 1. Download and Convert (download_convert.py)
     download_convert_args = [model_id, model_name]  # Store in model_name directory
@@ -345,6 +368,9 @@ def process_model(model_id):
 
     # Cleanup after processing this model
     cleanup_model_dir(model_name)
+    logging.info(f"Adding new model {model_name} to models-complete.json...")
+    models_data["models"].append(model_name)
+    save_models_json(models_data)
 
 def main():
     """Main monitoring function."""
@@ -352,6 +378,7 @@ def main():
     if is_conversion_in_progress():
         logging.info("Model conversion is already in progress. Skipping Git repo check.")
         return
+
     last_commit = None
     if os.path.exists(LAST_COMMIT_FILE):
         with open(LAST_COMMIT_FILE, "r") as f:
@@ -360,17 +387,15 @@ def main():
     else:
         logging.info("No last processed commit found. Starting from the latest commit.")
 
-    # Load cached commits or fetch new ones
-    commits = load_cached_commits()
+    # Fetch the latest commits from the GitHub API
+    commits = fetch_last_50_commits()
     if not commits:
-        commits = fetch_last_50_commits()
-        if not commits:
-            logging.info("No commits found.")
-            return
+        logging.info("No commits found.")
+        return
 
     logging.info(f"Processing {len(commits)} commits...")
 
-    # Process each commit
+    # Process commits in forward order (newest to oldest)
     for commit in commits:
         commit_sha = commit.get("sha", "UNKNOWN_SHA")
         logging.info(f"Processing commit: {commit_sha}")
@@ -402,6 +427,7 @@ def main():
                     logging.info(f"Base model: {model_info['base_model']}")
                 else:
                     logging.info("No base model information available.")
+
                 try:
                     # Mark the start of the model conversion
                     start_conversion()
@@ -419,12 +445,13 @@ def main():
             else:
                 logging.info("Model not found on Hugging Face.")
 
-            # Handle the new model (e.g., download and convert)
-            with open(LAST_COMMIT_FILE, "w") as f:
-                f.write(commit_sha)
-            break  # Stop after processing the first new model
-        else:
-            logging.info("No model-related changes detected in this commit.")
+            # Stop after processing the first new model
+            break
+
+        # Update the last processed commit after each check
+        with open(LAST_COMMIT_FILE, "w") as f:
+            f.write(commit_sha)
+        logging.info(f"Updated last processed commit SHA: {commit_sha}")
 
 if __name__ == "__main__":
     logging.info("Starting script in a loop with a 10-minute interval.")
