@@ -33,6 +33,15 @@ repo_id = args.repo_id
 output_dir = os.path.abspath(args.output_dir)
 os.makedirs(output_dir, exist_ok=True)
 
+# Define the final BF16 file path
+model_base_name = repo_id.split("/")[-1]
+bf16_output_file = os.path.join(output_dir, f"{model_base_name}-bf16.gguf")
+
+# Check if the final BF16 file already exists
+if os.path.exists(bf16_output_file):
+    print(f"BF16 file already exists at {bf16_output_file}. Exiting.")
+    exit()
+
 # List all files in the repository
 try:
     files = list_repo_files(repo_id=repo_id)
@@ -83,8 +92,6 @@ for file_path in downloaded_files:
 if not bf16_model_path:
     print("No BF16-compatible model file found, converting...")
     model_snapshot_dir = os.path.dirname(downloaded_files[0])
-    model_base_name = repo_id.split("/")[-1]
-    output_file = os.path.join(output_dir, f"{model_base_name}-bf16.gguf")
     
     # Update the path to the convert_hf_to_gguf.py script
     convert_script_path = "./llama.cpp/convert_hf_to_gguf.py"
@@ -92,7 +99,7 @@ if not bf16_model_path:
     convert_command = [
         "python3", convert_script_path,
         model_snapshot_dir,
-        "--outfile", output_file,
+        "--outfile", bf16_output_file,
         "--model-name", model_base_name,
         "--outtype", "bf16"
     ]
@@ -101,7 +108,7 @@ if not bf16_model_path:
     result = subprocess.run(convert_command, capture_output=True, text=True)
     
     if result.returncode == 0:
-        print(f"Successfully created BF16 GGUF: {output_file}")
+        print(f"Successfully created BF16 GGUF: {bf16_output_file}")
     else:
         print("Error during conversion:")
         print(result.stderr)
@@ -115,4 +122,3 @@ if model_snapshot_dir and os.path.exists(model_snapshot_dir):
         print(f"Cache directory {model_snapshot_dir} deleted successfully.")
     except Exception as e:
         print(f"Error while deleting the cache directory: {e}")
-

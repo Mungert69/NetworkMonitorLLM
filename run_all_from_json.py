@@ -3,6 +3,7 @@ import sys
 import json
 import os
 import shutil
+import threading
 
 def run_script(script_name, args):
     """Runs a script with arguments and streams output in real time."""
@@ -16,12 +17,34 @@ def run_script(script_name, args):
     # Run the script with real-time output streaming
     process = subprocess.Popen(
         ["python3", script_path] + args,
-        stdout=sys.stdout,
-        stderr=sys.stderr
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        bufsize=-1,  # Use default buffering
+        universal_newlines=False  # Read output as raw bytes
     )
-    
-    exit_code = process.wait()  # Wait for script to finish
 
+    # Function to read and print output in real time
+    def read_output(pipe, is_stderr=False):
+        for line in iter(pipe.readline, b''):  # Read bytes
+            if is_stderr:
+                sys.stderr.buffer.write(line)  # Write binary to stderr
+            else:
+                sys.stdout.buffer.write(line)  # Write binary to stdout
+            sys.stdout.flush()
+        pipe.close()
+
+    # Start threads to read stdout and stderr
+    stdout_thread = threading.Thread(target=read_output, args=(process.stdout,))
+    stderr_thread = threading.Thread(target=read_output, args=(process.stderr, True))
+    stdout_thread.start()
+    stderr_thread.start()
+
+    # Wait for the process to complete
+    process.wait()
+    stdout_thread.join()
+    stderr_thread.join()
+
+    exit_code = process.returncode
     if exit_code != 0:
         print(f"\nError running {script_name}, exited with code {exit_code}")
         sys.exit(exit_code)
