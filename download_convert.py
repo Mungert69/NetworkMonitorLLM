@@ -1,9 +1,10 @@
 import os
 import subprocess
 import argparse
-from huggingface_hub import hf_hub_download, list_repo_files, login
+from huggingface_hub import hf_hub_download, list_repo_files, login, HfApi
 from dotenv import load_dotenv
-import shutil  # Import shutil to delete directories
+import shutil
+from update_readme import update_readme  # Import the update_readme function
 
 # Load the .env file
 load_dotenv()
@@ -36,6 +37,15 @@ os.makedirs(output_dir, exist_ok=True)
 # Define the final BF16 file path
 model_base_name = repo_id.split("/")[-1]
 bf16_output_file = os.path.join(output_dir, f"{model_base_name}-bf16.gguf")
+
+# Create repository if it doesn't exist
+try:
+    api = HfApi()
+    api.create_repo(repo_id, exist_ok=True, token=api_token)
+    print(f"Repository {repo_id} is ready.")
+except Exception as e:
+    print(f"Error creating repository: {e}")
+    exit()
 
 # Check if the final BF16 file already exists
 if os.path.exists(bf16_output_file):
@@ -122,3 +132,22 @@ if model_snapshot_dir and os.path.exists(model_snapshot_dir):
         print(f"Cache directory {model_snapshot_dir} deleted successfully.")
     except Exception as e:
         print(f"Error while deleting the cache directory: {e}")
+
+# Update README.md after BF16 creation
+update_readme(output_dir, model_base_name)
+
+# Upload README.md to Hugging Face Hub
+api = HfApi()
+repo_id = f"Mungert/{model_base_name}-GGUF"
+
+try:
+    print("Uploading README.md...")
+    api.upload_file(
+        path_or_fileobj=os.path.join(output_dir, "README.md"),
+        path_in_repo="README.md",
+        repo_id=repo_id,
+        token=api_token,
+    )
+    print("README.md uploaded successfully.")
+except Exception as e:
+    print(f"Error uploading README.md: {e}")

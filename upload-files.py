@@ -49,22 +49,7 @@ except Exception as e:
     print(f"Error creating repository: {e}")
     exit()
 
-# Upload README.md if it exists
-readme_path = os.path.join(upload_dir, "README.md")
-if os.path.isfile(readme_path):
-    try:
-        print("Uploading README.md...")
-        api.upload_file(
-            path_or_fileobj=readme_path,
-            path_in_repo="README.md",
-            repo_id=repo_id,
-            token=api_token,
-        )
-        print("Uploaded README.md successfully.")
-    except Exception as e:
-        print(f"Error uploading README.md: {e}")
-
-# Upload all other files in the directory
+# Upload all files in the directory except README.md
 try:
     for file_name in os.listdir(upload_dir):
         file_path = os.path.join(upload_dir, file_name)
@@ -72,7 +57,7 @@ try:
             print(f"Uploading {file_name}...")
             api.upload_file(
                 path_or_fileobj=file_path,
-                path_in_repo=file_name,  # Change this if you want a subdirectory in the repo
+                path_in_repo=file_name,
                 repo_id=repo_id,
                 token=api_token,
             )
@@ -102,4 +87,3 @@ else:
     print("Hugging Face cache folder does not exist. Nothing to clear.")
 
 print("Upload and cleanup completed successfully.")
-
