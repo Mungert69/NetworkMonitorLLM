@@ -38,9 +38,11 @@ os.makedirs(output_dir, exist_ok=True)
 model_base_name = repo_id.split("/")[-1]
 bf16_output_file = os.path.join(output_dir, f"{model_base_name}-bf16.gguf")
 
+# Initialize API
+api = HfApi()
+
 # Create repository if it doesn't exist
 try:
-    api = HfApi()
     api.create_repo(repo_id, exist_ok=True, token=api_token)
     print(f"Repository {repo_id} is ready.")
 except Exception as e:
