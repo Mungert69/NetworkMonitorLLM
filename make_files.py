@@ -117,11 +117,13 @@ def filter_quant_configs(base_name, configs):
     for config in configs:
         quant_type = config[1]
         bits = QUANT_BIT_LEVELS.get(quant_type, 16)
-        if bits >= min_bits or ("TriLM" in base_name and quant_type.startswith("TQ")):
+
+        if bits >= min_bits and (not quant_type.startswith("TQ") or "TriLM" in base_name):
             filtered.append(config)
         else:
             print(f"⚠ Skipping {quant_type} ({bits}bit) for {base_name} "
                   f"({model_size/1e9:.1f}B) - too aggressive")
+
     return filtered
 
 def build_imatrix_urls(company_name, model_name):
