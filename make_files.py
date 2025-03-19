@@ -235,7 +235,7 @@ def quantize_model(input_model, company_name, base_name):
     # Get filtered configs based on model size
     filtered_configs = filter_quant_configs(base_name, QUANT_CONFIGS)
     
-    print(f"🏗️ Selected {len(filtered_configs)} quantizations for {base_name}")
+    print(f"🏗 Selected {len(filtered_configs)} quantizations for {base_name}")
     
     for suffix, quant_type, tensor_type, embed_type, use_imatrix, use_pure in filtered_configs:
         output_file = f"{base_name}-{suffix}.gguf"
@@ -256,16 +256,23 @@ def quantize_model(input_model, company_name, base_name):
         command.extend([bf16_model_file, output_path, quant_type])
         
         print("\nRunning:", " ".join(command))
-        result = subprocess.run(command, capture_output=True, text=True)
+        
+        # Run the command and capture output as bytes (avoid automatic UTF-8 decoding)
+        result = subprocess.run(command, capture_output=True, text=False)  # Set text=False
+        
+        # Decode the output manually with error handling
+        stdout = result.stdout.decode('utf-8', errors='ignore')
+        stderr = result.stderr.decode('utf-8', errors='ignore')
         
         if result.returncode == 0:
             print(f"Successfully created {output_file} in {output_dir}")
+            print("STDOUT:", stdout)
         else:
             print(f"Error creating {output_file}:")
-            print(result.stderr)
-  # After quantization, update the README.md
+            print("STDERR:", stderr)
+    
+    # After quantization, update the README.md
     update_readme(output_dir, base_name)  # This updates the README with the new information
-
 
 def main():
     parser = argparse.ArgumentParser(description="Automate GGUF model quantization")
