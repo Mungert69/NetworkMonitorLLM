@@ -90,16 +90,29 @@ QUANT_BIT_LEVELS = {
 }
 
 def get_model_size(base_name):
-    """Extract model size from name using common patterns for both billion and million sizes."""
+    """Enhanced model size extraction from name with better pattern matching"""
     import re
-    match = re.search(r'(\d+\.?\d*)\s*([bm])', base_name, re.IGNORECASE)
-    if match:
-        size = float(match.group(1))
-        size_unit = match.group(2).lower()
-        if size_unit == 'b':  # Billion
-            return size * 1e9
-        elif size_unit == 'm':  # Million
-            return size * 1e6
+    
+    # Common patterns in model names
+    patterns = [
+        r'(\d+\.?\d*)\s*([bm])b?',  # Matches "7b", "1.5b", "350m"
+        r'-(\d+)([bm])-',           # Matches "-7b-", "-350m-"
+        r'_(\d+)([bm])_',           # Matches "_7b_", "_350m_"
+        r'(\d+)([bm])\D',           # Matches "7b-", "350m_"
+        r'(\d+)([bm])$',            # Matches "7b", "350m" at end
+    ]
+    
+    for pattern in patterns:
+        match = re.search(pattern, base_name, re.IGNORECASE)
+        if match:
+            size = float(match.group(1))
+            size_unit = match.group(2).lower()
+            if size_unit == 'b':  # Billion
+                return int(size * 1e9)
+            elif size_unit == 'm':  # Million
+                return int(size * 1e6)
+    
+    print(f"⚠ Couldn't determine model size from name: {base_name}")
     return None
 
 def filter_quant_configs(base_name, configs):

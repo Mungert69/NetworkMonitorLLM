@@ -6,11 +6,12 @@ import shutil
 import threading
 
 def run_script(script_name, args):
-    """Runs a script with arguments and streams output in real time."""
+    """Runs a script with arguments and streams output in real time.
+    Returns True if the script succeeds, False otherwise."""
     script_path = os.path.join(os.getcwd(), script_name)  # Ensure absolute path
     if not os.path.exists(script_path):
         print(f"Error: Script {script_name} not found at {script_path}")
-        sys.exit(1)
+        return False  # Indicate failure
 
     print(f"\nRunning {script_name} with arguments: {args}")
 
@@ -47,9 +48,10 @@ def run_script(script_name, args):
     exit_code = process.returncode
     if exit_code != 0:
         print(f"\nError running {script_name}, exited with code {exit_code}")
-        sys.exit(exit_code)
+        return False  # Indicate failure
     else:
         print(f"Successfully ran {script_name}")
+        return True  # Indicate success
 
 def cleanup_model_dir(model_name):
     """Clean up the model directory to free up disk space."""
