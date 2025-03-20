@@ -24,10 +24,10 @@ LAST_COMMIT_FILE = "last_commit.txt"
 COMMITS_CACHE_FILE = "commits_cache.json"  # File to cache fetched commits
 GITHUB_TOKEN = "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"  # Add your token here
 HEADERS = {"Authorization": f"Bearer {GITHUB_TOKEN}"}
-MAX_TOKENS = 1024
+MAX_TOKENS = 4096
 MODELS_JSON_PATH = "models-complete.json"
 # Local GGUF model
-LOCAL_MODEL_PATH = "./Qwen2.5-1.5B-Instruct-q8_0.gguf"
+LOCAL_MODEL_PATH = "./Llama-3.1-8B-Instruct-q4_k_l.gguf"
 GRAMMAR_FILE_PATH = "./llama.cpp/grammars/json.gbnf"  # Path to your JSON grammar file
 LOCK_FILE = "model_conversion.lock"
 def is_conversion_in_progress():
@@ -131,107 +131,47 @@ def fetch_commit_details(commit_sha):
         return None
 
 def analyze_commit(commit):
-    """Analyze commit message, file names, and diffs to detect new models using the LLM."""
+    """Analyze commit message and file changes to detect new models using the LLM."""
     commit_sha = commit.get("sha", "UNKNOWN_SHA")
     message = commit.get("commit", {}).get("message", "No commit message found")
-    files = commit.get("files", [])  # List of files changed in the commit
+    files = commit.get("files", [])
 
     logging.info(f"Analyzing commit {commit_sha}...")
     logging.info(f"Commit message: {message}")
 
-    # Log all files in the commit for debugging
-    all_files = [file.get("filename", "") for file in files]
-    logging.info(f"All files in commit: {json.dumps(all_files, indent=2)}")
-    # Extract file names and diffs, but only for relevant files
-    file_changes = []
-    for file in files:
-        filename = file.get("filename", "")
-        patch = file.get("patch", "")  # Unified diff for the file
-
-        # Check if the file is relevant to model addition
-        if (
-            any(keyword in filename.lower() for keyword in ["convert", "hf_to_gguf", "models"])  # Keywords
-            or filename.startswith("scripts/")  # Scripts directory
-        ):
-            file_changes.append({"filename": filename, "patch": patch})
-
+    # Extract relevant file changes
+    file_changes = extract_relevant_file_changes(files)
     logging.info(f"Relevant file changes: {json.dumps(file_changes, indent=2)}")
 
-    # Base prompt template
-    base_prompt = (
-        "You are an AI assistant. Analyze the following information to determine if a new AI model is being added.\n"
-        "Respond ONLY in valid JSON format. Your response must be a complete JSON object with no extra text.\n"
-        "The response should look like this:\n"
-        "{{\n"
-        '  "is_new_model": true/false,\n'
-        '  "model_name_if_found": "Name of the model if detected, otherwise null",\n'
-        '  "reason_for_answer": "Explain why or why not."\n'
-        "}}\n"
-        "Return only the JSON structure, without any extra words, explanations, or formatting.\n"
-    )
-
-    # Helper message to remind the LLM of its task
-    helper_message = (
-        "\n\nRemember: Your task is to analyze the commit message and file changes (if any) to determine if a new AI model is being added. "
-        "Look at the commit message and file changes to make your decision."
-    )
-
-    # Add file changes context if available
-    if file_changes:
-        file_context = "Model building files have been changed. This may indicate a new model has been added : File changes:\n" + "\n".join([f["filename"] for f in file_changes])
-    else:
-        file_context = "No relevant file changes were found."
-
     # Build the final prompt
-    prompt = base_prompt + file_context + "\n\nCommit message:\n" + message + helper_message
-
-    # Calculate token limits
-    prompt_tokens = len(prompt.split())  # Rough token count (1 token ≈ 1 word)
-
-    # Truncate the prompt if it exceeds the token limit (prioritize the commit message)
-    if prompt_tokens > MAX_TOKENS:
-        # Truncate file changes to fit within the token limit
-        available_tokens = MAX_TOKENS - len(base_prompt.split()) - len(helper_message.split()) - len(message.split())
-        truncated_file_changes = file_changes[:available_tokens]
-        file_context = "File changes (truncated):\n" + "\n".join([f["filename"] for f in truncated_file_changes])
-        prompt = base_prompt + file_context + "\n\nCommit message:\n" + message + helper_message
+    prompt = build_commit_analysis_prompt(message, file_changes)
+    logging.info(f"LLM Prompt: {prompt}")
 
     try:
+        # Get LLM response
         llm_response = llm(
             prompt,
-            max_tokens=MAX_TOKENS,  # Adjust token size if needed
+            max_tokens=MAX_TOKENS,
             stop=None,  # Avoid prematurely stopping
             echo=False,
             grammar=grammar  # Apply the grammar during inference
         )
 
-        # Log the raw LLM response
+        # Extract and clean the response
         response_text = llm_response.get("choices", [{}])[0].get("text", "").strip()
-        logging.info(f"LLM Prompt was: {prompt}")
         logging.info(f"Raw LLM Response: {response_text}")
 
-        # Clean the response to ensure it's valid JSON
-        response_text = response_text.strip()
-        if not response_text.startswith("{") or not response_text.endswith("}"):
-            # Attempt to extract JSON from the response
-            start_idx = response_text.find("{")
-            end_idx = response_text.rfind("}") + 1
-            if start_idx == -1 or end_idx == -1:
-                raise ValueError("No valid JSON found in LLM response.")
-            response_text = response_text[start_idx:end_idx]
+        # Parse and validate the response
+        llm_output = parse_and_validate_llm_response(response_text)
 
-        # Parse the JSON response
-        llm_output = json.loads(response_text)
-
-        # Validate the JSON structure
-        if not all(key in llm_output for key in ["is_new_model", "model_name_if_found", "reason_for_answer"]):
-            raise ValueError("LLM response is missing required fields.")
-
+        # Log the decision
         is_new_model = llm_output.get("is_new_model", False)
         model_name = llm_output.get("model_name_if_found", None)
         reason = llm_output.get("reason_for_answer", "No reason provided.")
+        confidence = llm_output.get("confidence", "low")  # Default to low confidence
 
         logging.info(f"LLM Decision: {is_new_model}")
+        logging.info(f"LLM Confidence: {confidence}")
         logging.info(f"LLM Reason: {reason}")
         if model_name:
             logging.info(f"LLM Detected Model Name: {model_name}")
@@ -242,6 +182,124 @@ def analyze_commit(commit):
         logging.error(f"Invalid LLM response format: {e}")
         logging.error(f"Raw LLM Response (before failure): {response_text}")
         return False, None
+
+
+def extract_relevant_file_changes(files):
+    """Extract relevant file changes for model addition detection."""
+    file_changes = []
+    for file in files:
+        filename = file.get("filename", "")
+        patch = file.get("patch", "")  # Get the patch, default to empty string if missing
+
+        # Check if the file is relevant to model addition
+        if (
+            any(keyword in filename.lower() for keyword in ["convert", "hf_to_gguf", "models"])
+            or filename.startswith("scripts/")
+        ):
+            # Include the first 10 lines of the patch (if available)
+            if patch:  # Only process if patch is not empty
+                patch_preview = "\n".join(patch.split("\n")[:10])  # Show first 10 lines
+            else:
+                patch_preview = "No changes preview available"
+            file_changes.append({"filename": filename, "patch_preview": patch_preview})
+    return file_changes
+
+def build_commit_analysis_prompt(message, file_changes):
+    """Build the prompt for analyzing a commit."""
+    base_prompt = (
+        "You are an AI assistant. Analyze the following information to determine if a new AI model is being added.\n"
+        "Respond ONLY in valid JSON format. Your response must be a complete JSON object with no extra text.\n"
+        "The response should look like this:\n"
+        "{{\n"
+        '  "is_new_model": true/false,\n'
+        '  "model_name_if_found": "Name of the model if detected, otherwise null",\n'
+        '  "confidence": "high|medium|low",\n'
+        '  "reason_for_answer": "Explain why or why not."\n'
+        "}}\n"
+        "Return only the JSON structure, without any extra words, explanations, or formatting.\n"
+        "\n"
+        "Rules for detecting new models:\n"
+        "1. A new model must be explicitly mentioned in the commit message with keywords like 'add', 'support', or 'implement'.\n"
+        "2. The model name must not be 'ggml', 'llama', or any other framework name.\n"
+        "3. If no relevant files are changed (e.g., model definitions, configs, or scripts), confidence must be 'low'.\n"
+        "4. If the commit message mentions 'bug fix', 'optimize', or 'refactor', it is unlikely to be a new model.\n"
+        "\n"
+        "Examples of valid model additions:\n"
+        "- 'Add Mistral-8x22B implementation' (with relevant file changes)\n"
+        "- 'Support for Llama 3 70B' (with relevant file changes)\n"
+        "\n"
+        "Examples of non-model commits:\n"
+        "- 'Fix quantization bugs'\n"
+        "- 'Update documentation'\n"
+        "- 'Add SWA rope parameters' (no relevant file changes)\n"
+        "\n"
+        "File changes:\n"
+        "{file_changes}\n"
+        "\n"
+        "Commit message:\n"
+        "{message}\n"
+    )
+
+    # Add file changes context
+    if file_changes:
+        file_context = "Model building files have been changed. This may indicate a new model has been added:\n"
+        for file in file_changes:
+            file_context += (
+                f"- File: {file['filename']}\n"
+                f"  Changes preview:\n{file['patch_preview']}\n\n"
+            )
+    else:
+        file_context = "No relevant file changes were found. This strongly suggests that no new model was added, and confidence should be low."
+
+    # Build the final prompt
+    prompt = base_prompt.format(
+        message=message,
+        file_changes=file_context
+    )
+
+    # Truncate the prompt if it exceeds the token limit
+    prompt_tokens = len(prompt.split())
+    if prompt_tokens > MAX_TOKENS:
+        available_tokens = MAX_TOKENS - len(base_prompt.split()) - len(message.split())
+        truncated_file_changes = file_changes[:available_tokens]
+        file_context = "File changes (truncated):\n"
+        for file in truncated_file_changes:
+            file_context += (
+                f"- File: {file['filename']}\n"
+                f"  Changes preview:\n{file['patch_preview']}\n\n"
+            )
+        prompt = base_prompt.format(
+            message=message,
+            file_changes=file_context
+        )
+
+    return prompt
+
+def parse_and_validate_llm_response(response_text):
+    """Parse and validate the LLM response."""
+    response_text = response_text.strip()
+
+    # Extract JSON from the response
+    if not response_text.startswith("{") or not response_text.endswith("}"):
+        start_idx = response_text.find("{")
+        end_idx = response_text.rfind("}") + 1
+        if start_idx == -1 or end_idx == -1:
+            raise ValueError("No valid JSON found in LLM response.")
+        response_text = response_text[start_idx:end_idx]
+
+    # Parse the JSON response
+    llm_output = json.loads(response_text)
+
+    # Validate the JSON structure
+    required_keys = ["is_new_model", "model_name_if_found", "confidence", "reason_for_answer"]
+    if not all(key in llm_output for key in required_keys):
+        raise ValueError("LLM response is missing required fields.")
+
+    # Validate confidence level
+    if llm_output["confidence"] not in ["high", "medium", "low"]:
+        raise ValueError("Invalid confidence level in LLM response.")
+
+    return llm_output
 
 def extract_parameter_size(model_id):
     """Extract the parameter size (in billions) from the model ID."""
@@ -374,7 +432,6 @@ def process_model(model_id):
 
 def main():
     """Main monitoring function."""
-    # Skip if a model conversion is already in progress
     if is_conversion_in_progress():
         logging.info("Model conversion is already in progress. Skipping Git repo check.")
         return
@@ -385,73 +442,62 @@ def main():
             last_commit = f.read().strip()
         logging.info(f"Last processed commit SHA: {last_commit}")
     else:
-        logging.info("No last processed commit found. Starting from the latest commit.")
+        logging.info("No last processed commit found. Starting from the oldest commit in the batch.")
 
-    # Fetch the latest commits from the GitHub API
     commits = fetch_last_50_commits()
     if not commits:
-        logging.info("No commits found.")
+        logging.info("No commits fetched.")
         return
 
-    logging.info(f"Processing {len(commits)} commits...")
+    # Reverse commits to process oldest first
+    reversed_commits = list(reversed(commits))
+    logging.info(f"Processing {len(reversed_commits)} commits in oldest to newest order.")
 
-    # Process commits in forward order (newest to oldest)
-    for commit in commits:
+    # Determine commits to process
+    start_index = 0
+    if last_commit:
+        for i, commit in enumerate(reversed_commits):
+            if commit.get("sha") == last_commit:
+                start_index = i + 1
+                break
+        else:
+            start_index = 0  # Last commit not found, process all
+
+    commits_to_process = reversed_commits[start_index:]
+    if not commits_to_process:
+        logging.info("No new commits to process.")
+        return
+
+    logging.info(f"Found {len(commits_to_process)} new commits to process.")
+
+    for commit in commits_to_process:
         commit_sha = commit.get("sha", "UNKNOWN_SHA")
         logging.info(f"Processing commit: {commit_sha}")
 
-        # Skip if this commit has already been processed
-        if commit_sha == last_commit:
-            logging.info(f"Reached previously processed commit: {commit_sha}. Stopping further checks.")
-            break
-
-        logging.info(f"Checking commit {commit_sha}...")
-
-        # Fetch commit details if not already available
         if "files" not in commit:
-            commit = fetch_commit_details(commit_sha)
-            if not commit:
-                continue
+            commit = fetch_commit_details(commit_sha) or commit
 
-        # Analyze the commit
         is_new_model, model_name = analyze_commit(commit)
-        if is_new_model and model_name:
-            logging.info(f"New model detected: {model_name}")
-            
-            # Look up the base model on Hugging Face
-            model_info = find_huggingface_model(model_name, max_parameters=15)  # Set max_parameters as needed
-            if model_info:
-                logging.info(f"Model found on Hugging Face: {model_info['model_id']}")
-                logging.info(f"Number of parameters: {model_info['num_parameters'] / 1e9}B")
-                if model_info['base_model']:
-                    logging.info(f"Base model: {model_info['base_model']}")
-                else:
-                    logging.info("No base model information available.")
 
-                try:
-                    # Mark the start of the model conversion
-                    start_conversion()
-
-                    # Auto-build the GGUF model
-                    process_model(model_info['model_id'])
-
-                except Exception as e:
-                    # Log any errors that occur during the model conversion
-                    logging.error(f"An error occurred during model conversion: {e}")
-
-                finally:
-                    # Mark the end of the model conversion (clean up the lock file)
-                    end_conversion()
-            else:
-                logging.info("Model not found on Hugging Face.")
-
-            # Stop after processing the first new model
-            break
-
-        # Update the last processed commit after each check
+        # Update last processed commit immediately
         with open(LAST_COMMIT_FILE, "w") as f:
             f.write(commit_sha)
         logging.info(f"Updated last processed commit SHA: {commit_sha}")
+
+        if is_new_model and model_name:
+            logging.info(f"New model detected: {model_name}")
+            model_info = find_huggingface_model(model_name, max_parameters=15)
+            if model_info:
+                try:
+                    start_conversion()
+                    process_model(model_info['model_id'])
+                except Exception as e:
+                    logging.error(f"Error processing model: {e}")
+                finally:
+                    end_conversion()
+                break  # Stop after processing the first new model
+            else:
+                logging.info("Model not found on Hugging Face.")
 
 if __name__ == "__main__":
     logging.info("Starting script in a loop with a 10-minute interval.")
