@@ -16,7 +16,7 @@ class ModelConverter:
         self.catalog_file = "model_catalog.json"
         self.catalog = self.load_catalog()
         self.hf_token = os.getenv("HF_API_TOKEN")
-        self.MAX_PARAMETERS = 20e9  # 20 billion parameters
+        self.MAX_PARAMETERS = 9e9  # 9 billion parameters
         
         # Authenticate with Hugging Face Hub
         if not self.hf_token:
@@ -203,7 +203,7 @@ class ModelConverter:
 
         for model_id, entry in self.catalog.items():
             parameters = entry.get("parameters", 0) or 0 # Ensure parameters is never None
-            if entry["converted"] or entry["attempts"] >= 3 or parameters > self.MAX_PARAMETERS:
+            if entry["converted"] or entry["attempts"] >= 3 or parameters > self.MAX_PARAMETERS or parameters == -1:
                 continue
                 
             if not entry["has_config"]:
@@ -218,7 +218,7 @@ class ModelConverter:
             print("Starting conversion cycle...")
             self.run_conversion_cycle()
             print("Cycle complete. Sleeping for 15 minutes...")
-            time.sleep(9)  # 15 minutes
+            time.sleep(900)  # 15 minutes
 
             # Call build_and_copy after each sleep
             print("Updating and rebuilding llama.cpp...")

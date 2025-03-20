@@ -41,14 +41,6 @@ hf_cache_dir = os.path.expanduser("~/.cache/huggingface/hub/")
 # Initialize API
 api = HfApi()
 
-# Create repository if it doesn't exist
-try:
-    api.create_repo(repo_id, exist_ok=True, token=api_token)
-    print(f"Repository {repo_id} is ready.")
-except Exception as e:
-    print(f"Error creating repository: {e}")
-    exit()
-
 # Upload all files in the directory except README.md
 try:
     for file_name in os.listdir(upload_dir):

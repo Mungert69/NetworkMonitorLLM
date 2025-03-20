@@ -14,7 +14,7 @@ api_token = os.getenv("HF_API_TOKEN")
 
 if not api_token:
     print("Error: Hugging Face API token not found in .env file.")
-    exit()
+    exit(1)  # Explicitly indicate failure
 
 # Authenticate with the Hugging Face Hub
 try:
@@ -22,7 +22,7 @@ try:
     print("Authentication successful.")
 except Exception as e:
     print(f"Authentication failed: {e}")
-    exit()
+    exit(1)  # Explicitly indicate failure
 
 # Parse arguments
 parser = argparse.ArgumentParser(description="Download HF model and convert to BF16 GGUF")
@@ -38,11 +38,10 @@ os.makedirs(output_dir, exist_ok=True)
 model_base_name = repo_id.split("/")[-1]
 bf16_output_file = os.path.join(output_dir, f"{model_base_name}-bf16.gguf")
 
-
 # Check if the final BF16 file already exists
 if os.path.exists(bf16_output_file):
     print(f"BF16 file already exists at {bf16_output_file}. Exiting.")
-    exit()
+    exit(1)  # Explicitly indicate failure
 
 # List all files in the repository
 try:
@@ -50,7 +49,7 @@ try:
     print(f"Files found in repository '{repo_id}': {files}")
 except Exception as e:
     print(f"Failed to list files in repository '{repo_id}': {e}")
-    exit()
+    exit(1)  # Explicitly indicate failure
 
 # Download each file
 downloaded_files = []
@@ -63,9 +62,10 @@ try:
             print(f"Downloaded {file_name} to {file_path}")
         except Exception as e:
             print(f"Failed to download {file_name}: {e}")
+            exit(1)  # Explicitly indicate failure
 except Exception as e:
     print(f"An error occurred during the download process: {e}")
-    exit()
+    exit(1)  # Explicitly indicate failure
 
 # Download README.md if it exists
 readme_path = None
@@ -82,7 +82,7 @@ for file_name in files:
             print(f"README.md downloaded and saved to {readme_output_path}")
         except Exception as e:
             print(f"Failed to download README.md: {e}")
-            exit()
+            exit(1)  # Explicitly indicate failure
 
 # Identify main model file
 bf16_model_path = None
@@ -114,7 +114,7 @@ if not bf16_model_path:
     else:
         print("Error during conversion:")
         print(result.stderr)
-        exit()
+        exit(1)  # Explicitly indicate failure
 
 # Delete the cache directory to save disk space after conversion
 if model_snapshot_dir and os.path.exists(model_snapshot_dir):
@@ -132,22 +132,28 @@ update_readme(output_dir, model_base_name)
 api = HfApi()
 new_repo_id = f"Mungert/{model_base_name}-GGUF"
 
-# Create the new repository under your account
-try:
-    api.create_repo(new_repo_id, exist_ok=True, token=api_token)
-    print(f"Repository {new_repo_id} is ready.")
-except Exception as e:
-    print(f"Error creating repository: {e}")
-    exit()
+# Check if the BF16 file exists before creating the repository and uploading README.md
+if os.path.exists(bf16_output_file):
+    # Create the new repository under your account
+    try:
+        api.create_repo(new_repo_id, exist_ok=True, token=api_token)
+        print(f"Repository {new_repo_id} is ready.")
+    except Exception as e:
+        print(f"Error creating repository: {e}")
+        exit(1)  # Explicitly indicate failure
 
-try:
-    print("Uploading README.md...")
-    api.upload_file(
-        path_or_fileobj=os.path.join(output_dir, "README.md"),
-        path_in_repo="README.md",
-        repo_id=repo_id,
-        token=api_token,
-    )
-    print("README.md uploaded successfully.")
-except Exception as e:
-    print(f"Error uploading README.md: {e}")
+    try:
+        print("Uploading README.md...")
+        api.upload_file(
+            path_or_fileobj=os.path.join(output_dir, "README.md"),
+            path_in_repo="README.md",
+            repo_id=new_repo_id,  # Use the new repository ID
+            token=api_token,
+        )
+        print("README.md uploaded successfully.")
+    except Exception as e:
+        print(f"Error uploading README.md: {e}")
+        exit(1)  # Explicitly indicate failure
+else:
+    print("BF16 file not found. Repository and README.md will not be created.")
+    exit(1)  # Explicitly indicate failure
