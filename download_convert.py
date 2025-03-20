@@ -38,24 +38,6 @@ os.makedirs(output_dir, exist_ok=True)
 model_base_name = repo_id.split("/")[-1]
 bf16_output_file = os.path.join(output_dir, f"{model_base_name}-bf16.gguf")
 
-# Modify the repo_id: Replace the first part with "Mungert" and append "-GGUF" to the second part
-try:
-    org, model_name = args.repo_id.split("/")  # Split on "/"
-    new_repo_id = f"Mungert/{model_name}-GGUF"  # Example: Mungert/gemma-3-1b-it-GGUF
-except ValueError:
-    print(f"Invalid repo_id format: {args.repo_id}. Expected format: <org>/<model_name>")
-    exit()
-
-# Initialize API
-api = HfApi()
-
-# Create the new repository under your account
-try:
-    api.create_repo(new_repo_id, exist_ok=True, token=api_token)
-    print(f"Repository {new_repo_id} is ready.")
-except Exception as e:
-    print(f"Error creating repository: {e}")
-    exit()
 
 # Check if the final BF16 file already exists
 if os.path.exists(bf16_output_file):
@@ -148,7 +130,15 @@ update_readme(output_dir, model_base_name)
 
 # Upload README.md to Hugging Face Hub
 api = HfApi()
-repo_id = f"Mungert/{model_base_name}-GGUF"
+new_repo_id = f"Mungert/{model_base_name}-GGUF"
+
+# Create the new repository under your account
+try:
+    api.create_repo(new_repo_id, exist_ok=True, token=api_token)
+    print(f"Repository {new_repo_id} is ready.")
+except Exception as e:
+    print(f"Error creating repository: {e}")
+    exit()
 
 try:
     print("Uploading README.md...")
