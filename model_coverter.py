@@ -194,31 +194,29 @@ class ModelConverter:
             print(f"Conversion failed for {model_id}: {e}")
         finally:
             self.save_catalog()
+    def run_conversion_cycle(self):
+        """Process all unconverted models"""
+        models = self.get_trending_models()
+        self.update_catalog(models)
 
-
-def run_conversion_cycle(self):
-    """Process all unconverted models"""
-    models = self.get_trending_models()
-    self.update_catalog(models)
-
-    for model_id, entry in self.catalog.items():
-        parameters = entry.get("parameters", -1)  # Default to -1 if "parameters" key is missing
-        if parameters is None:  # Explicitly handle None
-            parameters = -1
-        # Debugging: Print the parameters value
-        print(f"Checking model {model_id} with parameters={parameters}")
-        
-        if entry["converted"] or entry["attempts"] >= 3 or parameters > self.MAX_PARAMETERS or parameters == -1:
-            print(f"Skipping {model_id} - converted={entry['converted']}, attempts={entry['attempts']}, parameters={parameters}")
-            continue
+        for model_id, entry in self.catalog.items():
+            parameters = entry.get("parameters", -1)  # Default to -1 if "parameters" key is missing
+            if parameters is None:  # Explicitly handle None
+                parameters = -1
+            # Debugging: Print the parameters value
+            print(f"Checking model {model_id} with parameters={parameters}")
             
-        if not entry["has_config"]:
-            print(f"Skipping {model_id} - config.json not found")
-            continue
-            
-        self.convert_model(model_id)
+            if entry["converted"] or entry["attempts"] >= 3 or parameters > self.MAX_PARAMETERS or parameters == -1:
+                print(f"Skipping {model_id} - converted={entry['converted']}, attempts={entry['attempts']}, parameters={parameters}")
+                continue
+                
+            if not entry["has_config"]:
+                print(f"Skipping {model_id} - config.json not found")
+                continue
+                
+            self.convert_model(model_id)
 
-    def start_daemon(self):
+    def start_daemon(self):  # Properly indented to be part of the ModelConverter class
         """Run continuously with 15 minute intervals"""
         while True:
             print("Starting conversion cycle...")
@@ -230,6 +228,7 @@ def run_conversion_cycle(self):
             print("Updating and rebuilding llama.cpp...")
             if not build_and_copy():
                 print("Warning: Failed to update or rebuild llama.cpp")
+
 
 if __name__ == "__main__":
     converter = ModelConverter()
