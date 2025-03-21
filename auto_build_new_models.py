@@ -29,8 +29,7 @@ MODELS_JSON_PATH = "models-complete.json"
 # Local GGUF model
 LOCAL_MODEL_PATH = "./Meta-Llama-3-8B-Instruct-q4_k_m.gguf"
 GRAMMAR_FILE_PATH = "./llama.cpp/grammars/json.gbnf"  # Path to your JSON grammar file
-LOCK_FILE = "model_conversion.lock"
-
+MODEL_CATALOG_FILE = "model_catalog.json"
 
 # Load the JSON grammar
 logging.info("Loading JSON grammar...")
