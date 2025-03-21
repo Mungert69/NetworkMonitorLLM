@@ -45,7 +45,7 @@ api = HfApi()
 try:
     for file_name in os.listdir(upload_dir):
         file_path = os.path.join(upload_dir, file_name)
-        if os.path.isfile(file_path) and file_name != "README.md":
+        if os.path.isfile(file_path) :
             print(f"Uploading {file_name}...")
             api.upload_file(
                 path_or_fileobj=file_path,
