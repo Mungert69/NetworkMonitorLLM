@@ -60,48 +60,67 @@ class ModelConverter:
                 return catalog
         except (FileNotFoundError, json.JSONDecodeError):
             return {}
+           
     def get_file_sizes(self, model_id):
         """Get the total size of .safetensors files in the repository as a fallback for parameter estimation."""
         try:
             print(f"\n[DEBUG] Starting file size check for: {model_id}")
             
-            # First try the original root directory approach
-            root_path = f'models/{model_id}'
-            print(f"[DEBUG] Checking root path: {root_path}")
-            
+            # Ensure the repository exists and is accessible
             try:
-                root_files = self.fs.ls(root_path, detail=True)
-                print(f"[DEBUG] Root directory contents ({len(root_files)} items):")
-                for f in root_files:
-                    print(f" - {f['name']} ({f['size']} bytes)")
-            except Exception as root_err:
-                print(f"[DEBUG] Root directory listing failed: {root_err}")
-
-            # Now try the recursive search
-            pattern = f'models/{model_id}/**/*.safetensors'
-            print(f"[DEBUG] Using glob pattern: {pattern}")
-            
-            files = self.fs.glob(pattern, detail=True)
-            print(f"[DEBUG] Found {len(files)} matching files in total")
-            
-            if not files:
-                print(f"[WARNING] No .safetensors files found for {model_id}")
+                repo_info = self.api.repo_info(model_id, repo_type="model")
+                print(f"[DEBUG] Repository found: {repo_info.id}")
+            except Exception as repo_err:
+                print(f"[ERROR] Repository not found or inaccessible: {model_id}")
+                print(f"[ERROR] Details: {str(repo_err)}")
                 return 0
 
-            # Log all found paths
-            print("[DEBUG] File details:")
-            total_size = 0
-            for path, info in files.items():
-                print(f" - {path} ({info['size']} bytes)")
-                total_size += info['size']
+            # Use HfFileSystem to list and sum sizes of .safetensors files
+            try:
+                # Try both `models` and `datasets` namespaces
+                paths_to_check = [
+                    f"models/{model_id}",  # Standard models path
+                    f"datasets/{model_id}",  # Some models are under datasets
+                    f"{model_id}",  # Try without any namespace
+                ]
 
-            print(f"[DEBUG] Total .safetensors size: {total_size} bytes")
-            return total_size
+                total_size = 0
+                found_files = False
+
+                for path in paths_to_check:
+                    print(f"[DEBUG] Checking path: {path}")
+                    
+                    try:
+                        # List files in the repository
+                        files = self.fs.ls(path, detail=True)
+                        print(f"[DEBUG] Found {len(files)} files in {path}:")
+                        for f in files:
+                            print(f" - {f['name']} ({f['size']} bytes)")
+                        
+                        # Filter for .safetensors files
+                        safetensors_files = [f for f in files if f['name'].endswith('.safetensors')]
+                        if safetensors_files:
+                            found_files = True
+                            print(f"[DEBUG] Found {len(safetensors_files)} .safetensors files in {path}")
+                            total_size += sum(f['size'] for f in safetensors_files)
+                    except Exception as ls_err:
+                        print(f"[DEBUG] Failed to list files in {path}: {str(ls_err)}")
+
+                if not found_files:
+                    print(f"[WARNING] No .safetensors files found for {model_id}")
+                    return 0
+
+                print(f"[DEBUG] Total .safetensors size: {total_size} bytes")
+                return total_size
+
+            except Exception as fs_err:
+                print(f"[ERROR] Failed to list or sum file sizes: {str(fs_err)}")
+                return 0
 
         except Exception as e:
             print(f"[ERROR] File size check failed for {model_id}: {str(e)}")
             return 0
-            
+
     def save_catalog(self):
         with open(self.catalog_file, "w") as f:
             json.dump(self.catalog, f, indent=2)
