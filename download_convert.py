@@ -41,7 +41,7 @@ bf16_output_file = os.path.join(output_dir, f"{model_base_name}-bf16.gguf")
 # Check if the final BF16 file already exists
 if os.path.exists(bf16_output_file):
     print(f"BF16 file already exists at {bf16_output_file}. Exiting.")
-    exit(1)  # Explicitly indicate failure
+    exit(0)  # Success, no need to proceed further
 
 # List all files in the repository
 try:
@@ -128,32 +128,5 @@ if model_snapshot_dir and os.path.exists(model_snapshot_dir):
 # Update README.md after BF16 creation
 update_readme(output_dir, model_base_name)
 
-# Upload README.md to Hugging Face Hub
-api = HfApi()
-new_repo_id = f"Mungert/{model_base_name}-GGUF"
-
-# Check if the BF16 file exists before creating the repository and uploading README.md
-if os.path.exists(bf16_output_file):
-    # Create the new repository under your account
-    try:
-        api.create_repo(new_repo_id, exist_ok=True, token=api_token)
-        print(f"Repository {new_repo_id} is ready.")
-    except Exception as e:
-        print(f"Error creating repository: {e}")
-        exit(1)  # Explicitly indicate failure
-
-    try:
-        print("Uploading README.md...")
-        api.upload_file(
-            path_or_fileobj=os.path.join(output_dir, "README.md"),
-            path_in_repo="README.md",
-            repo_id=new_repo_id,  # Use the new repository ID
-            token=api_token,
-        )
-        print("README.md uploaded successfully.")
-    except Exception as e:
-        print(f"Error uploading README.md: {e}")
-        exit(1)  # Explicitly indicate failure
-else:
-    print("BF16 file not found. Repository and README.md will not be created.")
-    exit(1)  # Explicitly indicate failure
+# Exit with success
+exit(0)

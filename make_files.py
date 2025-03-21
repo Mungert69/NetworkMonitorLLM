@@ -210,6 +210,16 @@ def download_imatrix(input_dir, company_name, model_name):
         print(f"{imatrix_file} already exists. Skipping download.")
     
     return imatrix_file
+def create_repo_if_not_exists(repo_id, api_token):
+    """Check if the repository exists, and create it if it doesn't."""
+    api = HfApi()
+    try:
+        api.create_repo(repo_id, exist_ok=True, token=api_token)
+        print(f"Repository {repo_id} is ready.")
+        return True
+    except Exception as e:
+        print(f"Error creating repository: {e}")
+        return False
 
 def upload_file_to_hf(file_path, repo_id):
     """Upload a file to Hugging Face Hub."""
@@ -240,6 +250,8 @@ def quantize_model(input_model, company_name, base_name):
     filtered_configs = filter_quant_configs(base_name, QUANT_CONFIGS)
     print(f"🏗 Selected {len(filtered_configs)} quantizations for {base_name}")
     
+    repo_created = False  # Flag to track if the repo has been created
+
     for suffix, quant_type, tensor_type, embed_type, use_imatrix, use_pure in filtered_configs:
         output_file = f"{base_name}-{suffix}.gguf"
         output_path = os.path.join(output_dir, output_file)
@@ -260,8 +272,17 @@ def quantize_model(input_model, company_name, base_name):
         if result.returncode == 0:
             print(f"Successfully created {output_file} in {output_dir}")
             print("STDOUT:", stdout)
+            
+            # Create the repo after the first successful GGUF conversion
+            if not repo_created:
+                if create_repo_if_not_exists(repo_id, api_token):
+                    repo_created = True
+                else:
+                    print("Failed to create repository. Aborting further uploads.")
+                    break  # Stop further processing if repo creation fails
+            
             # Upload the quantized file
-            if upload_file_to_hf(output_path, repo_id):
+            if repo_created and upload_file_to_hf(output_path, repo_id):
                 print(f"Uploaded {output_file} successfully.")
                 os.remove(output_path)  # Delete the local file after successful upload
                 print(f"Deleted {output_file} to free space.")
@@ -272,7 +293,7 @@ def quantize_model(input_model, company_name, base_name):
             print("STDERR:", stderr)
     
     # Upload the .imatrix file
-    if os.path.exists(imatrix_file):
+    if os.path.exists(imatrix_file) and repo_created:
         if upload_file_to_hf(imatrix_file, repo_id):
             print(f"Uploaded {os.path.basename(imatrix_file)} successfully.")
             os.remove(imatrix_file)  # Delete the local file after successful upload
@@ -280,8 +301,6 @@ def quantize_model(input_model, company_name, base_name):
         else:
             print(f"Failed to upload {os.path.basename(imatrix_file)}. Keeping local file.")
     
-    # Update the README.md
-    update_readme(output_dir, base_name)
 
 def main():
     parser = argparse.ArgumentParser(description="Automate GGUF model quantization")
