@@ -101,7 +101,6 @@ class ModelConverter:
                         safetensors_files = [f for f in files if f['name'].endswith('.safetensors')]
                         if safetensors_files:
                             found_files = True
-                            print(f"[DEBUG] Found {len(safetensors_files)} .safetensors files in {path}")
                             total_size += sum(f['size'] for f in safetensors_files)
                     except Exception as ls_err:
                         print(f"[DEBUG] Failed to list files in {path}: {str(ls_err)}")
