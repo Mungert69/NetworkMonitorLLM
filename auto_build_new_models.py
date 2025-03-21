@@ -31,35 +31,6 @@ LOCAL_MODEL_PATH = "./Llama-3.1-8B-Instruct-q4_k_l.gguf"
 GRAMMAR_FILE_PATH = "./llama.cpp/grammars/json.gbnf"  # Path to your JSON grammar file
 LOCK_FILE = "model_conversion.lock"
 
-def is_conversion_in_progress():
-    """Check if a model conversion is already in progress."""
-    return os.path.exists(LOCK_FILE)
-
-def start_conversion():
-    """Mark the start of a model conversion by creating a lock file."""
-    with open(LOCK_FILE, "w") as f:
-        f.write("conversion in progress")
-
-def end_conversion():
-    """Mark the end of a model conversion by deleting the lock file."""
-    if os.path.exists(LOCK_FILE):
-        os.remove(LOCK_FILE)
-
-def load_models_json():
-    """Load existing models from models-complete.json."""
-    if os.path.exists(MODELS_JSON_PATH):
-        with open(MODELS_JSON_PATH, "r") as file:
-            try:
-                return json.load(file)
-            except json.JSONDecodeError:
-                logging.error("Failed to parse models-complete.json. Using empty list.")
-                return {"models": []}
-    return {"models": []}
-
-def save_models_json(models_data):
-    """Save updated models to models-complete.json."""
-    with open(MODELS_JSON_PATH, "w") as file:
-        json.dump(models_data, file, indent=2)
 
 # Load the JSON grammar
 logging.info("Loading JSON grammar...")
@@ -71,6 +42,23 @@ try:
 except Exception as e:
     logging.error(f"Failed to load grammar: {e}")
     exit(1)
+
+def load_catalog():
+    """Load or initialize the model catalog."""
+    if os.path.exists(MODEL_CATALOG_FILE):
+        try:
+            with open(MODEL_CATALOG_FILE, "r") as f:
+                catalog = json.load(f)
+            return catalog
+        except json.JSONDecodeError:
+            logging.error("Failed to parse model_catalog.json. Using empty catalog.")
+            return {}
+    return {}
+
+def save_catalog(catalog):
+    """Save the catalog to MODEL_CATALOG_FILE."""
+    with open(MODEL_CATALOG_FILE, "w") as f:
+        json.dump(catalog, f, indent=2)
 
 def fetch_last_50_commits():
     """Fetch the last 50 commits from GitHub API and cache them."""
@@ -323,75 +311,46 @@ def find_huggingface_model(model_name, max_parameters=15):
         "num_parameters": num_parameters
     }
 
-def run_script(script_name, args):
-    """Runs a script with arguments and streams output in real time."""
-    script_path = os.path.join(os.getcwd(), script_name)
-    if not os.path.exists(script_path):
-        logging.error(f"Error: Script {script_name} not found at {script_path}")
-        sys.exit(1)
 
-    logging.info(f"\nRunning {script_name} with arguments: {args}")
-    process = subprocess.Popen(
-        ["python3", script_path] + args,
-        stdout=sys.stdout,
-        stderr=sys.stderr
-    )
-    exit_code = process.wait()
-    if exit_code != 0:
-        logging.error(f"\nError running {script_name}, exited with code {exit_code}")
-        sys.exit(exit_code)
-    else:
-        logging.info(f"Successfully ran {script_name}")
-
-def cleanup_model_dir(model_name):
-    """Clean up the model directory to free up disk space."""
-    model_dir = os.path.join("./", model_name)
-    if os.path.exists(model_dir):
-        logging.info(f"\nCleaning up directory: {model_dir}")
-        shutil.rmtree(model_dir)
-        logging.info(f"Successfully cleaned up {model_dir}")
-    else:
-        logging.info(f"Directory {model_dir} not found, skipping cleanup.")
-
-def process_model(model_id):
-    """Check and add a new model to models-complete.json if it's not already listed."""
-    if "/" not in model_id:
-        logging.error("Error: Model ID must be in the format 'company_name/model_name'.")
-        sys.exit(1)
-
-    company_name, model_name = model_id.split("/", 1)
-    models_data = load_models_json()
-    existing_models = set(models_data["models"])
-
-    if model_id in existing_models:
-        logging.info(f"Model {model_id} is already in models-complete.json. Skipping update.")
+def update_catalog_with_model(model_info, detected_model_name):
+    """
+    Update the model catalog with a new entry for the detected model.
+    The entry is written in the format:
+    "company/model": {
+         "added": timestamp,
+         "parameters": <number>,
+         "has_config": true,
+         "converted": false,
+         "attempts": 0,
+         "last_attempt": null,
+         "success_date": null,
+         "error_log": [],
+         "quantizations": []
+    }
+    """
+    catalog = load_catalog()
+    model_id = model_info["model_id"]
+    if model_id in catalog:
+        logging.info(f"Model {model_id} already exists in the catalog. Skipping update.")
         return
-    logging.info(f"\nProcessing model: {model_id}")
 
-    # 1. Download and Convert (download_convert.py)
-    download_convert_args = [model_id, model_name]
-    run_script("download_convert.py", download_convert_args)
-
-    # 2. Quantize model (make_files.py)
-    make_files_args = [model_id]
-    run_script("make_files.py", make_files_args)
-
-    # 3. Upload files (upload-files.py)
-    upload_files_args = [model_name]
-    run_script("upload-files.py", upload_files_args)
-
-    # Cleanup after processing this model
-    cleanup_model_dir(model_name)
-    logging.info(f"Adding new model {model_name} to models-complete.json...")
-    models_data["models"].append(model_name)
-    save_models_json(models_data)
+    entry = {
+        "added": datetime.now().isoformat(),
+        "parameters": model_info.get("num_parameters", -1),
+        "has_config": True,
+        "converted": False,
+        "attempts": 0,
+        "last_attempt": None,
+        "success_date": None,
+        "error_log": [],
+        "quantizations": []
+    }
+    catalog[model_id] = entry
+    save_catalog(catalog)
+    logging.info(f"Catalog updated with new model entry: {model_id}")
 
 def main():
     """Main monitoring function."""
-    if is_conversion_in_progress():
-        logging.info("Model conversion is already in progress. Skipping Git repo check.")
-        return
-
     last_commit = None
     if os.path.exists(LAST_COMMIT_FILE):
         with open(LAST_COMMIT_FILE, "r") as f:
@@ -433,7 +392,6 @@ def main():
 
         is_new_model, model_name = analyze_commit(commit)
 
-        # Update last processed commit immediately
         with open(LAST_COMMIT_FILE, "w") as f:
             f.write(commit_sha)
         logging.info(f"Updated last processed commit SHA: {commit_sha}")
@@ -443,12 +401,9 @@ def main():
             model_info = find_huggingface_model(model_name, max_parameters=15)
             if model_info:
                 try:
-                    start_conversion()
-                    process_model(model_info['model_id'])
+                    update_catalog_with_model(model_info, model_name)
                 except Exception as e:
-                    logging.error(f"Error processing model: {e}")
-                finally:
-                    end_conversion()
+                    logging.error(f"Error updating catalog: {e}")
                 break  # Stop after processing the first new model
             else:
                 logging.info("Model not found on Hugging Face.")
