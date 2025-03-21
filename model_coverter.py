@@ -32,27 +32,6 @@ class ModelConverter:
         self.api = HfApi()  # Initialize API client
         self.fs = HfFileSystem()  # Initialize File System client
     
-    def get_file_sizes(self, model_id):
-        """Get the total size of .safetensors files in the repository as a fallback for parameter estimation."""
-        try:
-            print(f"Checking file sizes in repository: {model_id}")  # Debug logging
-            
-            # Fix repository path from datasets to models
-            files = self.fs.ls(f'models/{model_id}', detail=True)
-            
-            # Filter for .safetensors files and calculate their total size
-            safetensors_files = [file for file in files if file['name'].endswith('.safetensors')]
-            if not safetensors_files:
-                print(f"Warning: No .safetensors files found for {model_id}")
-                return 0  # Avoid returning None
-
-            total_size = sum(file['size'] for file in safetensors_files)
-            
-            print(f"Found {len(safetensors_files)} .safetensors files with total size: {total_size} bytes")
-            return total_size
-        except Exception as e:
-            print(f"Error retrieving file sizes for {model_id}: {e}")
-            return 0
 
     def estimate_parameters(self, file_size):
         """Estimate the number of parameters based on file size."""
@@ -81,6 +60,47 @@ class ModelConverter:
                 return catalog
         except (FileNotFoundError, json.JSONDecodeError):
             return {}
+    def get_file_sizes(self, model_id):
+        """Get the total size of .safetensors files in the repository as a fallback for parameter estimation."""
+        try:
+            print(f"\n[DEBUG] Starting file size check for: {model_id}")
+            
+            # First try the original root directory approach
+            root_path = f'models/{model_id}'
+            print(f"[DEBUG] Checking root path: {root_path}")
+            
+            try:
+                root_files = self.fs.ls(root_path, detail=True)
+                print(f"[DEBUG] Root directory contents ({len(root_files)} items):")
+                for f in root_files:
+                    print(f" - {f['name']} ({f['size']} bytes)")
+            except Exception as root_err:
+                print(f"[DEBUG] Root directory listing failed: {root_err}")
+
+            # Now try the recursive search
+            pattern = f'models/{model_id}/**/*.safetensors'
+            print(f"[DEBUG] Using glob pattern: {pattern}")
+            
+            files = self.fs.glob(pattern, detail=True)
+            print(f"[DEBUG] Found {len(files)} matching files in total")
+            
+            if not files:
+                print(f"[WARNING] No .safetensors files found for {model_id}")
+                return 0
+
+            # Log all found paths
+            print("[DEBUG] File details:")
+            total_size = 0
+            for path, info in files.items():
+                print(f" - {path} ({info['size']} bytes)")
+                total_size += info['size']
+
+            print(f"[DEBUG] Total .safetensors size: {total_size} bytes")
+            return total_size
+
+        except Exception as e:
+            print(f"[ERROR] File size check failed for {model_id}: {str(e)}")
+            return 0
             
     def save_catalog(self):
         with open(self.catalog_file, "w") as f:
