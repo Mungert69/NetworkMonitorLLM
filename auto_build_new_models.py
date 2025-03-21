@@ -14,7 +14,7 @@ from huggingface_hub import HfApi
 # Configure logging
 logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(message)s",
-    level=logging.INFO  # Logging level is set to INFO
+    level=logging.INFO
 )
 
 # GitHub API settings
@@ -30,6 +30,7 @@ MODELS_JSON_PATH = "models-complete.json"
 LOCAL_MODEL_PATH = "./Llama-3.1-8B-Instruct-q4_k_l.gguf"
 GRAMMAR_FILE_PATH = "./llama.cpp/grammars/json.gbnf"  # Path to your JSON grammar file
 LOCK_FILE = "model_conversion.lock"
+
 def is_conversion_in_progress():
     """Check if a model conversion is already in progress."""
     return os.path.exists(LOCK_FILE)
@@ -59,19 +60,6 @@ def save_models_json(models_data):
     """Save updated models to models-complete.json."""
     with open(MODELS_JSON_PATH, "w") as file:
         json.dump(models_data, file, indent=2)
-
-# Load quantized GGUF model using llama-cpp-python
-logging.info("Loading quantized GGUF model...")
-try:
-    llm = Llama(
-        model_path=LOCAL_MODEL_PATH,  # Path to the model
-        n_ctx=MAX_TOKENS,  # Set the context window size to 8048 tokens
-        verbose=False  # Disable verbose logging for cleaner output
-    )
-    logging.info("Model loaded successfully with a context window of 8048 tokens.")
-except Exception as e:
-    logging.error(f"Failed to load model: {e}")
-    exit(1)
 
 # Load the JSON grammar
 logging.info("Loading JSON grammar...")
@@ -132,6 +120,20 @@ def fetch_commit_details(commit_sha):
 
 def analyze_commit(commit):
     """Analyze commit message and file changes to detect new models using the LLM."""
+    # Load quantized GGUF model using llama-cpp-python with chat support
+    logging.info("Loading quantized GGUF model...")
+    try:
+        llm = Llama(
+            model_path=LOCAL_MODEL_PATH,
+            n_ctx=MAX_TOKENS,
+            verbose=False,
+            chat_format="chatml"  # Use a native chat format for system/user messages
+        )
+        logging.info(f"Model loaded successfully with a context window of {MAX_TOKENS} tokens.")
+    except Exception as e:
+        logging.error(f"Failed to load model: {e}")
+        exit(1)
+
     commit_sha = commit.get("sha", "UNKNOWN_SHA")
     message = commit.get("commit", {}).get("message", "No commit message found")
     files = commit.get("files", [])
@@ -143,24 +145,26 @@ def analyze_commit(commit):
     file_changes = extract_relevant_file_changes(files)
     logging.info(f"Relevant file changes: {json.dumps(file_changes, indent=2)}")
 
-    # Build the final prompt
-    prompt = build_commit_analysis_prompt(message, file_changes)
-    logging.info(f"LLM Prompt: {prompt}")
+    # Build the prompt messages (a list of messages with roles)
+    prompt_messages = build_commit_analysis_prompt(message, file_changes)
+    logging.info("LLM prompt messages: " + json.dumps(prompt_messages, indent=2))
 
     try:
-        # Get LLM response
-        llm_response = llm(
-            prompt,
+        # Get LLM response using the chat completion API
+        llm_response = llm.create_chat_completion(
+            messages=prompt_messages,
             max_tokens=MAX_TOKENS,
-            stop=None,  # Avoid prematurely stopping
-            echo=False,
-            grammar=grammar  # Apply the grammar during inference
+            temperature=0.0,  # Use a low temperature for deterministic output
+            grammar=grammar
         )
 
-        # Extract and clean the response
-        response_text = llm_response.get("choices", [{}])[0].get("text", "").strip()
+        # Extract and clean the response from the assistant message
+        choice = llm_response.get("choices", [{}])[0]
+        if "message" in choice:
+            response_text = choice["message"].get("content", "").strip()
+        else:
+            response_text = choice.get("text", "").strip()
         logging.info(f"Raw LLM Response: {response_text}")
-
         # Parse and validate the response
         llm_output = parse_and_validate_llm_response(response_text)
 
@@ -168,8 +172,7 @@ def analyze_commit(commit):
         is_new_model = llm_output.get("is_new_model", False)
         model_name = llm_output.get("model_name_if_found", None)
         reason = llm_output.get("reason_for_answer", "No reason provided.")
-        confidence = llm_output.get("confidence", "low")  # Default to low confidence
-
+        confidence = llm_output.get("confidence", "low")
         logging.info(f"LLM Decision: {is_new_model}")
         logging.info(f"LLM Confidence: {confidence}")
         logging.info(f"LLM Reason: {reason}")
@@ -182,7 +185,6 @@ def analyze_commit(commit):
         logging.error(f"Invalid LLM response format: {e}")
         logging.error(f"Raw LLM Response (before failure): {response_text}")
         return False, None
-
 
 def extract_relevant_file_changes(files):
     """Extract relevant file changes for model addition detection."""
@@ -197,50 +199,46 @@ def extract_relevant_file_changes(files):
             or filename.startswith("scripts/")
         ):
             # Include the first 10 lines of the patch (if available)
-            if patch:  # Only process if patch is not empty
-                patch_preview = "\n".join(patch.split("\n")[:10])  # Show first 10 lines
+            if patch:
+                patch_preview = "\n".join(patch.split("\n")[:10])
             else:
                 patch_preview = "No changes preview available"
             file_changes.append({"filename": filename, "patch_preview": patch_preview})
     return file_changes
 
 def build_commit_analysis_prompt(message, file_changes):
-    """Build the prompt for analyzing a commit."""
-    base_prompt = (
-        "You are an AI assistant. Analyze the following information to determine if a new AI model is being added.\n"
-        "Respond ONLY in valid JSON format. Your response must be a complete JSON object with no extra text.\n"
-        "The response should look like this:\n"
-        "{{\n"
+    """Build the prompt messages for analyzing a commit."""
+    system_message = (
+        "You are an AI assistant that analyzes GitHub commits to detect new AI models.\n"
+        "Your task is to determine if a new AI model is being added based on the commit message and file changes.\n"
+        "Respond ONLY in valid JSON format with the following structure:\n"
+        "{\n"
         '  "is_new_model": true/false,\n'
         '  "model_name_if_found": "Name of the model if detected, otherwise null",\n'
         '  "confidence": "high|medium|low",\n'
         '  "reason_for_answer": "Explain why or why not."\n'
-        "}}\n"
-        "Return only the JSON structure, without any extra words, explanations, or formatting.\n"
-        "\n"
+        "}\n"
         "Rules for detecting new models:\n"
         "1. A new model must be explicitly mentioned in the commit message with keywords like 'add', 'support', or 'implement'.\n"
         "2. The model name must not be 'ggml', 'llama', or any other framework name.\n"
         "3. If no relevant files are changed (e.g., model definitions, configs, or scripts), confidence must be 'low'.\n"
         "4. If the commit message mentions 'bug fix', 'optimize', or 'refactor', it is unlikely to be a new model.\n"
+        "5. Analyze the C++ code changes in the patch preview to detect new models. Look for:\n"
+        "   - New class definitions (e.g., 'class Mistral3Model').\n"
+        "   - Model registration (e.g., '@Model.register(\"Mistral3ForConditionalGeneration\")').\n"
+        "   - Architecture changes (e.g., 'model_arch = gguf.MODEL_ARCH.LLAMA').\n"
         "\n"
         "Examples of valid model additions:\n"
         "- 'Add Mistral-8x22B implementation' (with relevant file changes)\n"
         "- 'Support for Llama 3 70B' (with relevant file changes)\n"
+        "- Code changes showing new model registration or architecture.\n"
         "\n"
         "Examples of non-model commits:\n"
         "- 'Fix quantization bugs'\n"
         "- 'Update documentation'\n"
         "- 'Add SWA rope parameters' (no relevant file changes)\n"
-        "\n"
-        "File changes:\n"
-        "{file_changes}\n"
-        "\n"
-        "Commit message:\n"
-        "{message}\n"
     )
 
-    # Add file changes context
     if file_changes:
         file_context = "Model building files have been changed. This may indicate a new model has been added:\n"
         for file in file_changes:
@@ -249,37 +247,26 @@ def build_commit_analysis_prompt(message, file_changes):
                 f"  Changes preview:\n{file['patch_preview']}\n\n"
             )
     else:
-        file_context = "No relevant file changes were found. This strongly suggests that no new model was added, and confidence should be low."
+        file_context = ("No relevant file changes were found. "
+                        "This strongly suggests that no new model was added, and confidence should be low.")
 
-    # Build the final prompt
-    prompt = base_prompt.format(
-        message=message,
-        file_changes=file_context
+    user_message = (
+        "Commit message:\n"
+        f"{message}\n\n"
+        "File changes:\n"
+        f"{file_context}"
     )
 
-    # Truncate the prompt if it exceeds the token limit
-    prompt_tokens = len(prompt.split())
-    if prompt_tokens > MAX_TOKENS:
-        available_tokens = MAX_TOKENS - len(base_prompt.split()) - len(message.split())
-        truncated_file_changes = file_changes[:available_tokens]
-        file_context = "File changes (truncated):\n"
-        for file in truncated_file_changes:
-            file_context += (
-                f"- File: {file['filename']}\n"
-                f"  Changes preview:\n{file['patch_preview']}\n\n"
-            )
-        prompt = base_prompt.format(
-            message=message,
-            file_changes=file_context
-        )
-
-    return prompt
+    # Return the prompt as a list of chat messages
+    messages = [
+        {"role": "system", "content": system_message},
+        {"role": "user", "content": user_message}
+    ]
+    return messages
 
 def parse_and_validate_llm_response(response_text):
     """Parse and validate the LLM response."""
     response_text = response_text.strip()
-
-    # Extract JSON from the response
     if not response_text.startswith("{") or not response_text.endswith("}"):
         start_idx = response_text.find("{")
         end_idx = response_text.rfind("}") + 1
@@ -287,53 +274,38 @@ def parse_and_validate_llm_response(response_text):
             raise ValueError("No valid JSON found in LLM response.")
         response_text = response_text[start_idx:end_idx]
 
-    # Parse the JSON response
     llm_output = json.loads(response_text)
-
-    # Validate the JSON structure
     required_keys = ["is_new_model", "model_name_if_found", "confidence", "reason_for_answer"]
     if not all(key in llm_output for key in required_keys):
         raise ValueError("LLM response is missing required fields.")
-
-    # Validate confidence level
     if llm_output["confidence"] not in ["high", "medium", "low"]:
         raise ValueError("Invalid confidence level in LLM response.")
-
     return llm_output
 
 def extract_parameter_size(model_id):
     """Extract the parameter size (in billions) from the model ID."""
-    # Match patterns like "7b", "3b", "27b", etc.
     match = re.search(r"(\d+)(b|B)", model_id)
     if match:
-        return int(match.group(1))  # Return the numeric part
+        return int(match.group(1))
     return None
 
 def find_huggingface_model(model_name, max_parameters=15):
     """Search for the model on Hugging Face and return its ID and base model information."""
     api = HfApi()
-    models = list(api.list_models(search=model_name))  # Fetch all models matching the search query
+    models = list(api.list_models(search=model_name))
     if not models:
         return None
 
-    # Filter models by parameter size
     filtered_models = []
     for model_info in models:
         try:
-            # Extract the number of parameters from the model's config or name
             num_parameters = None
-
-            # Check config for num_parameters
             if hasattr(model_info, "config") and model_info.config is not None:
                 num_parameters = model_info.config.get("num_parameters", None)
-
-            # If num_parameters is missing, infer from the model name
             if num_parameters is None:
                 param_size = extract_parameter_size(model_info.modelId)
                 if param_size is not None:
-                    num_parameters = param_size * 1e9  # Convert to actual number
-
-            # Filter by max_parameters
+                    num_parameters = param_size * 1e9
             if num_parameters is not None and num_parameters <= max_parameters * 1e9:
                 filtered_models.append((model_info, num_parameters))
         except Exception as e:
@@ -343,41 +315,32 @@ def find_huggingface_model(model_name, max_parameters=15):
         logging.info(f"No models found with <= {max_parameters}B parameters.")
         return None
 
-    # Sort filtered models by parameter size in descending order
     filtered_models.sort(key=lambda x: x[1], reverse=True)
-
-    # Return the largest model smaller than the input value
     largest_model, num_parameters = filtered_models[0]
     base_model = None
-
-    # Safely extract base_model from config if it exists
     if hasattr(largest_model, "config") and largest_model.config is not None:
         base_model = largest_model.config.get("base_model", None)
 
     return {
         "model_id": largest_model.modelId,
-        "base_model": base_model,  # Extract base model if available
-        "num_parameters": num_parameters  # Include the number of parameters
+        "base_model": base_model,
+        "num_parameters": num_parameters
     }
 
 def run_script(script_name, args):
     """Runs a script with arguments and streams output in real time."""
-    script_path = os.path.join(os.getcwd(), script_name)  # Ensure absolute path
+    script_path = os.path.join(os.getcwd(), script_name)
     if not os.path.exists(script_path):
         logging.error(f"Error: Script {script_name} not found at {script_path}")
         sys.exit(1)
 
     logging.info(f"\nRunning {script_name} with arguments: {args}")
-
-    # Run the script with real-time output streaming
     process = subprocess.Popen(
         ["python3", script_path] + args,
         stdout=sys.stdout,
         stderr=sys.stderr
     )
-    
-    exit_code = process.wait()  # Wait for script to finish
-
+    exit_code = process.wait()
     if exit_code != 0:
         logging.error(f"\nError running {script_name}, exited with code {exit_code}")
         sys.exit(exit_code)
@@ -386,24 +349,21 @@ def run_script(script_name, args):
 
 def cleanup_model_dir(model_name):
     """Clean up the model directory to free up disk space."""
-    model_dir = os.path.join("./", model_name)  # Directly use model's folder name
-    
+    model_dir = os.path.join("./", model_name)
     if os.path.exists(model_dir):
         logging.info(f"\nCleaning up directory: {model_dir}")
-        shutil.rmtree(model_dir)  # Remove the entire directory and its contents
+        shutil.rmtree(model_dir)
         logging.info(f"Successfully cleaned up {model_dir}")
     else:
         logging.info(f"Directory {model_dir} not found, skipping cleanup.")
 
 def process_model(model_id):
     """Check and add a new model to models-complete.json if it's not already listed."""
-    # Extract company name and model name
     if "/" not in model_id:
         logging.error("Error: Model ID must be in the format 'company_name/model_name'.")
         sys.exit(1)
 
     company_name, model_name = model_id.split("/", 1)
-
     models_data = load_models_json()
     existing_models = set(models_data["models"])
 
@@ -413,11 +373,11 @@ def process_model(model_id):
     logging.info(f"\nProcessing model: {model_id}")
 
     # 1. Download and Convert (download_convert.py)
-    download_convert_args = [model_id, model_name]  # Store in model_name directory
+    download_convert_args = [model_id, model_name]
     run_script("download_convert.py", download_convert_args)
 
     # 2. Quantize model (make_files.py)
-    make_files_args = [model_id]  # Fix: Pass only full model_id
+    make_files_args = [model_id]
     run_script("make_files.py", make_files_args)
 
     # 3. Upload files (upload-files.py)
@@ -449,11 +409,9 @@ def main():
         logging.info("No commits fetched.")
         return
 
-    # Reverse commits to process oldest first
     reversed_commits = list(reversed(commits))
     logging.info(f"Processing {len(reversed_commits)} commits in oldest to newest order.")
 
-    # Determine commits to process
     start_index = 0
     if last_commit:
         for i, commit in enumerate(reversed_commits):
@@ -461,7 +419,7 @@ def main():
                 start_index = i + 1
                 break
         else:
-            start_index = 0  # Last commit not found, process all
+            start_index = 0
 
     commits_to_process = reversed_commits[start_index:]
     if not commits_to_process:
@@ -503,21 +461,12 @@ if __name__ == "__main__":
     logging.info("Starting script in a loop with a 10-minute interval.")
     while True:
         try:
-            # Log the start of the iteration
             logging.info(f"Starting new iteration at {datetime.now()}")
-
-            # Call the main function
             main()
-
-            # Log the end of the iteration
             logging.info(f"Iteration completed at {datetime.now()}. Sleeping for 10 minutes...")
-
-            # Sleep for 10 minutes
             time.sleep(600)
-
         except Exception as e:
-            # Log any exceptions that occur
             logging.error(f"An error occurred during the iteration: {e}")
             logging.error("Restarting the loop in 10 minutes...")
-            time.sleep(600)  # Sleep before restarting the loop
+            time.sleep(600)
 
