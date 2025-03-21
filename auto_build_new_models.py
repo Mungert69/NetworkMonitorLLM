@@ -27,7 +27,7 @@ HEADERS = {"Authorization": f"Bearer {GITHUB_TOKEN}"}
 MAX_TOKENS = 4096
 MODELS_JSON_PATH = "models-complete.json"
 # Local GGUF model
-LOCAL_MODEL_PATH = "./Llama-3.1-8B-Instruct-q4_k_l.gguf"
+LOCAL_MODEL_PATH = "./Meta-Llama-3-8B-Instruct-q4_k_m.gguf"
 GRAMMAR_FILE_PATH = "./llama.cpp/grammars/json.gbnf"  # Path to your JSON grammar file
 LOCK_FILE = "model_conversion.lock"
 
