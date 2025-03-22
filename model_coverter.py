@@ -121,8 +121,52 @@ class ModelConverter:
             return 0
 
     def save_catalog(self):
-        with open(self.catalog_file, "w") as f:
-            json.dump(self.catalog, f, indent=2)
+        """
+        Save the catalog to a file, merging in data from an external file (models_catalog_new.json).
+        Uses atomic write to avoid corruption.
+        """
+        external_file = "models_catalog_new.json"
+        temp_file = self.catalog_file + ".tmp"
+
+        # Step 1: Load data from the external file (if it exists)
+        if os.path.exists(external_file):
+            try:
+                with open(external_file, "r") as f:
+                    external_catalog = json.load(f)
+                    print(f"Loaded external catalog from {external_file}")
+
+                # Step 2: Merge external data into the main catalog
+                for model_id, external_entry in external_catalog.items():
+                    if model_id in self.catalog:
+                        # Update existing entry (preserve certain fields)
+                        existing_entry = self.catalog[model_id]
+                        existing_entry.update(
+                            {k: v for k, v in external_entry.items() if k not in ["converted", "attempts", "success_date"]}
+                        )
+                        print(f"Merged updates for existing model: {model_id}")
+                    else:
+                        # Add new entry
+                        self.catalog[model_id] = external_entry
+                        print(f"Added new model from external catalog: {model_id}")
+
+            except Exception as e:
+                print(f"⚠ Error loading or merging external catalog: {e}")
+            finally:
+                # Step 3: Clean up the external file after merging
+                try:
+                    os.remove(external_file)
+                    print(f"Deleted external catalog file: {external_file}")
+                except Exception as e:
+                    print(f"⚠ Error deleting external catalog file: {e}")
+
+        # Step 4: Save the merged catalog atomically
+        try:
+            with open(temp_file, "w") as f:
+                json.dump(self.catalog, f, indent=2)
+            os.replace(temp_file, self.catalog_file)
+            print(f"Saved merged catalog to {self.catalog_file}")
+        except Exception as e:
+            print(f"⚠ Error saving catalog: {e}")
 
     def get_trending_models(self, limit=50):
         """Fetch trending models from Hugging Face API"""
@@ -192,14 +236,12 @@ class ModelConverter:
                     "quantizations": []
                 }
         
-        self.save_catalog()
 
     def convert_model(self, model_id):
         """Run conversion pipeline using the run_script function"""
         entry = self.catalog[model_id]
         entry["attempts"] += 1
         entry["last_attempt"] = datetime.now().isoformat()
-        self.save_catalog()
 
         success = True  # Assume success initially
 
@@ -232,29 +274,47 @@ class ModelConverter:
         except Exception as e:
             entry["error_log"].append(str(e))
             print(f"Conversion failed for {model_id}: {e}")
-        finally:
-            self.save_catalog()
-    def run_conversion_cycle(self):
-        """Process all unconverted models"""
+
+def run_conversion_cycle(self):
+        """Process all unconverted models in batch (read once, write once)."""
+
+        # 🔹 Read the catalog at the start of the loop
+        self.catalog = self.load_catalog()  # Load only once per cycle
+
+        # 🔹 Fetch and update the model list
         models = self.get_trending_models()
         self.update_catalog(models)
 
-        for model_id, entry in self.catalog.items():
-            parameters = entry.get("parameters", -1)  # Default to -1 if "parameters" key is missing
-            if parameters is None:  # Explicitly handle None
-                parameters = -1
-            # Debugging: Print the parameters value
-            print(f"Checking model {model_id} with parameters={parameters}")
-            
-            if entry["converted"] or entry["attempts"] >= 3 or parameters > self.MAX_PARAMETERS or parameters == -1:
-                print(f"Skipping {model_id} - converted={entry['converted']}, attempts={entry['attempts']}, parameters={parameters}")
-                continue
-                
-            if not entry["has_config"]:
-                print(f"Skipping {model_id} - config.json not found")
-                continue
-                
-            self.convert_model(model_id)
+        try:
+            for model_id, entry in self.catalog.items():
+                parameters = entry.get("parameters", -1)  # Default to -1 if missing
+
+                # Ensure parameters are properly updated
+                if parameters is None:
+                    parameters = -1  # Prevent None from causing issues
+
+                print(f"Checking model {model_id} with parameters={parameters}")
+
+                # Skip models that are already converted or exceed limits
+                if entry["converted"] or entry["attempts"] >= 3 or parameters > self.MAX_PARAMETERS or parameters == -1:
+                    print(f"Skipping {model_id} - converted={entry['converted']}, attempts={entry['attempts']}, parameters={parameters}")
+                    continue
+
+                if not entry["has_config"]:
+                    print(f"Skipping {model_id} - config.json not found")
+                    continue
+
+                # 🔹 Run conversion but DO NOT save catalog inside convert_model
+                try:
+                    self.convert_model(model_id)
+                except Exception as e:
+                    entry["error_log"].append(f"Error during conversion: {str(e)}")
+                    print(f"⚠️ Error converting {model_id}: {e}")
+
+        finally:
+            # 🔹 Ensure we always save the catalog, even if errors occur
+            print("Saving updated catalog after processing all models...")
+            self.save_catalog()
 
     def start_daemon(self):  # Properly indented to be part of the ModelConverter class
         """Run continuously with 15 minute intervals"""

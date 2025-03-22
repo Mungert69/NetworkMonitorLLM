@@ -54,10 +54,6 @@ def load_catalog():
             return {}
     return {}
 
-def save_catalog(catalog):
-    """Save the catalog to MODEL_CATALOG_FILE."""
-    with open(MODEL_CATALOG_FILE, "w") as f:
-        json.dump(catalog, f, indent=2)
 
 def fetch_last_50_commits():
     """Fetch the last 50 commits from GitHub API and cache them."""
@@ -313,7 +309,7 @@ def find_huggingface_model(model_name, max_parameters=15):
 
 def update_catalog_with_model(model_info, detected_model_name):
     """
-    Update the model catalog with a new entry for the detected model.
+    Update the external catalog file (models_catalog_new.json) with a new entry for the detected model.
     The entry is written in the format:
     "company/model": {
          "added": timestamp,
@@ -327,10 +323,26 @@ def update_catalog_with_model(model_info, detected_model_name):
          "quantizations": []
     }
     """
-    catalog = load_catalog()
+    external_file = "models_catalog_new.json"
+    temp_file = external_file + ".tmp"
+
+    # Load existing external catalog (if it exists)
+    if os.path.exists(external_file):
+        try:
+            with open(external_file, "r") as f:
+                external_catalog = json.load(f)
+            logging.info(f"Loaded existing external catalog from {external_file}")
+        except Exception as e:
+            logging.error(f"Failed to load external catalog: {e}")
+            external_catalog = {}
+    else:
+        external_catalog = {}
+        logging.info(f"No existing external catalog found. Creating a new one.")
+
+    # Add the new model entry
     model_id = model_info["model_id"]
-    if model_id in catalog:
-        logging.info(f"Model {model_id} already exists in the catalog. Skipping update.")
+    if model_id in external_catalog:
+        logging.info(f"Model {model_id} already exists in the external catalog. Skipping update.")
         return
 
     entry = {
@@ -344,9 +356,16 @@ def update_catalog_with_model(model_info, detected_model_name):
         "error_log": [],
         "quantizations": []
     }
-    catalog[model_id] = entry
-    save_catalog(catalog)
-    logging.info(f"Catalog updated with new model entry: {model_id}")
+    external_catalog[model_id] = entry
+
+    # Save the updated external catalog atomically
+    try:
+        with open(temp_file, "w") as f:
+            json.dump(external_catalog, f, indent=2)
+        os.replace(temp_file, external_file)
+        logging.info(f"Updated external catalog with new model entry: {model_id}")
+    except Exception as e:
+        logging.error(f"Failed to save external catalog: {e}")
 
 def main():
     """Main monitoring function."""
