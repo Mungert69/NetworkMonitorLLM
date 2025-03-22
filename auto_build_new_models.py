@@ -323,7 +323,7 @@ def update_catalog_with_model(model_info, detected_model_name):
          "quantizations": []
     }
     """
-    external_file = "models_catalog_new.json"
+    external_file = "model_catalog_new.json"
     temp_file = external_file + ".tmp"
 
     # Load existing external catalog (if it exists)

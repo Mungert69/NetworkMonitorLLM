@@ -125,7 +125,7 @@ class ModelConverter:
         Save the catalog to a file, merging in data from an external file (models_catalog_new.json).
         Uses atomic write to avoid corruption.
         """
-        external_file = "models_catalog_new.json"
+        external_file = "model_catalog_new.json"
         temp_file = self.catalog_file + ".tmp"
 
         # Step 1: Load data from the external file (if it exists)
