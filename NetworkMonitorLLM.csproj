@@ -12,9 +12,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-   <PackageReference Include="Microsoft.AspNetCore.App" />
-    <PackageReference Include="Microsoft.AspNetCore.Hosting" />
-    <PackageReference Include="Microsoft.AspNetCore.Server.Kestrel" />
+    <PackageReference Include="Microsoft.AspNetCore.Hosting" Version="9.0.2" />
+    <PackageReference Include="Microsoft.AspNetCore.Server.Kestrel" Version="9.0.2" />
     <PackageReference Include="Betalgo.Ranul.OpenAI" Version="9.0.1" />
     <PackageReference Include="coverlet.collector" Version="6.0.2">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
