@@ -17,17 +17,27 @@ namespace NetworkMonitor.LLM
                 .AddJsonFile(appFile, optional: false)
                 .Build();
 
-            IHost host = CreateHostBuilder(config).Build();
+            IHost host = CreateHostBuilder(config, args).Build();
 
-           
             host.Run();
         }
 
-        public static IHostBuilder CreateHostBuilder(IConfigurationRoot config) =>
-            Host.CreateDefaultBuilder()
+        public static IHostBuilder CreateHostBuilder(IConfigurationRoot config, string[] args) =>
+            Host.CreateDefaultBuilder(args)
                 .ConfigureAppConfiguration(builder =>
                 {
                     builder.AddConfiguration(config);
+                })
+                .ConfigureWebHostDefaults(webBuilder =>
+                {
+                    // Configure Kestrel to listen on port 7860
+                    webBuilder.ConfigureKestrel(serverOptions =>
+                    {
+                        serverOptions.ListenAnyIP(7860); // Listen on all IP addresses, port 7860
+                    });
+
+                    // Use the Startup class
+                    webBuilder.UseStartup<Startup>();
                 })
                 .ConfigureServices((hostContext, services) =>
                 {

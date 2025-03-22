@@ -1,0 +1,78 @@
+# Use the official Debian 12 (Bookworm) base image
+FROM debian:12
+
+# Set environment variables to avoid interactive prompts during package installation
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install dependencies
+RUN apt-get update && \
+    apt-get install -y \
+        build-essential \
+        git \
+        cmake \
+        clang \
+        pkg-config \
+        ccache \
+        wget \
+        vim
+
+# Install .NET 9.0
+RUN wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh && \
+    chmod +x dotnet-install.sh && \
+    ./dotnet-install.sh --channel 9.0 && \
+    export DOTNET_ROOT=/home/user/.dotnet && \
+    export PATH=$PATH:$DOTNET_ROOT:$DOTNET_ROOT/tools && \
+    echo 'export DOTNET_ROOT=/home/user/.dotnet' >> /home/user/.bashrc && \
+    echo 'export PATH=$PATH:$DOTNET_ROOT:$DOTNET_ROOT/tools' >> /home/user/.bashrc
+
+# Create a non-root user and switch to it
+RUN useradd -m user && \
+    mkdir -p /home/user/code && \
+    chown -R user:user /home/user
+USER user
+WORKDIR /home/user/code
+
+# Step 1: Clone and build OpenBLAS
+RUN git clone https://github.com/OpenMathLib/OpenBLAS.git && \
+    cd OpenBLAS && \
+    make -j$(nproc) && \
+    sudo make install && \
+    sudo cp /opt/OpenBLAS/lib/libopenblas* /usr/local/lib/ && \
+    export PKG_CONFIG_PATH=/opt/OpenBLAS/lib/pkgconfig:$PKG_CONFIG_PATH
+
+# Step 2: Clone and build llama.cpp with OpenBLAS support
+RUN git clone https://github.com/ggerganov/llama.cpp && \
+    cd llama.cpp && \
+    cmake -B build -DGGML_BLAS=ON -DGGML_BLAS_VENDOR=OpenBLAS -DBLAS_INCLUDE_DIRS=/home/user/code/OpenBLAS && \
+    cmake --build build --config Release -j$(nproc) && \
+    sudo cp build/bin/* /usr/local/bin/ && \
+    sudo cp build/lib* /usr/lib/x86_64-linux-gnu/
+
+# Step 3: Clone repositories
+RUN git clone https://mungert69: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@github.com/Mungert69/NetworkMonitor.git && \
+    git clone https://mungert69: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@github.com/Mungert69/NetworkMonitorLLM.git && \
+    git clone https://mungert69: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@github.com/Mungert69/NetworkMonitorData.git
+
+# Copy files into the container
+COPY --chown=user:user system_prompt_phi_4_mini /home/user/code/models/system_prompt_phi_4_mini
+COPY --chown=user:user appsettings.json /home/user/code/NetworkMonitorLLM/appsettings.json
+COPY --chown=user:user append_run.sh /home/user/code/models/append_run.sh
+COPY --chown=user:user build-phi-4-mini /home/user/code/models/build-phi-4-mini
+
+# Set permissions for scripts
+RUN chmod +x /home/user/code/models/append_run.sh
+
+# Download the Phi-4-mini model
+RUN mkdir -p /home/user/code/models && \
+    cd /home/user/code/models && \
+    wget https://huggingface.co/Mungert/Phi-4-mini-instruct.gguf/resolve/main/phi-4-mini-q4_k_l.gguf
+
+# Expose port 7860 for Hugging Face Spaces
+EXPOSE 7860
+
+# Set the working directory
+WORKDIR /home/user/code/NetworkMonitorLLM
+
+# Build and run the C# app
+RUN dotnet build
+CMD ["dotnet", "run", "--urls", "http://0.0.0.0:7860"]
