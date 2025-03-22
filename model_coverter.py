@@ -158,12 +158,14 @@ class ModelConverter:
             
             if model_id not in self.catalog:
                 parameters = model.get('config', {}).get('num_parameters')
-
+            # Check if parameters were already set in a previous loop
+                if parameters is None and model_id in self.catalog:
+                    parameters = self.catalog[model_id].get("parameters", -1)
                 if parameters is None:
                     base_name = model_id.split('/')[-1]
                     parameters = get_model_size(base_name)  # From make_files.py
                 
-                if parameters is None or parameters == 0:
+                if parameters is None or parameters == 0 or parameters == -1 :
                     print(f"Estimating parameters via file size for {model_id}")
                     total_size = self.get_file_sizes(model_id)
                     if total_size > 0:
