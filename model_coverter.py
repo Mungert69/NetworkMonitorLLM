@@ -137,14 +137,7 @@ class ModelConverter:
 
                 # Step 2: Merge external data into the main catalog
                 for model_id, external_entry in external_catalog.items():
-                    if model_id in self.catalog:
-                        # Update existing entry (preserve certain fields)
-                        existing_entry = self.catalog[model_id]
-                        existing_entry.update(
-                            {k: v for k, v in external_entry.items() if k not in ["converted", "attempts", "success_date"]}
-                        )
-                        print(f"Merged updates for existing model: {model_id}")
-                    else:
+                    if model_id not in self.catalog:
                         # Add new entry
                         self.catalog[model_id] = external_entry
                         print(f"Added new model from external catalog: {model_id}")
