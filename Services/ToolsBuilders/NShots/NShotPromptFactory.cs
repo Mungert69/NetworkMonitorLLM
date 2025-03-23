@@ -381,7 +381,7 @@ namespace NetworkMonitor.Connection
                 content = $"The user logged in at {currentTime} with email {serviceObj.UserInfo.Email}. " +
                           $"Users account type is {serviceObj.UserInfo.AccountType}. They have {serviceObj.UserInfo.TokensUsed} available tokens. " +
                           $"Remind the user that upgrading accounts gives more tokens and access to more functions. " +
-                          $"See https://freenetworkmonitor.click/subscription for details.";
+                          $"See {AppConstants.FrontendUrl}/subscription for details.";
             }
             else
             {
@@ -442,7 +442,7 @@ namespace NetworkMonitor.Connection
                 funcResponse = $"The user logged in at {currentTime} with email {serviceObj.UserInfo.Email}. " +
                           $"Users account type is {serviceObj.UserInfo.AccountType}. They have {serviceObj.UserInfo.TokensUsed} available tokens. " +
                           $"Remind the user that upgrading accounts gives more tokens and access to more functions. " +
-                          $"See https://freenetworkmonitor.click/subscription for details.";
+                          $"See {AppConstants.FrontendUrl}/subscription for details.";
             }
             else
             {
@@ -467,7 +467,7 @@ namespace NetworkMonitor.Connection
 
 
             string assistantStr2 = string.Format(config.FunctionBuilder, "call_monitor_sys", @"{""message"": ""What can you do?""}");
-            string funcResponse2 = @"I am a network monitoring and security assistant designed to help you manage and secure your network infrastructure. Here's what I can do:
+            string funcResponse2 = @$"I am a network monitoring and security assistant designed to help you manage and secure your network infrastructure. Here's what I can do:
 
 1. **Host Monitoring**  
    - Add, edit, and monitor hosts for uptime, SSL certificates, and more.  
@@ -511,7 +511,7 @@ namespace NetworkMonitor.Connection
     - Provide detailed monitoring data for hosts.  
     - Generate reports on network performance and security status.  
 
-If you need help with any of these tasks, just let me know! You can also visit https://freenetworkmonitor.click/subscription to upgrade your account and unlock more features.";
+If you need help with any of these tasks, just let me know! You can also visit {AppConstants.FrontendUrl}/subscription to upgrade your account and unlock more features.";
 
 
             AddAssistantMessageWithToolCall(
