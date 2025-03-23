@@ -54,7 +54,7 @@ namespace NetworkMonitor.LLM
                         });
 
                           });
-           
+
             services.AddSingleton(provider =>
              {
                  var systemParamsHelper = provider.GetRequiredService<ISystemParamsHelper>();
@@ -69,7 +69,7 @@ namespace NetworkMonitor.LLM
                  {
                      ApiKey = openAIApiKey
                  };
-    
+
                  return new OpenAIService(openAIOptions);
              });
 
@@ -107,30 +107,36 @@ namespace NetworkMonitor.LLM
                     });
 
         }
-       public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IHostApplicationLifetime appLifetime)
-{
-    app.UseRouting();
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IHostApplicationLifetime appLifetime)
+        {
+            app.UseRouting();
 
-    bool useFixedPort = Configuration.GetValue<bool>("UseFixedPort", false); // Defaults to false if missing
+            bool useFixedPort = Configuration.GetValue<bool>("UseFixedPort", false); // Defaults to false if missing
 
             if (useFixedPort)
             {
-                 app.UseEndpoints(endpoints =>
-                {
-                    endpoints.MapGet("/health", async context =>
+                app.UseEndpoints(endpoints =>
+               {
+                   endpoints.MapGet("/health", async context =>
+                   {
+                       context.Response.ContentType = "application/json";
+                       await context.Response.WriteAsync("{\"status\": \"healthy\"}");
+                   });
+                   endpoints.MapGet("/", async context =>
                     {
                         context.Response.ContentType = "application/json";
                         await context.Response.WriteAsync("{\"status\": \"healthy\"}");
                     });
-                });
+               });
+
             }
 
 
-    appLifetime.ApplicationStopping.Register(() =>
-    {
-        _cancellationTokenSource.Cancel();
-    });
-}
+            appLifetime.ApplicationStopping.Register(() =>
+            {
+                _cancellationTokenSource.Cancel();
+            });
+        }
 
     }
 }
