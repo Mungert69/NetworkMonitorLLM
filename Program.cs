@@ -32,11 +32,18 @@ namespace NetworkMonitor.LLM
                 {
                     builder.AddConfiguration(config);
                 })
-                .ConfigureServices((hostContext, services) =>
+                .ConfigureWebHostDefaults(webBuilder =>
                 {
-                    // Register your Startup class's ConfigureServices method
-                    var startup = new Startup(hostContext.Configuration);
-                    startup.ConfigureServices(services);
+                   bool useFixedPort = config.GetValue("UseFixedPort", false); // Defaults to false if missing
+
+                    int port = config.GetValue<int>("Port", 7860); // Default to 7860
+
+                    if (useFixedPort)
+                    {
+                        webBuilder.UseUrls($"http://0.0.0.0:{port}");
+                    }
+
+                    webBuilder.UseStartup<Startup>();
                 });
     }
 }
