@@ -54,13 +54,25 @@ namespace NetworkMonitor.LLM
                         });
 
                           });
-            var openAiService = new OpenAIService(new OpenAIOptions()
-            {
-                ApiKey = Configuration["OpenAIApiKey"] ?? "Api Key Missing"
-            });
-            services.AddSingleton(
-                    openAiService
-            );
+           
+            services.AddSingleton(provider =>
+             {
+                 var systemParamsHelper = provider.GetRequiredService<ISystemParamsHelper>();
+                 string openAIApiKey = "";
+                 if (systemParamsHelper != null)
+                 {
+                     openAIApiKey = systemParamsHelper.GetMLParams().OpenAIApiKey;
+                 }
+                 if (string.IsNullOrEmpty(openAIApiKey)) openAIApiKey = "Api Key Missing";
+
+                 var openAIOptions = new OpenAIOptions()
+                 {
+                     ApiKey = openAIApiKey
+                 };
+    
+                 return new OpenAIService(openAIOptions);
+             });
+
             services.AddSingleton<IAudioGenerator, AudioGenerator>();
             services.AddSingleton<IRabbitListener, RabbitListener>();
             services.AddSingleton<IRabbitRepo, RabbitRepo>();
@@ -73,11 +85,11 @@ namespace NetworkMonitor.LLM
             services.AddSingleton(_cancellationTokenSource);
             services.Configure<HostOptions>(s => s.ShutdownTimeout = TimeSpan.FromMinutes(5));
             services.AddSingleton<ICpuUsageMonitor, CpuUsageMonitor>();
-             services.AddSingleton<IQueryCoordinator, QueryCoordinator>();
-            
+            services.AddSingleton<IQueryCoordinator, QueryCoordinator>();
+
 
             services.AddHostedService<CpuUsageMonitor>();
-            
+
             services.AddAsyncServiceInitialization()
                 .AddInitAction<IRabbitRepo>(async (rabbitRepo) =>
                     {
