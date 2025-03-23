@@ -161,7 +161,7 @@ class ModelConverter:
         except Exception as e:
             print(f"⚠ Error saving catalog: {e}")
 
-    def get_trending_models(self, limit=50):
+    def get_trending_models(self, limit=100):
         """Fetch trending models from Hugging Face API"""
         url = "https://huggingface.co/api/models"
         params = {"limit": limit}
@@ -268,7 +268,7 @@ class ModelConverter:
             entry["error_log"].append(str(e))
             print(f"Conversion failed for {model_id}: {e}")
 
-def run_conversion_cycle(self):
+    def run_conversion_cycle(self):
         """Process all unconverted models in batch (read once, write once)."""
 
         # 🔹 Read the catalog at the start of the loop
