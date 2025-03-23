@@ -107,15 +107,30 @@ namespace NetworkMonitor.LLM
                     });
 
         }
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IHostApplicationLifetime appLifetime)
-        {
+       public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IHostApplicationLifetime appLifetime)
+{
+    app.UseRouting();
 
-            appLifetime.ApplicationStopping.Register(() =>
+    bool useFixedPort = Configuration.GetValue<bool>("UseFixedPort", false); // Defaults to false if missing
+
+            if (useFixedPort)
             {
-                _cancellationTokenSource.Cancel();
-            });
+                 app.UseEndpoints(endpoints =>
+                {
+                    endpoints.MapGet("/health", async context =>
+                    {
+                        context.Response.ContentType = "application/json";
+                        await context.Response.WriteAsync("{\"status\": \"healthy\"}");
+                    });
+                });
+            }
 
-        }
+
+    appLifetime.ApplicationStopping.Register(() =>
+    {
+        _cancellationTokenSource.Cancel();
+    });
+}
+
     }
 }
