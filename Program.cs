@@ -32,17 +32,6 @@ namespace NetworkMonitor.LLM
                 {
                     builder.AddConfiguration(config);
                 })
-                .ConfigureWebHostDefaults(webBuilder =>
-                {
-                    // Configure Kestrel to listen on port 7860
-                    webBuilder.ConfigureKestrel(serverOptions =>
-                    {
-                       // serverOptions.ListenAnyIP(7860); // Listen on all IP addresses, port 7860
-                    });
-
-                    // Use the Startup class
-                    webBuilder.UseStartup<Startup>();
-                })
                 .ConfigureServices((hostContext, services) =>
                 {
                     // Register your Startup class's ConfigureServices method
