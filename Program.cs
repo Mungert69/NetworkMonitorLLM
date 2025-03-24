@@ -9,6 +9,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using NetworkMonitor.Utils;
 
 namespace NetworkMonitor.LLM
 {
