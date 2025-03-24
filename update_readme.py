@@ -161,7 +161,7 @@ These models are optimized for **extreme memory efficiency**, making them ideal 
 
 Please click like ❤ . Also I’d really appreciate it if you could test my Network Monitor Assistant at 👉 [Network Monitor Assitant](https://freenetworkmonitor.click/dashboard).
 
-💬 Click the **chat icon** (bottom right of the main and dashboard pages) . Choose a LLM; toggle between the LLM Types TurboLLM -> FreeLLM -> TestLLM.
+💬 Click the **chat icon** (bottom right of the main and dashboard pages) . Choose a LLM; toggle between the LLM Types TurboLLM -> HugLLM -> TestLLM.
 
 ### What I'm Testing
 
@@ -171,9 +171,9 @@ I'm experimenting with **function calling** against my network monitoring servic
 
 ### The other Available AI Assistants
 
-🟢 **TurboLLM** – Uses **gpt-4o-mini** Fast! . Note: tokens are limited since OpenAI models are pricey, but you can [Login](https://freenetworkmonitor.click) or [Download](https://freenetworkmonitor.click/download) the Free Network Monitor agent to get more tokens, Alternatively use the FreeLLM .
+🟢 **TurboLLM** – Uses **gpt-4o-mini** Fast! . Note: tokens are limited since OpenAI models are pricey, but you can [Login](https://freenetworkmonitor.click) or [Download](https://freenetworkmonitor.click/download) the Free Network Monitor agent to get more tokens, Alternatively use the HugLLM .
 
-🔵 **FreeLLM** – Runs **open-source Hugging Face models** Medium speed (unlimited, subject to Hugging Face API availability).
+🔵 **HugLLM** – Runs **open-source Hugging Face models** Medium speed (unlimited, subject to Hugging Face API availability).
 
 
 """

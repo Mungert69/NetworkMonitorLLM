@@ -256,7 +256,7 @@ public class LLMFactory : ILLMFactory
         ILLMRunner runner = runnerType switch
         {
             "TurboLLM" => _openAIRunnerFactory.CreateRunner(_serviceProvider, serviceObj, null, history,_cpuUsageMonitor, _queryCoordinator),
-            "FreeLLM" => _hfRunnerFactory.CreateRunner(_serviceProvider, serviceObj, null, history,_cpuUsageMonitor, _queryCoordinator),
+            "HugLLM" => _hfRunnerFactory.CreateRunner(_serviceProvider, serviceObj, null, history,_cpuUsageMonitor, _queryCoordinator),
             "TestLLM" => _processRunnerFactory.CreateRunner(_serviceProvider, serviceObj, _processRunnerSemaphore, history, _cpuUsageMonitor, _queryCoordinator),
             _ => throw new ArgumentException($"Invalid runner type: {runnerType}")
         };
@@ -285,7 +285,7 @@ public class LLMFactory : ILLMFactory
         {
             _openAIRunnerFactory.LoadCount += delta;
         }
-        else if (llmType == "FreeLLM")
+        else if (llmType == "HugLLM")
         {
             _openAIRunnerFactory.LoadCount += delta;
         }
@@ -311,7 +311,7 @@ public class LLMFactory : ILLMFactory
                     {
                         "TurboLLM" => _openAIRunnerFactory.LoadCount,
                         "TestLLM" => _processRunnerFactory.LoadCount,
-                        "FreeLLM" => _hfRunnerFactory.LoadCount,
+                        "HugLLM" => _hfRunnerFactory.LoadCount,
                         _ => 0 // Fallback case (shouldn't occur due to earlier check)
                     };
                 }

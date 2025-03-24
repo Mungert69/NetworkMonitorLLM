@@ -104,28 +104,32 @@ public class OpenAIRunner : ILLMRunner
 
         _useHF = useHF;
         IToolsBuilder? toolsBuilder = null;
-        if (_serviceID == "monitor") toolsBuilder = new MonitorToolsBuilder(serviceObj.UserInfo);
+        
+        if (_serviceID == "blogmonitor") toolsBuilder = new BlogMonitorToolsBuilder(serviceObj.UserInfo);
+        if (_serviceID == "reportdata") toolsBuilder = new ReportDataToolsBuilder();
         if (_serviceID == "monitorsys") toolsBuilder = new MonitorToolsBuilder(serviceObj.UserInfo);
         if (_serviceID == "user") toolsBuilder = new UserToolsBuilder(serviceObj.UserInfo);
 
+        if (toolsBuilder == null) toolsBuilder = new MonitorToolsBuilder(serviceObj.UserInfo);
+
+        if (!_useHF)
+        {
+              if (_serviceID == "monitor") toolsBuilder = new MonitorToolsBuilder(serviceObj.UserInfo);
         if (_serviceID == "cmdprocessor") toolsBuilder = new CmdProcessorToolsBuilder(serviceObj.UserInfo);
         if (_serviceID == "nmap") toolsBuilder = new NmapToolsBuilder();
         if (_serviceID == "meta") toolsBuilder = new MetaToolsBuilder();
         if (_serviceID == "search") toolsBuilder = new SearchToolsBuilder();
         if (_serviceID == "quantum") toolsBuilder = new QuantumToolsBuilder();
 
-        if (_serviceID == "blogmonitor") toolsBuilder = new BlogMonitorToolsBuilder(serviceObj.UserInfo);
-        if (_serviceID == "reportdata") toolsBuilder = new ReportDataToolsBuilder();
-        if (toolsBuilder == null) toolsBuilder = new MonitorToolsBuilder(serviceObj.UserInfo);
-
-        if (!_useHF)
-        {
             _type = "TurboLLM";
             _llmApi = new OpenAIApi(_logger, _mlParams, toolsBuilder, _serviceID, _responseProcessor, _openAiService);
+      
         }
         else
         {
-            _type = "FreeLLM";
+             if (_serviceID == "monitor") toolsBuilder = new MonitorSimpleToolsBuilder(serviceObj.UserInfo);
+      
+            _type = "HugLLM";
             _isStream = _mlParams.IsStream;
             _llmApi = new HuggingFaceApi(_logger, _mlParams, toolsBuilder, _serviceID, _responseProcessor, _isStream);
         }
@@ -297,8 +301,18 @@ public class OpenAIRunner : ILLMRunner
             if (completionSuccess)
             {
                 int tokensUsed = completionResult.Usage.TotalTokens;
-                if (_useHF) tokensUsed = 0;
-                _logger.LogInformation($"TOKENS USED {tokensUsed} useHF is set to {_useHF}");
+
+                if (_useHF)
+                {
+
+                    tokensUsed = tokensUsed / 2;
+                      _logger.LogInformation($"TOKENS USED {tokensUsed} useHF is set to {_useHF} so Actual Tokens used {tokensUsed*2}");
+                }
+                else
+                {
+                    _logger.LogInformation($"TOKENS USED {tokensUsed}");
+                }
+              
 
                 responseServiceObj.TokensUsed = completionResult.Usage.TotalTokens;
                 if (completionResult.Usage != null && completionResult.Usage.PromptTokensDetails != null) _logger.LogInformation($"Cached Prompt Tokens {completionResult.Usage.PromptTokensDetails.CachedTokens}");

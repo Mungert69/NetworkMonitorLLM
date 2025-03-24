@@ -108,7 +108,7 @@ public class HuggingFaceApi : ILLMApi
         string toolsJson = ToolsWrapper(JsonToolsBuilder.BuildToolsJson(_toolsBuilder.Tools));
         // List<ChatMessage> systemPrompt=_toolsBuilder.GetSystemPrompt(currentTime, serviceObj);
         string footer = PromptFooter();
-        var systemMessages = _toolsBuilder.GetSystemPrompt(currentTime, serviceObj, "FreeLLM") ?? new List<ChatMessage>() { ChatMessage.FromSystem("") };
+        var systemMessages = _toolsBuilder.GetSystemPrompt(currentTime, serviceObj, "HugLLM") ?? new List<ChatMessage>() { ChatMessage.FromSystem("") };
 
         systemMessages[0].Content = toolsJson + systemMessages[0].Content + footer;
         //_logger.LogInformation($" Using SYSTEM prompt\n\n{systemMessages[0].Content}");
@@ -119,7 +119,7 @@ public class HuggingFaceApi : ILLMApi
 
     public List<ChatMessage> GetResumeSystemPrompt(string currentTime, LLMServiceObj serviceObj)
     {
-        var resumeSystemMessages = _toolsBuilder.GetResumeSystemPrompt(currentTime, serviceObj, "FreeLLM");
+        var resumeSystemMessages = _toolsBuilder.GetResumeSystemPrompt(currentTime, serviceObj, "HugLLM");
 
         return resumeSystemMessages;
 

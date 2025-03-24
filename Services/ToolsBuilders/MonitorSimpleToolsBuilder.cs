@@ -13,7 +13,7 @@ using System.Collections.Generic;
 using System.Net.Mime;
 
 namespace NetworkMonitor.LLM.Services;
-public class MonitorToolsBuilder : ToolsBuilderBase
+public class MonitorSimpleToolsBuilder : ToolsBuilderBase
 {
     private readonly FunctionDefinition fn_are_functions_running;
     private readonly FunctionDefinition fn_cancel_functions;
@@ -22,15 +22,14 @@ public class MonitorToolsBuilder : ToolsBuilderBase
     private readonly FunctionDefinition fn_get_host_data;
     private readonly FunctionDefinition fn_get_host_list;
     private readonly FunctionDefinition fn_get_user_info;
-    private readonly FunctionDefinition fn_call_security_expert;
     private readonly FunctionDefinition fn_run_busybox;
-    private readonly FunctionDefinition fn_call_penetration_expert;
     private readonly FunctionDefinition fn_get_agents;
-    private readonly FunctionDefinition fn_call_search_expert;
-    private readonly FunctionDefinition fn_call_cmd_processor_expert;
-    private readonly FunctionDefinition fn_call_quantum_expert;
+    private readonly FunctionDefinition fn_run_nmap;
+    private readonly FunctionDefinition fn_run_openssl;
+    private readonly FunctionDefinition fn_test_quantum_safety;
+    private readonly FunctionDefinition fn_scan_quantum_ports;
 
-    public MonitorToolsBuilder(UserInfo userInfo)
+    public MonitorSimpleToolsBuilder(UserInfo userInfo)
     {
         // Initialize all function definitions
         fn_are_functions_running = BuildAreFunctionsRunning();
@@ -40,45 +39,66 @@ public class MonitorToolsBuilder : ToolsBuilderBase
         fn_get_host_data = BuildGetHostDataFunction();
         fn_get_host_list = BuildGetHostListFunction();
         fn_get_user_info = BuildGetUserInfoFunction();
-        fn_call_security_expert = BuildCallNmapFunction();
         fn_run_busybox = BuildRunBusyboxFunction();
-        fn_call_penetration_expert = BuildCallMetasploitFunction();
         fn_get_agents = BuildGetAgentsFunction();
-        fn_call_search_expert = BuildCallSearchWebFunction();
-        fn_call_cmd_processor_expert = BuildCallCmdProcessorFunction();
-        fn_call_quantum_expert = BuildCallQuantumFunction();
 
+        
+fn_run_nmap = new FunctionDefinitionBuilder("run_nmap", "This function calls nmap. Create the parameters based upon the user's request. The response from the function will contain a result with the output of running nmap on the remote agent. Give the user a summary of the output that answers their query.")
+                .AddParameter("scan_options", PropertyDefinition.DefineString("The nmap scan options. Must reflect the user's desired scan goal, e.g., ping scan, vulnerability scan, etc."))
+                .AddParameter("target", PropertyDefinition.DefineString("Target to scan, like an IP, domain, or subnet."))
+                .AddParameter("agent_location", PropertyDefinition.DefineString("Optional. If available, specify which agent will run the scan."))
+                .AddParameter("number_lines", PropertyDefinition.DefineInteger("Number of lines to return. Increase this if you need more data returned by the search. Be careful with using larger numbers as a lot of data can be returned. Consider using a more targeted search term instead."))
+                .AddParameter("page", PropertyDefinition.DefineInteger("The page of lines to return. Use to paginate through many lines of data."))
+                .Validate()
+                .Build();
 
-        // Assuming these function references are defined in the current context
-        var accountTypeFunctions = AccountTypeFactory.GetFunctionsForAccountType<FunctionDefinition>(
-            userInfo.AccountType!,
-            fn_are_functions_running,
-            fn_cancel_functions,
-            fn_add_host,
-            fn_edit_host,
-            fn_get_host_data,
-            fn_get_host_list,
-            fn_get_user_info,
-            fn_get_agents,
-            fn_call_security_expert,
-            fn_call_penetration_expert,
-            fn_call_search_expert,
-            fn_call_cmd_processor_expert,
-            fn_call_quantum_expert,
-            fn_run_busybox
-        );
+            fn_run_openssl = new FunctionDefinitionBuilder("run_openssl", "This function calls openssl. Construct the command options based on the user's request for security checks on SSL/TLS configurations. Provide a summary of the findings and recommendations based on the analysis.")
+                .AddParameter("command_options", PropertyDefinition.DefineString("Construct the relevant openssl command options based on the user’s request, e.g., certificate analysis, protocol vulnerabilities."))
+                .AddParameter("target", PropertyDefinition.DefineString("The server or service you are scanning for security issues."))
+                .AddParameter("agent_location", PropertyDefinition.DefineString("Optional. Location of the agent that will execute the openssl command."))
+                 .AddParameter("number_lines", PropertyDefinition.DefineInteger("Number of lines to return. Increase this if you need more data returned by the search. Be careful with using larger numbers as a lot of data can be returned. Consider using a more targeted search term instead."))
+                .AddParameter("page", PropertyDefinition.DefineInteger("The page of lines to return. Use to paginate through many lines of data."))
+                .Validate()
+                .Build();
+   
+          // Define the test_quantum_safety function
+            fn_test_quantum_safety = new FunctionDefinitionBuilder("test_quantum_safety", "Tests a target endpoint for quantum-safe cryptographic support using specified algorithms. Use this to verify if a server supports post-quantum cryptography (PQC) algorithms.")
+                .AddParameter("target", PropertyDefinition.DefineString("The target server IP or hostname, required. Example: 'example.com' or '192.168.1.1'."))
+                .AddParameter("port", PropertyDefinition.DefineInteger("The TLS port to test, optional. Default is 443."))
+                .AddParameter("algorithms", PropertyDefinition.DefineArray(PropertyDefinition.DefineString("The list of quantum-safe algorithms to test, optional. Examples include 'Kyber512', 'Dilithium2', 'Falcon512'. If not provided, all enabled algorithms will be tested.")))
+                .AddParameter("timeout", PropertyDefinition.DefineInteger("The maximum time (in milliseconds) to wait for the test to complete, optional. Default is 59000ms."))
+                .Validate()
+                .Build();
+
+            // Define the scan_quantum_ports function
+            fn_scan_quantum_ports = new FunctionDefinitionBuilder("scan_quantum_ports", "Scans a target for open ports and tests each port for quantum-safe cryptographic support. Use this to identify vulnerable ports that lack quantum-safe encryption.")
+                .AddParameter("target", PropertyDefinition.DefineString("The target server IP or hostname, required. Example: 'example.com' or '192.168.1.1'."))
+                .AddParameter("ports", PropertyDefinition.DefineArray(PropertyDefinition.DefineInteger("The list of ports to scan, optional. If not provided, Nmap will be used to discover open ports.")))
+                .AddParameter("algorithms", PropertyDefinition.DefineArray(PropertyDefinition.DefineString("The list of quantum-safe algorithms to test, optional. Examples include 'Kyber512', 'Dilithium2', 'Falcon512'. If not provided, all enabled algorithms will be tested.")))
+                .AddParameter("timeout", PropertyDefinition.DefineInteger("The maximum time (in milliseconds) to wait for the scan to complete, optional. Default is 59000ms."))
+                .AddParameter("nmap_options", PropertyDefinition.DefineString("Custom Nmap options for port scanning, optional. Default is '-T4 --open'."))
+                .Validate()
+                .Build();
 
         // Build the tools list based on user account type
-        _tools = new List<ToolDefinition>();
-        foreach (var function in accountTypeFunctions)
+        _tools = new List<ToolDefinition>()
         {
-            _tools.Add(new ToolDefinition() { Function = function, Type = "function" });
-        }
-
+            new ToolDefinition() { Function = fn_run_nmap, Type = "function" },
+            new ToolDefinition() { Function = fn_run_openssl, Type = "function" },
+            new ToolDefinition() { Function = fn_are_functions_running, Type = "function" },
+            new ToolDefinition() { Function = fn_cancel_functions, Type = "function" },
+            new ToolDefinition() { Function = fn_add_host, Type = "function" },
+            new ToolDefinition() { Function = fn_edit_host, Type = "function" },
+            new ToolDefinition() { Function = fn_get_host_data, Type = "function" },
+            new ToolDefinition() { Function = fn_get_host_list, Type = "function" },
+            new ToolDefinition() { Function = fn_get_user_info, Type = "function" },
+            new ToolDefinition() { Function = fn_run_busybox, Type = "function" },
+            new ToolDefinition() { Function = fn_get_agents, Type = "function" },
+            new ToolDefinition() { Function = fn_test_quantum_safety, Type = "function" },
+            new ToolDefinition() { Function = fn_scan_quantum_ports, Type = "function" }
+        };
     }
-
-    // Function to build fn_add_host
-    private FunctionDefinition BuildAddHostFunction()
+  private FunctionDefinition BuildAddHostFunction()
     {
         return new FunctionDefinitionBuilder("add_host", "Add a new host to be monitored")
     .AddParameter("detail_response", PropertyDefinition.DefineBoolean("Will this function echo all the values set or just necessary parameters. The default is false for a faster response"))
@@ -161,15 +181,6 @@ public class MonitorToolsBuilder : ToolsBuilderBase
             .Build();
     }
 
-    private FunctionDefinition BuildCallNmapFunction()
-    {
-        return new FunctionDefinitionBuilder("call_security_expert", "Communicate a security assessment request to a remote security expert LLM. You will craft a detailed message describing the user's request for a security assessment, which may involve either network scans using Nmap or security checks using OpenSSL. The message should specify the type of assessment (e.g., vulnerability scan, SSL/TLS configuration check), the target (e.g., IP address, domain, or service), and any relevant parameters or instructions. Ensure the message clearly outlines the user's security goals. If the security expert LLM requires additional information, present these queries to the user in simple terms and assist in formulating the appropriate responses based on your understanding")
-            .AddParameter("message", PropertyDefinition.DefineString("The message to be sent to the security expert LLM, detailing the assessment request and parameters, including scan type (Nmap or OpenSSL), target, and any special instructions."))
-            .AddParameter("agent_location", PropertyDefinition.DefineString("The agent location that will execute the secutiry assessment. If no location is specified ask the user to choose from available agents to ensure the scan is executed from the correct network or geographic location."))
-            .Validate()
-            .Build();
-    }
-
     private FunctionDefinition BuildAreFunctionsRunning()
     {
         return new FunctionDefinitionBuilder("are_functions_running", "Check if functions have completed.")
@@ -182,33 +193,6 @@ public class MonitorToolsBuilder : ToolsBuilderBase
     {
         return new FunctionDefinitionBuilder("cancel_functions", "Cancel running functions")
             .AddParameter("message_id", PropertyDefinition.DefineString("The message_id that is associated with the function calls"))
-            .Validate()
-            .Build();
-    }
-
-    private FunctionDefinition BuildCallMetasploitFunction()
-    {
-        return new FunctionDefinitionBuilder("call_penetration_expert", "Communicate a penetration testing request to a remote Metasploit expert LLM. You will craft a detailed message describing the user's request for penetration testing, which may involve running Metasploit modules for exploitation, scanning, or information gathering. The message should specify the module name, module options, target, and any additional instructions or parameters. If the Metasploit expert requires further details, present these questions to the user in simple terms and assist in formulating appropriate responses based on your understanding. The penetration expert can also search the metasploit database using msfconsole search.")
-            .AddParameter("message", PropertyDefinition.DefineString("The message to be sent to the Metasploit expert LLM, detailing the penetration testing request including the module name, module options, target, and any special instructions."))
-            .AddParameter("agent_location", PropertyDefinition.DefineString("The agent location that will execute the penetration test. If no location is specified ask the user to choose from available agents to ensure the scan is executed from the correct network or geographic location."))
-            .Validate()
-            .Build();
-    }
-
-    private FunctionDefinition BuildCallSearchWebFunction()
-    {
-        return new FunctionDefinitionBuilder("call_search_expert", "Communicate a request to access the internet to a remote search expert LLM. You can either ask the search expert to read a given url or web page. It will return the text and links on the page. You can also ask the search expert to perform a web search using a search engine. When requesting a search engine search you will craft a detailed message describing the user's search query, which may involve general information retrieval, fact-checking, or finding specific data. The message should specify the search terms, any filters or constraints, and the type of information needed. If the search expert LLM requires additional information, present these queries to the user in simple terms and assist in formulating the appropriate responses based on your understanding. The search engine search will return a list of urls that can then be browsed indivdually. You can ask the search expert to read the text on these pages.")
-            .AddParameter("message", PropertyDefinition.DefineString("The message to be sent to the search expert LLM, detailing the type of request: read a page or perform a search. And the search term or web page url"))
-            .AddParameter("agent_location", PropertyDefinition.DefineString("The agent location that will perform the web search"))
-            .Validate()
-            .Build();
-    }
-
-    private FunctionDefinition BuildCallCmdProcessorFunction()
-    {
-        return new FunctionDefinitionBuilder("call_cmd_processor_expert", "Communicate a cmd processor management request to a remote cmd processor LLM expert. This expert can create, list, run, provide help for, show source code, and delete custom .NET command processors on a specified agent. Users do not need detailed .NET knowledge; they can simply request operations or even ask to view or modify the source code. For example, they might say 'list available cmd processors', 'add a new cmd processor named X', 'run the cmd processor with arguments Y', 'get help for a cmd processor', 'show me the source code of cmd processor X', or 'update cmd processor X with this new source code'. Note: the expert does not have access to the context of this conversation so be sure to give all the information it needs to perform the task.")
-            .AddParameter("message", PropertyDefinition.DefineString("A detailed message describing what you want the cmd processor expert to do. This can include requests to list available cmd processors, create or update cmd processors, run a cmd processor with certain arguments, retrieve or display its source code, show help information, or delete a cmd processor. The expert will parse this request and respond accordingly, prompting for further details if needed. IMPORTANT the expert DOES NOT have access to your conversation with the user. If you want it to use informaton from the conversation you must include it in the message. For example if you have source_code that you want it to use then you MUST suppy this in your request for it to create or update a cmd processor."))
-            .AddParameter("agent_location", PropertyDefinition.DefineString("The agent location on which the cmd processors should be managed. If not provided, the expert may ask the user to select an available agent."))
             .Validate()
             .Build();
     }
@@ -232,44 +216,23 @@ public class MonitorToolsBuilder : ToolsBuilderBase
             .Validate()
             .Build();
     }
+   public override List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
+{
+    string content = $"You are a network monitoring and security assistant. Use the tools where necessary to assist the user. Your name is {llmType}";
 
-    private FunctionDefinition BuildCallQuantumFunction()
+    content += "When calling functions ONLY include parameters that are strictly necessary. DO NOT include parameters set to null or empty. ONLY include parameters you set to a value. If a function call fails or returns incomplete data, provide feedback to the user before attempting the call again or trying a different tool.";
+    content += " Ensure that any function calls or tools you use align with the user's request. Use only the tools necessary for the task. For failed function calls, provide feedback about the issue before retrying or switching tools.";
+     content += "When choosing which tools to call be aware of the difference between ongoing monitoring tools (add_host, edit_host, get_host_data, get_host_list) and immediate execution tools (run_nmap, run_openssl, run_busybox, test_quantum_safety). Monitoring tools run continuously while others provide single results.";
+    content += "For immediate execution tools like run_nmap or run_openssl: Ensure you have all required parameters from the user first. These are 'call once' operations - if you need different results, you'll need to call them again with new parameters.";
+     content += " DO NOT TAKE ACTIONS WITHOUT CONFIRMING WITH THE USER. Unless absolutely necessary, call functions one at a time and provide feedback before proceeding.";
+
+    var chatMessage = new ChatMessage()
     {
-        return new FunctionDefinitionBuilder("call_quantum_expert", "Communicate a quantum security assessment request to a remote quantum cryptography expert LLM. You will craft a detailed message describing the user's request for quantum safety validation, which may involve testing post-quantum cryptographic algorithms, scanning quantum-vulnerable ports, or validating quantum-resistant configurations. The message should specify target servers, ports to test, algorithms to verify (e.g., Kyber512, Dilithium2), and any special parameters. If the quantum expert requires additional information, present these queries to the user in simple terms and assist in formulating appropriate responses.")
-            .AddParameter("message", PropertyDefinition.DefineString("""
-            The message to send to the quantum expert LLM should include:
-            1. Target server(s) or IP addresses to assess
-            2. Specific quantum algorithms to test, or do not specify to test all quantum tls kems.
-            3. Ports to scan for quantum vulnerabilities
-            Example: "Test example.com:443 for Kyber512 support, scan ports 443 and 8443 for quantum-vulnerable services"
-            """))
-            .AddParameter("agent_location", PropertyDefinition.DefineString("The agent location that will execute the quantum assessment. Quantum tests require specialized agents - verify availability first using get_agents."))
-            .Validate()
-            .Build();
-    }
-
-    public override List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
-    {
-        string content = $"You are a network monitoring and security assistant. Use the tools where necessary to assist the user. Your name is {llmType}, and you are faster than HugLLM.";
-
-        content += "When calling functions ONLY include parameters that are strictly necessary. DO NOT include parameters set to null or empty. ONLY include parameters you set to to a value. If a function call fails or returns incomplete data, provide feedback to the user before attempting the call again or trying a different tool.";
-        content += " Ensure that any function calls or tools you use align with the user's request. Use only the tools necessary for the task. For failed function calls, provide feedback about the issue before retrying or switching tools.";
-        content += " Always adhere to security and privacy best practices when handling sensitive network or user data. Do not display or log confidential information unnecessarily.";
-        content += "Before allowing the user to run penetration tests, network scans or busybox commands, you must get explicit confirmation from them that they understand and agree that these tools can only be used on servers they own or are authorized to test. Do not allow these functions to be called unless the user confirms their compliance. DO NOT keep asking the user for compliance once they have accepted it.";
-        content += "When calling the experts take note that the expert does not have access to your conversation with the user. The only context it has is the conversation with you so you must give it all the information it needs to perform the task you are requesting from it. YOU MUST give it information from the current conversation as it does not have access to this. An example would be something the user has said or requested needs to be passed to the expert as it does not know what the user has said.";
-        content += "When choosing which tools to call be aware of the difference between ongoing monitoring tools like adding add_host, edit_host, get_host_data and get_host_list and tools that are run immediately like the call experts, run busybox, cancel and are functions running. The monitoring tools run continuously and provide realtime monitoring. The rest of the functions are, one hit, call and get result.  An example would be use the monitoring functions if the user wanted to monitor a website or keep checking if their server was quantum safe. If they wanted to perform a one of penetration test then call the experts. There are also tools to get the current user info and agents that are used for both monitoring and one hit calls";
-        content += " DO NOT TAKE ACTIONS WITHOUT CONFIRMING WITH THE USER. Unless necessary call functons one at a time and give feedback before calling another.";
-
-        var chatMessage = new ChatMessage()
-        {
-            Role = "system",
-            Content = content
-        };
-        var chatMessages = new List<ChatMessage>();
-        chatMessages.Add(chatMessage);
-        return chatMessages;
-    }
-
+        Role = "system",
+        Content = content
+    };
+    return new List<ChatMessage> { chatMessage };
+}
     public override List<ChatMessage> GetResumeSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
     {
         string userStr = "";
