@@ -73,7 +73,7 @@ public class HuggingFaceApi : ILLMApi
         _httpClient.DefaultRequestHeaders.Add("api-key", _authToken);
         _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _authToken);
         _apiUrl = mlParams.LlmHFUrl.TrimEnd();
-        if (!_apiUrl.Contains("completions"))
+        if (_apiUrl.Contains("api-inference"))
             _apiUrl = $"{mlParams.LlmHFUrl.TrimEnd('/')}/models/{_modelID}/v1/chat/completions";
 
         _config = LLMConfigFactory.GetConfig(_modelVersion);
