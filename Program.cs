@@ -35,12 +35,17 @@ namespace NetworkMonitor.LLM
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                    bool useFixedPort = config.GetValue("UseFixedPort", false); // Defaults to false if missing
-
+                    string serviceID = config.GetValue("ServiceID", "");
                     int port = config.GetValue<int>("Port", 7860); // Default to 7860
 
                     if (useFixedPort)
                     {
                         webBuilder.UseUrls($"http://0.0.0.0:{port}");
+                    }
+                    else
+                    { 
+                       webBuilder.UseUrls($"http://0.0.0.0:{NetworkUtils.WordToPort(serviceID,5000,6000)}");  
+
                     }
 
                     webBuilder.UseStartup<Startup>();
