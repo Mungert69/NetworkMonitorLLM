@@ -158,7 +158,8 @@ def build_imatrix_urls(company_name, model_name):
 
 def download_imatrix(input_dir, company_name, model_name):
     """Download or generate the .imatrix file and upload it to Hugging Face Hub."""
-    imatrix_dir = os.path.join(input_dir, "imatrix-files")
+     parent_dir = os.path.abspath(os.path.join(input_dir, os.pardir))  # This properly gets parent
+    imatrix_dir = os.path.join(parent_dir, "imatrix-files")
     imatrix_file_copy = os.path.join(imatrix_dir, f"{model_name}.imatrix")
     imatrix_file = os.path.join(input_dir, f"{model_name}.imatrix")
     
