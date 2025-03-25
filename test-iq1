@@ -1,0 +1,49 @@
+#!/bin/bash
+
+# Configuration
+BIN_DIR="./"
+INPUT_MODEL="../Meta-Llama-3-8B-bf16.gguf"
+TEST_TEXT="./prompts/test_text.txt"
+IMATRIX_FILE="../imatrix-files/Meta-Llama-3-8B.imatrix"
+
+# Create test text file
+mkdir -p ./prompts
+cat <<EOF > "$TEST_TEXT"
+The capital of France is
+Shakespeare wrote
+Artificial intelligence
+EOF
+
+for FTYPE in IQ1_S IQ1_M IQ2_XXS; do
+  OUTPUT_MODEL="../Meta-Llama-3-8B-$FTYPE.gguf"
+  LOG_FILE="./quantize_${FTYPE}.log"
+  
+  echo "=== Testing $FTYPE ==="
+  
+  # Build base command
+  QUANTIZE_CMD=("$BIN_DIR/llama-quantize")
+  
+  # Add imatrix FIRST if available
+  if [ -f "$IMATRIX_FILE" ]; then
+    QUANTIZE_CMD+=("--imatrix" "$IMATRIX_FILE")
+    echo "Using importance matrix: $IMATRIX_FILE"
+  else
+    echo "WARNING: Quantizing $FTYPE without importance matrix"
+  fi
+  
+  # Add remaining arguments
+  QUANTIZE_CMD+=("$INPUT_MODEL" "$OUTPUT_MODEL" "$FTYPE")
+  
+  # Run quantization
+  echo "Running: ${QUANTIZE_CMD[*]}"
+  "${QUANTIZE_CMD[@]}" 2>&1 | tee "$LOG_FILE"
+  
+  # Verify results
+  echo -e "\nLayer Type Assignments:"
+  grep -E "ffn_down.*type|attn_v.*type" "$LOG_FILE" | head -10
+  
+  echo -e "\nPerplexity Test:"
+  "$BIN_DIR/llama-perplexity" -m "$OUTPUT_MODEL" -f "$TEST_TEXT" --ppl-stride 32 | tail -n 3
+  
+  echo -e "\n----------------------------------------\n"
+done
