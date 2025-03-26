@@ -46,17 +46,16 @@ QUANT_CONFIGS = [
     ("q4_k_l", "Q4_K", "Q8_0", "Q8_0", True, False),
     ("q5_k_l", "Q5_K", "Q8_0", "Q8_0", True, False),
     ("q6_k_l", "Q6_K", "Q8_0", "Q8_0", True, False),
-    ("q3_k_m", "Q3_K_M", None, None, True, False),
-    ("q3_k_s", "Q3_K_S", None, None, True, False),
-    ("q4_k_m", "Q4_K", None, None, True, False),
-    ("q4_k_s", "Q4_K_S", None, None, True, False),
-    ("q5_k_s", "Q5_K_S", None, None, True, False),
-    ("q5_k_m", "Q5_K_M", None, None, True, False),
+    ("q2_k_m", "Q2_K_M", 'Q5_K', 'Q5_K', True, False),
+    ("q2_k_s", "Q2_K_S", 'Q5_K', 'Q5_K', True, False),
+    ("q3_k_m", "Q3_K_M", "Q5_K", "Q5_K", True, False),
+    ("q3_k_s", "Q3_K_S", "Q5_K", "Q5_K", True, False),
+    ("q4_k_m", "Q4_K", "Q6_K", "Q6_K", True, False),
+    ("q4_k_s", "Q4_K_S", "Q6_K", "Q6_K", True, False),
+    ("q5_k_m", "Q5_K_M", "Q6_K", "Q6_K", True, False),
+    ("q5_k_s", "Q5_K_S", "Q6_K", "Q6_K", True, False),
     ("q6_k_m", "Q6_K", None, None, True, False), 
     ("q8_0", "Q8_0", None, None, False, True), 
-    ("iq4_xs", "IQ4_XS", None, None, True, False),
-    ("iq3_xs", "IQ3_XS", None, None, True, False),
-    ("iq4_nl", "IQ4_NL", None, None, True, False),
     ("q4_0", "Q4_0", None, None, True, True),
     ("q4_1", "Q4_1", None, None, True, True),
     ("q4_0_l", "Q4_0", "Q8_0", "Q8_0", True, True),
@@ -65,18 +64,20 @@ QUANT_CONFIGS = [
     ("q5_1", "Q5_1", None, None, True, True),
     ("q5_0_l", "Q5_0", "Q8_0", "Q8_0", True, True),
     ("q5_1_l", "Q5_1", "Q8_0", "Q8_0", True, True),
+    ('iq1_s', 'IQ1_S', 'Q5_K', 'Q5_K', True, False),
+    ('iq1_m', 'IQ1_M', 'Q5_K', 'Q5_K', True, False),
     ('iq2_xs', 'IQ2_XS', 'Q5_K', 'Q5_K', True, False),
-('iq2_xxs', 'IQ2_XXS', 'Q5_K', 'Q5_K', True, False),
-('iq2_s', 'IQ2_S', 'Q5_K', 'Q5_K', True, False),
-('iq2_m', 'IQ2_M', 'Q5_K', 'Q5_K', True, False),
-('iq1_s', 'IQ1_S', 'Q5_K', 'Q5_K', True, False),
-('iq1_m', 'IQ1_M', 'Q5_K', 'Q5_K', True, False),
+    ('iq2_xxs', 'IQ2_XXS', 'Q5_K', 'Q5_K', True, False),
+    ('iq2_s', 'IQ2_S', 'Q5_K', 'Q5_K', True, False),
+    ('iq2_m', 'IQ2_M', 'Q5_K', 'Q5_K', True, False),
+    ("iq3_xs", "IQ3_XS", 'Q5_K', 'Q5_K', True, False),
+    ("iq3_xxs", "IQ3_XXS", 'Q5_K', 'Q5_K', True, False),
+    ("iq3_s", "IQ3_S", 'Q5_K', 'Q5_K', True, False),
+    ("iq3_m", "IQ3_M", 'Q5_K', 'Q5_K', True, False),
+    ("iq4_xs", "IQ4_XS", None, None, True, False),
+    ("iq4_nl", "IQ4_NL", None, None, True, False),
     ("tq1_0", "TQ1_0", None, None, True, False),
     ("tq2_0", "TQ2_0", None, None, True, False),
-    ("q2_k_s", "Q2_K_S", None, None, True, False),
-    ("iq3_xxs", "IQ3_XXS", None, None, True, False),
-    ("iq3_s", "IQ3_S", None, None, True, False),
-    ("iq3_m", "IQ3_M", None, None, True, False)
 ]
 
 QUANT_BIT_LEVELS = {
@@ -201,10 +202,10 @@ def upload_large_file(file_path, repo_id, quant_type):
             
         print("🔪 Splitting large file...")
         chunks = split_file_standard(file_path, quant_type)
-        print(f"✂️ Created {len(chunks)} chunks")
+        print(f"✂ Created {len(chunks)} chunks")
         
         for idx, chunk in enumerate(chunks, 1):
-            print(f"⤴️ Uploading chunk {idx}/{len(chunks)} ({os.path.basename(chunk)})")
+            print(f"⤴ Uploading chunk {idx}/{len(chunks)} ({os.path.basename(chunk)})")
             if not upload_file_to_hf(chunk, repo_id):
                 raise RuntimeError(f"Chunk {idx} upload failed")
             os.remove(chunk)
@@ -214,7 +215,7 @@ def upload_large_file(file_path, repo_id, quant_type):
         
     except Exception as e:
         print(f"❌ Error: {str(e)}")
-        print(f"⚠️ Keeping original file: {file_path}")
+        print(f"⚠ Keeping original file: {file_path}")
         return False
 
 def get_model_size(base_name):
@@ -450,3 +451,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
