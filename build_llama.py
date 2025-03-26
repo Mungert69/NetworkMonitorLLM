@@ -73,9 +73,21 @@ def copy_binaries(source_dir, destination_dir):
             print(f"Copying {filename} to {destination_dir}...")
             shutil.copy2(source_file, destination_file)
 
+def prepare_repo():
+    """Force-clean the repo and ensure patch is the only change."""
+    # Reset ALL local changes (destructive, but ensures clean slate)
+    run_command(["git", "reset", "--hard", "HEAD"], cwd=llama_cpp_dir)
+    # Remove untracked files (e.g., build artifacts)
+    run_command(["git", "clean", "-fd"], cwd=llama_cpp_dir)
+    # Pull latest (now guaranteed to work)
+    run_command(["git", "pull"], cwd=llama_cpp_dir)
+
 def build_and_copy():
     """Build llama.cpp with custom patch and copy binaries."""
     try:
+        # Step 1: Wipe local changes and get fresh code
+        print("Forcing clean repo state...")
+        prepare_repo()
         # Git pull to get latest changes
         print("Pulling latest changes from the repository...")
         run_command(["git", "pull"], cwd=llama_cpp_dir)
