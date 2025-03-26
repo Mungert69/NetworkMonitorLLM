@@ -4,12 +4,13 @@ import shutil
 import sys
 
 # Define paths
-llama_cpp_dir = "./llama.cpp"
+llama_cpp_dir = os.path.abspath("./llama.cpp")
+src_dir = os.path.join(llama_cpp_dir, "src")
 build_dir = os.path.join(llama_cpp_dir, "build")
 bin_dir = os.path.join(build_dir, "bin")
-patch_file = os.path.abspath("my_quant_changes.patch")  # Path to your patch file
+patch_file = os.path.abspath("my_quant_changes.patch")
 
-# CMake and build commands
+# CMake configuration
 cmake_command = [
     "cmake", "-B", build_dir,
     "-DGGML_BLAS=ON",
@@ -19,113 +20,94 @@ cmake_command = [
 build_command = ["cmake", "--build", build_dir, "--config", "Release", "-j"]
 
 def run_command(command, cwd=None):
-    """Run a shell command in the specified directory."""
-    process = subprocess.Popen(command, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-    stdout, stderr = process.communicate()
+    """Execute shell command with error handling."""
+    process = subprocess.run(command, cwd=cwd, capture_output=True, text=True)
     if process.returncode != 0:
-        print(f"Command failed with return code {process.returncode}")
-        print(f"STDOUT: {stdout}")
-        print(f"STDERR: {stderr}")
-        raise RuntimeError(f"Command failed with return code {process.returncode}")
-    return stdout
+        print(f"Command failed: {' '.join(command)}")
+        print(process.stderr)
+        raise RuntimeError(process.stderr)
+    return process.stdout
 
 def apply_patch():
-    """Smart patch application with path correction and robust fallbacks"""
-    src_dir = os.path.join(llama_cpp_dir, "src")
-    patch_path = os.path.abspath(patch_file)
-    
-    def try_apply():
-        """Inner function to attempt patch application"""
-        # Try normal apply first
+    """Apply patch from the src directory where it works"""
+    original_dir = os.getcwd()
+    try:
+        # Change to src directory where patch applies correctly
+        os.chdir(src_dir)
+        
+        # Try applying patch
         try:
-            run_command(["git", "apply", "--ignore-space-change", patch_path], cwd=src_dir)
+            print("Applying patch from src directory...")
+            run_command(["git", "apply", "--ignore-space-change", patch_file])
             return True
         except RuntimeError as e:
-            print(f"Standard apply failed: {e}")
+            print(f"Git apply failed: {e}")
             
-            # Try 3-way merge if normal fails
+            # Try 3-way merge
             try:
-                run_command(["git", "apply", "-3", patch_path], cwd=src_dir)
+                print("Attempting 3-way merge...")
+                run_command(["git", "apply", "-3", "--ignore-space-change", patch_file])
                 return True
-            except RuntimeError:
+            except RuntimeError as e:
+                print(f"3-way merge failed: {e}")
+                
+                # Check if target code exists
+                if subprocess.run(["grep", "-q", "if (qs.i_ffn_down < qs.n_ffn_down/8", "llama-quant.cpp"]).returncode == 0:
+                    print("\nPOSSIBLE SOLUTION:")
+                    print("The target code exists but patch isn't applying cleanly.")
+                    print("Try regenerating the patch with:")
+                    print(f"cd {llama_cpp_dir} && git diff -U10 -- src/llama-quant.cpp > {patch_file}")
+                else:
+                    print("\nCRITICAL: The target code has changed upstream.")
+                    print("You'll need to manually update your patch.")
                 return False
-
-    # First attempt in src/ directory
-    if try_apply():
-        return True
-        
-    # Fallback: Check if target code exists
-    print("Patch failed. Verifying target code...")
-    grep_check = subprocess.run(
-        ["grep", "-q", "if (qs.i_ffn_down < qs.n_ffn_down/8", "llama-quant.cpp"],
-        cwd=src_dir
-    )
-    
-    if grep_check.returncode == 0:
-        print("Original code exists but patch failed. Possible line number changes.")
-        print("Please update your patch with:")
-        print(f"cd {llama_cpp_dir} && git diff -U10 --no-prefix -- src/llama-quant.cpp > {patch_path}")
-    else:
-        print("CRITICAL: Target code has changed upstream. Manual update required.")
-    
-    return False
-
-def copy_binaries(source_dir, destination_dir):
-    """Copy all files from source_dir to destination_dir."""
-    if not os.path.exists(source_dir):
-        raise FileNotFoundError(f"Source directory {source_dir} does not exist.")
-    
-    if not os.path.exists(destination_dir):
-        os.makedirs(destination_dir)
-    
-    for filename in os.listdir(source_dir):
-        source_file = os.path.join(source_dir, filename)
-        destination_file = os.path.join(destination_dir, filename)
-        if os.path.isfile(source_file):
-            print(f"Copying {filename} to {destination_dir}...")
-            shutil.copy2(source_file, destination_file)
+    finally:
+        # Always return to original directory
+        os.chdir(original_dir)
 
 def prepare_repo():
-    """Force-clean the repo and ensure patch is the only change."""
-    # Reset ALL local changes (destructive, but ensures clean slate)
+    """Clean and update repository"""
+    print("Resetting repository...")
     run_command(["git", "reset", "--hard", "HEAD"], cwd=llama_cpp_dir)
-    # Remove untracked files (e.g., build artifacts)
+    print("Cleaning untracked files...")
     run_command(["git", "clean", "-fd"], cwd=llama_cpp_dir)
-    # Pull latest (now guaranteed to work)
+    print("Pulling latest changes...")
     run_command(["git", "pull"], cwd=llama_cpp_dir)
 
 def build_and_copy():
-    """Build llama.cpp with custom patch and copy binaries."""
+    """Main build process"""
     try:
-        # Step 1: Wipe local changes and get fresh code
-        print("Forcing clean repo state...")
         prepare_repo()
-        # Git pull to get latest changes
-        print("Pulling latest changes from the repository...")
-        run_command(["git", "pull"], cwd=llama_cpp_dir)
-
-        # Apply custom patch
+        
         if not apply_patch():
-            raise RuntimeError("Patch application failed. Build aborted.")
-
-        # Configure and build
-        print("Configuring the build with CMake...")
+            raise RuntimeError("Patch application failed")
+            
+        print("Configuring build...")
         run_command(cmake_command, cwd=llama_cpp_dir)
-
-        print("Building the project...")
-        run_command(build_command + [str(os.cpu_count())], cwd=llama_cpp_dir)
-
-        # Copy binaries
+        
+        print("Building...")
+        run_command(build_command, cwd=llama_cpp_dir)
+        
         print("Copying binaries...")
-        copy_binaries(bin_dir, llama_cpp_dir)
-
-        print("Build and copy completed successfully!")
+        if not os.path.exists(bin_dir):
+            raise FileNotFoundError(f"Binary directory not found: {bin_dir}")
+        for f in os.listdir(bin_dir):
+            shutil.copy2(os.path.join(bin_dir, f), llama_cpp_dir)
+        
+        print("\nBuild successful!")
         return True
-
+        
     except Exception as e:
-        print(f"An error occurred: {e}")
+        print(f"\nBuild failed: {e}")
         return False
 
 if __name__ == "__main__":
-    success = build_and_copy()
-    sys.exit(0 if success else 1)
+    if not os.path.exists(llama_cpp_dir):
+        print(f"Error: llama.cpp directory not found at {llama_cpp_dir}")
+        sys.exit(1)
+        
+    if not os.path.exists(patch_file):
+        print(f"Error: Patch file not found at {patch_file}")
+        sys.exit(1)
+        
+    sys.exit(0 if build_and_copy() else 1)
