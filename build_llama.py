@@ -30,33 +30,45 @@ def run_command(command, cwd=None):
     return stdout
 
 def apply_patch():
-    """Apply the patch file with fuzzy matching and fallback checks."""
-    try:
-        # Attempt standard patch application
-        print("Applying custom quantization patch...")
-        run_command(["git", "apply", "--ignore-space-change", "--ignore-whitespace", patch_file], cwd=llama_cpp_dir)
-        return True
+    """Smart patch application with path correction and robust fallbacks"""
+    src_dir = os.path.join(llama_cpp_dir, "src")
+    patch_path = os.path.abspath(patch_file)
     
-    except RuntimeError:
-        # Check if the TARGET CODE still exists (even if line numbers changed)
-        print("Patch failed. Checking if target code exists for manual retry...")
-        grep_cmd = ["grep", "-q", "if (qs.i_ffn_down < qs.n_ffn_down/8", "src/llama-quant.cpp"]
-        grep_process = subprocess.Popen(grep_cmd, cwd=llama_cpp_dir, stderr=subprocess.PIPE)
-        grep_process.communicate()
-        
-        if grep_process.returncode == 0:
-            # Original code exists -> line numbers likely changed
-            print("Original code found. Retrying with 3-way merge...")
+    def try_apply():
+        """Inner function to attempt patch application"""
+        # Try normal apply first
+        try:
+            run_command(["git", "apply", "--ignore-space-change", patch_path], cwd=src_dir)
+            return True
+        except RuntimeError as e:
+            print(f"Standard apply failed: {e}")
+            
+            # Try 3-way merge if normal fails
             try:
-                run_command(["git", "apply", "-3", patch_file], cwd=llama_cpp_dir)
+                run_command(["git", "apply", "-3", patch_path], cwd=src_dir)
                 return True
             except RuntimeError:
-                print("3-way merge failed. Manual intervention required.")
                 return False
-        else:
-            # Target code has been modified upstream
-            print("CRITICAL: Target code has changed in llama-quant.cpp. Patch is outdated. Reapply with git diff -U10 --no-prefix > my_quant_changes.patch")
-            return False
+
+    # First attempt in src/ directory
+    if try_apply():
+        return True
+        
+    # Fallback: Check if target code exists
+    print("Patch failed. Verifying target code...")
+    grep_check = subprocess.run(
+        ["grep", "-q", "if (qs.i_ffn_down < qs.n_ffn_down/8", "llama-quant.cpp"],
+        cwd=src_dir
+    )
+    
+    if grep_check.returncode == 0:
+        print("Original code exists but patch failed. Possible line number changes.")
+        print("Please update your patch with:")
+        print(f"cd {llama_cpp_dir} && git diff -U10 --no-prefix -- src/llama-quant.cpp > {patch_path}")
+    else:
+        print("CRITICAL: Target code has changed upstream. Manual update required.")
+    
+    return False
 
 def copy_binaries(source_dir, destination_dir):
     """Copy all files from source_dir to destination_dir."""
