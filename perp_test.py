@@ -12,6 +12,14 @@ TEST_TEXT = Path("./perplexity_test_data.txt")
 IMATRIX_FILE = Path("./imatrix-files/Meta-Llama-3-8B.imatrix")
 MIN_TOKENS = 4160
 RESULTS_FILE = Path("./quantization_results.csv")
+QUANTS = [
+    "IQ2_XXS", "IQ2_XS", "IQ2_S", "IQ2_M",
+    "IQ1_S", "IQ1_M",
+    "Q2_K", "Q2_K_S",
+    "IQ3_XXS", "IQ3_XS", "IQ3_S", "IQ3_M",
+    "Q3_K", "Q3_K_S", "Q3_K_M", "Q3_K_L",
+    "IQ4_NL", "IQ4_XS"
+]
 
 # Get thread count safely
 try:
@@ -112,7 +120,7 @@ def main():
         prepare_test_data()
 
     # Test each quantization type
-    for ftype in ["IQ1_S", "IQ1_M", "IQ2_XXS"]:
+    for ftype in QUANTS:
         output_model = Path(f"./Meta-Llama-3-8B-{ftype}.gguf")
         log_file = Path(f"./quantize_{ftype}.log")
         
