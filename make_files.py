@@ -1,4 +1,6 @@
 import os
+import re
+import math
 import subprocess
 import argparse
 import urllib.request
@@ -6,6 +8,7 @@ from update_readme import update_readme  # Importing the update_readme function
 import shutil
 from huggingface_hub import HfApi, login
 from dotenv import load_dotenv
+from pathlib import Path
 
 # Load the .env file
 load_dotenv()
@@ -62,12 +65,12 @@ QUANT_CONFIGS = [
     ("q5_1", "Q5_1", None, None, True, True),
     ("q5_0_l", "Q5_0", "Q8_0", "Q8_0", True, True),
     ("q5_1_l", "Q5_1", "Q8_0", "Q8_0", True, True),
-    ("iq2_xs", "IQ2_XS", None, None, True, False),
-    ("iq2_xxs", "IQ2_XXS", None, None, True, False),
-    ("iq2_s", "IQ2_S", None, None, True, False),
-    ("iq2_m", "IQ2_M", None, None, True, False),
-    ("iq1_s", "IQ1_S", None, None, True, False),
-    ("iq1_m", "IQ1_M", None, None, True, False),
+    ('iq2_xs', 'IQ2_XS', 'Q5_K', 'Q5_K', True, False),
+('iq2_xxs', 'IQ2_XXS', 'Q5_K', 'Q5_K', True, False),
+('iq2_s', 'IQ2_S', 'Q5_K', 'Q5_K', True, False),
+('iq2_m', 'IQ2_M', 'Q5_K', 'Q5_K', True, False),
+('iq1_s', 'IQ1_S', 'Q5_K', 'Q5_K', True, False),
+('iq1_m', 'IQ1_M', 'Q5_K', 'Q5_K', True, False),
     ("tq1_0", "TQ1_0", None, None, True, False),
     ("tq2_0", "TQ2_0", None, None, True, False),
     ("q2_k_s", "Q2_K_S", None, None, True, False),
@@ -88,6 +91,131 @@ QUANT_BIT_LEVELS = {
     "Q5_K": 5, "Q5_K_S": 5, "Q5_K_M": 5, "Q5_0": 5, "Q5_1" : 5,
     "Q6_K": 6, "Q8_0": 8, "F16": 16, "BF16": 16
 }
+def get_standard_chunk_name(base_name, quant_type, part_num, total_parts):
+    """Generate HF-standard chunk names with validation"""
+    # Clean the base name by removing existing quantization suffixes
+    clean_base = re.sub(r'-(f16|bf16|q[0-9]_[kmls]|iq\d_\w+)$', '', base_name, flags=re.IGNORECASE)
+    
+    # Validate and convert part numbers
+    try:
+        part_num = int(part_num)
+        total_parts = int(total_parts)
+    except (ValueError, TypeError):
+        raise ValueError("Part numbers must be integers")
+    
+    return f"{clean_base}-{quant_type}-{part_num:05d}-of-{total_parts:05d}.gguf"
+
+
+def split_file_standard(file_path, quant_type, chunk_size=45*1024**3):
+    """Robust file splitting with proper error handling"""
+    file_name = os.path.basename(file_path)
+    base_name = file_name.replace('.gguf', '')
+    
+    # Initialize variables
+    chunk_paths = []
+    part_num = 1
+    read_size = 1 * 1024**3  # 1GB read buffer
+    safe_chunk_size = int(chunk_size * 0.95)  # 5% safety buffer
+
+    try:
+        # First pass to determine total chunks needed
+        with open(file_path, 'rb') as f:
+            total_size = os.path.getsize(file_path)
+            total_parts = math.ceil(total_size / safe_chunk_size)
+        
+        # Second pass for actual splitting
+        with open(file_path, 'rb') as f:
+            for current_part in range(1, total_parts + 1):
+                chunk_name = get_standard_chunk_name(base_name, quant_type, current_part, total_parts)
+                chunk_path = os.path.join(os.path.dirname(file_path), chunk_name)
+                
+                bytes_written = 0
+                with open(chunk_path, 'wb') as chunk_file:
+                    while bytes_written < safe_chunk_size:
+                        data = f.read(min(read_size, safe_chunk_size - bytes_written))
+                        if not data:
+                            break
+                        chunk_file.write(data)
+                        bytes_written += len(data)
+                
+                chunk_paths.append(chunk_path)
+                
+                # Check if we've reached EOF
+                if bytes_written < safe_chunk_size:
+                    break
+        
+        return chunk_paths
+
+    except Exception as e:
+        # Cleanup any partial files
+        for chunk in chunk_paths:
+            try:
+                os.remove(chunk)
+            except:
+                pass
+        raise RuntimeError(f"Failed to split file: {str(e)}")
+
+def extract_quant_folder_name(filename):
+    """Extract the quantization part from filename to use as folder name"""
+    # Remove .gguf extension if present
+    base_name = filename.replace('.gguf', '')
+    
+    # Pattern to match quantization suffixes (bf16-q4_k, q3_k_l, etc.)
+    patterns = [
+        r'(?:.*-)?(bf16-[^\-]+)$',  # Matches bf16-* at end
+        r'(?:.*-)?([^\-]+)$',       # Matches last part if no bf16
+    ]
+    
+    for pattern in patterns:
+        match = re.search(pattern, base_name)
+        if match:
+            return match.group(1)
+    
+    # Fallback to entire filename if no match
+    return base_name
+
+
+def upload_file_to_hf(file_path, repo_id):
+    """Upload a file to Hugging Face Hub."""
+    try:
+        api.upload_file(
+            path_or_fileobj=file_path,
+            path_in_repo=os.path.basename(file_path),
+            repo_id=repo_id,
+            token=api_token,
+        )
+        return True
+    except Exception as e:
+        print(f"Error uploading {os.path.basename(file_path)}: {e}")
+        return False
+
+def upload_large_file(file_path, repo_id, quant_type):
+    """Enhanced upload with detailed error reporting"""
+    try:
+        file_size = os.path.getsize(file_path)
+        print(f"\n📦 Processing: {os.path.basename(file_path)} ({file_size/1024**3:.2f}GB)")
+        
+        if file_size <= 49.5 * 1024**3:
+            print("🔼 Direct upload (under 49.5GB)")
+            return upload_file_to_hf(file_path, repo_id)
+            
+        print("🔪 Splitting large file...")
+        chunks = split_file_standard(file_path, quant_type)
+        print(f"✂️ Created {len(chunks)} chunks")
+        
+        for idx, chunk in enumerate(chunks, 1):
+            print(f"⤴️ Uploading chunk {idx}/{len(chunks)} ({os.path.basename(chunk)})")
+            if not upload_file_to_hf(chunk, repo_id):
+                raise RuntimeError(f"Chunk {idx} upload failed")
+            os.remove(chunk)
+            print(f"✅ Chunk {idx} uploaded and cleaned")
+            
+        return True
+        
+    except Exception as e:
+        print(f"❌ Error: {str(e)}")
+        print(f"⚠️ Keeping original file: {file_path}")
+        return False
 
 def get_model_size(base_name):
     """Enhanced model size extraction from name with better pattern matching"""
@@ -158,7 +286,7 @@ def build_imatrix_urls(company_name, model_name):
 
 def download_imatrix(input_dir, company_name, model_name):
     """Download or generate the .imatrix file and upload it to Hugging Face Hub."""
-     parent_dir = os.path.abspath(os.path.join(input_dir, os.pardir))  # This properly gets parent
+    parent_dir = os.path.abspath(os.path.join(input_dir, os.pardir))  # This properly gets parent
     imatrix_dir = os.path.join(parent_dir, "imatrix-files")
     imatrix_file_copy = os.path.join(imatrix_dir, f"{model_name}.imatrix")
     imatrix_file = os.path.join(input_dir, f"{model_name}.imatrix")
@@ -211,6 +339,7 @@ def download_imatrix(input_dir, company_name, model_name):
         print(f"{imatrix_file} already exists. Skipping download.")
     
     return imatrix_file
+
 def create_repo_if_not_exists(repo_id, api_token):
     """Check if the repository exists, and create it if it doesn't."""
     api = HfApi()
@@ -222,40 +351,34 @@ def create_repo_if_not_exists(repo_id, api_token):
         print(f"Error creating repository: {e}")
         return False
 
-def upload_file_to_hf(file_path, repo_id):
-    """Upload a file to Hugging Face Hub."""
-    try:
-        api.upload_file(
-            path_or_fileobj=file_path,
-            path_in_repo=os.path.basename(file_path),
-            repo_id=repo_id,
-            token=api_token,
-        )
-        return True
-    except Exception as e:
-        print(f"Error uploading {os.path.basename(file_path)}: {e}")
-        return False
-
 def quantize_model(input_model, company_name, base_name):
-    """Quantize the model and upload files as they are created."""
+    """Quantize the model and upload files following HF standards."""
+    # Setup paths and directories
     input_dir = os.path.dirname(input_model)
     output_dir = input_dir
     bf16_model_file = os.path.join(input_dir, f"{base_name}-bf16.gguf")
     imatrix_file = download_imatrix(input_dir, company_name, base_name)
     repo_id = f"Mungert/{base_name}-GGUF"
 
+    # Validate BF16 model exists
     if not os.path.exists(bf16_model_file):
         raise FileNotFoundError(f"BF16 model not found: {bf16_model_file}")
     
     os.makedirs(output_dir, exist_ok=True)
+    
+    # Get filtered quantization configs
     filtered_configs = filter_quant_configs(base_name, QUANT_CONFIGS)
     print(f"🏗 Selected {len(filtered_configs)} quantizations for {base_name}")
     
-    repo_created = False  # Flag to track if the repo has been created
+    # Initialize repo tracking
+    repo_created = False
 
+    # Process each quantization config
     for suffix, quant_type, tensor_type, embed_type, use_imatrix, use_pure in filtered_configs:
         output_file = f"{base_name}-{suffix}.gguf"
         output_path = os.path.join(output_dir, output_file)
+        
+        # Build quantization command
         command = ["./llama.cpp/llama-quantize"]
         if use_imatrix:
             command.extend(["--imatrix", imatrix_file])
@@ -265,43 +388,52 @@ def quantize_model(input_model, company_name, base_name):
             command.extend(["--output-tensor-type", tensor_type])
             command.extend(["--token-embedding-type", embed_type])
         command.extend([bf16_model_file, output_path, quant_type])
+        
+        # Execute quantization
         print("\nRunning:", " ".join(command))
         result = subprocess.run(command, capture_output=True, text=False)
         stdout = result.stdout.decode('utf-8', errors='ignore')
         stderr = result.stderr.decode('utf-8', errors='ignore')
         
-        if result.returncode == 0:
-            print(f"Successfully created {output_file} in {output_dir}")
-            print("STDOUT:", stdout)
-            
-            # Create the repo after the first successful GGUF conversion
-            if not repo_created:
-                if create_repo_if_not_exists(repo_id, api_token):
-                    repo_created = True
-                else:
-                    print("Failed to create repository. Aborting further uploads.")
-                    break  # Stop further processing if repo creation fails
-            
-            # Upload the quantized file
-            if repo_created and upload_file_to_hf(output_path, repo_id):
-                print(f"Uploaded {output_file} successfully.")
-                os.remove(output_path)  # Delete the local file after successful upload
-                print(f"Deleted {output_file} to free space.")
-            else:
-                print(f"Failed to upload {output_file}. Keeping local file.")
-        else:
+        if result.returncode != 0:
             print(f"Error creating {output_file}:")
             print("STDERR:", stderr)
+            continue
+            
+        print(f"Successfully created {output_file} in {output_dir}")
+        print("STDOUT:", stdout)
+        
+        # Create repo on first successful quantization
+        if not repo_created:
+            if create_repo_if_not_exists(repo_id, api_token):
+                repo_created = True
+            else:
+                print("Failed to create repository. Aborting further uploads.")
+                break
+        
+        # Handle file upload with standardized large file support
+        if repo_created:
+            if upload_large_file(output_path, repo_id, quant_type):
+                print(f"Uploaded {output_file} successfully.")
+                try:
+                    os.remove(output_path)
+                    print(f"Deleted {output_file} to free space.")
+                except Exception as e:
+                    print(f"Warning: Could not delete {output_file}: {e}")
+            else:
+                print(f"Failed to upload {output_file}. Keeping local file.")
     
-    # Upload the .imatrix file
+    # Upload imatrix file if repository was created
     if os.path.exists(imatrix_file) and repo_created:
-        if upload_file_to_hf(imatrix_file, repo_id):
+        if upload_large_file(imatrix_file, repo_id, "imatrix"):
             print(f"Uploaded {os.path.basename(imatrix_file)} successfully.")
-            os.remove(imatrix_file)  # Delete the local file after successful upload
-            print(f"Deleted {os.path.basename(imatrix_file)} to free space.")
+            try:
+                os.remove(imatrix_file)
+                print(f"Deleted {os.path.basename(imatrix_file)} to free space.")
+            except Exception as e:
+                print(f"Warning: Could not delete {imatrix_file}: {e}")
         else:
             print(f"Failed to upload {os.path.basename(imatrix_file)}. Keeping local file.")
-    
 
 def main():
     parser = argparse.ArgumentParser(description="Automate GGUF model quantization")

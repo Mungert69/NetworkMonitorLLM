@@ -200,16 +200,17 @@ static ggml_type llama_tensor_get_type(quantize_state_impl & qs, ggml_type new_t
     if (ftype == LLAMA_FTYPE_MOSTLY_IQ1_S || 
         ftype == LLAMA_FTYPE_MOSTLY_IQ1_M ||
         ftype == LLAMA_FTYPE_MOSTLY_IQ2_XXS ||
+        ftype == LLAMA_FTYPE_MOSTLY_IQ2_XS ||
         ftype == LLAMA_FTYPE_MOSTLY_IQ2_S ||
         ftype == LLAMA_FTYPE_MOSTLY_IQ2_M) {
         
         // First 25% and last 25% layers get higher precision
         if (qs.i_ffn_down < qs.n_ffn_down/4 || qs.i_ffn_down >= 3*qs.n_ffn_down/4) {
-            new_type = GGML_TYPE_IQ4_XS;  // Or Q4_K for even better quality
+            new_type = GGML_TYPE_IQ4_XS; 
         }
         // Middle layers get minimum acceptable precision
         else {
-            new_type = GGML_TYPE_IQ3_XXS;    // Better than Q2_K
+            new_type = GGML_TYPE_IQ3_XXS;  
         }
     }
     // Original logic for other quantization types
@@ -287,15 +288,19 @@ static ggml_type llama_tensor_get_type(quantize_state_impl & qs, ggml_type new_t
         auto info = layer_info(qs.i_ffn_down, qs.n_ffn_down, name.c_str());
         int i_layer = info.first, n_layer = info.second;
          // --- New: Special handling for ultra-low-bit modes ---
-   if (ftype == LLAMA_FTYPE_MOSTLY_IQ1_S || ftype == LLAMA_FTYPE_MOSTLY_IQ1_M || 
-        ftype == LLAMA_FTYPE_MOSTLY_IQ2_XXS) {
+   if (ftype == LLAMA_FTYPE_MOSTLY_IQ1_S || 
+        ftype == LLAMA_FTYPE_MOSTLY_IQ1_M ||
+        ftype == LLAMA_FTYPE_MOSTLY_IQ2_XXS ||
+        ftype == LLAMA_FTYPE_MOSTLY_IQ2_XS ||
+        ftype == LLAMA_FTYPE_MOSTLY_IQ2_S ||
+        ftype == LLAMA_FTYPE_MOSTLY_IQ2_M) {
         
         // Minimum GGML_TYPE_IQ3_XXS for all ffn_down layers in low-bit modes
         new_type = GGML_TYPE_IQ3_XXS;
         
         // Optionally: Give first/last layers even higher precision
         if (i_layer < n_layer/4 || i_layer >= 3*n_layer/4) {
-            new_type = GGML_TYPE_Q4_K;  // Higher precision for first/last 25%
+            new_type = GGML_TYPE_IQ4_XS;  // Higher precision for first/last 25%
         }
     }
         else if      (ftype == LLAMA_FTYPE_MOSTLY_Q2_K) new_type = GGML_TYPE_Q3_K;
@@ -970,3 +975,4 @@ uint32_t llama_model_quantize(
 
     return 0;
 }
+
