@@ -29,40 +29,44 @@ def run_command(command, cwd=None):
     return process.stdout
 
 def apply_patch():
-    """Apply patch from the src directory where it works"""
+    """Apply patch with proper path handling from src directory first"""
     original_dir = os.getcwd()
     try:
-        # Change to src directory where patch applies correctly
+        # Method 1: Try system patch command from src directory
         os.chdir(src_dir)
-        
-        # Try applying patch
         try:
-            print("Applying patch from src directory...")
-            run_command(["git", "apply", "--ignore-space-change", patch_file])
+            print("Attempting system patch from src directory...")
+            run_command(["patch", "-p1", "-i", patch_file])
             return True
         except RuntimeError as e:
-            print(f"Git apply failed: {e}")
+            print(f"System patch failed: {e}")
             
-            # Try 3-way merge
+            # Method 2: Try git apply from src directory
             try:
-                print("Attempting 3-way merge...")
-                run_command(["git", "apply", "-3", "--ignore-space-change", patch_file])
+                print("Attempting git apply from src directory...")
+                run_command(["git", "apply", "--ignore-space-change", patch_file])
                 return True
             except RuntimeError as e:
-                print(f"3-way merge failed: {e}")
+                print(f"Git apply failed: {e}")
                 
-                # Check if target code exists
-                if subprocess.run(["grep", "-q", "if (qs.i_ffn_down < qs.n_ffn_down/8", "llama-quant.cpp"]).returncode == 0:
-                    print("\nPOSSIBLE SOLUTION:")
-                    print("The target code exists but patch isn't applying cleanly.")
-                    print("Try regenerating the patch with:")
-                    print(f"cd {llama_cpp_dir} && git diff -U10 -- src/llama-quant.cpp > {patch_file}")
-                else:
-                    print("\nCRITICAL: The target code has changed upstream.")
-                    print("You'll need to manually update your patch.")
-                return False
+                # Method 3: Try 3-way merge
+                try:
+                    print("Attempting 3-way merge...")
+                    run_command(["git", "apply", "-3", "--ignore-space-change", patch_file])
+                    return True
+                except RuntimeError as e:
+                    print(f"3-way merge failed: {e}")
+                    
+                    # Final verification
+                    if subprocess.run(["grep", "-q", "if (qs.i_ffn_down < qs.n_ffn_down/8", "llama-quant.cpp"]).returncode == 0:
+                        print("\nPOSSIBLE SOLUTION:")
+                        print("Target code exists but patch won't apply cleanly.")
+                        print("Try regenerating the patch with:")
+                        print(f"cd {llama_cpp_dir} && git diff -U10 -- src/llama-quant.cpp > {patch_file}")
+                    else:
+                        print("\nCRITICAL: Target code has changed upstream.")
+                    return False
     finally:
-        # Always return to original directory
         os.chdir(original_dir)
 
 def prepare_repo():
