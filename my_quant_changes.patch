@@ -1,5 +1,5 @@
 diff --git src/llama-quant.cpp src/llama-quant.cpp
-index 09eb570..32556a1 100644
+index 09eb570..56b0112 100644
 --- src/llama-quant.cpp
 +++ src/llama-quant.cpp
 @@ -188,23 +188,37 @@ static ggml_type llama_tensor_get_type(quantize_state_impl & qs, ggml_type new_t
@@ -22,13 +22,13 @@ index 09eb570..32556a1 100644
 +                    new_type = GGML_TYPE_IQ4_XS;
 +		}
 +		else {
-+		    new_type = GGML_TYPE_IQ3_XS;
++		    new_type = GGML_TYPE_IQ3_S;
 +		}
 +
 +            }
 +            else {
 +		if (ftype == LLAMA_FTYPE_MOSTLY_IQ2_S || ftype == LLAMA_FTYPE_MOSTLY_IQ2_M) {
-+                    new_type = GGML_TYPE_IQ3_XS;
++                    new_type = GGML_TYPE_IQ3_S;
 +		}
 +		else {
 +		    new_type = GGML_TYPE_IQ2_XXS;
