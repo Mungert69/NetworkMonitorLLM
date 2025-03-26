@@ -18,10 +18,10 @@ index 09eb570..f4e63cf 100644
 -                new_type = ftype == LLAMA_FTYPE_MOSTLY_IQ2_S || ftype == LLAMA_FTYPE_MOSTLY_IQ2_M ? GGML_TYPE_IQ3_S : GGML_TYPE_Q2_K;
 +        else if (name.find("ffn_down") != std::string::npos) {     
 +            if (qs.i_ffn_down < qs.n_ffn_down/4 || qs.i_ffn_down >= 3*qs.n_ffn_down/4) {
-+                new_type = GGML_TYPE_IQ4_XS; 
++                new_type = GGML_TYPE_IQ3_M; 
 +            }
 +            else {
-+                new_type = GGML_TYPE_IQ3_XXS;  
++                new_type = GGML_TYPE_IQ2_M;  
              }
              ++qs.i_ffn_down;
          }
