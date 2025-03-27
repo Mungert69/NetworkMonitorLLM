@@ -176,18 +176,36 @@ def extract_quant_folder_name(filename):
     return base_name
 
 
-def upload_file_to_hf(file_path, repo_id):
-    """Upload a file to Hugging Face Hub."""
+def upload_file_to_hf(file_path, repo_id, create_dir=False):
+    """Upload a file to Hugging Face Hub with optional subdirectory organization.
+    
+    Args:
+        file_path: Local path to the file
+        repo_id: HF repository ID (e.g., "username/repo")
+        create_dir: If True, organizes files in quant-type subfolders
+    """
     try:
+        filename = os.path.basename(file_path)
+        
+        if create_dir:
+            # Extract quantization folder name (e.g., "q4_k" from "model-q4_k.gguf")
+            folder_name = extract_quant_folder_name(filename)
+            path_in_repo = f"{folder_name}/{filename}"
+            
+            # Check/create folder (HF API automatically handles path creation)
+            print(f"📂 Organizing in subfolder: {folder_name}/")
+        else:
+            path_in_repo = filename  # Default: root directory
+
         api.upload_file(
             path_or_fileobj=file_path,
-            path_in_repo=os.path.basename(file_path),
+            path_in_repo=path_in_repo,  # Now includes directory if create_dir=True
             repo_id=repo_id,
             token=api_token,
         )
         return True
     except Exception as e:
-        print(f"Error uploading {os.path.basename(file_path)}: {e}")
+        print(f"❌ Error uploading {filename}: {e}")
         return False
 
 def upload_large_file(file_path, repo_id, quant_type):
@@ -206,7 +224,7 @@ def upload_large_file(file_path, repo_id, quant_type):
         
         for idx, chunk in enumerate(chunks, 1):
             print(f"⤴ Uploading chunk {idx}/{len(chunks)} ({os.path.basename(chunk)})")
-            if not upload_file_to_hf(chunk, repo_id):
+            if not upload_file_to_hf(chunk, repo_id, create_dir=True):
                 raise RuntimeError(f"Chunk {idx} upload failed")
             os.remove(chunk)
             print(f"✅ Chunk {idx} uploaded and cleaned")
