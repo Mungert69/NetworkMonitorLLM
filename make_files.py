@@ -251,9 +251,9 @@ def filter_quant_configs(base_name, configs):
         print("⚠ Couldn't determine model size from name. Using all quantizations.")
         return configs
 
-    min_bits = 3 if model_size < 3e9 else (  # <3B models
-                2 if model_size < 7e9 else   # 3-7B models
-                1)                           # 7B+ models
+    min_bits = 3 if model_size < 3e9 else (  # <4B models
+                2 if model_size < 10e9 else   # 4-10B models
+                1)                           # 10B+ models
 
     filtered = []
     for config in configs:
