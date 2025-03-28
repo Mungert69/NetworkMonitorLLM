@@ -435,6 +435,8 @@ def quantize_model(input_model, company_name, base_name):
     
     # Initialize repo tracking
     repo_created = False
+    # Track if we've created any IQ1/IQ2 files
+    has_iq1_iq2_files = False
 
     # Process each quantization config
     for suffix, quant_type, tensor_type, embed_type, use_imatrix, use_pure in filtered_configs:
@@ -456,6 +458,10 @@ def quantize_model(input_model, company_name, base_name):
             continue
 
         print(f"Successfully created {output_file} in {output_dir}")
+        
+        # Check if this is an IQ1/IQ2 file
+        if not has_iq1_iq2_files and any(quant_type.startswith(prefix) for prefix in ['IQ1', 'IQ2']):
+            has_iq1_iq2_files = True
         
         # Create repo on first successful quantization
         if not repo_created:
@@ -488,6 +494,13 @@ def quantize_model(input_model, company_name, base_name):
                 print(f"Warning: Could not delete {imatrix_file}: {e}")
         else:
             print(f"Failed to upload {os.path.basename(imatrix_file)}. Keeping local file.")
+    
+    # Update README after all files are processed
+    try:
+        print("\n📝 Updating README.md...")
+        update_readme(input_dir, base_name, add_iquant_txt=has_iq1_iq2_files)
+    except Exception as e:
+        print(f"⚠ Failed to update README: {e}")
 
 def main():
     parser = argparse.ArgumentParser(description="Automate GGUF model quantization")
