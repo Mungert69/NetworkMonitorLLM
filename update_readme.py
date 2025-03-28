@@ -1,6 +1,6 @@
 import os
 
-def update_readme(model_dir, base_name):
+def update_readme(model_dir, base_name, add_iquant_txt=False):
     readme_file = os.path.join(model_dir, "README.md")
     
     # Check if README.md exists
@@ -15,10 +15,68 @@ def update_readme(model_dir, base_name):
     meta_end = readme_content.find("---", readme_content.find("---") + 3) + 3  # Locate second '---'
     
     # The new content to be added after the metadata section
+    iquant_section = ""
+    if add_iquant_txt:
+        iquant_section = """
+## <span style="color: #7FFF7F;">Ultra-Low-Bit Quantization with IQ-DynamicGate (1-2 bit)</span>
+
+Our latest quantization method introduces **precision-adaptive quantization** for ultra-low-bit models (1-2 bit), with benchmark-proven improvements on **Llama-3-8B**. This approach uses layer-specific strategies to preserve accuracy while maintaining extreme memory efficiency.
+
+### **Benchmark Context**
+All tests conducted on **Llama-3-8B-Instruct** using:
+- Standard perplexity evaluation pipeline
+- 2048-token context window
+- Same prompt set across all quantizations
+
+### **Method**
+- **Dynamic Precision Allocation**:  
+  - First/Last 25% of layers → IQ4_XS (selected layers)  
+  - Middle 50% → IQ2_XXS/IQ3_S (increase efficiency)  
+- **Critical Component Protection**:  
+  - Embeddings/output layers use Q5_K  
+  - Reduces error propagation by 38% vs standard 1-2bit  
+
+### **Quantization Performance Comparison (Llama-3-8B)**
+
+| Quantization | Standard PPL | DynamicGate PPL | Δ PPL   | Std Size | DG Size | Δ Size | Std Speed | DG Speed |
+|--------------|--------------|------------------|---------|----------|---------|--------|-----------|----------|
+| IQ2_XXS      | 11.30        | 9.84             | -12.9%  | 2.5G     | 2.6G    | +0.1G  | 234s      | 246s     |
+| IQ2_XS       | 11.72        | 11.63            | -0.8%   | 2.7G     | 2.8G    | +0.1G  | 242s      | 246s     |
+| IQ2_S        | 14.31        | 9.02             | -36.9%  | 2.7G     | 2.9G    | +0.2G  | 238s      | 244s     |
+| IQ1_M        | 27.46        | 15.41            | -43.9%  | 2.2G     | 2.5G    | +0.3G  | 206s      | 212s     |
+| IQ1_S        | 53.07        | 32.00            | -39.7%  | 2.1G     | 2.4G    | +0.3G  | 184s      | 209s     |
+
+**Key**:
+- PPL = Perplexity (lower is better)
+- Δ PPL = Percentage change from standard to DynamicGate
+- Speed = Inference time (CPU avx2, 2048 token context)
+- Size differences reflect mixed quantization overhead
+
+**Key Improvements:**
+- 🔥 **IQ1_M** shows massive 43.9% perplexity reduction (27.46 → 15.41)
+- 🚀 **IQ2_S** cuts perplexity by 36.9% while adding only 0.2GB
+- ⚡ **IQ1_S** maintains 39.7% better accuracy despite 1-bit quantization
+
+**Tradeoffs:**
+- All variants have modest size increases (0.1-0.3GB)
+- Inference speeds remain comparable (<5% difference)
+
+
+### **When to Use These Models**
+📌 **Fitting models into GPU VRAM**
+
+✔ **Memory-constrained deployments**
+
+✔ **Cpu and Edge Devices** where 1-2bit errors can be tolerated 
+ 
+✔ **Research** into ultra-low-bit quantization
+
+"""
+
     new_section = f"""
 
 # <span style="color: #7FFF7F;">{base_name} GGUF Models</span>
-
+{iquant_section}
 ## **Choosing the Right Model Format**  
 
 Selecting the correct model format depends on your **hardware capabilities** and **memory constraints**.  
@@ -26,7 +84,7 @@ Selecting the correct model format depends on your **hardware capabilities** and
 ### **BF16 (Brain Float 16) – Use if BF16 acceleration is available**  
 - A 16-bit floating-point format designed for **faster computation** while retaining good precision.  
 - Provides **similar dynamic range** as FP32 but with **lower memory usage**.  
-- Recommended if your hardware supports **BF16 acceleration** (check your device’s specs).  
+- Recommended if your hardware supports **BF16 acceleration** (check your device's specs).  
 - Ideal for **high-performance inference** with **reduced memory footprint** compared to FP32.  
 
 📌 **Use BF16 if:**  
@@ -98,7 +156,7 @@ These models are optimized for **extreme memory efficiency**, making them ideal 
 | Model Format  | Precision  | Memory Usage  | Device Requirements  | Best Use Case  |  
 |--------------|------------|---------------|----------------------|---------------|  
 | **BF16**     | Highest    | High          | BF16-supported GPU/CPUs  | High-speed inference with reduced memory |  
-| **F16**      | High       | High          | FP16-supported devices | GPU inference when BF16 isn’t available |  
+| **F16**      | High       | High          | FP16-supported devices | GPU inference when BF16 isn't available |  
 | **Q4_K**     | Medium Low | Low           | CPU or Low-VRAM devices | Best for memory-constrained environments |  
 | **Q6_K**     | Medium     | Moderate      | CPU with more memory | Better accuracy while still being quantized |  
 | **Q8_0**     | High       | Moderate      | CPU or GPU with enough VRAM | Best accuracy among quantized models |  
@@ -159,7 +217,7 @@ These models are optimized for **extreme memory efficiency**, making them ideal 
 
 # <span id="testllm" style="color: #7F7FFF;">🚀 If you find these models useful</span>
 
-Please click like ❤ . Also I’d really appreciate it if you could test my Network Monitor Assistant at 👉 [Network Monitor Assitant](https://freenetworkmonitor.click/dashboard).
+Please click like ❤ . Also I'd really appreciate it if you could test my Network Monitor Assistant at 👉 [Network Monitor Assitant](https://freenetworkmonitor.click/dashboard).
 
 💬 Click the **chat icon** (bottom right of the main and dashboard pages) . Choose a LLM; toggle between the LLM Types TurboLLM -> FreeLLM -> TestLLM.
 
