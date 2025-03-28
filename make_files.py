@@ -1,4 +1,5 @@
 import os
+import json
 import re
 import math
 import subprocess
@@ -33,52 +34,32 @@ api = HfApi()
 
 IMATRIX_BASE_URL = "https://huggingface.co/bartowski/"
 
+# Load QUANT_CONFIGS from JSON file
+quant_file = Path("quant_configs.json")
+if quant_file.exists():
+    with quant_file.open("r") as file:
+        quant_data = json.load(file)
+else:
+    print(f"Error: Quantization config file '{quant_file}' not found.")
+    exit()
+
+# Convert each configuration dictionary to a tuple with the same structure as before
 QUANT_CONFIGS = [
-    ("f16","F16","F16","F16",False,False),
-    ("f16-q8_0", "Q8_0", "F16", "F16", False, False),
-    ("bf16-q8_0", "Q8_0", "BF16", "BF16", False, False),
-    ("f16-q6_k", "Q6_K", "F16", "F16", True, False),
-    ("bf16-q6_k", "Q6_K", "BF16", "BF16", True, False),
-    ("f16-q4_k", "Q4_K", "F16", "F16", True, False),
-    ("bf16-q4_k", "Q4_K", "BF16", "BF16", True, False),
-    ("q2_k_l", "Q2_K", "Q8_0", "Q8_0", True, False),
-    ("q3_k_l", "Q3_K", "Q8_0", "Q8_0", True, False),
-    ("q4_k_l", "Q4_K", "Q8_0", "Q8_0", True, False),
-    ("q5_k_l", "Q5_K", "Q8_0", "Q8_0", True, False),
-    ("q6_k_l", "Q6_K", "Q8_0", "Q8_0", True, False),
-    ("q2_k_m", "Q2_K_M", 'Q5_K', 'Q5_K', True, False),
-    ("q2_k_s", "Q2_K_S", 'Q5_K', 'Q5_K', True, False),
-    ("q3_k_m", "Q3_K_M", "Q5_K", "Q5_K", True, False),
-    ("q3_k_s", "Q3_K_S", "Q5_K", "Q5_K", True, False),
-    ("q4_k_m", "Q4_K", "Q6_K", "Q6_K", True, False),
-    ("q4_k_s", "Q4_K_S", "Q6_K", "Q6_K", True, False),
-    ("q5_k_m", "Q5_K_M", "Q6_K", "Q6_K", True, False),
-    ("q5_k_s", "Q5_K_S", "Q6_K", "Q6_K", True, False),
-    ("q6_k_m", "Q6_K", None, None, True, False), 
-    ("q8_0", "Q8_0", None, None, False, True), 
-    ("q4_0", "Q4_0", None, None, True, True),
-    ("q4_1", "Q4_1", None, None, True, True),
-    ("q4_0_l", "Q4_0", "Q8_0", "Q8_0", True, True),
-    ("q4_1_l", "Q4_1", "Q8_0", "Q8_0", True, True),
-    ("q5_0", "Q5_0", None, None, True, True),
-    ("q5_1", "Q5_1", None, None, True, True),
-    ("q5_0_l", "Q5_0", "Q8_0", "Q8_0", True, True),
-    ("q5_1_l", "Q5_1", "Q8_0", "Q8_0", True, True),
-    ('iq1_s', 'IQ1_S', 'Q5_K', 'Q5_K', True, False),
-    ('iq1_m', 'IQ1_M', 'Q5_K', 'Q5_K', True, False),
-    ('iq2_xs', 'IQ2_XS', 'Q5_K', 'Q5_K', True, False),
-    ('iq2_xxs', 'IQ2_XXS', 'Q5_K', 'Q5_K', True, False),
-    ('iq2_s', 'IQ2_S', 'Q5_K', 'Q5_K', True, False),
-    ('iq2_m', 'IQ2_M', 'Q5_K', 'Q5_K', True, False),
-    ("iq3_xs", "IQ3_XS", 'Q5_K', 'Q5_K', True, False),
-    ("iq3_xxs", "IQ3_XXS", 'Q5_K', 'Q5_K', True, False),
-    ("iq3_s", "IQ3_S", 'Q5_K', 'Q5_K', True, False),
-    ("iq3_m", "IQ3_M", 'Q5_K', 'Q5_K', True, False),
-    ("iq4_xs", "IQ4_XS", None, None, True, False),
-    ("iq4_nl", "IQ4_NL", None, None, True, False),
-    ("tq1_0", "TQ1_0", None, None, True, False),
-    ("tq2_0", "TQ2_0", None, None, True, False),
+    (
+        item["name"],
+        item["type"],
+        item["embed_type"],
+        item["output_type"],
+        item["use_imatrix"],
+        item["use_pure"]
+    )
+    for item in quant_data
 ]
+
+# Print loaded configurations
+print("Loaded QUANT_CONFIGS:")
+for config in QUANT_CONFIGS:
+    print(config)
 
 QUANT_BIT_LEVELS = {
     # 1-bit quantizations (very aggressive)
