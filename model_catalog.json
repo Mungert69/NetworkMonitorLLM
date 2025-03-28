@@ -317,5 +317,248 @@
     "success_date": "2025-03-22T08:28:59.882051",
     "error_log": [],
     "quantizations": []
+  },
+  "zhibinlan/LLaVE-2B": {
+    "added": "2025-03-23T03:20:15.972452",
+    "parameters": 2000000000,
+    "has_config": true,
+    "converted": false,
+    "attempts": 1,
+    "last_attempt": "2025-03-23T03:20:44.881338",
+    "success_date": null,
+    "error_log": [],
+    "quantizations": []
+  },
+  "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B": {
+    "added": "2025-03-23T03:20:22.869693",
+    "parameters": 1500000000,
+    "has_config": true,
+    "converted": true,
+    "attempts": 1,
+    "last_attempt": "2025-03-23T03:23:44.366597",
+    "success_date": "2025-03-23T03:56:49.720552",
+    "error_log": [],
+    "quantizations": []
+  },
+  "BAAI/bge-m3": {
+    "added": "2025-03-23T03:20:25.144608",
+    "parameters": -1,
+    "has_config": true,
+    "converted": false,
+    "attempts": 0,
+    "last_attempt": null,
+    "success_date": null,
+    "error_log": [],
+    "quantizations": []
+  },
+  "sentence-transformers/all-MiniLM-L6-v2": {
+    "added": "2025-03-23T03:20:26.889558",
+    "parameters": 22717094.0,
+    "has_config": true,
+    "converted": true,
+    "attempts": 1,
+    "last_attempt": "2025-03-23T03:56:49.724309",
+    "success_date": "2025-03-23T04:08:57.371291",
+    "error_log": [],
+    "quantizations": []
+  },
+  "kyutai/mimi": {
+    "added": "2025-03-23T03:20:29.520981",
+    "parameters": 96162457.0,
+    "has_config": true,
+    "converted": false,
+    "attempts": 3,
+    "last_attempt": "2025-03-23T04:08:57.372226",
+    "success_date": null,
+    "error_log": [],
+    "quantizations": []
+  },
+  "Qwen/Qwen2.5-7B-Instruct": {
+    "added": "2025-03-23T03:20:30.725521",
+    "parameters": 7000000000,
+    "has_config": true,
+    "converted": true,
+    "attempts": 1,
+    "last_attempt": "2025-03-23T04:09:22.226229",
+    "success_date": "2025-03-23T09:46:11.505201",
+    "error_log": [],
+    "quantizations": []
+  },
+  "microsoft/phi-4": {
+    "added": "2025-03-23T03:20:32.299215",
+    "parameters": 7329760748.0,
+    "has_config": true,
+    "converted": true,
+    "attempts": 1,
+    "last_attempt": "2025-03-23T09:46:11.515947",
+    "success_date": "2025-03-24T00:57:46.086048",
+    "error_log": [],
+    "quantizations": []
+  },
+  "microsoft/Phi-4-mini-instruct": {
+    "added": "2025-03-23T03:20:35.755443",
+    "parameters": 1918016554.0,
+    "has_config": true,
+    "converted": true,
+    "attempts": 1,
+    "last_attempt": "2025-03-24T00:57:46.137087",
+    "success_date": "2025-03-24T05:09:36.622816",
+    "error_log": [],
+    "quantizations": []
+  },
+  "tencent/HunyuanVideo-I2V": {
+    "added": "2025-03-23T03:20:37.326688",
+    "parameters": -1,
+    "has_config": true,
+    "converted": false,
+    "attempts": 0,
+    "last_attempt": null,
+    "success_date": null,
+    "error_log": [],
+    "quantizations": []
+  },
+  "openai/whisper-large-v3": {
+    "added": "2025-03-23T03:20:40.133514",
+    "parameters": 2315310762.0,
+    "has_config": true,
+    "converted": false,
+    "attempts": 3,
+    "last_attempt": "2025-03-24T05:09:36.634392",
+    "success_date": null,
+    "error_log": [],
+    "quantizations": []
+  },
+  "google/shieldgemma-2-4b-it": {
+    "added": "2025-03-23T03:20:40.402188",
+    "parameters": 4000000000,
+    "has_config": true,
+    "converted": false,
+    "attempts": 1,
+    "last_attempt": "2025-03-24T05:26:50.374926",
+    "success_date": null,
+    "error_log": [],
+    "quantizations": []
+  },
+  "meta-llama/Llama-2-7b-chat-hf": {
+    "added": "2025-03-23T03:20:40.625773",
+    "parameters": 7000000000,
+    "has_config": true,
+    "converted": true,
+    "attempts": 1,
+    "last_attempt": "2025-03-24T05:32:58.062692",
+    "success_date": null,
+    "error_log": [],
+    "quantizations": []
+  },
+  "allenai/olmOCR-7B-0225-preview": {
+    "added": "2025-03-23T03:20:41.096844",
+    "parameters": 7000000000,
+    "has_config": true,
+    "converted": true,
+    "attempts": 1,
+    "last_attempt": "2025-03-24T05:33:11.126278",
+    "success_date": "2025-03-24T13:56:10.345888",
+    "error_log": [],
+    "quantizations": []
+  },
+  "mixedbread-ai/mxbai-rerank-large-v2": {
+    "added": "2025-03-23T03:20:43.692205",
+    "parameters": 771866702.0,
+    "has_config": true,
+    "converted": true,
+    "attempts": 1,
+    "last_attempt": "2025-03-24T13:56:10.355812",
+    "success_date": "2025-03-24T16:20:49.457074",
+    "error_log": [],
+    "quantizations": []
+  },
+  "StarJiaxing/R1-Omni-0.5B": {
+    "added": "2025-03-23T03:20:43.958270",
+    "parameters": 500000000,
+    "has_config": true,
+    "converted": false,
+    "attempts": 1,
+    "last_attempt": "2025-03-24T16:20:49.464023",
+    "success_date": null,
+    "error_log": [],
+    "quantizations": []
+  },
+  "MetaStoneTec/MetaStone-L1-7B": {
+    "added": "2025-03-23T03:20:44.439355",
+    "parameters": 7000000000,
+    "has_config": true,
+    "converted": true,
+    "attempts": 1,
+    "last_attempt": "2025-03-24T16:22:57.130663",
+    "success_date": "2025-03-25T00:35:59.874418",
+    "error_log": [],
+    "quantizations": []
+  },
+  "RWKV/RWKV7-Goose-World3-1.5B-HF": {
+    "added": "2025-03-22T17:17:42.265504",
+    "parameters": 1500000000.0,
+    "has_config": true,
+    "converted": false,
+    "attempts": 0,
+    "last_attempt": null,
+    "success_date": null,
+    "error_log": [],
+    "quantizations": []
+  },
+  "UW/OLMo2-11B-SuperBPE-t180k": {
+    "added": "2025-03-24T11:52:26.505964",
+    "parameters": 11000000000.0,
+    "has_config": true,
+    "converted": false,
+    "attempts": 0,
+    "last_attempt": null,
+    "success_date": null,
+    "error_log": [],
+    "quantizations": []
+  },
+  "UW/OLMo2-8B-SuperBPE-t180k": {
+    "added": "2025-03-24T11:52:26.505964",
+    "parameters": 11000000000.0,
+    "has_config": true,
+    "converted": false,
+    "attempts": 0,
+    "last_attempt": null,
+    "success_date": null,
+    "error_log": [],
+    "quantizations": []
+  },
+  "UW/OLMo2-11B-SuperBPE-t180k": {
+    "added": "2025-03-24T11:52:26.505964",
+    "parameters": 11000000000.0,
+    "has_config": true,
+    "converted": false,
+    "attempts": 0,
+    "last_attempt": null,
+    "success_date": null,
+    "error_log": [],
+    "quantizations": []
+  },
+  "PLM-Team/PLM-1.8B-Instruct": {
+    "added": "2025-03-24T11:52:26.505964",
+    "parameters": 8000000000.0,
+    "has_config": true,
+    "converted": false,
+    "attempts": 0,
+    "last_attempt": null,
+    "success_date": null,
+    "error_log": [],
+    "quantizations": []
+  },
+  "PLM-Team/PLM-1.8B": {
+    "added": "2025-03-24T11:52:26.505964",
+    "parameters": 8000000000.0,
+    "has_config": true,
+    "converted": false,
+    "attempts": 0,
+    "last_attempt": null,
+    "success_date": null,
+    "error_log": [],
+    "quantizations": []
   }
+
 }
