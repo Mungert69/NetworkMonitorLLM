@@ -351,6 +351,69 @@ def create_repo_if_not_exists(repo_id, api_token):
         print(f"Error creating repository: {e}")
         return False
 
+def needs_compatibility_check(quant_type, tensor_type, embed_type):
+    """Determine if we need to check compatibility for Q5_K/Q6_K tensor/embed types"""
+    return (tensor_type in ["Q5_K", "Q6_K"] or 
+            embed_type in ["Q5_K", "Q6_K"])
+
+def quantize_with_fallback(model_path, output_path, quant_type, tensor_type=None, embed_type=None, 
+                         use_imatrix=None, use_pure=False):
+    """Perform quantization with automatic fallback for Q5_K/Q6_K tensor/embed types"""
+    temp_output = f"{output_path}.tmp"
+    
+    def run_quantization(t_type, e_type):
+        """Helper function to run quantization with specific types"""
+        command = ["./llama.cpp/llama-quantize"]
+        if use_imatrix:
+            command.extend(["--imatrix", use_imatrix])
+        if use_pure:
+            command.append("--pure")
+        if t_type and e_type:
+            command.extend(["--output-tensor-type", t_type])
+            command.extend(["--token-embedding-type", e_type])
+        command.extend([model_path, temp_output, quant_type])
+        
+        result = subprocess.run(command, capture_output=True, text=True)
+        if result.stdout:
+            print("Output:", result.stdout)
+        if result.stderr:
+            print("Errors:", result.stderr)
+        return result
+
+    # First try with original types
+    if not needs_compatibility_check(quant_type, tensor_type, embed_type):
+        result = run_quantization(tensor_type, embed_type)
+        if result.returncode == 0:
+            os.rename(temp_output, output_path)
+            return True
+        print(f"⚠ Quantization failed with unexpected error:")
+        print(result.stderr)
+        return False
+
+    # Try with original Q5_K/Q6_K types first
+    result = run_quantization(tensor_type, embed_type)
+    if result.returncode == 0:
+        os.rename(temp_output, output_path)
+        return True
+    
+    # If failed, try with Q5_1 fallback for tensor/embed types
+    print(f"⚠ Q5_K/Q6_K tensor/embed types not compatible, falling back to Q5_1")
+    adjusted_tensor = tensor_type if tensor_type not in ["Q5_K", "Q6_K"] else "Q5_1"
+    adjusted_embed = embed_type if embed_type not in ["Q5_K", "Q6_K"] else "Q5_1"
+    
+    result = run_quantization(adjusted_tensor, adjusted_embed)
+    if result.returncode == 0:
+        os.rename(temp_output, output_path)
+        return True
+    
+    print(f"❌ Quantization failed even with fallback:")
+    print(result.stderr)
+    try:
+        os.remove(temp_output)
+    except:
+        pass
+    return False
+
 def quantize_model(input_model, company_name, base_name):
     """Quantize the model and upload files following HF standards."""
     # Setup paths and directories
@@ -377,31 +440,22 @@ def quantize_model(input_model, company_name, base_name):
     for suffix, quant_type, tensor_type, embed_type, use_imatrix, use_pure in filtered_configs:
         output_file = f"{base_name}-{suffix}.gguf"
         output_path = os.path.join(output_dir, output_file)
+       
+        print(f"\n🏗 Processing {output_file}...")
+        success = quantize_with_fallback(
+            bf16_model_file,
+            output_path,
+            quant_type,
+            tensor_type=tensor_type,
+            embed_type=embed_type,
+            use_imatrix=imatrix_file if use_imatrix else None,
+            use_pure=use_pure
+        )
         
-        # Build quantization command
-        command = ["./llama.cpp/llama-quantize"]
-        if use_imatrix:
-            command.extend(["--imatrix", imatrix_file])
-        if use_pure:
-            command.append("--pure")
-        if tensor_type and embed_type:
-            command.extend(["--output-tensor-type", tensor_type])
-            command.extend(["--token-embedding-type", embed_type])
-        command.extend([bf16_model_file, output_path, quant_type])
-        
-        # Execute quantization
-        print("\nRunning:", " ".join(command))
-        result = subprocess.run(command, capture_output=True, text=False)
-        stdout = result.stdout.decode('utf-8', errors='ignore')
-        stderr = result.stderr.decode('utf-8', errors='ignore')
-        
-        if result.returncode != 0:
-            print(f"Error creating {output_file}:")
-            print("STDERR:", stderr)
+        if not success:
             continue
-            
+
         print(f"Successfully created {output_file} in {output_dir}")
-        print("STDOUT:", stdout)
         
         # Create repo on first successful quantization
         if not repo_created:
