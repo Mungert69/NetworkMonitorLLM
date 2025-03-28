@@ -83,7 +83,7 @@ def process_model(model_id):
     make_files_args = [model_id]  # Fix: Pass only full model_id
     run_script("make_files.py", make_files_args)
 
-    # 3. Upload files (upload-files.py)
+   # 3. Upload files (upload-files.py)
     upload_files_args = [model_name]
     run_script("upload-files.py", upload_files_args)
 
