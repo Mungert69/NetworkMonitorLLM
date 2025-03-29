@@ -110,12 +110,14 @@ public class LLMService : ILLMService
                 {
                     checkSession.Runner = runner;
                 }
-                var responseServiceObj = new LLMServiceObj(serviceObj);
-                responseServiceObj.LlmMessage = $"<Assistant:> Hi I'm {runner.Type} how can I help you. \n\n";
-                await PublishToRabbitMQAsync("llmServiceMessage", responseServiceObj, false);
+                //var responseServiceObj = new LLMServiceObj(serviceObj);
+                //responseServiceObj.LlmMessage = $"<Assistant:> Hi I'm {runner.Type} how can I help you. \n\n";
+                //responseServiceObj..ResultMessage = "Sending Success Output";
+                //responseServiceObj..ResultSuccess = true;
+                //await PublishToRabbitMQAsync("llmServiceMessage", responseServiceObj, false);
 
                 //await SetResultMessageAsync(llmServiceObj, $"Success {runner.Type} {_serviceID} Assistant Started", true, "llmServiceMessage", true);
-                //await SetResultMessageAsync(llmServiceObj, $"<Assistant:> Hi i'm {runner.Type} how can I help you. \n\n", true, "llmServiceMessage", true);
+                await SetResultMessageAsync(llmServiceObj, $"Hi i'm {runner.Type} your Network Monitor Assistant. How can I help you.", true, "llmServiceMessage", true);
 
 
             }
