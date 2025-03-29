@@ -90,7 +90,7 @@ public class LLMService : ILLMService
 
                 await runner.StartProcess(llmServiceObj);
                 // Only add a new session if it does not exist
-                if (checkSession==null)
+                if (checkSession == null)
                 {
                     _sessions[llmServiceObj.SessionId] = new Session
                     {
@@ -106,17 +106,22 @@ public class LLMService : ILLMService
                         }
                     };
                 }
-                else {
-                    checkSession.Runner=runner;
+                else
+                {
+                    checkSession.Runner = runner;
                 }
+                var responseServiceObj = new LLMServiceObj(serviceObj);
+                responseServiceObj.LlmMessage = $"<Assistant:> Hi I'm {runner.Type} how can I help you. \n\n";
+                await PublishToRabbitMQAsync("llmServiceMessage", responseServiceObj, false);
+
                 //await SetResultMessageAsync(llmServiceObj, $"Success {runner.Type} {_serviceID} Assistant Started", true, "llmServiceMessage", true);
-                await SetResultMessageAsync(llmServiceObj, $"<Assistant:> Hi i'm {runner.Type} how can I help you. \n\n", true, "llmServiceMessage", true);
-               
-               
+                //await SetResultMessageAsync(llmServiceObj, $"<Assistant:> Hi i'm {runner.Type} how can I help you. \n\n", true, "llmServiceMessage", true);
+
+
             }
             else
             {
-                    //await SetResultMessageAsync(llmServiceObj, $"Info: {llmServiceObj.LLMRunnerType} {_serviceID} Assistant already running so it was not reloaded", true, "llmServiceMessage", true);
+                //await SetResultMessageAsync(llmServiceObj, $"Info: {llmServiceObj.LLMRunnerType} {_serviceID} Assistant already running so it was not reloaded", true, "llmServiceMessage", true);
             }
 
             await PublishToRabbitMQAsync("llmServiceStarted", llmServiceObj, false);
@@ -386,7 +391,7 @@ public class LLMService : ILLMService
     {
         try
         {
-            if (checkSession != null && checkSession.Runner!=null)
+            if (checkSession != null && checkSession.Runner != null)
             {
                 await checkSession.Runner.RemoveProcess(sessionId);
                 checkSession.Runner = null;
