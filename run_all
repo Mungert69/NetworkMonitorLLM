@@ -1,2 +1,0 @@
-source venv/bin/activate
-nohup python3 run_all_from_json.py  models.json &
