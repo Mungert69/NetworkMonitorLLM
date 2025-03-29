@@ -144,7 +144,7 @@ public class OpenAIRunner : ILLMRunner
 
     }
 #pragma warning restore CS8618 
-    public Task StartProcess(LLMServiceObj serviceObj)
+    public async Task StartProcess(LLMServiceObj serviceObj)
     {
         _isStateStarting = true;
         _isStateReady = false;
@@ -179,7 +179,7 @@ public class OpenAIRunner : ILLMRunner
         _isStateStarting = false;
         _isStateReady = true;
         _isStateFailed = false;
-        return Task.CompletedTask;
+        return ;
     }
 
 
