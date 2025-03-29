@@ -170,10 +170,6 @@ public class OpenAIRunner : ILLMRunner
             //Now we just add a system prompt with resume information
             _history.AddRange(resumeSystemPrompt);
         }
-        var responseServiceObj = new LLMServiceObj(serviceObj);
-        responseServiceObj.LlmMessage = $"<Assistant:> Hi i'm {_type} how can I help you. \n\n";
-        if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
-
         _logger.LogInformation($"Started {_type} {_serviceID} Assistant with session id {serviceObj.SessionId} at {serviceObj.GetClientStartTime()}. with CTX size {_maxTokens} and Response tokens {_responseTokens}");
 
         _isStateStarting = false;

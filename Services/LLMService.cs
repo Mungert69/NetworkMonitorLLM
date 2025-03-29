@@ -109,11 +109,14 @@ public class LLMService : ILLMService
                 else {
                     checkSession.Runner=runner;
                 }
-                await SetResultMessageAsync(llmServiceObj, $"Success {runner.Type} {_serviceID} Assistant Started", true, "llmServiceMessage", true);
+                //await SetResultMessageAsync(llmServiceObj, $"Success {runner.Type} {_serviceID} Assistant Started", true, "llmServiceMessage", true);
+                await SetResultMessageAsync(llmServiceObj, $"<Assistant:> Hi i'm {runner.Type} how can I help you. \n\n", true, "llmServiceMessage", true);
+               
+               
             }
             else
             {
-                    await SetResultMessageAsync(llmServiceObj, $"Info: {llmServiceObj.LLMRunnerType} {_serviceID} Assistant already running so it was not reloaded", true, "llmServiceMessage", true);
+                    //await SetResultMessageAsync(llmServiceObj, $"Info: {llmServiceObj.LLMRunnerType} {_serviceID} Assistant already running so it was not reloaded", true, "llmServiceMessage", true);
             }
 
             await PublishToRabbitMQAsync("llmServiceStarted", llmServiceObj, false);
