@@ -104,7 +104,7 @@ public class OpenAIRunner : ILLMRunner
 
         _useHF = useHF;
         IToolsBuilder? toolsBuilder = null;
-        
+
         if (_serviceID == "blogmonitor") toolsBuilder = new BlogMonitorToolsBuilder(serviceObj.UserInfo);
         if (_serviceID == "reportdata") toolsBuilder = new ReportDataToolsBuilder();
         if (_serviceID == "monitorsys") toolsBuilder = new MonitorToolsBuilder(serviceObj.UserInfo);
@@ -114,21 +114,21 @@ public class OpenAIRunner : ILLMRunner
 
         if (!_useHF)
         {
-              if (_serviceID == "monitor") toolsBuilder = new MonitorToolsBuilder(serviceObj.UserInfo);
-        if (_serviceID == "cmdprocessor") toolsBuilder = new CmdProcessorToolsBuilder(serviceObj.UserInfo);
-        if (_serviceID == "nmap") toolsBuilder = new NmapToolsBuilder();
-        if (_serviceID == "meta") toolsBuilder = new MetaToolsBuilder();
-        if (_serviceID == "search") toolsBuilder = new SearchToolsBuilder();
-        if (_serviceID == "quantum") toolsBuilder = new QuantumToolsBuilder();
+            if (_serviceID == "monitor") toolsBuilder = new MonitorToolsBuilder(serviceObj.UserInfo);
+            if (_serviceID == "cmdprocessor") toolsBuilder = new CmdProcessorToolsBuilder(serviceObj.UserInfo);
+            if (_serviceID == "nmap") toolsBuilder = new NmapToolsBuilder();
+            if (_serviceID == "meta") toolsBuilder = new MetaToolsBuilder();
+            if (_serviceID == "search") toolsBuilder = new SearchToolsBuilder();
+            if (_serviceID == "quantum") toolsBuilder = new QuantumToolsBuilder();
 
             _type = "TurboLLM";
             _llmApi = new OpenAIApi(_logger, _mlParams, toolsBuilder, _serviceID, _responseProcessor, _openAiService);
-      
+
         }
         else
         {
-             if (_serviceID == "monitor") toolsBuilder = new MonitorSimpleToolsBuilder(serviceObj.UserInfo);
-      
+            if (_serviceID == "monitor") toolsBuilder = new MonitorSimpleToolsBuilder(serviceObj.UserInfo);
+
             _type = "HugLLM";
             _isStream = _mlParams.IsStream;
             _llmApi = new HuggingFaceApi(_logger, _mlParams, toolsBuilder, _serviceID, _responseProcessor, _isStream);
@@ -170,6 +170,9 @@ public class OpenAIRunner : ILLMRunner
             //Now we just add a system prompt with resume information
             _history.AddRange(resumeSystemPrompt);
         }
+        var responseServiceObj = new LLMServiceObj(serviceObj);
+        responseServiceObj.LlmMessage = $"<Assistant:> Hi i'm {_type} how can I help you. \n\n";
+        if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
 
         _logger.LogInformation($"Started {_type} {_serviceID} Assistant with session id {serviceObj.SessionId} at {serviceObj.GetClientStartTime()}. with CTX size {_maxTokens} and Response tokens {_responseTokens}");
 
@@ -306,13 +309,13 @@ public class OpenAIRunner : ILLMRunner
                 {
 
                     tokensUsed = tokensUsed / 2;
-                      _logger.LogInformation($"TOKENS USED {tokensUsed} useHF is set to {_useHF} so Actual Tokens used {tokensUsed*2}");
+                    _logger.LogInformation($"TOKENS USED {tokensUsed} useHF is set to {_useHF} so Actual Tokens used {tokensUsed * 2}");
                 }
                 else
                 {
                     _logger.LogInformation($"TOKENS USED {tokensUsed}");
                 }
-              
+
 
                 responseServiceObj.TokensUsed = completionResult.Usage.TotalTokens;
                 if (completionResult.Usage != null && completionResult.Usage.PromptTokensDetails != null) _logger.LogInformation($"Cached Prompt Tokens {completionResult.Usage.PromptTokensDetails.CachedTokens}");
@@ -582,14 +585,14 @@ public class OpenAIRunner : ILLMRunner
             localHistory.Add(assistantResponse);
         }
         else _pendingFunctionCalls.TryAdd(serviceObj.MessageID, choiceMessage);
-        int numDequeue=MaxRecentFunctionCalls ; 
-        if (isDuplicate && duplicateCount>1)
+        int numDequeue = MaxRecentFunctionCalls;
+        if (isDuplicate && duplicateCount > 1)
         {
             _logger.LogWarning($"Possible loop detected when calling functions");
             var duplicateMessage = ChatMessage.FromSystem(
                 $" You are possibly stuck in a loop. Take a summary of what you have been doing and give the user feedback before continuing. If the user wants to call the same function again that is ok. Just check first.");
             localHistory.Add(duplicateMessage);
-            numDequeue=0;
+            numDequeue = 0;
         }
         while (_recentFunctionCalls.Count > numDequeue)
         {
