@@ -117,7 +117,7 @@ public class LLMService : ILLMService
                 //await PublishToRabbitMQAsync("llmServiceMessage", responseServiceObj, false);
 
                 //await SetResultMessageAsync(llmServiceObj, $"Success {runner.Type} {_serviceID} Assistant Started", true, "llmServiceMessage", true);
-                await SetResultMessageAsync(llmServiceObj, $"Hi i'm {runner.Type} your Network Monitor Assistant. How can I help you.", true, "llmServiceMessage", true);
+                if (_serviceID=="monitor") await SetResultMessageAsync(llmServiceObj, $"Hi i'm {runner.Type} your Network Monitor Assistant. How can I help you.", true, "llmServiceMessage", true);
 
 
             }
