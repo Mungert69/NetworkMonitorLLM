@@ -294,12 +294,12 @@ public class LLMService : ILLMService
                 if (string.IsNullOrEmpty(llmServiceObj.SessionId)){
                     return new ResultObj(){Success=false, Message = "Empty SessionID"};
                 }
-                else return await SetResultMessageAsync(
+                /*else return await SetResultMessageAsync(
                     llmServiceObj,
                     $"No Assistant found for sessionId={llmServiceObj.SessionId}. Try reloading the Assistant or refreshing the page. If the problem persists, contact support@freenetworkmontior.click",
                     false,
                     "llmServiceMessage"
-                );
+                );*/
             }
 
 
