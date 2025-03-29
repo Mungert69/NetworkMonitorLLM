@@ -86,7 +86,7 @@ public class LLMService : ILLMService
                 string extraMessage = llmServiceObj.LLMRunnerType == "TestLLM"
                     ? $" , this can take up to {_mlParams.LlmSystemPromptTimeout} seconds..."
                     : "";
-                await SetResultMessageAsync(llmServiceObj, $"Starting {llmServiceObj.LLMRunnerType} {_serviceID} Assistant{extraMessage}", true, "llmServiceMessage", true);
+                //await SetResultMessageAsync(llmServiceObj, $"Starting {llmServiceObj.LLMRunnerType} {_serviceID} Assistant{extraMessage}", true, "llmServiceMessage", true);
 
                 await runner.StartProcess(llmServiceObj);
                 // Only add a new session if it does not exist
