@@ -289,7 +289,7 @@ public class LLMService : ILLMService
         try
         {
             // Check if session is valid
-            if (string.IsNullOrEmpty(llmServiceObj.SessionId) || !_sessions.TryGetValue(llmServiceObj.SessionId, out var session))
+            if (!string.IsNullOrEmpty(llmServiceObj.SessionId) && !_sessions.TryGetValue(llmServiceObj.SessionId, out var session))
             {
                 return await SetResultMessageAsync(
                     llmServiceObj,
