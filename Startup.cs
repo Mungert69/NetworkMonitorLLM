@@ -82,7 +82,7 @@ namespace NetworkMonitor.LLM
             services.AddTransient<ILLMResponseProcessor, LLMResponseProcessor>();
             services.AddSingleton<ILLMService, LLMService>();
             services.AddSingleton<ILLMFactory, LLMFactory>();
-            services.AddSingleton<IHistoryStorage,HuggingFaceDatasetStorage >();
+            services.AddSingleton<IHistoryStorage,RedisHistoryStorage >();
             services.AddSingleton(_cancellationTokenSource);
             services.Configure<HostOptions>(s => s.ShutdownTimeout = TimeSpan.FromMinutes(5));
             services.AddSingleton<ICpuUsageMonitor, CpuUsageMonitor>();

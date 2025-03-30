@@ -10,6 +10,9 @@ using NetworkMonitor.Utils.Helpers;
 
 namespace NetworkMonitor.LLM.Services
 {
+    /// <summary>
+    ///  NOTE this code does not work as the urls are not exposed by huggingface datasets api
+    /// </summary>
     public class HuggingFaceDatasetStorage : IHistoryStorage
     {
         private readonly string _dataRepoId;
