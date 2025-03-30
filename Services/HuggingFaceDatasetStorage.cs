@@ -6,18 +6,21 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using NetworkMonitor.Utils.Helpers;
 
 namespace NetworkMonitor.LLM.Services
 {
     public class HuggingFaceDatasetStorage : IHistoryStorage
     {
-        private readonly string _repoId="johnbridges/NetMonLLMData";
-        private readonly string _token = Environment.GetEnvironmentVariable("HF_TOKEN");
+        private readonly string _dataRepoId;
+        private readonly string _token;
         private readonly HttpClient _httpClient;
         private const string ApiBaseUrl = "https://huggingface.co/api/datasets/";
 
-        public HuggingFaceDatasetStorage()
+        public HuggingFaceDatasetStorage(ISystemParamsHelper systemParamsHelper)
         {
+            _dataRepoId=systemParamsHelper.GetMLParams().DataRepoId;
+            _token=systemParamsHelper.GetMLParams().HFToken;
             _httpClient = new HttpClient();
             _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {_token}");
         }
@@ -146,7 +149,7 @@ namespace NetworkMonitor.LLM.Services
 
         private async Task<List<string>> ListFilesInRepo()
         {
-            var response = await _httpClient.GetAsync($"{ApiBaseUrl}{_repoId}/tree/main");
+            var response = await _httpClient.GetAsync($"{ApiBaseUrl}{_dataRepoId}/tree/main");
             response.EnsureSuccessStatusCode();
             
             var content = await response.Content.ReadAsStringAsync();
@@ -157,14 +160,14 @@ namespace NetworkMonitor.LLM.Services
 
         private async Task<string> DownloadFile(string filePath)
         {
-            var response = await _httpClient.GetAsync($"{ApiBaseUrl}{_repoId}/resolve/main/{filePath}");
+            var response = await _httpClient.GetAsync($"{ApiBaseUrl}{_dataRepoId}/resolve/main/{filePath}");
             response.EnsureSuccessStatusCode();
             return await response.Content.ReadAsStringAsync();
         }
 
         private async Task UploadFile(string fileName, string content)
         {
-            var request = new HttpRequestMessage(HttpMethod.Put, $"{ApiBaseUrl}{_repoId}/write/main/{fileName}")
+            var request = new HttpRequestMessage(HttpMethod.Put, $"{ApiBaseUrl}{_dataRepoId}/write/main/{fileName}")
             {
                 Content = new StringContent(content)
             };
@@ -175,7 +178,7 @@ namespace NetworkMonitor.LLM.Services
 
         private async Task DeleteFile(string filePath)
         {
-            var response = await _httpClient.DeleteAsync($"{ApiBaseUrl}{_repoId}/delete/main/{filePath}");
+            var response = await _httpClient.DeleteAsync($"{ApiBaseUrl}{_dataRepoId}/delete/main/{filePath}");
             response.EnsureSuccessStatusCode();
         }
 
