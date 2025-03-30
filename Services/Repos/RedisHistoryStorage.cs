@@ -7,6 +7,8 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using StackExchange.Redis;
 using NetworkMonitor.Utils.Helpers;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices; 
 
 namespace NetworkMonitor.LLM.Services
 {
@@ -50,65 +52,102 @@ namespace NetworkMonitor.LLM.Services
 
             return config;
         }
-        public async Task<ConcurrentDictionary<string, Session>> LoadAllSessionsAsync()
-        {
-            var sessions = new ConcurrentDictionary<string, Session>();
-            var server = GetServer();
+    public async Task<ConcurrentDictionary<string, Session>> LoadAllSessionsAsync()
+{
+    var sessions = new ConcurrentDictionary<string, Session>();
+    var server = GetServer();
 
+    try
+    {
+        var keys = await GetKeysAsync(server, $"{_keyPrefix}*");
+        foreach (var key in keys)
+        {
             try
             {
-                await foreach (var key in ScanKeysAsync(server, $"{_keyPrefix}*"))
+                var history = await LoadFromKey(key);
+                if (history != null)
                 {
-                    try
+                    sessions.TryAdd(history.SessionId, new Session
                     {
-                        var history = await LoadFromKey(key);
-                        if (history != null)
-                        {
-                            sessions.TryAdd(history.SessionId, new Session
-                            {
-                                HistoryDisplayName = history,
-                                Runner = null
-                            });
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"Error loading session from Redis key {key}: {ex.Message}");
-                    }
+                        HistoryDisplayName = history,
+                        Runner = null
+                    });
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error scanning Redis keys: {ex.Message}");
+                Console.WriteLine($"Error loading session from Redis key {key}: {ex.Message}");
             }
-
-            return sessions;
         }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error scanning Redis keys: {ex.Message}");
+    }
 
-        public async Task<List<HistoryDisplayName>> GetHistoryDisplayNamesAsync(string userId)
+    return sessions;
+}
+      public async Task<List<HistoryDisplayName>> GetHistoryDisplayNamesAsync(string userId)
+{
+    var historyDisplayNames = new List<HistoryDisplayName>();
+    var server = GetServer();
+    var keys = await GetKeysAsync(server, $"{_keyPrefix}*_{userId}_*");
+
+    foreach (var key in keys)
+    {
+        try
         {
-            var historyDisplayNames = new List<HistoryDisplayName>();
-            var server = GetServer();
-
-            await foreach (var key in ScanKeysAsync(server, $"{_keyPrefix}*_{userId}_*"))
+            var history = await LoadFromKey(key);
+            if (history != null)
             {
-                try
-                {
-                    var history = await LoadFromKey(key);
-                    if (history != null)
-                    {
-                        historyDisplayNames.Add(history);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error loading history from Redis key {key}: {ex.Message}");
-                }
+                historyDisplayNames.Add(history);
             }
-
-            return historyDisplayNames;
         }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading history from Redis key {key}: {ex.Message}");
+        }
+    }
 
+    return historyDisplayNames;
+}
+
+public async Task<HistoryDisplayName?> LoadHistoryAsync(string sessionId)
+{
+    if (string.IsNullOrWhiteSpace(sessionId))
+        throw new ArgumentException("Session ID cannot be empty", nameof(sessionId));
+
+    var server = GetServer();
+    var keys = await GetKeysAsync(server, $"{_keyPrefix}*_{sessionId}");
+
+    foreach (var key in keys)
+    {
+        try
+        {
+            return await LoadFromKey(key);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading session {sessionId} from Redis: {ex.Message}");
+        }
+    }
+
+    return null;
+}
+
+public async Task DeleteHistoryAsync(string sessionId)
+{
+    if (string.IsNullOrWhiteSpace(sessionId))
+        throw new ArgumentException("Session ID cannot be empty", nameof(sessionId));
+
+    var server = GetServer();
+    var keys = await GetKeysAsync(server, $"{_keyPrefix}*_{sessionId}");
+
+    foreach (var key in keys)
+    {
+        await _db.KeyDeleteAsync(key);
+    }
+}
         public async Task SaveHistoryAsync(HistoryDisplayName historyDisplayName)
         {
             if (historyDisplayName == null)
@@ -122,41 +161,6 @@ namespace NetworkMonitor.LLM.Services
             });
 
             await _db.StringSetAsync(key, json);
-        }
-
-        public async Task<HistoryDisplayName?> LoadHistoryAsync(string sessionId)
-        {
-            if (string.IsNullOrWhiteSpace(sessionId))
-                throw new ArgumentException("Session ID cannot be empty", nameof(sessionId));
-
-            var server = GetServer();
-
-            await foreach (var key in ScanKeysAsync(server, $"{_keyPrefix}*_{sessionId}"))
-            {
-                try
-                {
-                    return await LoadFromKey(key);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error loading session {sessionId} from Redis: {ex.Message}");
-                }
-            }
-
-            return null;
-        }
-
-        public async Task DeleteHistoryAsync(string sessionId)
-        {
-            if (string.IsNullOrWhiteSpace(sessionId))
-                throw new ArgumentException("Session ID cannot be empty", nameof(sessionId));
-
-            var server = GetServer();
-
-            await foreach (var key in ScanKeysAsync(server, $"{_keyPrefix}*_{sessionId}"))
-            {
-                await _db.KeyDeleteAsync(key);
-            }
         }
 
         private async Task<HistoryDisplayName?> LoadFromKey(RedisKey key)
@@ -176,26 +180,28 @@ namespace NetworkMonitor.LLM.Services
             return _redis.GetServer(endpoints.First());
         }
 
-        private async IAsyncEnumerable<RedisKey> ScanKeysAsync(IServer server, string pattern)
+      private async Task<List<RedisKey>> GetKeysAsync(IServer server, string pattern)
+{
+    var keys = new List<RedisKey>();
+    var enumerator = server.KeysAsync(
+        database: _db.Database,
+        pattern: pattern,
+        pageSize: 100).GetAsyncEnumerator();
+    
+    try
+    {
+        while (await enumerator.MoveNextAsync().ConfigureAwait(false))
         {
-            var cursor = 0;
-            do
-            {
-                var scanResult = await server.KeysAsync(
-                    database: _db.Database,
-                    pattern: pattern,
-                    pageSize: 100,
-                    cursor: cursor);
-
-                foreach (var key in scanResult)
-                {
-                    yield return key;
-                }
-
-                cursor = scanResult.Cursor;
-            } while (cursor != 0);
+            keys.Add(enumerator.Current);
         }
-
+    }
+    finally
+    {
+        await enumerator.DisposeAsync().ConfigureAwait(false);
+    }
+    
+    return keys;
+}
         public void Dispose()
         {
             Dispose(true);
