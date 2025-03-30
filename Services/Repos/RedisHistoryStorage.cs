@@ -38,7 +38,7 @@ namespace NetworkMonitor.LLM.Services
 
                 // TLS Configuration
                 Ssl = true,
-                SslProtocols = System.Security.Authentication.SslProtocols.Tls12,
+                SslProtocols = System.Security.Authentication.SslProtocols.Tls13,
 
                 // Connection tuning
                 ConnectTimeout = 5000,
