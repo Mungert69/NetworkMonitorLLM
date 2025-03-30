@@ -35,7 +35,8 @@ namespace NetworkMonitor.LLM.Services
                 // Basic connection
                 EndPoints = { redisUrl },  // e.g. "your-server:46379"
                 Password = redisSecret,
-
+                User = "admin",
+    
                 // TLS Configuration
                 Ssl = true,
                 SslProtocols = System.Security.Authentication.SslProtocols.Tls13,
