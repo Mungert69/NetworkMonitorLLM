@@ -20,7 +20,7 @@ public interface IHistoryStorage
 
 public class FileSystemHistoryStorage : IHistoryStorage
 {
-    private readonly string _storagePath = "storage";
+    private readonly string _storagePath = "data";
 
     public FileSystemHistoryStorage()
     {
