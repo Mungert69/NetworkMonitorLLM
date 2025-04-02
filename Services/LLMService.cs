@@ -30,7 +30,16 @@ public interface ILLMService
 public class LLMService : ILLMService
 {
     private readonly ILogger _logger;
-
+    private static readonly Dictionary<string, string> ServiceIdMap = new()
+{
+    {"monitor", "Monitor"},
+    {"nmap", "Security"},
+    {"meta", "Penetration"},
+    {"cmdprocessor", "Code Building"},
+    {"search", "Search"},
+    {"quantum", "Quantum Ready"}
+    // Add more mappings as needed
+};
     private readonly IServiceProvider _serviceProvider;
     private readonly IRabbitRepo _rabbitRepo;
     private ILLMFactory _llmFactory;
@@ -56,6 +65,13 @@ public class LLMService : ILLMService
         _sessions = await _llmFactory.LoadAllSessionsAsync();
         _llmFactory.Sessions = _sessions;
     }
+
+    private string GetDisplayName(string serviceId)
+{
+    return ServiceIdMap.TryGetValue(serviceId, out var displayName) 
+        ? displayName 
+        : serviceId;  // Fallback to original ID if not found
+}
     public async Task<LLMServiceObj> StartProcess(LLMServiceObj llmServiceObj)
     {
         llmServiceObj.SessionId = llmServiceObj.RequestSessionId + "_" + llmServiceObj.LLMRunnerType;
@@ -86,7 +102,7 @@ public class LLMService : ILLMService
                 string extraMessage = llmServiceObj.LLMRunnerType == "TestLLM"
                     ? $" , this can take up to {_mlParams.LlmSystemPromptTimeout} seconds..."
                     : "";
-                await SetResultMessageAsync(llmServiceObj, $"Starting {llmServiceObj.LLMRunnerType} {_serviceID} Expert{extraMessage}", true, "llmServiceMessage", true);
+                await SetResultMessageAsync(llmServiceObj, $"Starting {llmServiceObj.LLMRunnerType} {GetDisplayName(_serviceID)} Expert{extraMessage}", true, "llmServiceMessage", true);
 
                 await runner.StartProcess(llmServiceObj);
                 // Only add a new session if it does not exist
@@ -117,7 +133,7 @@ public class LLMService : ILLMService
                 //await PublishToRabbitMQAsync("llmServiceMessage", responseServiceObj, false);
 
                 //await SetResultMessageAsync(llmServiceObj, $"Success {runner.Type} {_serviceID} Assistant Started", true, "llmServiceMessage", true);
-                if (_serviceID=="monitor") await SetResultMessageAsync(llmServiceObj, $"Hi i'm {runner.Type} your Network Monitor Assistant. How can I help you.", true, "llmServiceMessage", true);
+                if (_serviceID == "monitor") await SetResultMessageAsync(llmServiceObj, $"Hi i'm {runner.Type} your Network Monitor Assistant. How can I help you.", true, "llmServiceMessage", true);
 
 
             }
@@ -291,8 +307,8 @@ public class LLMService : ILLMService
             // Check if session is valid
             if (string.IsNullOrEmpty(llmServiceObj.SessionId) || !_sessions.TryGetValue(llmServiceObj.SessionId, out var session))
             {
-                return new ResultObj(){Success=false, Message = "Empty SessionID"};
-                
+                return new ResultObj() { Success = false, Message = "Empty SessionID" };
+
                 /*return await SetResultMessageAsync(
                     llmServiceObj,
                     $"No Assistant found for sessionId={llmServiceObj.SessionId}. Try reloading the Assistant or refreshing the page. If the problem persists, contact support@freenetworkmontior.click",
