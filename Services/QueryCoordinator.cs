@@ -47,6 +47,8 @@ namespace NetworkMonitor.LLM.Services
             _serviceID = systemParamsHelper.GetSystemParams().ServiceID!;
             string encryptKey=systemParamsHelper.GetSystemParams().EmailEncryptKey ;
             _authKey=EncryptHelper.EncryptedPassword(encryptKey,_serviceID);
+             _logger.LogInformation($"using key {encryptKey} authkey is  {_authKey}");
+
 
         }
 
