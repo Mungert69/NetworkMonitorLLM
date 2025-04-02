@@ -79,14 +79,14 @@ public class LLMService : ILLMService
                 ILLMRunner runner = await _llmFactory.CreateRunner(llmServiceObj.LLMRunnerType, llmServiceObj);
                 if (!runner.IsEnabled)
                 {
-                    //await SetResultMessageAsync(llmServiceObj, $"{llmServiceObj.LLMRunnerType} {_serviceID} not started as it is disabled.", true, "llmServiceMessage");
+                    await SetResultMessageAsync(llmServiceObj, $"{llmServiceObj.LLMRunnerType} {_serviceID} not started as it is disabled.", true, "llmServiceMessage");
                     return llmServiceObj;
                 }
 
                 string extraMessage = llmServiceObj.LLMRunnerType == "TestLLM"
                     ? $" , this can take up to {_mlParams.LlmSystemPromptTimeout} seconds..."
                     : "";
-                //await SetResultMessageAsync(llmServiceObj, $"Starting {llmServiceObj.LLMRunnerType} {_serviceID} Assistant{extraMessage}", true, "llmServiceMessage", true);
+                await SetResultMessageAsync(llmServiceObj, $"Starting {llmServiceObj.LLMRunnerType} {_serviceID} Expert{extraMessage}", true, "llmServiceMessage", true);
 
                 await runner.StartProcess(llmServiceObj);
                 // Only add a new session if it does not exist
