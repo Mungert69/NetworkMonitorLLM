@@ -41,7 +41,7 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
         _llmService = llmService;
         _serviceID = systemParamsHelper.GetSystemParams().ServiceID ?? "monitor";
         _queryCoordinator=queryCoordinator;
-        Setup();
+
     }
 
     private static SystemUrl DeriveSystemUrl(ISystemParamsHelper systemParamsHelper)
