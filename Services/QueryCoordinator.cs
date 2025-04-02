@@ -34,6 +34,7 @@ namespace NetworkMonitor.LLM.Services
         private readonly TimeSpan _defaultTimeout = TimeSpan.FromSeconds(30); // Default timeout for queries
         private readonly IRabbitRepo _rabbitRepo;
         private readonly string _serviceID;
+        private readonly string _authKey;
 
         private const string SystemRagMessage = "The following RAG data has been added.";
 
@@ -44,6 +45,8 @@ namespace NetworkMonitor.LLM.Services
             _logger = logger;
             _rabbitRepo = rabbitRepo;
             _serviceID = systemParamsHelper.GetSystemParams().ServiceID!;
+            string encryptKey=systemParamsHelper.GetSystemParams().EmailEncryptKey ;
+            _authKey=EncryptHelper.EncryptedPassword(encryptKey,_serviceID);
 
         }
 
@@ -141,7 +144,8 @@ namespace NetworkMonitor.LLM.Services
                 IndexName = "documents",
                 QueryText = queryText,
                 MessageID = messageId,
-                AppID = llmType
+                AppID = llmType,
+                AuthKey=_authKey
             };
 
             // Publish the query to RabbitMQ
