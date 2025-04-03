@@ -49,31 +49,22 @@ public class MonitorToolsBuilder : ToolsBuilderBase
         fn_call_quantum_expert = BuildCallQuantumFunction();
 
 
-        // Assuming these function references are defined in the current context
-        var accountTypeFunctions = AccountTypeFactory.GetFunctionsForAccountType<FunctionDefinition>(
-            userInfo.AccountType!,
-            fn_are_functions_running,
-            fn_cancel_functions,
-            fn_add_host,
-            fn_edit_host,
-            fn_get_host_data,
-            fn_get_host_list,
-            fn_get_user_info,
-            fn_get_agents,
-            fn_call_security_expert,
-            fn_call_penetration_expert,
-            fn_call_search_expert,
-            fn_call_cmd_processor_expert,
-            fn_call_quantum_expert,
-            fn_run_busybox
-        );
-
-        // Build the tools list based on user account type
-        _tools = new List<ToolDefinition>();
-        foreach (var function in accountTypeFunctions)
+         // Static tools list assignment
+        _tools = new List<ToolDefinition>()
         {
-            _tools.Add(new ToolDefinition() { Function = function, Type = "function" });
-        }
+            new ToolDefinition() { Function = fn_call_security_expert, Type = "function" },
+             new ToolDefinition() { Function = fn_are_functions_running, Type = "function" },
+            new ToolDefinition() { Function = fn_cancel_functions, Type = "function" },
+            new ToolDefinition() { Function = fn_add_host, Type = "function" },
+            new ToolDefinition() { Function = fn_edit_host, Type = "function" },
+            new ToolDefinition() { Function = fn_get_host_data, Type = "function" },
+            new ToolDefinition() { Function = fn_get_host_list, Type = "function" },
+            new ToolDefinition() { Function = fn_get_user_info, Type = "function" },
+            new ToolDefinition() { Function = fn_get_agents, Type = "function" },
+            new ToolDefinition() { Function = fn_call_search_expert, Type = "function" },
+            new ToolDefinition() { Function = fn_call_cmd_processor_expert, Type = "function" },
+            new ToolDefinition() { Function = fn_call_quantum_expert, Type = "function" }
+        };
 
     }
 
