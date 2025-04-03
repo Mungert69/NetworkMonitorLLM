@@ -41,7 +41,7 @@ public class MonitorToolsBuilder : ToolsBuilderBase
         fn_get_host_list = BuildGetHostListFunction();
         fn_get_user_info = BuildGetUserInfoFunction();
         fn_call_security_expert = BuildCallNmapFunction();
-        fn_run_busybox = BuildRunBusyboxFunction();
+        //fn_run_busybox = BuildRunBusyboxFunction();
         fn_call_penetration_expert = BuildCallMetasploitFunction();
         fn_get_agents = BuildGetAgentsFunction();
         fn_call_search_expert = BuildCallSearchWebFunction();
@@ -213,7 +213,7 @@ public class MonitorToolsBuilder : ToolsBuilderBase
             .Build();
     }
 
-    private FunctionDefinition BuildRunBusyboxFunction()
+    /*private FunctionDefinition BuildRunBusyboxFunction()
     {
         return new FunctionDefinitionBuilder("run_busybox_command", "Run a BusyBox command. Use BusyBox utilities to assist with other functions of the assistant as well as user requests. For instance, you might use BusyBox to gather network diagnostics, troubleshoot connectivity issues, monitor system performance, or perform basic file operations in response to a user's request")
             .AddParameter("command", PropertyDefinition.DefineString("The BusyBox command to be executed. Example commands: 'ls /tmp' to list files in the /tmp directory, 'ping -c 4 8.8.8.8' to ping Google's DNS server 4 times, or 'ifconfig' to display network interface configurations."))
@@ -223,7 +223,7 @@ public class MonitorToolsBuilder : ToolsBuilderBase
             .Validate()
             .Build();
     }
-
+*/
 
     private FunctionDefinition BuildGetAgentsFunction()
     {
