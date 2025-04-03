@@ -35,9 +35,9 @@ public class LLMService : ILLMService
     {"monitor", "Monitor"},
     {"nmap", "Security"},
     {"meta", "Penetration"},
-    {"cmdprocessor", "Code Building"},
+    {"cmdprocessor", "Cmd Processor"},
     {"search", "Search"},
-    {"quantum", "Quantum Ready"}
+    {"quantum", "Quantum"}
     // Add more mappings as needed
 };
     private readonly IServiceProvider _serviceProvider;
