@@ -77,7 +77,7 @@ public class HuggingFaceApi : ILLMApi
             _apiUrl = $"{mlParams.LlmHFUrl.TrimEnd('/')}/models/{_modelID}/v1/chat/completions";
 
         _config = LLMConfigFactory.GetConfig(_modelVersion);
-        _logger.LogInformation($"Initialized Hugging Face API with URL: {_apiUrl}");
+        _logger.LogInformation($"Initialized Hugging Face API with URL: {_apiUrl} using model id {_modelID}");
     }
 
     public string WrapFunctionResponse(string name, string funcStr)
