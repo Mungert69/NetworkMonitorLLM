@@ -42,108 +42,108 @@ public class MonitorSimpleToolsBuilder : ToolsBuilderBase
         fn_run_busybox = BuildRunBusyboxFunction();
         fn_get_agents = BuildGetAgentsFunction();
 
-        
-fn_run_nmap = new FunctionDefinitionBuilder(
-    "run_nmap", 
-    "Executes an nmap network scan based on the user's request. " +
-    "The function should be called when the user needs network discovery, port scanning, service detection, " +
-    "vulnerability assessment, or other network reconnaissance tasks. " +
-    "Construct appropriate scan options based on the user's specific needs (e.g., stealth scanning, " +
-    "service version detection, OS fingerprinting). " +
-    "After receiving results, analyze the output to provide the user with: " +
-    "1) A concise summary of key findings, 2) Security implications, 3) Any recommended next steps. " +
-    "Highlight critical vulnerabilities or unusual findings prominently.")
-    .AddParameter(
-        "scan_options", 
-        PropertyDefinition.DefineString(
-            "Nmap command-line options to execute. " +
-            "Should be constructed based on the user's specific request. " +
-            "Examples: '-sV' for service version detection, '-O' for OS fingerprinting, " +
-            "'-A' for aggressive scan, '-p-' for all ports, '--script vuln' for vulnerability scanning. " +
-            "Combine options as needed (e.g., '-sS -p 80,443 -T4'). " +
-            "Ensure options are valid and security-conscious (avoid overly aggressive scans without justification)."))
-    .AddParameter(
-        "target", 
-        PropertyDefinition.DefineString(
-            "The target to scan - can be an IP address (e.g., '192.168.1.1'), " +
-            "IP range ('192.168.1.0/24'), domain name ('example.com'), " +
-            "or hostname. Validate the target with the user if ambiguous."))
-    .AddParameter(
-        "agent_location", 
-        PropertyDefinition.DefineString(
-            "Optional. Preferred agent location if scanning from multiple possible locations. " +
-            "Important for scanning internal vs external networks. " +
-            "Example: 'us-east-1' for AWS region or 'corporate-dmz' for specific network segment."))
-    .AddParameter(
-        "number_lines", 
-        PropertyDefinition.DefineInteger(
-            "Limit for output lines to return. Default to 50 for initial scans. " +
-            "Increase for detailed analysis (e.g., 200-500 for full port scans), " +
-            "but be mindful of response size. Consider filtering results first."))
-    .AddParameter(
-        "page", 
-        PropertyDefinition.DefineInteger(
-            "Pagination control for large result sets. Start with 1. " +
-            "Increment to view additional portions of extensive scan results."))
-    .Validate()
-    .Build();
 
-fn_run_openssl = new FunctionDefinitionBuilder(
-    "run_openssl", 
-    "Executes OpenSSL commands for security analysis of SSL/TLS configurations, certificates, " +
-    "and cryptographic protocols. Use when the user requests: certificate inspection, " +
-    "protocol support checks, cipher suite evaluation, or cryptographic vulnerability testing. " +
-    "Analyze results to provide: 1) Security grade of configuration, 2) Specific vulnerabilities found, " +
-    "3) Recommended fixes, 4) Compliance status with current best practices.")
-    .AddParameter(
-        "command_options", 
-        PropertyDefinition.DefineString(
-            "OpenSSL command and options constructed for the specific task. " +
-            "Examples: 's_client -connect example.com:443 -showcerts' for certificate analysis, " +
-            "'ciphers -v' to list supported ciphers, 'x509 -text -noout' for certificate details. " +
-            "Include all necessary flags for the requested analysis."))
-    .AddParameter(
-        "target", 
-        PropertyDefinition.DefineString(
-            "Target server in format 'host:port' (e.g., 'example.com:443'), " +
-            "or certificate file if analyzing local files. For SMTP/other protocols, " +
-            "use format 'smtp.example.com:25' with appropriate protocol options."))
-    .AddParameter(
-        "agent_location", 
-        PropertyDefinition.DefineString(
-            "Optional. Preferred agent location if testing from different network perspectives. " +
-            "Important for testing internal vs external services or geographic-specific configurations."))
-    .AddParameter(
-        "number_lines", 
-        PropertyDefinition.DefineInteger(
-            "Limit for output lines to return. Default to 100 for certificate analysis. " +
-            "May need higher values (300+) for verbose outputs like full certificate chains."))
-    .AddParameter(
-        "page", 
-        PropertyDefinition.DefineInteger(
-            "Pagination control for extensive outputs (e.g., multi-certificate chains). " +
-            "Start with 1, increment to view additional sections."))
-    .Validate()
-    .Build();
-   
-          // Define the test_quantum_safety function
-            fn_test_quantum_safety = new FunctionDefinitionBuilder("test_quantum_safety", "Tests a target endpoint for quantum-safe cryptographic support using specified algorithms. Use this to verify if a server supports post-quantum cryptography (PQC) algorithms.")
-                .AddParameter("target", PropertyDefinition.DefineString("The target server IP or hostname, required. Example: 'example.com' or '192.168.1.1'."))
-                .AddParameter("port", PropertyDefinition.DefineInteger("The TLS port to test, optional. Default is 443."))
-                .AddParameter("algorithms", PropertyDefinition.DefineArray(PropertyDefinition.DefineString("The list of quantum-safe algorithms to test, optional. Examples include 'Kyber512', 'Dilithium2', 'Falcon512'. If not provided, all enabled algorithms will be tested.")))
-                .AddParameter("timeout", PropertyDefinition.DefineInteger("The maximum time (in milliseconds) to wait for the test to complete, optional. Default is 59000ms."))
-                .Validate()
-                .Build();
+        fn_run_nmap = new FunctionDefinitionBuilder(
+            "run_nmap",
+            "Executes an nmap network scan based on the user's request. " +
+            "The function should be called when the user needs network discovery, port scanning, service detection, " +
+            "vulnerability assessment, or other network reconnaissance tasks. " +
+            "Construct appropriate scan options based on the user's specific needs (e.g., stealth scanning, " +
+            "service version detection, OS fingerprinting). " +
+            "After receiving results, analyze the output to provide the user with: " +
+            "1) A concise summary of key findings, 2) Security implications, 3) Any recommended next steps. " +
+            "Highlight critical vulnerabilities or unusual findings prominently.")
+            .AddParameter(
+                "scan_options",
+                PropertyDefinition.DefineString(
+                    "Nmap command-line options to execute. " +
+                    "Should be constructed based on the user's specific request. " +
+                    "Examples: '-sV' for service version detection, '-O' for OS fingerprinting, " +
+                    "'-A' for aggressive scan, '-p-' for all ports, '--script vuln' for vulnerability scanning. " +
+                    "Combine options as needed (e.g., '-sS -p 80,443 -T4'). " +
+                    "Ensure options are valid and security-conscious (avoid overly aggressive scans without justification)."))
+            .AddParameter(
+                "target",
+                PropertyDefinition.DefineString(
+                    "The target to scan - can be an IP address (e.g., '192.168.1.1'), " +
+                    "IP range ('192.168.1.0/24'), domain name ('example.com'), " +
+                    "or hostname. Validate the target with the user if ambiguous."))
+            .AddParameter(
+                "agent_location",
+                PropertyDefinition.DefineString(
+                    "Optional. Preferred agent location if scanning from multiple possible locations. " +
+                    "Important for scanning internal vs external networks. " +
+                    "Example: 'us-east-1' for AWS region or 'corporate-dmz' for specific network segment."))
+            .AddParameter(
+                "number_lines",
+                PropertyDefinition.DefineInteger(
+                    "Limit for output lines to return. Default to 50 for initial scans. " +
+                    "Increase for detailed analysis (e.g., 200-500 for full port scans), " +
+                    "but be mindful of response size. Consider filtering results first."))
+            .AddParameter(
+                "page",
+                PropertyDefinition.DefineInteger(
+                    "Pagination control for large result sets. Start with 1. " +
+                    "Increment to view additional portions of extensive scan results."))
+            .Validate()
+            .Build();
 
-            // Define the scan_quantum_ports function
-            fn_scan_quantum_ports = new FunctionDefinitionBuilder("scan_quantum_ports", "Scans a target for open ports and tests each port for quantum-safe cryptographic support. Use this to identify vulnerable ports that lack quantum-safe encryption.")
-                .AddParameter("target", PropertyDefinition.DefineString("The target server IP or hostname, required. Example: 'example.com' or '192.168.1.1'."))
-                .AddParameter("ports", PropertyDefinition.DefineArray(PropertyDefinition.DefineInteger("The list of ports to scan, optional. If not provided, Nmap will be used to discover open ports.")))
-                .AddParameter("algorithms", PropertyDefinition.DefineArray(PropertyDefinition.DefineString("The list of quantum-safe algorithms to test, optional. Examples include 'Kyber512', 'Dilithium2', 'Falcon512'. If not provided, all enabled algorithms will be tested.")))
-                .AddParameter("timeout", PropertyDefinition.DefineInteger("The maximum time (in milliseconds) to wait for the scan to complete, optional. Default is 59000ms."))
-                .AddParameter("nmap_options", PropertyDefinition.DefineString("Custom Nmap options for port scanning, optional. Default is '-T4 --open'."))
-                .Validate()
-                .Build();
+        fn_run_openssl = new FunctionDefinitionBuilder(
+            "run_openssl",
+            "Executes OpenSSL commands for security analysis of SSL/TLS configurations, certificates, " +
+            "and cryptographic protocols. Use when the user requests: certificate inspection, " +
+            "protocol support checks, cipher suite evaluation, or cryptographic vulnerability testing. " +
+            "Analyze results to provide: 1) Security grade of configuration, 2) Specific vulnerabilities found, " +
+            "3) Recommended fixes, 4) Compliance status with current best practices.")
+            .AddParameter(
+                "command_options",
+                PropertyDefinition.DefineString(
+                    "OpenSSL command and options constructed for the specific task. " +
+                    "Examples: 's_client -connect example.com:443 -showcerts' for certificate analysis, " +
+                    "'ciphers -v' to list supported ciphers, 'x509 -text -noout' for certificate details. " +
+                    "Include all necessary flags for the requested analysis."))
+            .AddParameter(
+                "target",
+                PropertyDefinition.DefineString(
+                    "Target server in format 'host:port' (e.g., 'example.com:443'), " +
+                    "or certificate file if analyzing local files. For SMTP/other protocols, " +
+                    "use format 'smtp.example.com:25' with appropriate protocol options."))
+            .AddParameter(
+                "agent_location",
+                PropertyDefinition.DefineString(
+                    "Optional. Preferred agent location if testing from different network perspectives. " +
+                    "Important for testing internal vs external services or geographic-specific configurations."))
+            .AddParameter(
+                "number_lines",
+                PropertyDefinition.DefineInteger(
+                    "Limit for output lines to return. Default to 100 for certificate analysis. " +
+                    "May need higher values (300+) for verbose outputs like full certificate chains."))
+            .AddParameter(
+                "page",
+                PropertyDefinition.DefineInteger(
+                    "Pagination control for extensive outputs (e.g., multi-certificate chains). " +
+                    "Start with 1, increment to view additional sections."))
+            .Validate()
+            .Build();
+
+        // Define the test_quantum_safety function
+        fn_test_quantum_safety = new FunctionDefinitionBuilder("test_quantum_safety", "Tests a target endpoint for quantum-safe cryptographic support using specified algorithms. Use this to verify if a server supports post-quantum cryptography (PQC) algorithms.")
+            .AddParameter("target", PropertyDefinition.DefineString("The target server IP or hostname, required. Example: 'example.com' or '192.168.1.1'."))
+            .AddParameter("port", PropertyDefinition.DefineInteger("The TLS port to test, optional. Default is 443."))
+            .AddParameter("algorithms", PropertyDefinition.DefineArray(PropertyDefinition.DefineString("The list of quantum-safe algorithms to test, optional. Examples include 'Kyber512', 'Dilithium2', 'Falcon512'. If not provided, all enabled algorithms will be tested.")))
+            .AddParameter("timeout", PropertyDefinition.DefineInteger("The maximum time (in milliseconds) to wait for the test to complete, optional. Default is 59000ms."))
+            .Validate()
+            .Build();
+
+        // Define the scan_quantum_ports function
+        fn_scan_quantum_ports = new FunctionDefinitionBuilder("scan_quantum_ports", "Scans a target for open ports and tests each port for quantum-safe cryptographic support. Use this to identify vulnerable ports that lack quantum-safe encryption.")
+            .AddParameter("target", PropertyDefinition.DefineString("The target server IP or hostname, required. Example: 'example.com' or '192.168.1.1'."))
+            .AddParameter("ports", PropertyDefinition.DefineArray(PropertyDefinition.DefineInteger("The list of ports to scan, optional. If not provided, Nmap will be used to discover open ports.")))
+            .AddParameter("algorithms", PropertyDefinition.DefineArray(PropertyDefinition.DefineString("The list of quantum-safe algorithms to test, optional. Examples include 'Kyber512', 'Dilithium2', 'Falcon512'. If not provided, all enabled algorithms will be tested.")))
+            .AddParameter("timeout", PropertyDefinition.DefineInteger("The maximum time (in milliseconds) to wait for the scan to complete, optional. Default is 59000ms."))
+            .AddParameter("nmap_options", PropertyDefinition.DefineString("Custom Nmap options for port scanning, optional. Default is '-T4 --open'."))
+            .Validate()
+            .Build();
 
         // Build the tools list based on user account type
         _tools = new List<ToolDefinition>()
@@ -163,87 +163,137 @@ fn_run_openssl = new FunctionDefinitionBuilder(
             new ToolDefinition() { Function = fn_scan_quantum_ports, Type = "function" }
         };
     }
-  private FunctionDefinition BuildAddHostFunction()
+    private FunctionDefinition BuildAddHostFunction()
     {
-        return new FunctionDefinitionBuilder("add_host", "Add a new host to be monitored")
-    .AddParameter("detail_response", PropertyDefinition.DefineBoolean("Will this function echo all the values set or just necessary parameters. The default is false for a faster response"))
-    .AddParameter("address", PropertyDefinition.DefineString("The host address, required"))
-    .AddParameter("endpoint", PropertyDefinition.DefineEnum(
-        new List<string> { "quantum", "http", "https", "httphtml", "icmp", "dns", "smtp", "rawconnect", "nmapvuln", "nmap", "crawlsite" },
-        "The endpoint type, optional. Endpoint types are: quantum is a quantum safe encryption test, http is a website ping, https is an SSL certificate check, httphtml is a website HTML load, icmp is a host ping, dns is a DNS lookup, smtp is an email server helo message confirmation, rawconnect is a low-level raw socket connection, nmap is a nmap service scan of the host, nmapvuln is a nmap vulnerability scan of the host and crawlsite performs a simulated user crawl of the site that generates site traffic using chrome browser."))
-    .AddParameter("port", PropertyDefinition.DefineNumber("The port of the service being monitored, optional. It will be zero if it is the standard port for the host endpoint type. Note the standard port for endpoint type http is 443"))
-    .AddParameter("timeout", PropertyDefinition.DefineNumber("The time to wait for a timeout in milliseconds, optional. Default is 59000"))
-    .AddParameter("email", PropertyDefinition.DefineString("Do not use this field if the user IS LOGGED IN. Their login email will be used and this field will be ignored. If the user is NOT LOGGED IN then ask for an email. Alerts are sent to the user's email"))
-    .AddParameter("agent_location", PropertyDefinition.DefineString("The location of the agent monitoring this host, optional. If this is left blank, an agent_location will be assigned"))
-    .Validate()
-    .Build();
+        return new FunctionDefinitionBuilder(
+            "add_host",
+            "Add a new host to be monitored. Example: To monitor 'example.com' with HTTPS: {'address':'example.com','endpoint':'https'}. For vulnerability scans: {'address':'192.168.1.5','endpoint':'nmapvuln'}.")
+        .AddParameter("detail_response", PropertyDefinition.DefineBoolean(
+            "Return full configuration details. Default: false (faster response)."))
+        .AddParameter("address", PropertyDefinition.DefineString(
+            "[REQUIRED] Host address (IP/domain). Examples: '10.0.0.1', 'app.prod'."))
+        .AddParameter("endpoint", PropertyDefinition.DefineEnum(
+            new List<string> { "quantum", "http", "https", "httphtml", "icmp", "dns", "smtp", "rawconnect", "nmapvuln", "nmap", "crawlsite" },
+            "Monitoring type. quantum=quantum-safe encryption test, http=website ping, https=SSL check, httphtml=HTML load, icmp=host ping, dns=DNS lookup, smtp=email HELO, rawconnect=raw socket, nmapvuln=Nmap vuln scan, nmap=service scan, crawlsite=Chrome-based crawl. Default: 'https' if port 443."))
+        .AddParameter("port", PropertyDefinition.DefineNumber(
+            "Service port. Default: Standard for endpoint (443 for HTTPS). Use 0 for auto-detection."))
+        .AddParameter("timeout", PropertyDefinition.DefineNumber(
+            "Timeout in milliseconds. Default: 59000 (~1 minute)."))
+        .AddParameter("email", PropertyDefinition.DefineString(
+            "[Non-logged-in users only] Alert email. Ignored if authenticated."))
+        .AddParameter("agent_location", PropertyDefinition.DefineString(
+            "Monitoring agent (e.g., 'Scanner-EU'). Auto-assigned if blank."))
+        .Validate()
+        .Build();
     }
 
     private FunctionDefinition BuildEditHostFunction()
     {
-        return new FunctionDefinitionBuilder("edit_host", "Edit a host's monitoring configuration")
-    .AddParameter("detail_response", PropertyDefinition.DefineBoolean("Will the function echo all the values set. Default is false"))
-    .AddParameter("auth_key", PropertyDefinition.DefineString("This is a string that is used to authenticate the Edit action for a user who is not logged in. This key is returned when adding a host for the first time. It should be stored and sent with subsequent edit requests. Optional if user is logged in."))
-    .AddParameter("id", PropertyDefinition.DefineNumber("This is the host ID used for identifying the host, optional. It is obtained when adding a host"))
-    .AddParameter("enabled", PropertyDefinition.DefineBoolean("Host enabled, optional"))
-    .AddParameter("address", PropertyDefinition.DefineString("Host address, optional"))
-     .AddParameter("endpoint", PropertyDefinition.DefineEnum(
-        new List<string> { "quantum", "http", "https", "httphtml", "icmp", "dns", "smtp", "rawconnect", "nmapvuln", "nmap", "crawlsite" },
-        "The endpoint type, optional. Endpoint types are: quantum is a quantum safe encryption test, http is a website ping, https is an SSL certificate check, httphtml is a website HTML load, icmp is a host ping, dns is a DNS lookup, smtp is an email server helo message confirmation, rawconnect is a low-level raw socket connection, nmap is a nmap service scan of the host, nmapvuln is a nmap vulnerability scan of the host and crawlsite performs a simulated user crawl of the site that generates site traffic using chrome browser."))
-   .AddParameter("port", PropertyDefinition.DefineNumber("The port, optional"))
-    .AddParameter("timeout", PropertyDefinition.DefineNumber("Time to wait for a timeout in milliseconds, optional"))
-    .AddParameter("hidden", PropertyDefinition.DefineBoolean("Is the host hidden, optional. Setting this to true effectively deletes the host from future monitoring"))
-    .AddParameter("agent_location", PropertyDefinition.DefineString("The location of the agent monitoring this host, optional"))
-    .Validate()
-    .Build();
+        return new FunctionDefinitionBuilder(
+            "edit_host",
+            "Edit a host's monitoring configuration. Example: Disable host ID 15: {'id':15,'enabled':false}. Change to ICMP: {'address':'legacy-app','endpoint':'icmp'}.")
+        .AddParameter("detail_response", PropertyDefinition.DefineBoolean(
+            "Return full updated configuration. Default: false."))
+        .AddParameter("auth_key", PropertyDefinition.DefineString(
+            "[Required if not logged in] Auth key from initial host creation."))
+        .AddParameter("id", PropertyDefinition.DefineNumber(
+            "Host ID (from get_host_list). Example: 15."))
+        .AddParameter("enabled", PropertyDefinition.DefineBoolean(
+            "Enable/disable monitoring. Default: true."))
+        .AddParameter("address", PropertyDefinition.DefineString(
+            "Update host address (e.g., 'new-app.prod')."))
+        .AddParameter("endpoint", PropertyDefinition.DefineEnum(
+            new List<string> { "quantum", "http", "https", "httphtml", "icmp", "dns", "smtp", "rawconnect", "nmapvuln", "nmap", "crawlsite" },
+            "Same options as add_host. Changes monitoring type."))
+        .AddParameter("port", PropertyDefinition.DefineNumber(
+            "Update service port (e.g., 8080 for non-standard HTTP)."))
+        .AddParameter("timeout", PropertyDefinition.DefineNumber(
+            "Adjust timeout (ms). Default: 59000."))
+        .AddParameter("hidden", PropertyDefinition.DefineBoolean(
+            "Hide host (soft delete). Default: false."))
+        .AddParameter("agent_location", PropertyDefinition.DefineString(
+            "Reassign monitoring agent (e.g., 'Scanner-US')."))
+        .Validate()
+        .Build();
     }
 
     private FunctionDefinition BuildGetHostDataFunction()
     {
-        return new FunctionDefinitionBuilder("get_host_data", "Retrieve collected monitoring data for a host. The parameters that are added act as filters so only lnclude them if the filter is required.  For example to see the host data for host with id 10 {\"id\":10}, to see only the latest data set (dataset_id 0 is the latest running data set) for this host {\"id\":10, \"dataset_id\":0}.  Do not include empty or null parameters")
-            .AddParameter("detail_response", PropertyDefinition.DefineBoolean("Will this function provide full detail, or a brief summary, for each hosts monitoring data."))
-            .AddParameter("dataset_id", PropertyDefinition.DefineNumber("Filter on dataset_id. Return a set of statistical data. Data is arranged in 6-hour data sets. Set dataset_id to zero for the latest/current data. To view data older than the current dataset; set dataset_id to null and select a date range with date_start and date_end"))
-            .AddParameter("id", PropertyDefinition.DefineNumber("Return only hosts with ID, optional"))
-          // Add a parameter for filtering hosts by address
-          .AddParameter("address", PropertyDefinition.DefineString("Filter on hosts with address, optional. Supports wildcards: * matches any sequence of characters, ? matches any single character. Example: '192.168.*' matches all addresses starting with '192.168.'."))
-            .AddParameter("email", PropertyDefinition.DefineString("Filter on hosts with this email associated, optional"))
-             .AddParameter("enabled", PropertyDefinition.DefineBoolean("Filter on hosts that are enabled for monitoring. Default is true, only change this if you really what to confirm a host is disabled and has no monitoring data, optional"))
-            .AddParameter("port", PropertyDefinition.DefineNumber("Filter on hosts that are using this port, optional"))
-            .AddParameter("endpoint", PropertyDefinition.DefineString("Filter hosts that are using this endpoint type, optional"))
-            .AddParameter("alert_sent", PropertyDefinition.DefineBoolean("Filter on hosts that have a host down alert sent, optional"))
-            .AddParameter("alert_flag", PropertyDefinition.DefineBoolean("Filter on hosts that have a host down alert flag set, optional. This can be used to get hosts that are up or down"))
-            .AddParameter("date_start", PropertyDefinition.DefineString("Filter on host data that Start from this date, optional. When used with date_end this gives a range of times to filter on"))
-            .AddParameter("date_end", PropertyDefinition.DefineString("Filter on host data that ends on this date, optional"))
-            .AddParameter("page_size", PropertyDefinition.DefineNumber("The number of hosts to return on each page of data. Defaults to 4, optional"))
-            .AddParameter("page_number", PropertyDefinition.DefineNumber("If not all data is returned then page the data with this page_number, optional"))
-            .AddParameter("agent_location", PropertyDefinition.DefineString("The location of the agent monitoring this host, optional"))
-            .Validate()
-            .Build();
+        return new FunctionDefinitionBuilder(
+            "get_host_data",
+            "Retrieve monitoring data with filters. Example: Latest data for host ID 10: {'id':10,'dataset_id':0}. Find down hosts: {'alert_flag':true}.")
+        .AddParameter("detail_response", PropertyDefinition.DefineBoolean(
+            "Include full metrics (response times/headers). Default: false."))
+        .AddParameter("dataset_id", PropertyDefinition.DefineNumber(
+            "6-hour data window (0=latest). Use null + dates for history."))
+        .AddParameter("id", PropertyDefinition.DefineNumber(
+            "Host ID (e.g., 15)."))
+        .AddParameter("address", PropertyDefinition.DefineString(
+            "Wildcard filter (e.g., '*.prod'). Supports * and ? wildcards."))
+        .AddParameter("email", PropertyDefinition.DefineString(
+            "Filter by alert recipient email."))
+        .AddParameter("enabled", PropertyDefinition.DefineBoolean(
+            "Active/inactive hosts. Default: true."))
+        .AddParameter("port", PropertyDefinition.DefineNumber(
+            "Filter by port (e.g., 443)."))
+        .AddParameter("endpoint", PropertyDefinition.DefineString(
+            "Filter by endpoint (e.g., 'https')."))
+        .AddParameter("alert_sent", PropertyDefinition.DefineBoolean(
+            "Hosts that triggered alerts."))
+        .AddParameter("alert_flag", PropertyDefinition.DefineBoolean(
+            "Hosts in alert state (up/down)."))
+        .AddParameter("date_start", PropertyDefinition.DefineString(
+            "ISO start time (e.g., '2024-05-01T00:00:00')."))
+        .AddParameter("date_end", PropertyDefinition.DefineString(
+            "ISO end time."))
+        .AddParameter("page_size", PropertyDefinition.DefineNumber(
+            "Results per page. Default: 4."))
+        .AddParameter("page_number", PropertyDefinition.DefineNumber(
+            "Pagination page. Default: 1."))
+        .AddParameter("agent_location", PropertyDefinition.DefineString(
+            "Filter by agent (e.g., 'Scanner-EU')."))
+        .Validate()
+        .Build();
     }
+
     private FunctionDefinition BuildGetHostListFunction()
     {
-        return new FunctionDefinitionBuilder("get_host_list", "Retrieve a list of host configurations. Do not include empty or null parameters. Only include parameters that you want to filter on. For example To see all host configurations {}, to see the host configuration for host with id 10 {\"id\":10}")
-    .AddParameter("detail_response", PropertyDefinition.DefineBoolean("Will this function provide all host config detail. Set this to true if more than address and ID are required"))
-    .AddParameter("id", PropertyDefinition.DefineNumber("Return host with ID, optional"))
-    // Add a parameter for filtering hosts by address
-    .AddParameter("address", PropertyDefinition.DefineString("Filter on hosts with address, optional. Supports wildcards: * matches any sequence of characters, ? matches any single character. Example: '192.168.*' matches all addresses starting with '192.168.'."))
-    .AddParameter("email", PropertyDefinition.DefineString("Filter on hosts with this email associated, optional"))
-    .AddParameter("enabled", PropertyDefinition.DefineBoolean("Filter on hosts that are enabled for monitoring. Default is true, only change this if you really what to confirm a host is disabled and has no monitoring data, optional"))
-    .AddParameter("port", PropertyDefinition.DefineNumber("Filter on hosts with port, optional"))
-    .AddParameter("endpoint", PropertyDefinition.DefineString("Filter on hosts with endpoint type, optional"))
-    .AddParameter("page_size", PropertyDefinition.DefineNumber("The number of hosts to return on each page of data. Defaults to 4, optional"))
-    .AddParameter("page_number", PropertyDefinition.DefineNumber("If not all data is returned then page the data, optional"))
-    .AddParameter("agent_location", PropertyDefinition.DefineString("The location of the agent monitoring this host, optional"))
-    .Validate()
-    .Build();
+        return new FunctionDefinitionBuilder(
+            "get_host_list",
+            "List monitored hosts. Example: All 192.168.* hosts: {'address':'192.168.*'}. Disabled hosts: {'enabled':false}.")
+        .AddParameter("detail_response", PropertyDefinition.DefineBoolean(
+            "Include full config (tags/thresholds). Default: false."))
+        .AddParameter("id", PropertyDefinition.DefineNumber(
+            "Host ID (e.g., 15)."))
+        .AddParameter("address", PropertyDefinition.DefineString(
+            "Wildcard filter (e.g., 'prod-?.*')."))
+        .AddParameter("email", PropertyDefinition.DefineString(
+            "Filter by contact email."))
+        .AddParameter("enabled", PropertyDefinition.DefineBoolean(
+            "Active/inactive hosts. Default: true."))
+        .AddParameter("port", PropertyDefinition.DefineNumber(
+            "Filter by port (e.g., 443)."))
+        .AddParameter("endpoint", PropertyDefinition.DefineString(
+            "Filter by endpoint (e.g., 'dns')."))
+        .AddParameter("page_size", PropertyDefinition.DefineNumber(
+            "Results per page. Default: 4."))
+        .AddParameter("page_number", PropertyDefinition.DefineNumber(
+            "Pagination page. Default: 1."))
+        .AddParameter("agent_location", PropertyDefinition.DefineString(
+            "Filter by agent location."))
+        .Validate()
+        .Build();
     }
 
     private FunctionDefinition BuildGetUserInfoFunction()
     {
-        return new FunctionDefinitionBuilder("get_user_info", "Get information about the user including the users time.")
-            .AddParameter("detail_response", PropertyDefinition.DefineBoolean("Will this function return all user details. Set to false if only basic info is required"))
-            .Validate()
-            .Build();
+        return new FunctionDefinitionBuilder(
+            "get_user_info",
+            "Get user account details (timezone, tokens, etc). Always include detail_response.")
+        .AddParameter("detail_response", PropertyDefinition.DefineBoolean(
+            "Full profile vs basic (email/timezone). Required."))
+        .Validate()
+        .Build();
     }
 
     private FunctionDefinition BuildAreFunctionsRunning()
@@ -281,23 +331,56 @@ fn_run_openssl = new FunctionDefinitionBuilder(
             .Validate()
             .Build();
     }
-   public override List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
-{
-    string content = $"You are a network monitoring and security assistant. Use the tools where necessary to assist the user. Your name is {llmType}";
-
-    content += "When calling functions ONLY include parameters that are strictly necessary. DO NOT include parameters set to null or empty. ONLY include parameters you set to a value. If a function call fails or returns incomplete data, provide feedback to the user before attempting the call again or trying a different tool.";
-    content += " Ensure that any function calls or tools you use align with the user's request. Use only the tools necessary for the task. For failed function calls, provide feedback about the issue before retrying or switching tools.";
-     content += "When choosing which tools to call be aware of the difference between ongoing monitoring tools (add_host, edit_host, get_host_data, get_host_list) and immediate execution tools (run_nmap, run_openssl, run_busybox, test_quantum_safety). Monitoring tools run continuously while others provide single results.";
-    content += "For immediate execution tools like run_nmap or run_openssl: Ensure you have all required parameters from the user first. These are 'call once' operations - if you need different results, you'll need to call them again with new parameters.";
-     content += " DO NOT TAKE ACTIONS WITHOUT CONFIRMING WITH THE USER. Unless absolutely necessary, call functions one at a time and provide feedback before proceeding.";
-
-    var chatMessage = new ChatMessage()
+    public override List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
     {
-        Role = "system",
-        Content = content
-    };
-    return new List<ChatMessage> { chatMessage };
-}
+  string content = $@"
+You are a network monitoring and security assistant named {llmType}. Your role is to:
+1. **Execute tasks** using the provided tools when needed.
+2. **Explain results** in clear, non-technical terms (avoid raw JSON/function output).
+3. **Prioritize security**
+
+### **Tool Usage Rules**
+- **Parameter Efficiency**: 
+  - ONLY include parameters with explicit values. Omit null/empty fields.
+
+- **Error Handling**:
+  - If a tool fails, explain the issue to the user **before** retrying or switching tools.
+    - Example: *""The scan failed because the target IP is unreachable. Verify the address or try a different tool.""*
+
+- **Tool Selection**:
+  - **Ongoing Monitoring Tools** (run continuously):
+    - `add_host` / `edit_host`: Configure hosts for long-term monitoring.
+    - `get_host_data` / `get_host_list`: Review historical or current status.
+  - **Immediate Execution Tools** (single results):
+    - `run_nmap` / `run_openssl`: One-time scans/tests.
+    - `test_quantum_safety`: Instant cryptographic checks.
+
+### **Result Formatting Guide**
+Always transform tool outputs into **user-friendly summaries**:
+1. **For Monitoring Tools**:
+   - ✅ *""Host `example.com` (HTTPS) is now monitored. Last check: 200ms response, SSL valid until 2025-10-01.""*
+   - ❌ Avoid: `{{""status"":""up"",""response_time"":200}}`.
+
+2. **For Scans/Tests**:
+   - ✅ *""Nmap found 3 open ports on `192.168.1.1`: 22 (SSH), 80 (HTTP), 443 (HTTPS). No critical vulnerabilities detected.""*
+   - ❌ Avoid raw Nmap JSON.
+
+3. **For Errors**:
+   - ✅ *""Couldn’t scan `example.com:8080`. The port may be blocked or the host offline.""
+
+### **Proactive Guidance**
+- Suggest next steps:  
+  *""Would you like to set up alerts for this host?""*  
+  *""I can run a vulnerability scan if needed.""*
+- Flag security risks:  
+  *""Warning: Port 22 (SSH) is open with default credentials. Recommend hardening.""";
+        var chatMessage = new ChatMessage()
+        {
+            Role = "system",
+            Content = content
+        };
+        return new List<ChatMessage> { chatMessage };
+    }
     public override List<ChatMessage> GetResumeSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
     {
         string userStr = "";
