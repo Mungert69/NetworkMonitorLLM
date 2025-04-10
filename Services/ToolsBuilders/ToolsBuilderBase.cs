@@ -48,7 +48,7 @@ namespace NetworkMonitor.LLM.Services
 
             return new List<ChatMessage> { chatMessage };
         }
-           public List<string> GetFunctionNames()
+        public List<string> GetFunctionNames()
         {
             var functionNames = new List<string>();
             foreach (var tool in _tools)
@@ -62,17 +62,17 @@ namespace NetworkMonitor.LLM.Services
         }
 
         // Method to return a list of function names as a single string
-public string GetFunctionNamesAsString(string separator = ", ")
-{
-    var functionNames = new List<string>();
-    foreach (var tool in _tools)
-    {
-        if (tool.Type == "function" && tool.Function != null)
+        public string GetFunctionNamesAsString(string separator = ", ")
         {
-            functionNames.Add(tool.Function.Name);
+            var functionNames = new List<string>();
+            foreach (var tool in _tools)
+            {
+                if (tool.Type == "function" && tool.Function != null)
+                {
+                    functionNames.Add(tool.Function.Name);
+                }
+            }
+            return string.Join(separator, functionNames);
         }
-    }
-    return string.Join(separator, functionNames);
-}
     }
 }

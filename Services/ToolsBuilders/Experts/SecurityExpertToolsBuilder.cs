@@ -12,31 +12,17 @@ using System.Net.Mime;
 
 namespace NetworkMonitor.LLM.Services
 {
-    public class NmapToolsBuilder : ToolsBuilderBase
+    public class SecurityExpertToolsBuilder : ToolsBuilderBase
     {
         private readonly FunctionDefinition fn_run_nmap;
         private readonly FunctionDefinition fn_run_openssl;
 
-        public NmapToolsBuilder()
+        public SecurityExpertToolsBuilder()
         {
 
-            fn_run_nmap = new FunctionDefinitionBuilder("run_nmap", "This function calls nmap. Create the parameters based upon the user's request. The response from the function will contain a result with the output of running nmap on the remote agent. Give the user a summary of the output that answers their query.")
-                .AddParameter("scan_options", PropertyDefinition.DefineString("The nmap scan options. Must reflect the user's desired scan goal, e.g., ping scan, vulnerability scan, etc."))
-                .AddParameter("target", PropertyDefinition.DefineString("Target to scan, like an IP, domain, or subnet."))
-                .AddParameter("agent_location", PropertyDefinition.DefineString("Optional. If available, specify which agent will run the scan."))
-                .AddParameter("number_lines", PropertyDefinition.DefineInteger("Number of lines to return. Increase this if you need more data returned by the search. Be careful with using larger numbers as a lot of data can be returned. Consider using a more targeted search term instead."))
-                .AddParameter("page", PropertyDefinition.DefineInteger("The page of lines to return. Use to paginate through many lines of data."))
-                .Validate()
-                .Build();
+            fn_run_nmap = SecurityTools.BuildNmapFunction();
 
-            fn_run_openssl = new FunctionDefinitionBuilder("run_openssl", "This function calls openssl. Construct the command options based on the user's request for security checks on SSL/TLS configurations. Provide a summary of the findings and recommendations based on the analysis.")
-                .AddParameter("command_options", PropertyDefinition.DefineString("Construct the relevant openssl command options based on the user’s request, e.g., certificate analysis, protocol vulnerabilities."))
-                .AddParameter("target", PropertyDefinition.DefineString("The server or service you are scanning for security issues."))
-                .AddParameter("agent_location", PropertyDefinition.DefineString("Optional. Location of the agent that will execute the openssl command."))
-                 .AddParameter("number_lines", PropertyDefinition.DefineInteger("Number of lines to return. Increase this if you need more data returned by the search. Be careful with using larger numbers as a lot of data can be returned. Consider using a more targeted search term instead."))
-                .AddParameter("page", PropertyDefinition.DefineInteger("The page of lines to return. Use to paginate through many lines of data."))
-                .Validate()
-                .Build();
+            fn_run_openssl = SecurityTools.BuildOpenSslFunction();
               
             _tools = new List<ToolDefinition>()
             {
