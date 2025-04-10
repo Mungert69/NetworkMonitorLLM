@@ -45,9 +45,8 @@ namespace NetworkMonitor.LLM.Services
             _logger = logger;
             _rabbitRepo = rabbitRepo;
             _serviceID = systemParamsHelper.GetSystemParams().ServiceID!;
-            string encryptKey=systemParamsHelper.GetSystemParams().EmailEncryptKey ;
-            _authKey=EncryptHelper.EncryptedPassword(encryptKey,_serviceID);
-
+            _authKey=systemParamsHelper.GetSystemParams().ServiceAuthKey ;
+            
         }
 
         public async Task AddSystemRag(string messageId, List<ChatMessage> localHistory)
