@@ -356,3 +356,4 @@ nohup.out
 nohup.out
 main.log
 /histories/*
+.env
