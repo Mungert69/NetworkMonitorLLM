@@ -63,3 +63,4 @@ for file in "${files[@]}"; do
 done
 
 echo "Successfully replaced all occurrences in ${#files[@]} file(s)"
+
