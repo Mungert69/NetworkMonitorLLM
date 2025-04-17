@@ -255,7 +255,8 @@ public class LLMFactory : ILLMFactory
 
         ILLMRunner runner = runnerType switch
         {
-            "TurboLLM" => _openAIRunnerFactory.CreateRunner(_serviceProvider, serviceObj, null, history,_cpuUsageMonitor, _queryCoordinator),
+            //"TurboLLM" => _openAIRunnerFactory.CreateRunner(_serviceProvider, serviceObj, null, history,_cpuUsageMonitor, _queryCoordinator),
+            "TurboLLM" => _hfRunnerFactory.CreateRunner(_serviceProvider, serviceObj, null, history,_cpuUsageMonitor, _queryCoordinator),
             "HugLLM" => _hfRunnerFactory.CreateRunner(_serviceProvider, serviceObj, null, history,_cpuUsageMonitor, _queryCoordinator),
             "TestLLM" => _processRunnerFactory.CreateRunner(_serviceProvider, serviceObj, _processRunnerSemaphore, history, _cpuUsageMonitor, _queryCoordinator),
             _ => throw new ArgumentException($"Invalid runner type: {runnerType}")
