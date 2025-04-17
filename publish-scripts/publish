@@ -1,12 +1,16 @@
-#sudo ./publish-us-nmap
-#sudo ./publish-us-meta
-#sudo ./publish-us-search
-#sudo ./publish-us-monitor
-sudo ./publish-eu-nmap
-sudo ./publish-eu-meta
-sudo ./publish-eu-search
-sudo ./publish-eu-cmdprocessor
-sudo ./publish-eu-reportdata
-sudo ./publish-eu-blogmonitor
-sudo ./publish-eu-quantum
-sudo ./publish-eu-monitor
+# US instances
+#sudo ./publish-instance us Nmap
+#sudo ./publish-instance us Meta
+#sudo ./publish-instance us Search
+#sudo ./publish-instance us Monitor
+
+# EU instances
+sudo ./publish-instance eu Nmap
+sudo ./publish-instance eu Meta
+sudo ./publish-instance eu Search
+sudo ./publish-instance eu CmdProcessor
+sudo ./publish-instance eu ReportData
+sudo ./publish-instance eu BlogMonitor
+sudo ./publish-instance eu Quantum
+sudo ./publish-instance eu Monitor
+

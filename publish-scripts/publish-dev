@@ -1,9 +1,10 @@
-sudo ./publish-eu-nmap
-sudo ./publish-eu-meta
-sudo ./publish-eu-search
-sudo ./publish-eu-cmdprocessor
-#sudo ./publish-eu-reportdata-dev
-sudo ./publish-eu-blogmonitor
-sudo ./publish-eu-quantum
-sudo ./publish-eu-monitorsys
-sudo ./publish-eu-monitor
+sudo ./publish-instance eu Nmap
+sudo ./publish-instance eu Meta
+sudo ./publish-instance eu Search
+sudo ./publish-instance eu CmdProcessor
+# sudo ./publish-instance eu ReportDataDev
+sudo ./publish-instance eu BlogMonitor
+sudo ./publish-instance eu Quantum
+sudo ./publish-instance eu MonitorSys
+sudo ./publish-instance eu Monitor
+

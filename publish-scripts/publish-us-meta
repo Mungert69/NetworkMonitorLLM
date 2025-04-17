@@ -1,4 +1,0 @@
-systemctl stop NM-LLM-US-Meta.service
-cp appsettings-us-meta.json ../appsettings.json
-dotnet publish ../NetworkMonitorLLM.csproj --os linux --arch x64  --output ../../services/llm-us-meta -c Release --self-contained true 
-systemctl start NM-LLM-US-Meta.service
