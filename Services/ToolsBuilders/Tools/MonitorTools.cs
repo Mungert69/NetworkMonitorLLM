@@ -127,7 +127,7 @@ public class MonitorTools{
             .AddParameter("endpoint", PropertyDefinition.DefineString(
                 "Filter by endpoint (e.g., 'dns')."))
             .AddParameter("page_size", PropertyDefinition.DefineNumber(
-                "Results per page. Default: 4."))
+                "Results per page. Default: 10."))
             .AddParameter("page_number", PropertyDefinition.DefineNumber(
                 "Pagination page. Default: 1."))
             .AddParameter("agent_location", PropertyDefinition.DefineString(
