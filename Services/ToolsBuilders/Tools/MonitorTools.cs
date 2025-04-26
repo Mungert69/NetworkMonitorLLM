@@ -18,22 +18,22 @@ public class MonitorTools{
         {
             return new FunctionDefinitionBuilder(
                 "add_host",
-                "Add a new host to be monitored. Example: To monitor 'example.com' with HTTPS: {'address':'example.com','endpoint':'https'}. For vulnerability scans: {'address':'192.168.1.5','endpoint':'nmapvuln'}.")
+                "Add a new host to be monitored. Example: To monitor 'https://example.com' website: {'address':'https://example.com','endpoint':'http'}. For vulnerability scans: {'address':'192.168.1.5','endpoint':'nmapvuln'}.")
             .AddParameter("detail_response", PropertyDefinition.DefineBoolean(
                 "Return full configuration details. Default: false (faster response)."))
             .AddParameter("address", PropertyDefinition.DefineString(
                 "[REQUIRED] Host address (IP/domain). Examples: '10.0.0.1', 'app.prod'."))
             .AddParameter("endpoint", PropertyDefinition.DefineEnum(
                 new List<string> { "quantum", "http", "https", "httphtml", "icmp", "dns", "smtp", "rawconnect", "nmapvuln", "nmap", "crawlsite" },
-                "Monitoring type. quantum=quantum-safe encryption test, http=website ping, https=SSL check, httphtml=HTML load, icmp=host ping, dns=DNS lookup, smtp=email HELO, rawconnect=raw socket, nmapvuln=Nmap vuln scan, nmap=service scan, crawlsite=Chrome-based crawl. Default: 'https' if port 443."))
+                "Monitoring type. quantum=quantum-safe encryption test, http=website connection test on port 443, https=SSL certificate check only, httphtml=HTML load, icmp=host ping, dns=DNS lookup, smtp=email HELO, rawconnect=raw socket, nmapvuln=Nmap vuln scan, nmap=service scan, crawlsite=Chrome-based crawl. Example to test if website https://example.com use http as the endpoint"))
             .AddParameter("port", PropertyDefinition.DefineNumber(
-                "Service port. Default: Standard for endpoint (443 for HTTPS). Use 0 for auto-detection."))
+                "Service port. Only set if you want to use a non standard port."))
             .AddParameter("timeout", PropertyDefinition.DefineNumber(
                 "Timeout in milliseconds. Default: 59000 (~1 minute)."))
             .AddParameter("email", PropertyDefinition.DefineString(
                 "[Non-logged-in users only] Alert email. Ignored if authenticated."))
             .AddParameter("agent_location", PropertyDefinition.DefineString(
-                "Monitoring agent (e.g., 'Scanner-EU'). Auto-assigned if blank."))
+                "Monitoring agent (e.g., 'Berlin - Germany'). Auto-assigned if blank."))
             .Validate()
             .Build();
         }
@@ -55,7 +55,7 @@ public class MonitorTools{
                 "Update host address (e.g., 'new-app.prod')."))
             .AddParameter("endpoint", PropertyDefinition.DefineEnum(
                 new List<string> { "quantum", "http", "https", "httphtml", "icmp", "dns", "smtp", "rawconnect", "nmapvuln", "nmap", "crawlsite" },
-                "Same options as add_host. Changes monitoring type."))
+                "Monitoring type. quantum=quantum-safe encryption test, http=website connection test on port 443, https=SSL certificate check only, httphtml=HTML load, icmp=host ping, dns=DNS lookup, smtp=email HELO, rawconnect=raw socket, nmapvuln=Nmap vuln scan, nmap=service scan, crawlsite=Chrome-based crawl. Example to test if website https://example.com use http as the endpoint"))
             .AddParameter("port", PropertyDefinition.DefineNumber(
                 "Update service port (e.g., 8080 for non-standard HTTP)."))
             .AddParameter("timeout", PropertyDefinition.DefineNumber(
@@ -63,7 +63,7 @@ public class MonitorTools{
             .AddParameter("hidden", PropertyDefinition.DefineBoolean(
                 "Hide host (soft delete). Default: false."))
             .AddParameter("agent_location", PropertyDefinition.DefineString(
-                "Reassign monitoring agent (e.g., 'Scanner-US')."))
+                "Reassign monitoring agent (e.g., 'London - UK')."))
             .Validate()
             .Build();
         }
@@ -102,7 +102,7 @@ public class MonitorTools{
             .AddParameter("page_number", PropertyDefinition.DefineNumber(
                 "Pagination page. Default: 1."))
             .AddParameter("agent_location", PropertyDefinition.DefineString(
-                "Filter by agent (e.g., 'Scanner-EU')."))
+                "Filter by agent (e.g., 'Kansas - USA')."))
             .Validate()
             .Build();
         }
