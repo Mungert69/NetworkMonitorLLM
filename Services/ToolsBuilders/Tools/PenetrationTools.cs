@@ -32,8 +32,7 @@ public class PenetrationTools
             "Example: { \"RHOSTS\": \"192.168.1.5\", \"LHOST\": \"10.0.0.1\", \"PAYLOAD\": \"windows/meterpreter/reverse_tcp\" }"))
         .AddParameter("target", PropertyDefinition.DefineString(
             "[REQUIRED] IP/Domain/CIDR range. Validate format first. Example: '192.168.1.0/24'"))
-        .AddParameter("agent_location", PropertyDefinition.DefineEnum(
-            new List<string> { "aws-eu", "azure-us", "gcp-asia" },
+        .AddParameter("agent_location", PropertyDefinition.DefineString(
             "Predefined agent locations. Default: auto-assign based on target geoIP"))
         .AddParameter("number_lines", PropertyDefinition.DefineInteger(
             "Output lines to return. Default: 20. Max: 100."))
