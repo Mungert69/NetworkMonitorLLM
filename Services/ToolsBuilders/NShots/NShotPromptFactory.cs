@@ -387,7 +387,8 @@ namespace NetworkMonitor.Connection
             {
                 content = $"The user is not logged in, the time is {currentTime}. " +
                           $"They don't need to be logged in, but to add hosts they will need to supply an email address. " +
-                          $"All other functions can be called with or without an email address.";
+                          $"All other functions can be called with or without an email address."+
+                          $"If the user asks about logging in then they can browse to {AppConstants.FrontendUrl}/?assistant=open and then click the login button top right";
             }
             string parameters = @"{""detail_response"" : false}";
             string assistantStr = string.Format(config.FunctionBuilder, "get_user_info", parameters);
