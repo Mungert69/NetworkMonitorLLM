@@ -51,15 +51,28 @@ public class CommonTools
             .Build();
     }
 
-    public static FunctionDefinition BuildRunBusyboxFunction()
-    {
-        return new FunctionDefinitionBuilder("run_busybox_command", "Run a BusyBox command. Use BusyBox utilities to assist with other functions of the assistant as well as user requests. For instance, you might use BusyBox to gather local network diagnostics (what is the local network address range), troubleshoot connectivity issues, monitor system performance, or perform basic file operations in response to a user's request")
-            .AddParameter("command", PropertyDefinition.DefineString("The BusyBox command to be executed. Example commands: 'ls /tmp' to list files in the /tmp directory, 'ping -c 4 8.8.8.8' to ping Google's DNS server 4 times, or 'ifconfig' to display network interface configurations."))
-            .AddParameter("agent_location", PropertyDefinition.DefineString("The agent location that will run the busybox command. If no location is specified ask the user to choose from available agents to ensure the scan is executed from the correct network or geographic location."))
-            .AddParameter("number_lines", PropertyDefinition.DefineInteger("Number of lines to return from the command output. Use this parameter to limit the output. Larger values may return extensive data, so use higher limits cautiously."))
-            .AddParameter("page", PropertyDefinition.DefineInteger("The page of lines to return. Use this to paginate through multiple lines of output if the command returns more data than the specified number of lines."))
-            .Validate()
-            .Build();
-    }
+  public static FunctionDefinition BuildRunBusyboxFunction()
+{
+    return new FunctionDefinitionBuilder("run_busybox_command", 
+        "Run BusyBox commands for local network analysis. Key use cases:\n" +
+        "1. Interface status: 'ifconfig eth0' | 'ip addr show'\n" +
+        "2. Connectivity testing: 'ping -c 4 192.168.1.1' | 'traceroute 10.0.0.5'\n" +
+        "3. Network configuration: 'netstat -r' | 'ip route list'\n" +
+        "4. DNS validation: 'nslookup gateway.local' | 'dig +short myip.opendns.com'\n" +
+        "5. ARP analysis: 'arp -a' | 'ip neigh show'")
+    .AddParameter("command", PropertyDefinition.DefineString(
+        "BusyBox network diagnostic command. Examples:\n" +
+        "- Show all interfaces: 'ip -br addr'\n" +
+        "- Ping default gateway: 'ping -c 5 $(ip route | awk '/default/ {print $3}')'\n" +
+        "- Trace route to DNS server: 'traceroute 8.8.8.8'"))
+    .AddParameter("agent_location", PropertyDefinition.DefineString(
+        "Network segment identifier. Examples: 'gateway-node', 'branch-office-switch', 'main-router'"))
+    .AddParameter("number_lines", PropertyDefinition.DefineInteger(
+        "Output line limit. Example: 20 lines for 'ip addr show' output"))
+    .AddParameter("page", PropertyDefinition.DefineInteger(
+        "Paginate large outputs. Example: Page 2 of routing table ('netstat -r') results"))
+    .Validate()
+    .Build();
+}
 
 }

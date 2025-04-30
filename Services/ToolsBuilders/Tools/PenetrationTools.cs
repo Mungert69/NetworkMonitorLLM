@@ -25,32 +25,23 @@ public class PenetrationTools
             "2. Get module details with get_metasploit_module_info " +
             "3. Execute with required parameters. " +
             "Example: To exploit EternalBlue: {'module_name':'exploit/windows/smb/ms17_010_eternalblue','target':'192.168.1.5','module_options':{'RHOSTS':'192.168.1.5','LHOST':'10.0.0.1'}}")
-            .AddParameter("module_name", PropertyDefinition.DefineString(
-                "[REQUIRED] Full module path from search results. Example: 'exploit/windows/smb/ms17_010_eternalblue'"))
-            .AddParameter("module_options", PropertyDefinition.DefineObject(
-                properties: new Dictionary<string, PropertyDefinition>
-                {
-                    ["RHOSTS"] = PropertyDefinition.DefineString("Target IP/Range. Example: '192.168.1.1-254'"),
-                    ["LHOST"] = PropertyDefinition.DefineString("Attacker IP for callbacks"),
-                    ["PAYLOAD"] = PropertyDefinition.DefineEnum(
-                        new List<string> { "windows/meterpreter/reverse_tcp", "generic/shell_reverse_tcp" },
-                        "Payload type. Default: auto-select based on module")
-                },
-                required: new List<string> { "RHOSTS" },
-                description: "[REQUIRED] Minimum options needed for execution. Always include RHOSTS."))
-            .AddParameter("target", PropertyDefinition.DefineString(
-                "[REQUIRED] IP/Domain/CIDR range. Validate format first. Example: '192.168.1.0/24'"))
-            .AddParameter("agent_location", PropertyDefinition.DefineEnum(
-                new List<string> { "aws-eu", "azure-us", "gcp-asia" },
-                "Predefined agent locations. Default: auto-assign based on target geoIP"))
-            .AddParameter("number_lines", PropertyDefinition.DefineInteger(
-                "Output lines to return. Default: 20. Max: 100."))
-            .AddParameter("page", PropertyDefinition.DefineInteger(
-                "Pagination for large outputs. Start with 1. Increment if 'truncated' flag is set."))
-            .Validate()
-            .Build();
+        .AddParameter("module_name", PropertyDefinition.DefineString(
+            "[REQUIRED] Full module path from search results. Example: 'exploit/windows/smb/ms17_010_eternalblue'"))
+      .AddParameter("module_options", PropertyDefinition.DefineString(
+    "JSON object with Metasploit module options. Must include 'RHOSTS'. " +
+    "Example: { \"RHOSTS\": \"192.168.1.5\", \"LHOST\": \"10.0.0.1\", \"PAYLOAD\": \"windows/meterpreter/reverse_tcp\" }"))
+.AddParameter("target", PropertyDefinition.DefineString(
+            "[REQUIRED] IP/Domain/CIDR range. Validate format first. Example: '192.168.1.0/24'"))
+        .AddParameter("agent_location", PropertyDefinition.DefineEnum(
+            new List<string> { "aws-eu", "azure-us", "gcp-asia" },
+            "Predefined agent locations. Default: auto-assign based on target geoIP"))
+        .AddParameter("number_lines", PropertyDefinition.DefineInteger(
+            "Output lines to return. Default: 20. Max: 100."))
+        .AddParameter("page", PropertyDefinition.DefineInteger(
+            "Pagination for large outputs. Start with 1. Increment if 'truncated' flag is set."))
+        .Validate()
+        .Build();
     }
-
     public static FunctionDefinition BuildSearchMetasploitFunction()
     {
         return new FunctionDefinitionBuilder("search_metasploit_modules",
