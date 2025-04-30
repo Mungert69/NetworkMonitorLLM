@@ -33,14 +33,14 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
 {
     protected ILLMService _llmService;
     private string _serviceID = "monitor";
-       private readonly IQueryCoordinator _queryCoordinator;
+    private readonly IQueryCoordinator _queryCoordinator;
 
     public RabbitListener(ILLMService llmService, ILogger<RabbitListenerBase> logger, ISystemParamsHelper systemParamsHelper, IQueryCoordinator queryCoordinator) : base(logger, DeriveSystemUrl(systemParamsHelper))
     {
 
         _llmService = llmService;
         _serviceID = systemParamsHelper.GetSystemParams().ServiceID ?? "monitor";
-        _queryCoordinator=queryCoordinator;
+        _queryCoordinator = queryCoordinator;
 
     }
 
@@ -93,111 +93,101 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
         result.Success = true;
         try
         {
-            foreach (var rabbitMQObj in _rabbitMQObjs)
-            {
-                if (rabbitMQObj.ConnectChannel == null)
-                {
-                    result.Message += $" Error : RabbitListener Connect Channel not open for Exchange {rabbitMQObj.ExchangeName}";
-                    result.Success = false;
-                    _logger.LogCritical(result.Message);
-                    return result;
-                }
-                rabbitMQObj.Consumer = new AsyncEventingBasicConsumer(rabbitMQObj.ConnectChannel);
+            await Parallel.ForEachAsync(_rabbitMQObjs, async (rabbitMQObj, cancellationToken) =>
+              {
+
+                  if (rabbitMQObj.ConnectChannel != null)
+                  {
+
+                      rabbitMQObj.Consumer = new AsyncEventingBasicConsumer(rabbitMQObj.ConnectChannel);
+                      await rabbitMQObj.ConnectChannel.BasicConsumeAsync(
+                              queue: rabbitMQObj.QueueName,
+                              autoAck: false,
+                              consumer: rabbitMQObj.Consumer
+                          );
 
 
-                await rabbitMQObj.ConnectChannel.BasicConsumeAsync(
-                    queue: rabbitMQObj.QueueName,
-                    autoAck: false,
-                    consumer: rabbitMQObj.Consumer
-                );
-
-                if (rabbitMQObj.Consumer == null)
-                {
-                    result.Message += $" Error : RabbitListener can't create Consumer for queue  {rabbitMQObj.QueueName}";
-                    result.Success = false;
-                    _logger.LogCritical(result.Message);
-                    return result;
-                }
-                switch (rabbitMQObj.FuncName)
-                {
-                    case "llmStartSession":
-                        await rabbitMQObj.ConnectChannel.BasicQosAsync(prefetchSize: 0, prefetchCount: 1, global: false);
-                        rabbitMQObj.Consumer.ReceivedAsync += async (model, ea) =>
-                    {
-                        try
-                        {
-                            _ = StartSession(ConvertToObject<LLMServiceObj>(model, ea));
-                            await rabbitMQObj.ConnectChannel.BasicAckAsync(ea.DeliveryTag, false);
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogError(" Error : RabbitListener.DeclareConsumers.llmStartSession " + ex.Message);
-                        }
-                    };
-                        break;
-                    case "llmStopRequest":
-                        await rabbitMQObj.ConnectChannel.BasicQosAsync(prefetchSize: 0, prefetchCount: 1, global: false);
-                        rabbitMQObj.Consumer.ReceivedAsync += async (model, ea) =>
-                    {
-                        try
-                        {
-                            _ = StopRequest(ConvertToObject<LLMServiceObj>(model, ea));
-                            await rabbitMQObj.ConnectChannel.BasicAckAsync(ea.DeliveryTag, false);
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogError(" Error : RabbitListener.DeclareConsumers.llmStopRequest " + ex.Message);
-                        }
-                    };
-                        break;
-                    case "llmRemoveSession":
-                        await rabbitMQObj.ConnectChannel.BasicQosAsync(prefetchSize: 0, prefetchCount: 1, global: false);
-                        rabbitMQObj.Consumer.ReceivedAsync += async (model, ea) =>
-                    {
-                        try
-                        {
-                            _ = RemoveSession(ConvertToObject<LLMServiceObj>(model, ea));
-                            await rabbitMQObj.ConnectChannel.BasicAckAsync(ea.DeliveryTag, false);
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogError(" Error : RabbitListener.DeclareConsumers.llmRemoveSession " + ex.Message);
-                        }
-                    };
-                        break;
-                    case "llmUserInput":
-                        await rabbitMQObj.ConnectChannel.BasicQosAsync(prefetchSize: 0, prefetchCount: 1, global: false);
-                        rabbitMQObj.Consumer.ReceivedAsync += async (model, ea) =>
-                    {
-                        try
-                        {
-                            _ = UserInput(ConvertToObject<LLMServiceObj>(model, ea));
-                            await rabbitMQObj.ConnectChannel.BasicAckAsync(ea.DeliveryTag, false);
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogError(" Error : RabbitListener.DeclareConsumers.llmUserInput " + ex.Message);
-                        }
-                    };
-                        break;
-                    case "queryIndexResult":
-                        await rabbitMQObj.ConnectChannel.BasicQosAsync(prefetchSize: 0, prefetchCount: 1, global: false);
-                        rabbitMQObj.Consumer.ReceivedAsync += async (model, ea) =>
-                        {
-                            try
+                      switch (rabbitMQObj.FuncName)
+                      {
+                          case "llmStartSession":
+                              await rabbitMQObj.ConnectChannel.BasicQosAsync(prefetchSize: 0, prefetchCount: 1, global: false);
+                              rabbitMQObj.Consumer.ReceivedAsync += async (model, ea) =>
                             {
-                                 QueryIndexResult(ConvertToObject<QueryIndexRequest>(model, ea));
-                                await rabbitMQObj.ConnectChannel.BasicAckAsync(ea.DeliveryTag, false);
-                            }
-                            catch (Exception ex)
+                      try
+                      {
+                          _ = StartSession(ConvertToObject<LLMServiceObj>(model, ea));
+                          await rabbitMQObj.ConnectChannel.BasicAckAsync(ea.DeliveryTag, false);
+                      }
+                      catch (Exception ex)
+                      {
+                          _logger.LogError(" Error : RabbitListener.DeclareConsumers.llmStartSession " + ex.Message);
+                      }
+                  };
+                              break;
+                          case "llmStopRequest":
+                              await rabbitMQObj.ConnectChannel.BasicQosAsync(prefetchSize: 0, prefetchCount: 1, global: false);
+                              rabbitMQObj.Consumer.ReceivedAsync += async (model, ea) =>
                             {
-                                _logger.LogError(" Error : RabbitListener.DeclareConsumers.queryIndexResult " + ex.Message);
-                            }
-                        };
-                        break;
+                      try
+                      {
+                          _ = StopRequest(ConvertToObject<LLMServiceObj>(model, ea));
+                          await rabbitMQObj.ConnectChannel.BasicAckAsync(ea.DeliveryTag, false);
+                      }
+                      catch (Exception ex)
+                      {
+                          _logger.LogError(" Error : RabbitListener.DeclareConsumers.llmStopRequest " + ex.Message);
+                      }
+                  };
+                              break;
+                          case "llmRemoveSession":
+                              await rabbitMQObj.ConnectChannel.BasicQosAsync(prefetchSize: 0, prefetchCount: 1, global: false);
+                              rabbitMQObj.Consumer.ReceivedAsync += async (model, ea) =>
+                            {
+                      try
+                      {
+                          _ = RemoveSession(ConvertToObject<LLMServiceObj>(model, ea));
+                          await rabbitMQObj.ConnectChannel.BasicAckAsync(ea.DeliveryTag, false);
+                      }
+                      catch (Exception ex)
+                      {
+                          _logger.LogError(" Error : RabbitListener.DeclareConsumers.llmRemoveSession " + ex.Message);
+                      }
+                  };
+                              break;
+                          case "llmUserInput":
+                              await rabbitMQObj.ConnectChannel.BasicQosAsync(prefetchSize: 0, prefetchCount: 1, global: false);
+                              rabbitMQObj.Consumer.ReceivedAsync += async (model, ea) =>
+                            {
+                      try
+                      {
+                          _ = UserInput(ConvertToObject<LLMServiceObj>(model, ea));
+                          await rabbitMQObj.ConnectChannel.BasicAckAsync(ea.DeliveryTag, false);
+                      }
+                      catch (Exception ex)
+                      {
+                          _logger.LogError(" Error : RabbitListener.DeclareConsumers.llmUserInput " + ex.Message);
+                      }
+                  };
+                              break;
+                          case "queryIndexResult":
+                              await rabbitMQObj.ConnectChannel.BasicQosAsync(prefetchSize: 0, prefetchCount: 1, global: false);
+                              rabbitMQObj.Consumer.ReceivedAsync += async (model, ea) =>
+                                {
+                          try
+                          {
+                              QueryIndexResult(ConvertToObject<QueryIndexRequest>(model, ea));
+                              await rabbitMQObj.ConnectChannel.BasicAckAsync(ea.DeliveryTag, false);
+                          }
+                          catch (Exception ex)
+                          {
+                              _logger.LogError(" Error : RabbitListener.DeclareConsumers.queryIndexResult " + ex.Message);
+                          }
+                      };
+                              break;
 
-                }
-            }
+                      }
+                  }
+              });
             if (result.Success) result.Message += " Success : Declared all consumers ";
         }
         catch (Exception e)
@@ -349,7 +339,7 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
         return result;
     }
 
-        public ResultObj QueryIndexResult(QueryIndexRequest? queryIndexRequest)
+    public ResultObj QueryIndexResult(QueryIndexRequest? queryIndexRequest)
     {
         var result = new ResultObj();
         result.Success = false;
