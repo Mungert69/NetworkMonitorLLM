@@ -49,11 +49,9 @@ public class PenetrationTools
             .AddParameter("module_type", PropertyDefinition.DefineEnum(
                 new List<string> { "exploit", "auxiliary", "post", "payload", "encoder", "nop" },
                 "Category filter. Multiple allowed with commas. Example: 'exploit,auxiliary'"))
-            .AddParameter("platform", PropertyDefinition.DefineEnum(
-                new List<string> { "windows", "linux", "android", "multi" },
+            .AddParameter("platform", PropertyDefinition.DefineString(
                 "OS filter. Use 'multi' for cross-platform"))
-            .AddParameter("service", PropertyDefinition.DefineEnum(
-                new List<string> { "smb", "http", "ssh", "ftp", "rdp" },
+            .AddParameter("service", PropertyDefinition.DefineString(
                 "Affected service filter"))
             .AddParameter("cve", PropertyDefinition.DefineString(
                 "CVE ID with validation. Format: CVE-YYYY-NNNNN. Example: CVE-2017-0144"))
@@ -68,6 +66,13 @@ public class PenetrationTools
                 "Results per page. Default: 10. Max: 50."))
             .AddParameter("page", PropertyDefinition.DefineInteger(
                 "Pagination control. Start with 1. Increment if 'more_results'=true"))
+                .AddParameter("agent_location", PropertyDefinition.DefineString(
+            "Predefined agent locations. Default: auto-assign based on target geoIP"))
+        .AddParameter("number_lines", PropertyDefinition.DefineInteger(
+            "Output lines to return. Default: 20. Max: 100."))
+        .AddParameter("page", PropertyDefinition.DefineInteger(
+            "Pagination for large outputs. Start with 1. Increment if 'truncated' flag is set."))
+        
             .Validate()
             .Build();
     }
@@ -83,6 +88,13 @@ public class PenetrationTools
                 "Include full parameter details. Default: true"))
             .AddParameter("show_examples", PropertyDefinition.DefineBoolean(
                 "Include usage examples. Default: true"))
+                .AddParameter("agent_location", PropertyDefinition.DefineString(
+            "Predefined agent locations. Default: auto-assign based on target geoIP"))
+        .AddParameter("number_lines", PropertyDefinition.DefineInteger(
+            "Output lines to return. Default: 20. Max: 100."))
+        .AddParameter("page", PropertyDefinition.DefineInteger(
+            "Pagination for large outputs. Start with 1. Increment if 'truncated' flag is set."))
+        
             .Validate()
             .Build();
     }
