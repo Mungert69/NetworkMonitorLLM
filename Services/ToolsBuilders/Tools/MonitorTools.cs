@@ -77,12 +77,12 @@ public class MonitorTools
         "- Get all hosts with alerts: {'alert_flag': true}\n" +
         "- Get latest data for specific host: {'dataset_id': 0, 'address': 'test.com'}\n" +
         "- Get historical data by time range: {'id': 2, 'date_start': '2024-04-11T19:20:00', 'date_end': '2024-04-12T19:20:00'}\n" +
-        "- Paginate through all hosts: {'page_number': 1, 'page_size': 50}\n\n" +
+        "- Paginate through all hosts. Starting at page 1 with 10 hosts on it: {'page_number': 1, 'page_size': 10}\n\n" +
         "Note: Multiple filters can be combined (AND logic). Leaving a filter out means that field won't be used to restrict results.")
     .AddParameter("detail_response", PropertyDefinition.DefineBoolean(
-        "Set to true for comprehensive monitoring data including extra statistics and agent location. This may impact performance."))
+        "Set to true for comprehensive monitoring data including reponse time statistics, agent location, and other info."))
     .AddParameter("dataset_id", PropertyDefinition.DefineNumber(
-        "Statistical dataset identifier (0 = latest data). For historical data, set to null and specify date range."))
+        "Dataset identifier (0 = latest data). For historical data, set to null and specify date range."))
     .AddParameter("id", PropertyDefinition.DefineNumber(
         "Filter by host ID. Omit to include all IDs."))
     .AddParameter("address", PropertyDefinition.DefineString(
@@ -119,11 +119,11 @@ public class MonitorTools
         "Retrieve a list of monitored hosts and their configurations based on specified filters. By default, if no filters are provided (empty object {}), all hosts will be returned. Add parameters to filter and restrict the results. Examples:\n" +
         "- Get all hosts with '.com' addresses: {'address': '.com'}\n" +
         "- Get only DNS endpoint hosts: {'endpoint': 'dns'}\n" +
-        "- Get enabled hosts from specific location: {'enabled': true, 'agent_location': 'europe'}\n" +
-        "- Paginate through all hosts: {'page_number': 1, 'page_size': 50}\n\n" +
+        "- Get enabled hosts from specific location: {'enabled': true, 'agent_location': 'London - UK'}\n" +
+        "- Paginate through all hosts, show page 1 with 10 hosts on it: {'page_number': 1, 'page_size': 10}\n\n" +
         "Note: Multiple filters can be combined (AND logic). Leaving a filter out means that field won't be used to restrict results.")
     .AddParameter("detail_response", PropertyDefinition.DefineBoolean(
-        "Set to true to include full configuration details (beyond just ID and address). This may increase response size."))
+        "Set to true to include full configuration details (beyond just ID and address)."))
     .AddParameter("id", PropertyDefinition.DefineNumber(
         "Filter by host ID. Omit to include all IDs."))
     .AddParameter("address", PropertyDefinition.DefineString(
