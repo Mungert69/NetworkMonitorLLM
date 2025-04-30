@@ -72,37 +72,37 @@ public class MonitorTools{
         {
             return new FunctionDefinitionBuilder(
                 "get_host_data",
-                "Retrieve monitoring data with filters. Example: Latest data for host ID 10: {'id':10,'dataset_id':0}. Find down hosts: {'alert_flag':true}.")
+                "Retrieve host monitoring data with optional filters. Use this to get the actual host monitoring data. In general you would only filter by address and then add fields to apply additional filters")
             .AddParameter("detail_response", PropertyDefinition.DefineBoolean(
                 "Include full metrics (response times/headers). Default: false."))
             .AddParameter("dataset_id", PropertyDefinition.DefineNumber(
-                "6-hour data window (0=latest). Use null + dates for history."))
+                "Get data within a dataset (0=latest). Do not set this if you set date_start or date_end"))
             .AddParameter("id", PropertyDefinition.DefineNumber(
-                "Host ID (e.g., 15)."))
+                "Filter by host id. In general only use this if only one host with a given id is required"))
             .AddParameter("address", PropertyDefinition.DefineString(
-                "Wildcard filter (e.g., '*.prod'). Supports * and ? wildcards."))
+                "Fitler by host address. You can use wildcard filters (e.g., 'example*'). Supports * and ? wildcards."))
             .AddParameter("email", PropertyDefinition.DefineString(
                 "Filter by alert recipient email."))
             .AddParameter("enabled", PropertyDefinition.DefineBoolean(
-                "Active/inactive hosts. Default: true."))
+                "Filter by Active/inactive hosts. Default: true."))
             .AddParameter("port", PropertyDefinition.DefineNumber(
                 "Filter by port (e.g., 443)."))
             .AddParameter("endpoint", PropertyDefinition.DefineString(
-                "Filter by endpoint (e.g., 'https')."))
+                "Filter by endpoint type"))
             .AddParameter("alert_sent", PropertyDefinition.DefineBoolean(
-                "Hosts that triggered alerts."))
+                "Filter by hosts that have had an email alert sent))
             .AddParameter("alert_flag", PropertyDefinition.DefineBoolean(
-                "Hosts in alert state (up/down)."))
+                "Filter by Hosts in alert state true (host down) false (host down)."))
             .AddParameter("date_start", PropertyDefinition.DefineString(
-                "ISO start time (e.g., '2024-05-01T00:00:00')."))
+                "Filter by ISO start time (e.g., '2024-05-01T00:00:00')."))
             .AddParameter("date_end", PropertyDefinition.DefineString(
-                "ISO end time."))
+                "Fitler by ISO end time."))
             .AddParameter("page_size", PropertyDefinition.DefineNumber(
                 "Results per page. Default: 4."))
             .AddParameter("page_number", PropertyDefinition.DefineNumber(
                 "Pagination page. Default: 1."))
             .AddParameter("agent_location", PropertyDefinition.DefineString(
-                "Filter by agent (e.g., 'Kansas - USA')."))
+                "Filter by agent location. In general leave this field out unless you want Filter by agent location"))
             .Validate()
             .Build();
         }
@@ -111,17 +111,17 @@ public class MonitorTools{
         {
             return new FunctionDefinitionBuilder(
                 "get_host_list",
-                "List monitored hosts. Example: All 192.168.* hosts: {'address':'192.168.*'}. Disabled hosts: {'enabled':false}.")
+                "List monitored host configuration. Only use this to show host monitoring configuration.")
             .AddParameter("detail_response", PropertyDefinition.DefineBoolean(
                 "Include full config (tags/thresholds). Default: false."))
             .AddParameter("id", PropertyDefinition.DefineNumber(
                 "Host ID (e.g., 15)."))
             .AddParameter("address", PropertyDefinition.DefineString(
-                "Wildcard filter (e.g., 'prod-?.*')."))
+                "Fitler by host address. You can use wildcard filters (e.g., '*.com'). Supports * and ? wildcards."))
             .AddParameter("email", PropertyDefinition.DefineString(
                 "Filter by contact email."))
             .AddParameter("enabled", PropertyDefinition.DefineBoolean(
-                "Active/inactive hosts. Default: true."))
+                "Filter by Active/inactive hosts. Default: true."))
             .AddParameter("port", PropertyDefinition.DefineNumber(
                 "Filter by port (e.g., 443)."))
             .AddParameter("endpoint", PropertyDefinition.DefineString(
@@ -131,7 +131,7 @@ public class MonitorTools{
             .AddParameter("page_number", PropertyDefinition.DefineNumber(
                 "Pagination page. Default: 1."))
             .AddParameter("agent_location", PropertyDefinition.DefineString(
-                "Filter by agent location."))
+                "Filter by agent locatoin. In general leave this field out unless you want Filter by agent location"))
             .Validate()
             .Build();
         }
