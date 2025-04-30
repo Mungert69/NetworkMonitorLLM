@@ -69,72 +69,80 @@ public class MonitorTools
         .Build();
     }
 
-    public static FunctionDefinition BuildGetHostDataFunction()
-    {
-        return new FunctionDefinitionBuilder(
-            "get_host_data",
-            "Retrieve monitoring data for hosts. This function allows you to obtain data related to the monitoring of hosts. For example, to get the latest data for a host with address 'test.com', you would specify {'dataset_id': 0, 'address': 'test.com'}. To get data for a host with ID 2 between specific dates, you would specify {'id': 2, 'date_start': '2024-04-11T19:20:00', 'date_end': '2024-04-12T19:20:00'}. You can also filter hosts that are flagged with an alert by specifying {'alert_flag': true}. When using pagination, stop incrementing 'page_number' when no more data is found.")
-        .AddParameter("detail_response", PropertyDefinition.DefineBoolean(
-            "Set to true if you want the function to provide all monitoring data for hosts, including extra response statistics or agent location. Setting it to true may slow down the processing speed."))
-        .AddParameter("dataset_id", PropertyDefinition.DefineNumber(
-            "Return a set of statistical data. Data is arranged in 6-hour datasets. Set 'dataset_id' to 0 for the latest data. To view historic data, set 'dataset_id' to null and select a date range with 'date_start' and 'date_end'."))
-        .AddParameter("id", PropertyDefinition.DefineNumber(
-            "Return data for the host with this ID. Optional field."))
-        .AddParameter("address", PropertyDefinition.DefineString(
-            "Return data for the host with this address. Optional field."))
-        .AddParameter("email", PropertyDefinition.DefineString(
-            "Return data for hosts associated with this email. Optional field."))
-        .AddParameter("enabled", PropertyDefinition.DefineBoolean(
-            "Return data for hosts with this enabled status. Optional field."))
-        .AddParameter("port", PropertyDefinition.DefineNumber(
-            "Return data for the host with this port. Optional field."))
-        .AddParameter("endpoint", PropertyDefinition.DefineString(
-            "Return data for hosts with this endpoint type. Optional field."))
-        .AddParameter("alert_sent", PropertyDefinition.DefineBoolean(
-            "Return data for hosts that have sent a down alert. Optional field."))
-        .AddParameter("alert_flag", PropertyDefinition.DefineBoolean(
-            "Return data for hosts that have an alert flag set. This can be used to retrieve hosts that are up or down. Optional field."))
-        .AddParameter("date_start", PropertyDefinition.DefineString(
-            "The start time to filter data from. Used with 'date_end' to define a time range. Optional field."))
-        .AddParameter("date_end", PropertyDefinition.DefineString(
-            "The end time to filter data up to. Optional field."))
-        .AddParameter("page_number", PropertyDefinition.DefineNumber(
-            "The current page of paginated results. Starts from 1. Use this when retrieving large datasets incrementally."))
-        .AddParameter("page_size", PropertyDefinition.DefineNumber(
-            "The maximum number of entries to retrieve per page. The default is 4."))
-        .AddParameter("agent_location", PropertyDefinition.DefineString(
-            "The location of the agent monitoring this host. Optional field."))
-        .Validate()
-        .Build();
-    }
-
-    public static FunctionDefinition BuildGetHostListFunction()
-    {
-        return new FunctionDefinitionBuilder(
-            "get_host_list",
-            "Retrieve a list of monitored hosts and their configurations. This function allows you to obtain information about the hosts being monitored. For example, to filter hosts by address containing '.com', you would specify {'address': '.com'}. To filter hosts with a 'dns' endpoint, you would specify {'endpoint': 'dns'}.")
-        .AddParameter("detail_response", PropertyDefinition.DefineBoolean(
-            "Set to true if you require more than the host's address and ID. This will provide additional configuration details."))
-        .AddParameter("id", PropertyDefinition.DefineNumber(
-            "Return configuration for the host with this ID. Optional field."))
-        .AddParameter("address", PropertyDefinition.DefineString(
-            "Return configuration for the host with this address. Optional field."))
-        .AddParameter("email", PropertyDefinition.DefineString(
-            "Return configurations for hosts associated with this email. Optional field."))
-        .AddParameter("enabled", PropertyDefinition.DefineBoolean(
-            "Return configurations for hosts with this enabled status. Optional field."))
-        .AddParameter("port", PropertyDefinition.DefineNumber(
-            "Return configurations for hosts with this port. Optional field."))
-        .AddParameter("endpoint", PropertyDefinition.DefineString(
-            "Return configurations for hosts with this endpoint type. Optional field."))
-        .AddParameter("page_number", PropertyDefinition.DefineNumber(
-            "The current page of paginated results. Starts from 1. Use this when retrieving large datasets incrementally."))
-        .AddParameter("page_size", PropertyDefinition.DefineNumber(
-            "The maximum number of host configurations to retrieve per page. The default is 4."))
-        .AddParameter("agent_location", PropertyDefinition.DefineString(
-            "The location of the agent monitoring these hosts. Optional field."))
-        .Validate()
-        .Build();
-    }
-
+   public static FunctionDefinition BuildGetHostDataFunction()
+{
+    return new FunctionDefinitionBuilder(
+        "get_host_data",
+        "Retrieve monitoring data for hosts based on specified filters. By default, if no filters are provided (empty object {}), all host data will be returned. Add parameters to filter and restrict the results. Examples:\n" +
+        "- Get all hosts with alerts: {'alert_flag': true}\n" +
+        "- Get latest data for specific host: {'dataset_id': 0, 'address': 'test.com'}\n" +
+        "- Get historical data by time range: {'id': 2, 'date_start': '2024-04-11T19:20:00', 'date_end': '2024-04-12T19:20:00'}\n" +
+        "- Paginate through all hosts: {'page_number': 1, 'page_size': 50}\n\n" +
+        "Note: Multiple filters can be combined (AND logic). Leaving a filter out means that field won't be used to restrict results.")
+    .AddParameter("detail_response", PropertyDefinition.DefineBoolean(
+        "Set to true for comprehensive monitoring data including extra statistics and agent location. This may impact performance."))
+    .AddParameter("dataset_id", PropertyDefinition.DefineNumber(
+        "Statistical dataset identifier (0 = latest data). For historical data, set to null and specify date range."))
+    .AddParameter("id", PropertyDefinition.DefineNumber(
+        "Filter by host ID. Omit to include all IDs."))
+    .AddParameter("address", PropertyDefinition.DefineString(
+        "Filter by host address (supports partial matchesa and wildcards * and ?). Omit to include all addresses."))
+    .AddParameter("email", PropertyDefinition.DefineString(
+        "Filter by associated email. Omit to include all emails."))
+    .AddParameter("enabled", PropertyDefinition.DefineBoolean(
+        "Filter by enabled status. Omit to include both enabled and disabled hosts."))
+    .AddParameter("port", PropertyDefinition.DefineNumber(
+        "Filter by port number. Omit to include all ports."))
+    .AddParameter("endpoint", PropertyDefinition.DefineString(
+        "Filter by endpoint type. Omit to include all endpoints."))
+    .AddParameter("alert_sent", PropertyDefinition.DefineBoolean(
+        "Filter by alert sent status. Omit to include regardless of alert status."))
+    .AddParameter("alert_flag", PropertyDefinition.DefineBoolean(
+        "Filter by alert flag status. Omit to include hosts with any alert status."))
+    .AddParameter("date_start", PropertyDefinition.DefineString(
+        "Start time for historical data filtering. Requires date_end. Format: 'YYYY-MM-DDTHH:MM:SS'."))
+    .AddParameter("date_end", PropertyDefinition.DefineString(
+        "End time for historical data filtering. Format: 'YYYY-MM-DDTHH:MM:SS'."))
+    .AddParameter("page_number", PropertyDefinition.DefineNumber(
+        "Pagination: page number (1-based). Use with page_size for large datasets."))
+    .AddParameter("page_size", PropertyDefinition.DefineNumber(
+        "Pagination: results per page (default=4)."))
+    .AddParameter("agent_location", PropertyDefinition.DefineString(
+        "Filter by agent location. Omit to include all locations."))
+    .Validate()
+    .Build();
+}
+   public static FunctionDefinition BuildGetHostListFunction()
+{
+    return new FunctionDefinitionBuilder(
+        "get_host_list",
+        "Retrieve a list of monitored hosts and their configurations based on specified filters. By default, if no filters are provided (empty object {}), all hosts will be returned. Add parameters to filter and restrict the results. Examples:\n" +
+        "- Get all hosts with '.com' addresses: {'address': '.com'}\n" +
+        "- Get only DNS endpoint hosts: {'endpoint': 'dns'}\n" +
+        "- Get enabled hosts from specific location: {'enabled': true, 'agent_location': 'europe'}\n" +
+        "- Paginate through all hosts: {'page_number': 1, 'page_size': 50}\n\n" +
+        "Note: Multiple filters can be combined (AND logic). Leaving a filter out means that field won't be used to restrict results.")
+    .AddParameter("detail_response", PropertyDefinition.DefineBoolean(
+        "Set to true to include full configuration details (beyond just ID and address). This may increase response size."))
+    .AddParameter("id", PropertyDefinition.DefineNumber(
+        "Filter by host ID. Omit to include all IDs."))
+    .AddParameter("address", PropertyDefinition.DefineString(
+        "Filter by host address (supports partial matchesa and wildcards * and ?). Omit to include all addresses."))
+    .AddParameter("email", PropertyDefinition.DefineString(
+        "Filter by associated email. Omit to include all emails."))
+    .AddParameter("enabled", PropertyDefinition.DefineBoolean(
+        "Filter by enabled status. Omit to include both enabled and disabled hosts."))
+    .AddParameter("port", PropertyDefinition.DefineNumber(
+        "Filter by port number. Omit to include all ports."))
+    .AddParameter("endpoint", PropertyDefinition.DefineString(
+        "Filter by endpoint type (e.g., 'http', 'dns'). Omit to include all endpoints."))
+    .AddParameter("page_number", PropertyDefinition.DefineNumber(
+        "Pagination: page number (1-based). Use with page_size for large result sets."))
+    .AddParameter("page_size", PropertyDefinition.DefineNumber(
+        "Pagination: results per page (default=4)."))
+    .AddParameter("agent_location", PropertyDefinition.DefineString(
+        "Filter by agent location. Omit to include all locations."))
+    .Validate()
+    .Build();
+}
 }
