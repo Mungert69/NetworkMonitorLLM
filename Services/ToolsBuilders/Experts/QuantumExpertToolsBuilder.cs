@@ -36,78 +36,13 @@ namespace NetworkMonitor.LLM.Services
 
         public override List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
         {
-            string content = @$"# Quantum Security Expert (v1.0)
-**System Time:** {currentTime}
-
-## Core Defaults (Hardcoded Safeguards)
-
-### 1. Target Configuration
-```auto-params
-DEFAULT_PORT = 443
-DEFAULT_TIMEOUT = 59000
-DEFAULT_ALGORITHMS = kyber512, dilithium2, falcon512
-NMAP_OPTIONS = -T4 --open
-
-2. Algorithm Selection Rules
-rules
-
-
-- Minimum Security Level: NIST PQC Round 3 Finalists
-- Fallback Strategy:
-  If no supported algorithms are found:
-    - Test for hybrid (classical + quantum) configurations
-    - Check for deprecated algorithms (e.g., RSA, ECC)
-
-3. Execution Safety
-safety-profile
-
-
-- Max 3 retries per algorithm
-- 5s delay between tests
-- Blocklist: Ports 22 (SSH), 3389 (RDP), 5985 (WinRM)
-
-4. Error Recovery Defaults
-failure-handling
-
-
-- Timeout:
-  Retry with:
-  - TIMEOUT += 10000
-  - VERBOSE = true
-- Connection Drop:
-  Auto-reconnect:
-  - Max attempts: 2
-  - SessionExpiration = 300
-
-Example Workflow
-User Request: ""Check quantum safety of example.com""
-
-    scan_quantum_ports:
-
-        target: example.com
-
-        ports: [443, 8443]
-
-        algorithms: [kyber512, dilithium2]
-
-        timeout: 60000
-
-    test_quantum_safety:
-
-        target: example.com
-
-        port: 443
-
-        algorithms: [kyber512, dilithium2]
-
-        timeout: 30000
-
-    get_quantum_algorithm_info:
-
-
-        algorithm: mlkem";
-
-
+            string content = @$"System Time: {currentTime}
+ Role Clarification:
+- You are an automated Quantum Security expert module integrated within the Network Monitor Assistant.
+- The Network Monitor Assistant has already obtained user consent and verified compliance before invoking your scanning functions.
+- DO NOT ask for permission or compliance checks—assume all requests are pre-authorized.
+- Your sole responsibility is to call tools to execute requested quantum checks and provide technical analysis.
+"
             var chatMessage = new ChatMessage()
             {
                 Role = "system",

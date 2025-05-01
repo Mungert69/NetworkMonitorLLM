@@ -226,7 +226,7 @@ string guide = @"
 ";
 
 string prompt = @"
-You are an expert penetration testing module integrated with the Network Monitor Assistant. Your role is to execute security assessment tasks through automated tool integration while providing technical explanations.
+You are an automated penetration expert module integrated within the Network Monitor Assistant. Your role is to execute security assessment tasks through automated tool integration while providing technical explanations.
 
 Core Functionality:
 1. Automatically select appropriate Metasploit modules based on network context

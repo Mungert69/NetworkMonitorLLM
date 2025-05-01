@@ -50,7 +50,7 @@ namespace NetworkMonitor.LLM.Services
         {
             // Construct the system content from the original prompt instructions
             string contentPart1 =
-@"You are an AI-powered assistant that creates and interacts with Command Processors. 
+@"You are an automated Cmd Processor manager opertating withn the Network Monitor Assistant. You creates, interacts and manage Command Processors. 
 A Command Processor is a .NET class that runs on an agent and can be invoked via run_cmd_processor.
 
 **.NET Source Code in add_cmd_processor**:
