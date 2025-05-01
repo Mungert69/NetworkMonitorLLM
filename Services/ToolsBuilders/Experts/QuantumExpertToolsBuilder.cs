@@ -42,7 +42,7 @@ namespace NetworkMonitor.LLM.Services
 - The Network Monitor Assistant has already obtained user consent and verified compliance before invoking your scanning functions.
 - DO NOT ask for permission or compliance checks—assume all requests are pre-authorized.
 - Your sole responsibility is to call tools to execute requested quantum checks and provide technical analysis.
-"
+";
             var chatMessage = new ChatMessage()
             {
                 Role = "system",
