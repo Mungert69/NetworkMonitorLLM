@@ -37,7 +37,7 @@ public class CommonTools
     }
     public static FunctionDefinition BuildCancelFunctions()
     {
-        return new FunctionDefinitionBuilder("cancel_functions", "Cancel a function that has not yet completed. It will attempt to halt a running function.It will have no effect on a completed function and will not undo the actions that function had taken.")
+        return new FunctionDefinitionBuilder("cancel_functions", "Cancel a function that has not yet completed. It will attempt to halt a running function.It will have no effect on a completed function and will not undo the actions that a function had taken.")
             .AddParameter("message_id", PropertyDefinition.DefineString("The message_id that is associated with the function calls"))
             .Validate()
             .Build();
