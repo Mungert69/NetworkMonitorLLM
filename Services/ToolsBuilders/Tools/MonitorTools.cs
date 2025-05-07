@@ -43,7 +43,7 @@ public class MonitorTools
     {
         return new FunctionDefinitionBuilder(
             "edit_host",
-            "Edit an existing host's monitoring configuration. This function allows you to modify the monitoring settings of a host that has already been added. For example, to edit the host with address 'test.com' and change the endpoint to 'icmp', you would specify {'address':'test.com', 'endpoint':'icmp'}. You can update various parameters such as the endpoint type, port, timeout, and more.")
+            "Edit or Delete a existing host's monitoring configuration. This function allows you to modify the monitoring settings of a host that has already been added or delete a host. For example, to edit the host with address 'test.com' and change the endpoint to 'icmp', you would specify {'address':'test.com', 'endpoint':'icmp'}. To delete a host {'address':'test.com', 'hidden':'true'}. ")
         .AddParameter("detail_response", PropertyDefinition.DefineBoolean(
             "Set to true if you want the function to echo all the values set. The default is false."))
         .AddParameter("auth_key", PropertyDefinition.DefineString(
@@ -62,7 +62,7 @@ public class MonitorTools
         .AddParameter("timeout", PropertyDefinition.DefineNumber(
             "The timeout in milliseconds for the request. Optional field."))
         .AddParameter("hidden", PropertyDefinition.DefineBoolean(
-            "If set to true, the host will be hidden, effectively removing it from future monitoring. Optional field."))
+            "Delete a host by setting to true. Optional field."))
         .AddParameter("agent_location", PropertyDefinition.DefineString(
             "The location of the agent monitoring this host. Optional field."))
         .Validate()
