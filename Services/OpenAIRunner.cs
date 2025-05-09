@@ -127,7 +127,12 @@ public class OpenAIRunner : ILLMRunner
         }
         else
         {
-            if (_serviceID == "monitor") toolsBuilder = new MonitorSimpleToolsBuilder(serviceObj.UserInfo);
+            if (_serviceID == "monitor") toolsBuilder = new MonitorToolsBuilder(serviceObj.UserInfo);
+            if (_serviceID == "cmdprocessor") toolsBuilder = new CmdProcessorExpertToolsBuilder(serviceObj.UserInfo);
+            if (_serviceID == "nmap") toolsBuilder = new SecurityExpertToolsBuilder();
+            if (_serviceID == "meta") toolsBuilder = new PenetrationExpertToolsBuilder();
+            if (_serviceID == "search") toolsBuilder = new SearchExpertToolsBuilder();
+            if (_serviceID == "quantum") toolsBuilder = new QuantumExpertToolsBuilder();
 
             _type = "HugLLM";
             _isStream = _mlParams.IsStream;
