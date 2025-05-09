@@ -2,13 +2,13 @@
 2024-04-27 16:20:52 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
       Public IP address of this service is 213.199.46.193
 2024-04-27 16:20:53 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
-       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.freenetworkmonitor.click .IPAdress = 
+       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.readyforquantum.com .IPAdress = 
 2024-04-27 16:20:53 info: NetworkMonitor.Objects.Repository.RabbitRepo[0]
        RabbitRepo : ConnectAndSetUp :  Success : RabbitRepo Connected to RabbitMQ serverdevrabbitmq:5672
 2024-04-27 16:20:53 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
       Public IP address of this service is 213.199.46.193
 2024-04-27 16:20:53 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
-       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.freenetworkmonitor.click .IPAdress = 
+       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.readyforquantum.com .IPAdress = 
 2024-04-27 16:20:53 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
        Rabbit Setup :  Success : Connected to devrabbitmq:5672 . Setup RabbitListener messages were :  RabbitListener DeclareQueues :  Srv-LLMService-llmStartSession  Srv-LLMService-llmUserInput  Srv-LLMService-llmRemoveSession  : Success : Declared all queues  Success : Declared all consumers  RabbitRepo BindChannelToConsumer :  Success :  bound all consumers to queues 
 2024-04-27 16:20:53 info: Microsoft.Hosting.Lifetime[0]

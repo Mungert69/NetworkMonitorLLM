@@ -7,17 +7,17 @@
 2024-04-03 00:46:04 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
       Public IP address of this service is 213.199.46.193
 2024-04-03 00:46:04 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
-       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.freenetworkmonitor.click .IPAdress = 
+       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.readyforquantum.com .IPAdress = 
 2024-04-03 00:46:04 info: NetworkMonitor.Objects.Repository.RabbitRepo[0]
        RabbitRepo : ConnectAndSetUp :  Success : RabbitRepo Connected to RabbitMQ serverdevrabbitmq:5672
 2024-04-03 00:46:05 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
       Public IP address of this service is 213.199.46.193
 2024-04-03 00:46:05 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
-       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.freenetworkmonitor.click .IPAdress = 
+       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.readyforquantum.com .IPAdress = 
 2024-04-03 00:46:05 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
       Public IP address of this service is 213.199.46.193
 2024-04-03 00:46:05 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
-       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.freenetworkmonitor.click .IPAdress = 
+       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.readyforquantum.com .IPAdress = 
 2024-04-03 00:46:05 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
        Rabbit Setup :  Success : Connected to devrabbitmq:5672 . Setup RabbitListener messages were :  RabbitListener DeclareQueues :  Srv-LLMService-mlCheck  Srv-LLMService-mlCheckHost  Srv-LLMService-mlCheckLatestHosts  Srv-LLMService-predictPingInfos  Srv-LLMService-llmStartSession  Srv-LLMService-llmUserInput  Srv-LLMService-llmRemoveSession  : Success : Declared all queues  Success : Declared all consumers  RabbitRepo BindChannelToConsumer :  Success :  bound all consumers to queues 
 2024-04-03 00:46:05 info: Microsoft.Hosting.Lifetime[0]
@@ -419,17 +419,17 @@ generate: n_ctx = 6000, n_batch = 2048, n_predict = 6000, n_keep = 2363
 2024-04-03 03:59:31 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
       Public IP address of this service is 213.199.46.193
 2024-04-03 03:59:31 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
-       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.freenetworkmonitor.click .IPAdress = 
+       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.readyforquantum.com .IPAdress = 
 2024-04-03 03:59:31 info: NetworkMonitor.Objects.Repository.RabbitRepo[0]
        RabbitRepo : ConnectAndSetUp :  Success : RabbitRepo Connected to RabbitMQ serverdevrabbitmq:5672
 2024-04-03 03:59:31 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
       Public IP address of this service is 213.199.46.193
 2024-04-03 03:59:31 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
-       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.freenetworkmonitor.click .IPAdress = 
+       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.readyforquantum.com .IPAdress = 
 2024-04-03 03:59:32 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
       Public IP address of this service is 213.199.46.193
 2024-04-03 03:59:32 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
-       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.freenetworkmonitor.click .IPAdress = 
+       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.readyforquantum.com .IPAdress = 
 2024-04-03 03:59:32 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
        Rabbit Setup :  Success : Connected to devrabbitmq:5672 . Setup RabbitListener messages were :  RabbitListener DeclareQueues :  Srv-LLMService-mlCheck  Srv-LLMService-mlCheckHost  Srv-LLMService-mlCheckLatestHosts  Srv-LLMService-predictPingInfos  Srv-LLMService-llmStartSession  Srv-LLMService-llmUserInput  Srv-LLMService-llmRemoveSession  : Success : Declared all queues  Success : Declared all consumers  RabbitRepo BindChannelToConsumer :  Success :  bound all consumers to queues 
 2024-04-03 03:59:32 info: Microsoft.Hosting.Lifetime[0]
@@ -1347,17 +1347,17 @@ generate: n_ctx = 6000, n_batch = 2048, n_predict = 6000, n_keep = 2481
 2024-04-03 04:33:13 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
       Public IP address of this service is 213.199.46.193
 2024-04-03 04:33:13 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
-       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.freenetworkmonitor.click .IPAdress = 
+       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.readyforquantum.com .IPAdress = 
 2024-04-03 04:33:13 info: NetworkMonitor.Objects.Repository.RabbitRepo[0]
        RabbitRepo : ConnectAndSetUp :  Success : RabbitRepo Connected to RabbitMQ serverdevrabbitmq:5672
 2024-04-03 04:33:13 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
       Public IP address of this service is 213.199.46.193
 2024-04-03 04:33:13 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
-       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.freenetworkmonitor.click .IPAdress = 
+       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.readyforquantum.com .IPAdress = 
 2024-04-03 04:33:14 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
       Public IP address of this service is 213.199.46.193
 2024-04-03 04:33:14 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
-       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.freenetworkmonitor.click .IPAdress = 
+       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.readyforquantum.com .IPAdress = 
 2024-04-03 04:33:14 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
        Rabbit Setup :  Success : Connected to devrabbitmq:5672 . Setup RabbitListener messages were :  RabbitListener DeclareQueues :  Srv-LLMService-mlCheck  Srv-LLMService-mlCheckHost  Srv-LLMService-mlCheckLatestHosts  Srv-LLMService-predictPingInfos  Srv-LLMService-llmStartSession  Srv-LLMService-llmUserInput  Srv-LLMService-llmRemoveSession  : Success : Declared all queues  Success : Declared all consumers  RabbitRepo BindChannelToConsumer :  Success :  bound all consumers to queues 
 2024-04-03 04:33:14 info: Microsoft.Hosting.Lifetime[0]
@@ -1555,20 +1555,20 @@ generate: n_ctx = 6000, n_batch = 2048, n_predict = 6000, n_keep = 2558
 2024-04-03 04:36:04 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
       MessageAPI : UserInput :  Processed UserInput :so how do I check my site is ready for quantum
 2024-04-03 04:36:16 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
-       Start User Input I would like you setup my site freenetworkmonitor.click for quantum 
+       Start User Input I would like you setup my site readyforquantum.com for quantum 
 2024-04-03 04:36:16 info: NetworkMonitor.ML.Services.LLMProcessRunner[0]
         LLMService : SendInputAndGetResponse() :
 2024-04-03 04:36:16 info: NetworkMonitor.ML.Services.LLMProcessRunner[0]
-       ProcessLLMOutput(user input) -> I would like you setup my site freenetworkmonitor.click for quantum 
+       ProcessLLMOutput(user input) -> I would like you setup my site readyforquantum.com for quantum 
 2024-04-03 04:36:16 warn: NetworkMonitor.ML.Services.LLMProcessRunner[0]
        Start BroadcastAsyc() 
 2024-04-03 04:36:16 info: NetworkMonitor.ML.Services.LLMProcessRunner[0]
-      sessionID=106124d0-edc6-4eb0-8215-eed47bc59219 line is =>> I would like you setup my site freenetworkmonitor.click for quantum 
+      sessionID=106124d0-edc6-4eb0-8215-eed47bc59219 line is =>> I would like you setup my site readyforquantum.com for quantum 
       <=
 2024-04-03 04:36:31 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
       Service : UpdatePingInfos : For Processor AuthID 1 Success : updated 8 MonitorPingInfos , 8 PingInfos.
 2024-04-03 04:36:41 info: NetworkMonitor.ML.Services.LLMProcessRunner[0]
-      sessionID=106124d0-edc6-4eb0-8215-eed47bc59219 line is => To set up your site freenetworkmonitor.click for quantum monitoring, follow these steps:
+      sessionID=106124d0-edc6-4eb0-8215-eed47bc59219 line is => To set up your site readyforquantum.com for quantum monitoring, follow these steps:
       <=
 2024-04-03 04:36:44 info: NetworkMonitor.ML.Services.LLMProcessRunner[0]
       sessionID=106124d0-edc6-4eb0-8215-eed47bc59219 line is =>1. Use the "AddHost" function provided to me.
@@ -1605,7 +1605,7 @@ generate: n_ctx = 6000, n_batch = 2048, n_predict = 6000, n_keep = 2558
 2024-04-03 04:37:18 info: NetworkMonitor.ML.Services.LLMProcessRunner[0]
        --> Finshed LLM Interaction 
 2024-04-03 04:37:18 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
-      MessageAPI : UserInput :  Processed UserInput :I would like you setup my site freenetworkmonitor.click for quantum 
+      MessageAPI : UserInput :  Processed UserInput :I would like you setup my site readyforquantum.com for quantum 
 2024-04-03 04:37:18 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
        Start User Input add my site
 2024-04-03 04:37:18 info: NetworkMonitor.ML.Services.LLMProcessRunner[0]
@@ -1647,15 +1647,15 @@ generate: n_ctx = 6000, n_batch = 2048, n_predict = 6000, n_keep = 2558
 2024-04-03 04:37:49 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
       MessageAPI : UserInput :  Processed UserInput :add my site
 2024-04-03 04:37:54 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
-       Start User Input freenetworkmonitor.click quantum my email support@mahadeva.co.uk
+       Start User Input readyforquantum.com quantum my email support@mahadeva.co.uk
 2024-04-03 04:37:54 info: NetworkMonitor.ML.Services.LLMProcessRunner[0]
         LLMService : SendInputAndGetResponse() :
 2024-04-03 04:37:54 info: NetworkMonitor.ML.Services.LLMProcessRunner[0]
-       ProcessLLMOutput(user input) -> freenetworkmonitor.click quantum my email support@mahadeva.co.uk
+       ProcessLLMOutput(user input) -> readyforquantum.com quantum my email support@mahadeva.co.uk
 2024-04-03 04:37:54 warn: NetworkMonitor.ML.Services.LLMProcessRunner[0]
        Start BroadcastAsyc() 
 2024-04-03 04:37:54 info: NetworkMonitor.ML.Services.LLMProcessRunner[0]
-      sessionID=106124d0-edc6-4eb0-8215-eed47bc59219 line is =>> freenetworkmonitor.click quantum my email support@mahadeva.co.uk
+      sessionID=106124d0-edc6-4eb0-8215-eed47bc59219 line is =>> readyforquantum.com quantum my email support@mahadeva.co.uk
       <=
 2024-04-03 04:38:01 info: NetworkMonitor.ML.Services.MonitorMLService[0]
       TIMER started :  Event (Finished ProcessorDataObj Setup) at 0 :  Event (Published 8 predictStatusAlerts to alertservice) at 2 : 
@@ -1664,7 +1664,7 @@ generate: n_ctx = 6000, n_batch = 2048, n_predict = 6000, n_keep = 2558
 2024-04-03 04:38:01 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
        SERVICE : CheckLatestHosts : PublishMonitorPingInfos :  Success : published PredictMonitorStatuses . 
 2024-04-03 04:38:20 info: NetworkMonitor.ML.Services.LLMProcessRunner[0]
-      sessionID=106124d0-edc6-4eb0-8215-eed47bc59219 line is => To add your site freenetworkmonitor.click for quantum monitoring, please provide me with the following information:
+      sessionID=106124d0-edc6-4eb0-8215-eed47bc59219 line is => To add your site readyforquantum.com for quantum monitoring, please provide me with the following information:
       <=
 2024-04-03 04:38:22 info: NetworkMonitor.ML.Services.LLMProcessRunner[0]
       sessionID=106124d0-edc6-4eb0-8215-eed47bc59219 line is =>1. The address of your website.
@@ -20374,15 +20374,15 @@ generate: n_ctx = 6000, n_batch = 2048, n_predict = 6000, n_keep = 2558
 2024-04-04 18:59:03 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
        SERVICE : CheckLatestHosts : PublishMonitorPingInfos :  Success : published PredictMonitorStatuses . 
 2024-04-04 18:59:23 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
-       Start User Input can you monitor my website freenetworkmonitor.click my email is support@mahadeva.co.uk
+       Start User Input can you monitor my website readyforquantum.com my email is support@mahadeva.co.uk
 2024-04-04 18:59:23 info: NetworkMonitor.ML.Services.LLMProcessRunner[0]
         LLMService : SendInputAndGetResponse() :
 2024-04-04 18:59:23 info: NetworkMonitor.ML.Services.LLMProcessRunner[0]
-       ProcessLLMOutput(user input) -> can you monitor my website freenetworkmonitor.click my email is support@mahadeva.co.uk
+       ProcessLLMOutput(user input) -> can you monitor my website readyforquantum.com my email is support@mahadeva.co.uk
 2024-04-04 18:59:23 warn: NetworkMonitor.ML.Services.LLMProcessRunner[0]
        Start BroadcastAsyc() 
 2024-04-04 18:59:23 info: NetworkMonitor.ML.Services.LLMProcessRunner[0]
-      sessionID=036515f1-6524-41f2-800c-56ea35ca8c0b line is =>> can you monitor my website freenetworkmonitor.click my email is support@mahadeva.co.uk
+      sessionID=036515f1-6524-41f2-800c-56ea35ca8c0b line is =>> can you monitor my website readyforquantum.com my email is support@mahadeva.co.uk
       <=
 2024-04-04 18:59:31 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
       Service : UpdatePingInfos : For Processor AuthID 1 Success : updated 8 MonitorPingInfos , 7 PingInfos.
@@ -20403,7 +20403,7 @@ generate: n_ctx = 6000, n_batch = 2048, n_predict = 6000, n_keep = 2558
 2024-04-04 19:00:05 info: NetworkMonitor.ML.Services.LLMProcessRunner[0]
        --> Finshed LLM Interaction 
 2024-04-04 19:00:05 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
-      MessageAPI : UserInput :  Processed UserInput :can you monitor my website freenetworkmonitor.click my email is support@mahadeva.co.uk
+      MessageAPI : UserInput :  Processed UserInput :can you monitor my website readyforquantum.com my email is support@mahadeva.co.uk
 2024-04-04 19:00:29 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
        Start User Input I dont know what to use for those values can you not setup a monitor with what I have given you
 2024-04-04 19:00:29 info: NetworkMonitor.ML.Services.LLMProcessRunner[0]
@@ -20424,7 +20424,7 @@ generate: n_ctx = 6000, n_batch = 2048, n_predict = 6000, n_keep = 2558
 2024-04-04 19:01:03 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
        SERVICE : CheckLatestHosts : PublishMonitorPingInfos :  Success : published PredictMonitorStatuses . 
 2024-04-04 19:01:09 info: NetworkMonitor.ML.Services.LLMProcessRunner[0]
-      sessionID=036515f1-6524-41f2-800c-56ea35ca8c0b line is => Of course! However, I need more information to set up the monitor. Could you please provide me with the website address (in this case, "freenetworkmonitor.click") and your email address where alerts should be sent ("support@mahadeva.co.uk"). This is all the information I need to get started.
+      sessionID=036515f1-6524-41f2-800c-56ea35ca8c0b line is => Of course! However, I need more information to set up the monitor. Could you please provide me with the website address (in this case, "readyforquantum.com") and your email address where alerts should be sent ("support@mahadeva.co.uk"). This is all the information I need to get started.
       <=
 2024-04-04 19:01:09 info: NetworkMonitor.ML.Services.LLMProcessRunner[0]
       sessionID=036515f1-6524-41f2-800c-56ea35ca8c0b line is =>
@@ -20449,10 +20449,10 @@ generate: n_ctx = 6000, n_batch = 2048, n_predict = 6000, n_keep = 2558
 2024-04-04 19:01:31 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
       Service : UpdatePingInfos : For Processor AuthID 1 Success : updated 8 MonitorPingInfos , 8 PingInfos.
 2024-04-04 19:01:49 info: NetworkMonitor.ML.Services.LLMProcessRunner[0]
-      sessionID=036515f1-6524-41f2-800c-56ea35ca8c0b line is => <functioncall> {"name": "AddHost", "parameters": '{"address": "freenetworkmonitor.click", "endPointType": "http", "addUserEmail": "support@mahadeva.co.uk"}'} </functioncall>
+      sessionID=036515f1-6524-41f2-800c-56ea35ca8c0b line is => <functioncall> {"name": "AddHost", "parameters": '{"address": "readyforquantum.com", "endPointType": "http", "addUserEmail": "support@mahadeva.co.uk"}'} </functioncall>
       <=
 2024-04-04 19:01:49 info: NetworkMonitor.ML.Services.LLMProcessRunner[0]
-       ProcessLLMOutput(call_func) -> {"name": "AddHost", "parameters": {"address": "freenetworkmonitor.click", "endPointType": "http", "addUserEmail": "support@mahadeva.co.uk"}}
+       ProcessLLMOutput(call_func) -> {"name": "AddHost", "parameters": {"address": "readyforquantum.com", "endPointType": "http", "addUserEmail": "support@mahadeva.co.uk"}}
 2024-04-04 19:01:49 info: NetworkMonitor.ML.Services.LLMProcessRunner[0]
       sessionID=036515f1-6524-41f2-800c-56ea35ca8c0b line is =>
       <=
@@ -23605,13 +23605,13 @@ generate: n_ctx = 6000, n_batch = 2048, n_predict = 6000, n_keep = 2558
 2024-04-06 01:02:56 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
       Public IP address of this service is 213.199.46.193
 2024-04-06 01:02:56 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
-       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.freenetworkmonitor.click .IPAdress = 
+       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.readyforquantum.com .IPAdress = 
 2024-04-06 01:02:56 info: NetworkMonitor.Objects.Repository.RabbitRepo[0]
        RabbitRepo : ConnectAndSetUp :  Success : RabbitRepo Connected to RabbitMQ serverdevrabbitmq:5672
 2024-04-06 01:02:57 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
       Public IP address of this service is 213.199.46.193
 2024-04-06 01:02:57 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
-       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.freenetworkmonitor.click .IPAdress = 
+       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.readyforquantum.com .IPAdress = 
 2024-04-06 01:02:57 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
        Rabbit Setup :  Success : Connected to devrabbitmq:5672 . Setup RabbitListener messages were :  RabbitListener DeclareQueues :  Srv-LLMService-llmStartSession  Srv-LLMService-llmUserInput  Srv-LLMService-llmRemoveSession  : Success : Declared all queues  Success : Declared all consumers  RabbitRepo BindChannelToConsumer :  Success :  bound all consumers to queues 
 2024-04-06 01:02:57 info: Microsoft.Hosting.Lifetime[0]
@@ -23626,13 +23626,13 @@ generate: n_ctx = 6000, n_batch = 2048, n_predict = 6000, n_keep = 2558
 2024-04-06 01:04:05 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
       Public IP address of this service is 213.199.46.193
 2024-04-06 01:04:05 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
-       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.freenetworkmonitor.click .IPAdress = 
+       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.readyforquantum.com .IPAdress = 
 2024-04-06 01:04:05 info: NetworkMonitor.Objects.Repository.RabbitRepo[0]
        RabbitRepo : ConnectAndSetUp :  Success : RabbitRepo Connected to RabbitMQ serverdevrabbitmq:5672
 2024-04-06 01:04:05 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
       Public IP address of this service is 213.199.46.193
 2024-04-06 01:04:05 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
-       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.freenetworkmonitor.click .IPAdress = 
+       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.readyforquantum.com .IPAdress = 
 2024-04-06 01:04:05 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
        Rabbit Setup :  Success : Connected to devrabbitmq:5672 . Setup RabbitListener messages were :  RabbitListener DeclareQueues :  Srv-LLMService-llmStartSession  Srv-LLMService-llmUserInput  Srv-LLMService-llmRemoveSession  : Success : Declared all queues  Success : Declared all consumers  RabbitRepo BindChannelToConsumer :  Success :  bound all consumers to queues 
 2024-04-06 01:04:05 info: Microsoft.Hosting.Lifetime[0]
@@ -24790,13 +24790,13 @@ generate: n_ctx = 6000, n_batch = 2048, n_predict = 6000, n_keep = 2585
 2024-04-06 01:45:50 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
       Public IP address of this service is 213.199.46.193
 2024-04-06 01:45:50 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
-       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.freenetworkmonitor.click .IPAdress = 
+       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.readyforquantum.com .IPAdress = 
 2024-04-06 01:45:50 info: NetworkMonitor.Objects.Repository.RabbitRepo[0]
        RabbitRepo : ConnectAndSetUp :  Success : RabbitRepo Connected to RabbitMQ serverdevrabbitmq:5672
 2024-04-06 01:45:50 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
       Public IP address of this service is 213.199.46.193
 2024-04-06 01:45:50 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
-       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.freenetworkmonitor.click .IPAdress = 
+       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.readyforquantum.com .IPAdress = 
 2024-04-06 01:45:50 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
        Rabbit Setup :  Success : Connected to devrabbitmq:5672 . Setup RabbitListener messages were :  RabbitListener DeclareQueues :  Srv-LLMService-llmStartSession  Srv-LLMService-llmUserInput  Srv-LLMService-llmRemoveSession  : Success : Declared all queues  Success : Declared all consumers  RabbitRepo BindChannelToConsumer :  Success :  bound all consumers to queues 
 2024-04-06 01:45:50 info: Microsoft.Hosting.Lifetime[0]
@@ -25166,15 +25166,15 @@ The build failed. Fix the build errors and run again.
 2024-04-06 03:59:10 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
       Public IP address of this service is 213.199.46.193
 2024-04-06 03:59:10 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
-       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.freenetworkmonitor.click .IPAdress = 
+       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.readyforquantum.com .IPAdress = 
 2024-04-06 03:59:10 info: NetworkMonitor.Objects.Repository.RabbitRepo[0]
-       RabbitRepo : ConnectAndSetUp :  Success : RabbitRepo Connected to RabbitMQ serverrabbitmq.freenetworkmonitor.click:55671
+       RabbitRepo : ConnectAndSetUp :  Success : RabbitRepo Connected to RabbitMQ serverrabbitmq.readyforquantum.com:55671
 2024-04-06 03:59:11 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
       Public IP address of this service is 213.199.46.193
 2024-04-06 03:59:11 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
-       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.freenetworkmonitor.click .IPAdress = 
+       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.readyforquantum.com .IPAdress = 
 2024-04-06 03:59:11 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
-       Rabbit Setup :  Success : Connected to rabbitmq.freenetworkmonitor.click:55671 . Setup RabbitListener messages were :  RabbitListener DeclareQueues :  Srv-LLMService-llmStartSession  Srv-LLMService-llmUserInput  Srv-LLMService-llmRemoveSession  : Success : Declared all queues  Success : Declared all consumers  RabbitRepo BindChannelToConsumer :  Success :  bound all consumers to queues 
+       Rabbit Setup :  Success : Connected to rabbitmq.readyforquantum.com:55671 . Setup RabbitListener messages were :  RabbitListener DeclareQueues :  Srv-LLMService-llmStartSession  Srv-LLMService-llmUserInput  Srv-LLMService-llmRemoveSession  : Success : Declared all queues  Success : Declared all consumers  RabbitRepo BindChannelToConsumer :  Success :  bound all consumers to queues 
 2024-04-06 03:59:11 info: Microsoft.Hosting.Lifetime[0]
       Application started. Press Ctrl+C to shut down.
 2024-04-06 03:59:11 info: Microsoft.Hosting.Lifetime[0]
@@ -25475,15 +25475,15 @@ generate: n_ctx = 6000, n_batch = 2048, n_predict = 6000, n_keep = 2553
 2024-04-06 04:04:28 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
       MessageAPI : UserInput :  Processed UserInput :how can I manage the host
 2024-04-06 04:04:59 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
-       Start User Input can I monitor my website freenetworkmonitor.click to see if its quantum safe
+       Start User Input can I monitor my website readyforquantum.com to see if its quantum safe
 2024-04-06 04:04:59 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
         LLMService : SendInputAndGetResponse() :
 2024-04-06 04:04:59 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
-       ProcessLLMOutput(user input) -> can I monitor my website freenetworkmonitor.click to see if its quantum safe
+       ProcessLLMOutput(user input) -> can I monitor my website readyforquantum.com to see if its quantum safe
 2024-04-06 04:04:59 warn: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
        Start BroadcastAsyc() 
 2024-04-06 04:05:30 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
-      sessionID=639e050e-c713-4c50-889c-8fe89cd9684a line is =>>  To monitor your website freenetworkmonitor.click for a quantum safe encryption test, you need to add it as a host using the AddHost function. Provide the website address and select "quantum" as the end point type.
+      sessionID=639e050e-c713-4c50-889c-8fe89cd9684a line is =>>  To monitor your website readyforquantum.com for a quantum safe encryption test, you need to add it as a host using the AddHost function. Provide the website address and select "quantum" as the end point type.
       
       <=
 2024-04-06 04:05:30 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
@@ -25491,7 +25491,7 @@ generate: n_ctx = 6000, n_batch = 2048, n_predict = 6000, n_keep = 2553
 2024-04-06 04:05:30 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
        --> Finshed LLM Interaction 
 2024-04-06 04:05:30 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
-      MessageAPI : UserInput :  Processed UserInput :can I monitor my website freenetworkmonitor.click to see if its quantum safe
+      MessageAPI : UserInput :  Processed UserInput :can I monitor my website readyforquantum.com to see if its quantum safe
 2024-04-06 04:05:38 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
        Start User Input can you do it for me
 2024-04-06 04:05:38 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
@@ -25501,7 +25501,7 @@ generate: n_ctx = 6000, n_batch = 2048, n_predict = 6000, n_keep = 2553
 2024-04-06 04:05:38 warn: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
        Start BroadcastAsyc() 
 2024-04-06 04:05:54 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
-      sessionID=639e050e-c713-4c50-889c-8fe89cd9684a line is =>>  I'm sorry, but as an AI, I'm unable to perform external tasks. However, I can assist you with the functions provided to me. You can add your website freenetworkmonitor.click as a host and select "quantum" as the end point type.
+      sessionID=639e050e-c713-4c50-889c-8fe89cd9684a line is =>>  I'm sorry, but as an AI, I'm unable to perform external tasks. However, I can assist you with the functions provided to me. You can add your website readyforquantum.com as a host and select "quantum" as the end point type.
       
       <=
 2024-04-06 04:05:54 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
@@ -25511,25 +25511,25 @@ generate: n_ctx = 6000, n_batch = 2048, n_predict = 6000, n_keep = 2553
 2024-04-06 04:05:54 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
       MessageAPI : UserInput :  Processed UserInput :can you do it for me
 2024-04-06 04:06:29 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
-       Start User Input add host freenetworkmonitor.click quantum
+       Start User Input add host readyforquantum.com quantum
 2024-04-06 04:06:29 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
         LLMService : SendInputAndGetResponse() :
 2024-04-06 04:06:29 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
-       ProcessLLMOutput(user input) -> add host freenetworkmonitor.click quantum
+       ProcessLLMOutput(user input) -> add host readyforquantum.com quantum
 2024-04-06 04:06:29 warn: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
        Start BroadcastAsyc() 
 2024-04-06 04:06:46 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
-      sessionID=639e050e-c713-4c50-889c-8fe89cd9684a line is =>>  {"name": "AddHost", "parameters": {'address': 'freenetworkmonitor.click', 'endPointType': 'quantum', 'port': 0, 'timeout': 5000, 'addUserEmail': '<your_email>'}}
+      sessionID=639e050e-c713-4c50-889c-8fe89cd9684a line is =>>  {"name": "AddHost", "parameters": {'address': 'readyforquantum.com', 'endPointType': 'quantum', 'port': 0, 'timeout': 5000, 'addUserEmail': '<your_email>'}}
       
       <=
 2024-04-06 04:06:46 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
-       ProcessLLMOutput(call_func) -> {"name": "AddHost", "parameters": {"address": "freenetworkmonitor.click", "endPointType": "quantum", "port": 0, "timeout": 5000, "addUserEmail": "<your_email>"}}
+       ProcessLLMOutput(call_func) -> {"name": "AddHost", "parameters": {"address": "readyforquantum.com", "endPointType": "quantum", "port": 0, "timeout": 5000, "addUserEmail": "<your_email>"}}
 2024-04-06 04:06:46 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
        Cancel due to output end detected 
 2024-04-06 04:06:46 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
        --> Finshed LLM Interaction 
 2024-04-06 04:06:46 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
-      MessageAPI : UserInput :  Processed UserInput :add host freenetworkmonitor.click quantum
+      MessageAPI : UserInput :  Processed UserInput :add host readyforquantum.com quantum
 2024-04-06 04:06:46 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
        Start User Input { "error addUserEmail invalid" }
 2024-04-06 04:06:46 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
@@ -25557,7 +25557,7 @@ generate: n_ctx = 6000, n_batch = 2048, n_predict = 6000, n_keep = 2553
 2024-04-06 04:07:06 warn: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
        Start BroadcastAsyc() 
 2024-04-06 04:07:19 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
-      sessionID=639e050e-c713-4c50-889c-8fe89cd9684a line is =>>  If you mean the email address support@mahadeva.co.uk, it's already a valid email address. You can proceed with adding your website freenetworkmonitor.click using this email address.
+      sessionID=639e050e-c713-4c50-889c-8fe89cd9684a line is =>>  If you mean the email address support@mahadeva.co.uk, it's already a valid email address. You can proceed with adding your website readyforquantum.com using this email address.
       
       <=
 2024-04-06 04:07:19 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
@@ -25575,11 +25575,11 @@ generate: n_ctx = 6000, n_batch = 2048, n_predict = 6000, n_keep = 2553
 2024-04-06 04:07:24 warn: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
        Start BroadcastAsyc() 
 2024-04-06 04:07:41 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
-      sessionID=639e050e-c713-4c50-889c-8fe89cd9684a line is =>>  {"name": "AddHost", "parameters": {'address': 'freenetworkmonitor.click', 'endPointType': 'quantum', 'port': 0, 'timeout': 5000, 'addUserEmail': 'support@mahadeva.co.uk'}}
+      sessionID=639e050e-c713-4c50-889c-8fe89cd9684a line is =>>  {"name": "AddHost", "parameters": {'address': 'readyforquantum.com', 'endPointType': 'quantum', 'port': 0, 'timeout': 5000, 'addUserEmail': 'support@mahadeva.co.uk'}}
       
       <=
 2024-04-06 04:07:41 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
-       ProcessLLMOutput(call_func) -> {"name": "AddHost", "parameters": {"address": "freenetworkmonitor.click", "endPointType": "quantum", "port": 0, "timeout": 5000, "addUserEmail": "support@mahadeva.co.uk"}}
+       ProcessLLMOutput(call_func) -> {"name": "AddHost", "parameters": {"address": "readyforquantum.com", "endPointType": "quantum", "port": 0, "timeout": 5000, "addUserEmail": "support@mahadeva.co.uk"}}
 2024-04-06 04:07:41 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
        Cancel due to output end detected 
 2024-04-06 04:07:41 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
@@ -25595,7 +25595,7 @@ generate: n_ctx = 6000, n_batch = 2048, n_predict = 6000, n_keep = 2553
 2024-04-06 04:07:41 warn: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
        Start BroadcastAsyc() 
 2024-04-06 04:08:18 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
-      sessionID=639e050e-c713-4c50-889c-8fe89cd9684a line is =>>  Your website freenetworkmonitor.click has been added successfully. You can edit its configuration using the EditHost function with the provided editAuthKey and monitorIPID.
+      sessionID=639e050e-c713-4c50-889c-8fe89cd9684a line is =>>  Your website readyforquantum.com has been added successfully. You can edit its configuration using the EditHost function with the provided editAuthKey and monitorIPID.
       
       <=
 2024-04-06 04:08:18 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
@@ -25661,15 +25661,15 @@ generate: n_ctx = 6000, n_batch = 2048, n_predict = 6000, n_keep = 2553
 2024-04-06 04:10:27 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
       MessageAPI : UserInput :  Processed UserInput :yes
 2024-04-06 04:10:27 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
-       Start User Input [{"address" : "test.com", "monitorIPID" : 1597, "addUserEmail" : "support@mahadeva.co.uk", "endPointType" : "http", "port" : 80, "enabled" : True, },{"address" : "freenetworkmonitor.click", "monitorIPID" : 1598, "addUserEmail" : "support@mahadeva.co.uk", "endPointType" : "quantum", "port" : 0, "enabled" : True, }]
+       Start User Input [{"address" : "test.com", "monitorIPID" : 1597, "addUserEmail" : "support@mahadeva.co.uk", "endPointType" : "http", "port" : 80, "enabled" : True, },{"address" : "readyforquantum.com", "monitorIPID" : 1598, "addUserEmail" : "support@mahadeva.co.uk", "endPointType" : "quantum", "port" : 0, "enabled" : True, }]
 2024-04-06 04:10:27 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
         LLMService : SendInputAndGetResponse() :
 2024-04-06 04:10:27 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
-       ProcessLLMOutput(user input) -> FUNCTION RESPONSE: [{"address" : "test.com", "monitorIPID" : 1597, "addUserEmail" : "support@mahadeva.co.uk", "endPointType" : "http", "port" : 80, "enabled" : True, },{"address" : "freenetworkmonitor.click", "monitorIPID" : 1598, "addUserEmail" : "support@mahadeva.co.uk", "endPointType" : "quantum", "port" : 0, "enabled" : True, }]
+       ProcessLLMOutput(user input) -> FUNCTION RESPONSE: [{"address" : "test.com", "monitorIPID" : 1597, "addUserEmail" : "support@mahadeva.co.uk", "endPointType" : "http", "port" : 80, "enabled" : True, },{"address" : "readyforquantum.com", "monitorIPID" : 1598, "addUserEmail" : "support@mahadeva.co.uk", "endPointType" : "quantum", "port" : 0, "enabled" : True, }]
 2024-04-06 04:10:27 warn: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
        Start BroadcastAsyc() 
 2024-04-06 04:11:09 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
-      sessionID=639e050e-c713-4c50-889c-8fe89cd9684a line is =>>  You are currently monitoring two hosts - test.com and freenetworkmonitor.click. Both hosts have been enabled for monitoring.
+      sessionID=639e050e-c713-4c50-889c-8fe89cd9684a line is =>>  You are currently monitoring two hosts - test.com and readyforquantum.com. Both hosts have been enabled for monitoring.
       
       <=
 2024-04-06 04:11:09 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
@@ -25677,7 +25677,7 @@ generate: n_ctx = 6000, n_batch = 2048, n_predict = 6000, n_keep = 2553
 2024-04-06 04:11:09 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
        --> Finshed LLM Interaction 
 2024-04-06 04:11:09 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
-      MessageAPI : UserInput :  Processed UserInput :FUNCTION RESPONSE: [{"address" : "test.com", "monitorIPID" : 1597, "addUserEmail" : "support@mahadeva.co.uk", "endPointType" : "http", "port" : 80, "enabled" : True, },{"address" : "freenetworkmonitor.click", "monitorIPID" : 1598, "addUserEmail" : "support@mahadeva.co.uk", "endPointType" : "quantum", "port" : 0, "enabled" : True, }]
+      MessageAPI : UserInput :  Processed UserInput :FUNCTION RESPONSE: [{"address" : "test.com", "monitorIPID" : 1597, "addUserEmail" : "support@mahadeva.co.uk", "endPointType" : "http", "port" : 80, "enabled" : True, },{"address" : "readyforquantum.com", "monitorIPID" : 1598, "addUserEmail" : "support@mahadeva.co.uk", "endPointType" : "quantum", "port" : 0, "enabled" : True, }]
 2024-04-06 04:11:47 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
        Start User Input what type of monitoring for each of these hosts
 2024-04-06 04:11:47 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
@@ -25687,7 +25687,7 @@ generate: n_ctx = 6000, n_batch = 2048, n_predict = 6000, n_keep = 2553
 2024-04-06 04:11:47 warn: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
        Start BroadcastAsyc() 
 2024-04-06 04:12:04 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
-      sessionID=639e050e-c713-4c50-889c-8fe89cd9684a line is =>>  The host test.com is being monitored using the HTTP end point type with a port of 80. The host freenetworkmonitor.click is being tested for quantum safety, which means it's being checked if it's safe from quantum attacks.
+      sessionID=639e050e-c713-4c50-889c-8fe89cd9684a line is =>>  The host test.com is being monitored using the HTTP end point type with a port of 80. The host readyforquantum.com is being tested for quantum safety, which means it's being checked if it's safe from quantum attacks.
       
       <=
 2024-04-06 04:12:04 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
@@ -25717,15 +25717,15 @@ generate: n_ctx = 6000, n_batch = 2048, n_predict = 6000, n_keep = 2553
 2024-04-06 04:12:36 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
       MessageAPI : UserInput :  Processed UserInput :lets change the port from 80 to 443
 2024-04-06 04:12:36 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
-       Start User Input { " The host freenetworkmonitor.click was successully edited.. Please take note the host address editted was freenetworkmonitor.click to match the editAuthKey" }
+       Start User Input { " The host readyforquantum.com was successully edited.. Please take note the host address editted was readyforquantum.com to match the editAuthKey" }
 2024-04-06 04:12:36 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
         LLMService : SendInputAndGetResponse() :
 2024-04-06 04:12:36 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
-       ProcessLLMOutput(user input) -> FUNCTION RESPONSE: { " The host freenetworkmonitor.click was successully edited.. Please take note the host address editted was freenetworkmonitor.click to match the editAuthKey" }
+       ProcessLLMOutput(user input) -> FUNCTION RESPONSE: { " The host readyforquantum.com was successully edited.. Please take note the host address editted was readyforquantum.com to match the editAuthKey" }
 2024-04-06 04:12:36 warn: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
        Start BroadcastAsyc() 
 2024-04-06 04:13:04 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
-      sessionID=639e050e-c713-4c50-889c-8fe89cd9684a line is =>>  Your website freenetworkmonitor.click has been successfully edited. The port has been changed to 443.
+      sessionID=639e050e-c713-4c50-889c-8fe89cd9684a line is =>>  Your website readyforquantum.com has been successfully edited. The port has been changed to 443.
       
       <=
 2024-04-06 04:13:04 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
@@ -25733,7 +25733,7 @@ generate: n_ctx = 6000, n_batch = 2048, n_predict = 6000, n_keep = 2553
 2024-04-06 04:13:04 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
        --> Finshed LLM Interaction 
 2024-04-06 04:13:04 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
-      MessageAPI : UserInput :  Processed UserInput :FUNCTION RESPONSE: { " The host freenetworkmonitor.click was successully edited.. Please take note the host address editted was freenetworkmonitor.click to match the editAuthKey" }
+      MessageAPI : UserInput :  Processed UserInput :FUNCTION RESPONSE: { " The host readyforquantum.com was successully edited.. Please take note the host address editted was readyforquantum.com to match the editAuthKey" }
 2024-04-06 04:13:45 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
        Start User Input what are the two edit auth keys you have given me
 2024-04-06 04:13:45 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
@@ -25809,15 +25809,15 @@ generate: n_ctx = 6000, n_batch = 2048, n_predict = 6000, n_keep = 2553
 2024-04-06 04:15:34 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
       MessageAPI : UserInput :  Processed UserInput :yes use that
 2024-04-06 04:15:34 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
-       Start User Input [{"address" : "test.com", "monitorIPID" : 1597, "addUserEmail" : "support@mahadeva.co.uk", "endPointType" : "http", "port" : 80, "enabled" : True, },{"address" : "freenetworkmonitor.click", "monitorIPID" : 1598, "addUserEmail" : "support@mahadeva.co.uk", "endPointType" : "quantum", "port" : 0, "enabled" : True, }]
+       Start User Input [{"address" : "test.com", "monitorIPID" : 1597, "addUserEmail" : "support@mahadeva.co.uk", "endPointType" : "http", "port" : 80, "enabled" : True, },{"address" : "readyforquantum.com", "monitorIPID" : 1598, "addUserEmail" : "support@mahadeva.co.uk", "endPointType" : "quantum", "port" : 0, "enabled" : True, }]
 2024-04-06 04:15:34 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
         LLMService : SendInputAndGetResponse() :
 2024-04-06 04:15:34 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
-       ProcessLLMOutput(user input) -> FUNCTION RESPONSE: [{"address" : "test.com", "monitorIPID" : 1597, "addUserEmail" : "support@mahadeva.co.uk", "endPointType" : "http", "port" : 80, "enabled" : True, },{"address" : "freenetworkmonitor.click", "monitorIPID" : 1598, "addUserEmail" : "support@mahadeva.co.uk", "endPointType" : "quantum", "port" : 0, "enabled" : True, }]
+       ProcessLLMOutput(user input) -> FUNCTION RESPONSE: [{"address" : "test.com", "monitorIPID" : 1597, "addUserEmail" : "support@mahadeva.co.uk", "endPointType" : "http", "port" : 80, "enabled" : True, },{"address" : "readyforquantum.com", "monitorIPID" : 1598, "addUserEmail" : "support@mahadeva.co.uk", "endPointType" : "quantum", "port" : 0, "enabled" : True, }]
 2024-04-06 04:15:34 warn: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
        Start BroadcastAsyc() 
 2024-04-06 04:16:15 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
-      sessionID=639e050e-c713-4c50-889c-8fe89cd9684a line is =>>  You are currently monitoring two hosts - test.com and freenetworkmonitor.click. Both hosts have been enabled for monitoring.
+      sessionID=639e050e-c713-4c50-889c-8fe89cd9684a line is =>>  You are currently monitoring two hosts - test.com and readyforquantum.com. Both hosts have been enabled for monitoring.
       
       <=
 2024-04-06 04:16:15 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
@@ -25825,7 +25825,7 @@ generate: n_ctx = 6000, n_batch = 2048, n_predict = 6000, n_keep = 2553
 2024-04-06 04:16:15 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
        --> Finshed LLM Interaction 
 2024-04-06 04:16:15 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
-      MessageAPI : UserInput :  Processed UserInput :FUNCTION RESPONSE: [{"address" : "test.com", "monitorIPID" : 1597, "addUserEmail" : "support@mahadeva.co.uk", "endPointType" : "http", "port" : 80, "enabled" : True, },{"address" : "freenetworkmonitor.click", "monitorIPID" : 1598, "addUserEmail" : "support@mahadeva.co.uk", "endPointType" : "quantum", "port" : 0, "enabled" : True, }]
+      MessageAPI : UserInput :  Processed UserInput :FUNCTION RESPONSE: [{"address" : "test.com", "monitorIPID" : 1597, "addUserEmail" : "support@mahadeva.co.uk", "endPointType" : "http", "port" : 80, "enabled" : True, },{"address" : "readyforquantum.com", "monitorIPID" : 1598, "addUserEmail" : "support@mahadeva.co.uk", "endPointType" : "quantum", "port" : 0, "enabled" : True, }]
 2024-04-06 04:16:33 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
        Start User Input can you change the port to 443 for test.com
 2024-04-06 04:16:33 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
@@ -25847,11 +25847,11 @@ generate: n_ctx = 6000, n_batch = 2048, n_predict = 6000, n_keep = 2553
 2024-04-06 04:16:52 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
       MessageAPI : UserInput :  Processed UserInput :can you change the port to 443 for test.com
 2024-04-06 04:16:52 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
-       Start User Input { " The host freenetworkmonitor.click was successully edited.. Please take note the host address editted was freenetworkmonitor.click to match the editAuthKey" }
+       Start User Input { " The host readyforquantum.com was successully edited.. Please take note the host address editted was readyforquantum.com to match the editAuthKey" }
 2024-04-06 04:16:52 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
         LLMService : SendInputAndGetResponse() :
 2024-04-06 04:16:52 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
-       ProcessLLMOutput(user input) -> FUNCTION RESPONSE: { " The host freenetworkmonitor.click was successully edited.. Please take note the host address editted was freenetworkmonitor.click to match the editAuthKey" }
+       ProcessLLMOutput(user input) -> FUNCTION RESPONSE: { " The host readyforquantum.com was successully edited.. Please take note the host address editted was readyforquantum.com to match the editAuthKey" }
 2024-04-06 04:16:52 warn: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
        Start BroadcastAsyc() 
 2024-04-06 04:17:17 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
@@ -25863,7 +25863,7 @@ generate: n_ctx = 6000, n_batch = 2048, n_predict = 6000, n_keep = 2553
 2024-04-06 04:17:17 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
        --> Finshed LLM Interaction 
 2024-04-06 04:17:17 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
-      MessageAPI : UserInput :  Processed UserInput :FUNCTION RESPONSE: { " The host freenetworkmonitor.click was successully edited.. Please take note the host address editted was freenetworkmonitor.click to match the editAuthKey" }
+      MessageAPI : UserInput :  Processed UserInput :FUNCTION RESPONSE: { " The host readyforquantum.com was successully edited.. Please take note the host address editted was readyforquantum.com to match the editAuthKey" }
 2024-04-06 04:17:36 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
        LLM Service : Start Process for sessionsId e992ff7f-3022-4ec7-94f1-521102038b9c
 Log start
@@ -26020,13 +26020,13 @@ generate: n_ctx = 6000, n_batch = 2048, n_predict = 6000, n_keep = 2553
 2024-04-11 00:07:07 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
       Public IP address of this service is 213.199.46.193
 2024-04-11 00:07:07 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
-       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.freenetworkmonitor.click .IPAdress = 
+       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.readyforquantum.com .IPAdress = 
 2024-04-11 00:07:07 info: NetworkMonitor.Objects.Repository.RabbitRepo[0]
        RabbitRepo : ConnectAndSetUp :  Success : RabbitRepo Connected to RabbitMQ serverdevrabbitmq:5672
 2024-04-11 00:07:07 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
       Public IP address of this service is 213.199.46.193
 2024-04-11 00:07:07 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
-       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.freenetworkmonitor.click .IPAdress = 
+       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.readyforquantum.com .IPAdress = 
 2024-04-11 00:07:07 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
        Rabbit Setup :  Success : Connected to devrabbitmq:5672 . Setup RabbitListener messages were :  RabbitListener DeclareQueues :  Srv-LLMService-llmStartSession  Srv-LLMService-llmUserInput  Srv-LLMService-llmRemoveSession  : Success : Declared all queues  Success : Declared all consumers  RabbitRepo BindChannelToConsumer :  Success :  bound all consumers to queues 
 2024-04-11 00:07:07 info: Microsoft.Hosting.Lifetime[0]
@@ -26218,13 +26218,13 @@ generate: n_ctx = 4000, n_batch = 2048, n_predict = 4000, n_keep = 2058
 2024-04-11 01:08:14 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
       Public IP address of this service is 213.199.46.193
 2024-04-11 01:08:14 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
-       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.freenetworkmonitor.click .IPAdress = 
+       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.readyforquantum.com .IPAdress = 
 2024-04-11 01:08:14 info: NetworkMonitor.Objects.Repository.RabbitRepo[0]
        RabbitRepo : ConnectAndSetUp :  Success : RabbitRepo Connected to RabbitMQ serverdevrabbitmq:5672
 2024-04-11 01:08:15 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
       Public IP address of this service is 213.199.46.193
 2024-04-11 01:08:15 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
-       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.freenetworkmonitor.click .IPAdress = 
+       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.readyforquantum.com .IPAdress = 
 2024-04-11 01:08:15 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
        Rabbit Setup :  Success : Connected to devrabbitmq:5672 . Setup RabbitListener messages were :  RabbitListener DeclareQueues :  Srv-LLMService-llmStartSession  Srv-LLMService-llmUserInput  Srv-LLMService-llmRemoveSession  : Success : Declared all queues  Success : Declared all consumers  RabbitRepo BindChannelToConsumer :  Success :  bound all consumers to queues 
 2024-04-11 01:08:15 info: Microsoft.Hosting.Lifetime[0]
@@ -26624,13 +26624,13 @@ generate: n_ctx = 4000, n_batch = 2048, n_predict = 4000, n_keep = 2088
 2024-04-11 01:26:37 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
       Public IP address of this service is 213.199.46.193
 2024-04-11 01:26:37 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
-       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.freenetworkmonitor.click .IPAdress = 
+       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.readyforquantum.com .IPAdress = 
 2024-04-11 01:26:37 info: NetworkMonitor.Objects.Repository.RabbitRepo[0]
        RabbitRepo : ConnectAndSetUp :  Success : RabbitRepo Connected to RabbitMQ serverdevrabbitmq:5672
 2024-04-11 01:26:38 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
       Public IP address of this service is 213.199.46.193
 2024-04-11 01:26:38 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
-       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.freenetworkmonitor.click .IPAdress = 
+       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.readyforquantum.com .IPAdress = 
 2024-04-11 01:26:38 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
        Rabbit Setup :  Success : Connected to devrabbitmq:5672 . Setup RabbitListener messages were :  RabbitListener DeclareQueues :  Srv-LLMService-llmStartSession  Srv-LLMService-llmUserInput  Srv-LLMService-llmRemoveSession  : Success : Declared all queues  Success : Declared all consumers  RabbitRepo BindChannelToConsumer :  Success :  bound all consumers to queues 
 2024-04-11 01:26:38 info: Microsoft.Hosting.Lifetime[0]
@@ -26945,13 +26945,13 @@ generate: n_ctx = 4000, n_batch = 2048, n_predict = 4000, n_keep = 2088
 2024-04-11 01:42:38 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
       Public IP address of this service is 213.199.46.193
 2024-04-11 01:42:38 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
-       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.freenetworkmonitor.click .IPAdress = 
+       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.readyforquantum.com .IPAdress = 
 2024-04-11 01:42:39 info: NetworkMonitor.Objects.Repository.RabbitRepo[0]
        RabbitRepo : ConnectAndSetUp :  Success : RabbitRepo Connected to RabbitMQ serverdevrabbitmq:5672
 2024-04-11 01:42:39 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
       Public IP address of this service is 213.199.46.193
 2024-04-11 01:42:39 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
-       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.freenetworkmonitor.click .IPAdress = 
+       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.readyforquantum.com .IPAdress = 
 2024-04-11 01:42:39 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
        Rabbit Setup :  Success : Connected to devrabbitmq:5672 . Setup RabbitListener messages were :  RabbitListener DeclareQueues :  Srv-LLMService-llmStartSession  Srv-LLMService-llmUserInput  Srv-LLMService-llmRemoveSession  : Success : Declared all queues  Success : Declared all consumers  RabbitRepo BindChannelToConsumer :  Success :  bound all consumers to queues 
 2024-04-11 01:42:39 info: Microsoft.Hosting.Lifetime[0]
@@ -27285,13 +27285,13 @@ generate: n_ctx = 4000, n_batch = 2048, n_predict = 4000, n_keep = 2088
 2024-04-11 02:26:26 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
       Public IP address of this service is 213.199.46.193
 2024-04-11 02:26:26 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
-       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.freenetworkmonitor.click .IPAdress = 
+       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.readyforquantum.com .IPAdress = 
 2024-04-11 02:26:26 info: NetworkMonitor.Objects.Repository.RabbitRepo[0]
        RabbitRepo : ConnectAndSetUp :  Success : RabbitRepo Connected to RabbitMQ serverdevrabbitmq:5672
 2024-04-11 02:26:27 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
       Public IP address of this service is 213.199.46.193
 2024-04-11 02:26:27 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
-       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.freenetworkmonitor.click .IPAdress = 
+       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.readyforquantum.com .IPAdress = 
 2024-04-11 02:26:27 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
        Rabbit Setup :  Success : Connected to devrabbitmq:5672 . Setup RabbitListener messages were :  RabbitListener DeclareQueues :  Srv-LLMService-llmStartSession  Srv-LLMService-llmUserInput  Srv-LLMService-llmRemoveSession  : Success : Declared all queues  Success : Declared all consumers  RabbitRepo BindChannelToConsumer :  Success :  bound all consumers to queues 
 2024-04-11 02:26:27 info: Microsoft.Hosting.Lifetime[0]
@@ -27609,13 +27609,13 @@ generate: n_ctx = 2000, n_batch = 2048, n_predict = 2000, n_keep = 938
 2024-04-11 02:34:22 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
       Public IP address of this service is 213.199.46.193
 2024-04-11 02:34:22 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
-       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.freenetworkmonitor.click .IPAdress = 
+       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.readyforquantum.com .IPAdress = 
 2024-04-11 02:34:22 info: NetworkMonitor.Objects.Repository.RabbitRepo[0]
        RabbitRepo : ConnectAndSetUp :  Success : RabbitRepo Connected to RabbitMQ serverdevrabbitmq:5672
 2024-04-11 02:34:22 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
       Public IP address of this service is 213.199.46.193
 2024-04-11 02:34:22 info: NetworkMonitor.Utils.Helpers.SystemParamsHelper[0]
-       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.freenetworkmonitor.click .IPAdress = 
+       Info : set ThisSystemUrl.ExtermalUrl = https://devoauth.readyforquantum.com .IPAdress = 
 2024-04-11 02:34:22 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
        Rabbit Setup :  Success : Connected to devrabbitmq:5672 . Setup RabbitListener messages were :  RabbitListener DeclareQueues :  Srv-LLMService-llmStartSession  Srv-LLMService-llmUserInput  Srv-LLMService-llmRemoveSession  : Success : Declared all queues  Success : Declared all consumers  RabbitRepo BindChannelToConsumer :  Success :  bound all consumers to queues 
 2024-04-11 02:34:22 info: Microsoft.Hosting.Lifetime[0]

@@ -65,12 +65,12 @@ Host successfully added to the monitoring system.
 
 Since you are not logged in, please provide your email address as well.
 
-<User:> The site is https://freenetworkmonitor.click my email is support@mahadeva.co.uk
+<User:> The site is https://readyforquantum.com my email is support@mahadeva.co.uk
 
-<Function Call:> add_host {"detail_response":false,"address":"freenetworkmonitor.click","endpoint":"https","port":0,"timeout":59000,"email":"support@mahadeva.co.uk","agent_location":""}
-<Function Response:> {"address" : "freenetworkmonitor.click", "id" : 1883, "auth_key" : "cm_D6SxzWPi-9WBdDtHCmn0S-WJUd6humAE=", "message" : "Added host", "success" : true}
+<Function Call:> add_host {"detail_response":false,"address":"readyforquantum.com","endpoint":"https","port":0,"timeout":59000,"email":"support@mahadeva.co.uk","agent_location":""}
+<Function Response:> {"address" : "readyforquantum.com", "id" : 1883, "auth_key" : "cm_D6SxzWPi-9WBdDtHCmn0S-WJUd6humAE=", "message" : "Added host", "success" : true}
 
-<Assistant:> Your website **freenetworkmonitor.click** has been successfully added for monitoring. Here are the details:
+<Assistant:> Your website **readyforquantum.com** has been successfully added for monitoring. Here are the details:
 
 - **Host ID**: 1883
 - **Auth Key**: cm_D6SxzWPi-9WBdDtHCmn0S-WJUd6humAE=
@@ -108,7 +108,7 @@ Please select one of these options to proceed with the network scan on 192.168.1
 
 <User:> how do I install a local agent
 
-<Assistant:> You can install a local agent by downloading it from the following link: [Download Agents](https://freenetworkmonitor.click/download).
+<Assistant:> You can install a local agent by downloading it from the following link: [Download Agents](https://readyforquantum.com/download).
 
 Choose the appropriate version that matches your operating system, follow the installation instructions provided on the site, and then let me know when you're ready to proceed with the scan after installation.
 

@@ -217,7 +217,7 @@ Use the function 'get_host_list' to 'Obtain a list host configurations'
 Use the function 'get_agents' to 'Retrieve details about available monitoring agents, including local and internet-based agents.'
 {
   "name": "get_agents",
-  "description": "Retrieve a list of monitoring agent details. Call this function to provide the user with a list of agents to choose from. Note that agent locations that contain an email address are the user's local agents used for local network tasks. The other agents (e.g., 'Scanner - EU') are internet-based agents. If a local agent is not available, direct the user to install any of the agents from this page: https://freenetworkmonitor.click/download.",
+  "description": "Retrieve a list of monitoring agent details. Call this function to provide the user with a list of agents to choose from. Note that agent locations that contain an email address are the user's local agents used for local network tasks. The other agents (e.g., 'Scanner - EU') are internet-based agents. If a local agent is not available, direct the user to install any of the agents from this page: https://readyforquantum.com/download.",
   "parameters": {
     "type": "object",
     "properties": {
