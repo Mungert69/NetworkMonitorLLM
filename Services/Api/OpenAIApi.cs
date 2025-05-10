@@ -68,7 +68,7 @@ public class OpenAIApi : ILLMApi
         if (_mlParams.XmlFunctionParsing) return _config.XmlPromptFooter;
         else return "";
     }
-    public List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj)
+    public List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, bool noThink=false)
     {
         string footer = PromptFooter();
         var systemMessages = _toolsBuilder.GetSystemPrompt(currentTime, serviceObj, "TurboLLM") ?? new List<ChatMessage>() {ChatMessage.FromSystem("")};

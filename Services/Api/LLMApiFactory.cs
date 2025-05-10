@@ -24,7 +24,7 @@ namespace NetworkMonitor.LLM.Services;
 public interface ILLMApi
 {
     Task<ChatCompletionCreateResponseSuccess> CreateCompletionAsync(List<ChatMessage> messages, int maxTokens, LLMServiceObj serviceObj);
-    List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj);
+    List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, bool noThink=false);
     string GetFunctionNamesAsString(string separator = ", ");
      List<ChatMessage> GetResumeSystemPrompt(string currentTime, LLMServiceObj serviceObj);
       int SystemPromptCount { get ; }

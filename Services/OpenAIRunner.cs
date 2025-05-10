@@ -79,6 +79,7 @@ public class OpenAIRunner : ILLMRunner
     private readonly ILLMApi _llmApi;
     private bool _useHF = false;
     private bool _createAudio = false;
+    private bool _noThink=false;
 
     private IAudioGenerator _audioGenerator;
     private HashSet<string> _ignoreParameters => LLMConfigFactory.IgnoreParameters;
@@ -99,6 +100,7 @@ public class OpenAIRunner : ILLMRunner
         _openAIRunnerSemaphore = new SemaphoreSlim(1);
         _serviceID = systemParamsHelper.GetSystemParams().ServiceID!;
         _mlParams = systemParamsHelper.GetMLParams();
+        _noThink=_mlParams.LlmNoThink;
         _history = history;
         _queryCoordinator = queryCoordinator;
 
@@ -155,7 +157,7 @@ public class OpenAIRunner : ILLMRunner
         _isStateReady = false;
         _responseProcessor.IsManagedMultiFunc = true;
 
-        var systemPrompt = _llmApi.GetSystemPrompt(serviceObj.GetClientStartTime().ToString("yyyy-MM-ddTHH:mm:ss"), serviceObj);
+        var systemPrompt = _llmApi.GetSystemPrompt(serviceObj.GetClientStartTime().ToString("yyyy-MM-ddTHH:mm:ss"), serviceObj, _noThink);
 
         _systemPromptTokens = CalculateTokens(systemPrompt);
         if (_history.Count == 0)

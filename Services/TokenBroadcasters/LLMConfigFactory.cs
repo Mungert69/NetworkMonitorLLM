@@ -261,7 +261,7 @@ Reminder:
                 SystemMessageTemplate = "<|im_start|>system\\\n{0}<|im_end|>",
                 EOTToken = "<|im_end|>",
                 FunctionResponseTemplate = "<|im_start|>assistant\\\n<tool_response>\\\n{1}\\\n</tool_response>",
-
+                NoThinkToken="/no_think",
                 FunctionBuilder = "<tool_call>\n{1}\n</tool_call>",
                 FunctionResponse = "<tool_response>{1}</tool_response>",
                 FunctionDefsWrap = @"# Tools
@@ -352,7 +352,7 @@ public class LLMConfig
     public string FunctionBuilder { get; set; } = string.Empty;
     public string PromptFooter { get; set; } = string.Empty;
     public string XmlPromptFooter { get; set; } = string.Empty;
-
+    public string NoThinkToken{get;set;} = string.Empty;
     public string ReversePrompt { get; set; } = string.Empty;
     public string ExtraReversePrompt { get; set; } = string.Empty;
     public Func<ILLMResponseProcessor, ILogger, bool, ITokenBroadcaster> CreateBroadcaster { get; set; } =

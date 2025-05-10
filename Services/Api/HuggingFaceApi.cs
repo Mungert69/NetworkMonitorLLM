@@ -102,15 +102,16 @@ public class HuggingFaceApi : ILLMApi
         return _toolsBuilder.GetFunctionNamesAsString();
     }
 
-    public List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj)
+    public List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, bool noThink)
     {
 
         string toolsJson = ToolsWrapper(JsonToolsBuilder.BuildToolsJson(_toolsBuilder.Tools));
         // List<ChatMessage> systemPrompt=_toolsBuilder.GetSystemPrompt(currentTime, serviceObj);
         string footer = PromptFooter();
         var systemMessages = _toolsBuilder.GetSystemPrompt(currentTime, serviceObj, "HugLLM") ?? new List<ChatMessage>() { ChatMessage.FromSystem("") };
-
-        systemMessages[0].Content = toolsJson + systemMessages[0].Content + footer;
+        string noThinkToken="";
+        if (noThink) noThinkToken=" "+_config.NoThinkToken+" ";
+        systemMessages[0].Content = toolsJson + systemMessages[0].Content + footer +noThinkToken;
         //_logger.LogInformation($" Using SYSTEM prompt\n\n{systemMessages[0].Content}");
         systemMessages.AddRange(NShotPromptFactory.GetPrompt(_serviceID, _isXml, currentTime, serviceObj, _config));
         _systemPromptCount = systemMessages.Count;
