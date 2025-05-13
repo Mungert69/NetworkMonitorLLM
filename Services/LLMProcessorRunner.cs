@@ -203,7 +203,7 @@ public class LLMProcessRunner : ILLMRunner
         );
 
         serviceObj.UserInput = functionResponse;
-        if (_noThink && !string.IsNullOrEmpty(_config.NoThinkToken)) serviceObj.UserInput =$"\n/{_config.NoThinkToken}}\n"
+        if (_noThink && !string.IsNullOrEmpty(_config.NoThinkToken)) serviceObj.UserInput =$"\n/{_config.NoThinkToken}}\n";
         // We have to set it as a not call as the function call is already in the history or context. so this is just user input as a function response 
         serviceObj.SetAsNotCall();
         _sendOutput = false;

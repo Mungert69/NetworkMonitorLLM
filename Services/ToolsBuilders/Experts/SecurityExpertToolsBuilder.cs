@@ -272,13 +272,7 @@ openssl s_client -connect example.com:443 -servername example.com -showcerts -tl
 - Provide structured findings including:
   - Identified vulnerabilities
   - Configuration weaknesses
-  - MITRE ATT&CK mappings (from RAG database)
   - Remediation recommendations
-
-4. Operational Constraints:
-- Optimize scans for network efficiency
-- Default to non-intrusive techniques
-- Respect upstream timeout limitations
 
  Example Execution Flow:
 1. Network Monitor Assistant -> You: ""Scan 192.168.1.1 ports 80-443""
