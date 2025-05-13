@@ -36,6 +36,7 @@ public class LLMProcessRunner : ILLMRunner
     private bool _isStateFailed = false;
     private bool _isEnabled = false;
     private string _serviceID;
+    private bool _noThink=false;
     private LLMConfig _config;
     private LLMServiceObj _startServiceoObj;
 
@@ -65,6 +66,7 @@ public class LLMProcessRunner : ILLMRunner
         _responseProcessor = responseProcessor;
         _startServiceoObj = startServiceObj;
         _mlParams = systemParamsHelper.GetMLParams();
+        _noThink=_mlParams.LlmNoThink;
         _serviceID = systemParamsHelper.GetSystemParams().ServiceID!;
         if (processRunnerSemaphore == null) throw new Exception(" Processor Runner Semaphore is null");
         _processRunnerSemaphore = processRunnerSemaphore;
@@ -201,6 +203,7 @@ public class LLMProcessRunner : ILLMRunner
         );
 
         serviceObj.UserInput = functionResponse;
+        if (_noThink && !string.IsNullOrEmpty(_config.NoThinkToken)) serviceObj.UserInput =$"\n/{_config.NoThinkToken}}\n"
         // We have to set it as a not call as the function call is already in the history or context. so this is just user input as a function response 
         serviceObj.SetAsNotCall();
         _sendOutput = false;
