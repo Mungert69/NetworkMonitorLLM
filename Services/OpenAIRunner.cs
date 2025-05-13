@@ -33,6 +33,7 @@ public class OpenAIRunner : ILLMRunner
     private List<ChatMessage> _history;
     private ConcurrentDictionary<string, ChatMessage> _pendingFunctionCalls = new ConcurrentDictionary<string, ChatMessage>();
     private ConcurrentDictionary<string, ChatMessage> _pendingFunctionResponses = new ConcurrentDictionary<string, ChatMessage>();
+    // Add these private fields to your OpenAIRunner class
     private string _type = "TurboLLM";
 
     private bool _isStateReady = false;
@@ -79,7 +80,7 @@ public class OpenAIRunner : ILLMRunner
     private readonly ILLMApi _llmApi;
     private bool _useHF = false;
     private bool _createAudio = false;
-    private bool _noThink=false;
+    private bool _noThink = false;
 
     private IAudioGenerator _audioGenerator;
     private HashSet<string> _ignoreParameters => LLMConfigFactory.IgnoreParameters;
@@ -100,7 +101,7 @@ public class OpenAIRunner : ILLMRunner
         _openAIRunnerSemaphore = new SemaphoreSlim(1);
         _serviceID = systemParamsHelper.GetSystemParams().ServiceID!;
         _mlParams = systemParamsHelper.GetMLParams();
-        _noThink=_mlParams.LlmNoThink;
+        _noThink = _mlParams.LlmNoThink;
         _history = history;
         _queryCoordinator = queryCoordinator;
 
@@ -178,11 +179,12 @@ public class OpenAIRunner : ILLMRunner
             _history.AddRange(resumeSystemPrompt);
         }
         _logger.LogInformation($"Started {_type} {_serviceID} Assistant with session id {serviceObj.SessionId} at {serviceObj.GetClientStartTime()}. with CTX size {_maxTokens} and Response tokens {_responseTokens}");
+        await _queryCoordinator.InitializeSession(serviceObj.SessionId);
 
         _isStateStarting = false;
         _isStateReady = true;
         _isStateFailed = false;
-        return ;
+        return;
     }
 
 
@@ -190,7 +192,7 @@ public class OpenAIRunner : ILLMRunner
     {
         _isStateReady = false;
 
-        // DO something here 
+        _queryCoordinator.CleanupSession(sessionId);
 
         _isStateReady = true;
         _isStateFailed = true;
