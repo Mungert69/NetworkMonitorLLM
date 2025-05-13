@@ -17,11 +17,20 @@ TARGET_BASE="$ROOTDIR/code/services"
 TARGET_DIR="$TARGET_BASE/llm-$REGION-$SERVICE_NAME_LOWER"
 ENV_SOURCE="$ROOTDIR/code/securefiles/domain-env"
 
+# Check if service exists
+if ! systemctl list-unit-files | grep -q "^$SERVICE"; then
+  echo "Error: Service $SERVICE does not exist"
+  exit 1
+fi
+
 # Ensure base and target directories exist
 mkdir -p "$TARGET_DIR"
 
 echo "Stopping service: $SERVICE"
-systemctl stop "$SERVICE"
+if ! systemctl stop "$SERVICE"; then
+  echo "Error: Failed to stop service $SERVICE"
+  exit 1
+fi
 
 cp "../appsettings-$REGION-$SERVICE_NAME_LOWER.json" ../appsettings.json
 
@@ -34,4 +43,3 @@ ln -sf "$ENV_SOURCE" "$TARGET_DIR/.env"
 
 echo "Starting service: $SERVICE"
 systemctl start "$SERVICE"
-
