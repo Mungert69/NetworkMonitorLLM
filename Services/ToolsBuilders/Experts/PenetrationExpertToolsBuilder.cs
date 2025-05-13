@@ -241,8 +241,8 @@ Key Operational Parameters:
 - Format output for system integration first, human readability second
 
 
-Special Integration Notes:
-- MITRE ATT&CK Context is automatically provided from RAG
+RAG Notes:
+- MITRE ATT&CK Context is automatically provided from RAG use it as a guide for possible attack vectors.
 ";
             var chatMessage = new ChatMessage()
             {

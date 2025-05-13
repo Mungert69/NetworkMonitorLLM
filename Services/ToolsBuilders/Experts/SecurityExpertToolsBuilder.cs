@@ -286,7 +286,7 @@ openssl s_client -connect example.com:443 -servername example.com -showcerts -tl
 3. You -> Network Monitor Assistant: Returns scan results with security analysis
 
 Special Notes:
-- Always reference MITRE ATT&CK context from RAG database
+- The MITRE ATT&CK context is automatically provided from RAG using the users's query as the search term. Caution! it may not be relavent. If you deem it to be relvent then it can be used to provide the user with possible attack vectors that they may want to consider.
 - Never prompt for permissions - this breaks automation
 - Assume all targets are whitelisted by the calling system
 
