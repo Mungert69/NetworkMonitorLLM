@@ -11,31 +11,20 @@ using System.Text.RegularExpressions;
 
 public interface ICpuUsageMonitor
 {
-    /// <summary>
-    /// Gets the current rolling average CPU usage for the entire system.
-    /// </summary>
     float GetCurrentAverageCpuUsage();
-
-    /// <summary>
-    /// Recommends the number of CPUs to use based on the current system load.
-    /// </summary>
-    /// <param name="maxCpu">The maximum number of CPUs available for scaling.</param>
-    /// <param name="targetCpuUsage">The target CPU usage percentage (default is 80%).</param>
-    /// <returns>The recommended number of CPUs to use.</returns>
     int RecommendCpuCount(int maxCpu, float targetCpuUsage = 50f);
-
     bool IsMemoryTooLow(float minFreeMemoryPercentage = 50f);
     bool IsSwapTooHigh(float maxSwapUsagePercentage = 50f);
-    bool IsMemoryAvailable(int memory);
+    bool IsMemoryAvailable(int memoryInMB);
 }
 
 public class CpuUsageMonitor : ICpuUsageMonitor, IHostedService, IDisposable
 {
     private readonly ILogger<CpuUsageMonitor> _logger;
-    private readonly int _sampleIntervalMs = 1000; // Sample every 1 second
-    private readonly int _rollingAverageDurationMs = 60000; // Rolling average over 60 seconds
-    private readonly Queue<float> _cpuUsageSamples = new Queue<float>();
-    private Timer _timer;
+    private readonly int _sampleIntervalMs = 1000;
+    private readonly int _rollingAverageDurationMs = 60000;
+    private readonly Queue<float> _cpuUsageSamples = new();
+    private Timer? _timer;
     private float _currentAverageCpuUsage;
 
     public CpuUsageMonitor(ILogger<CpuUsageMonitor> logger)
@@ -43,70 +32,49 @@ public class CpuUsageMonitor : ICpuUsageMonitor, IHostedService, IDisposable
         _logger = logger;
     }
 
-    public float GetCurrentAverageCpuUsage()
-    {
-        return _currentAverageCpuUsage;
-    }
+    public float GetCurrentAverageCpuUsage() => _currentAverageCpuUsage;
 
     public int RecommendCpuCount(int maxCpu, float targetCpuUsage = 50f)
     {
-        // If CPU usage is very low, start with half the available CPUs
         if (_currentAverageCpuUsage <= 5)
-        {
             return maxCpu;
-        }
 
-        // Calculate the ratio of current usage to target usage
         float usageRatio = _currentAverageCpuUsage / targetCpuUsage;
+        int recommended;
 
-        // If we're using more CPU than target, reduce cores
-        // If we're using less CPU than target, increase cores
-        int recommendedCpuCount;
-        if (usageRatio > 1) // Using more CPU than target
-        {
-            // Reduce cores proportionally to how much we're over
-            recommendedCpuCount = (int)Math.Max(1, maxCpu / (usageRatio * 2.0f));
-        }
-        else // Using less CPU than target
-        {
-            // Increase cores proportionally, but more conservatively
-            recommendedCpuCount = (int)Math.Min(maxCpu, maxCpu * (0.8f + (1 - usageRatio) * 0.4f));
-        }
+        if (usageRatio > 1)
+            recommended = (int)Math.Max(1, maxCpu / (usageRatio * 2.0f));
+        else
+            recommended = (int)Math.Min(maxCpu, maxCpu * (0.8f + (1 - usageRatio) * 0.4f));
 
-        // Ensure it's within bounds and apply smoothing
-        recommendedCpuCount = Math.Clamp(recommendedCpuCount, 1, maxCpu);
+        recommended = Math.Clamp(recommended, 1, maxCpu);
 
         _logger.LogInformation(
-            $"Current CPU Usage: {_currentAverageCpuUsage:F1}%, " +
-            $"Target: {targetCpuUsage:F1}%, " +
-            $"Usage Ratio: {usageRatio:F2}, " +
-            $"Recommended CPUs: {recommendedCpuCount}/{maxCpu}"
+            $"CPU Avg: {_currentAverageCpuUsage:F1}%, Target: {targetCpuUsage:F1}%, " +
+            $"Ratio: {usageRatio:F2}, Recommended CPUs: {recommended}/{maxCpu}"
         );
 
-        return recommendedCpuCount;
+        return recommended;
     }
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
-        _logger.LogInformation("CPU Usage Monitor started.");
+        _logger.LogInformation("Starting CPU monitor...");
         _timer = new Timer(SampleCpuUsage, null, 0, _sampleIntervalMs);
         return Task.CompletedTask;
     }
 
     private async void SampleCpuUsage(object? state)
     {
-        float cpuUsage = await GetTotalSystemCpuUsage();
-        _cpuUsageSamples.Enqueue(cpuUsage);
+        float usage = await GetTotalSystemCpuUsage();
+        _cpuUsageSamples.Enqueue(usage);
 
-        // Remove old samples that exceed the rolling average window
         while (_cpuUsageSamples.Count > _rollingAverageDurationMs / _sampleIntervalMs)
-        {
             _cpuUsageSamples.Dequeue();
-        }
 
-        // Calculate rolling average
-        _currentAverageCpuUsage = _cpuUsageSamples.Count > 0 ? _cpuUsageSamples.Average() : 0;
-        //_logger.LogDebug($"Sampled CPU Usage: {cpuUsage:F2}%, Rolling Average: {_currentAverageCpuUsage:F2}%");
+        _currentAverageCpuUsage = _cpuUsageSamples.Count > 0
+            ? _cpuUsageSamples.Average()
+            : 0;
     }
 
     private async Task<float> GetTotalSystemCpuUsage()
@@ -115,57 +83,41 @@ public class CpuUsageMonitor : ICpuUsageMonitor, IHostedService, IDisposable
         {
             if (OperatingSystem.IsWindows())
                 return await GetWindowsCpuUsage();
-            else if (OperatingSystem.IsLinux() || OperatingSystem.IsMacOS())
+            if (OperatingSystem.IsLinux() || OperatingSystem.IsMacOS())
                 return await GetLinuxMacCpuUsage();
-            else
-                throw new PlatformNotSupportedException("Unsupported operating system.");
+
+            throw new PlatformNotSupportedException();
         }
         catch (Exception ex)
         {
-            _logger.LogError($"Error getting CPU usage: {ex.Message}");
+            _logger.LogError($"Failed to read CPU usage: {ex.Message}");
             return 0;
         }
     }
 
     private async Task<float> GetWindowsCpuUsage()
     {
-#pragma warning disable  CA1416
-        using (var cpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total"))
-        {
-            cpuCounter.NextValue(); // First call gives 0, discard it
-            await Task.Delay(500); // Asynchronous non-blocking delay
-            return cpuCounter.NextValue();
-
-        }
+#pragma warning disable CA1416
+        using var cpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total");
+        cpuCounter.NextValue();
+        await Task.Delay(500);
+        return cpuCounter.NextValue();
 #pragma warning restore CA1416
     }
 
-
     private async Task<float> GetLinuxMacCpuUsage()
     {
-        try
-        {
-            // Read first snapshot
-            var firstSample = await ReadCpuStats();
-            if (firstSample == null) return 0;
+        var first = await ReadCpuStats();
+        if (first == null) return 0;
 
-            await Task.Delay(500); // Asynchronous non-blocking delay
+        await Task.Delay(500);
+        var second = await ReadCpuStats();
+        if (second == null) return 0;
 
-            // Read second snapshot
-            var secondSample = await ReadCpuStats();
-            if (secondSample == null) return 0;
+        long totalDelta = second.Total - first.Total;
+        long idleDelta = second.Idle - first.Idle;
 
-            // Calculate differences
-            long totalDiff = secondSample.Total - firstSample.Total;
-            long idleDiff = secondSample.Idle - firstSample.Idle;
-
-            return totalDiff == 0 ? 0 : (100f * (totalDiff - idleDiff) / totalDiff);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError($"Error reading CPU usage: {ex.Message}");
-            return 0;
-        }
+        return totalDelta == 0 ? 0 : (100f * (totalDelta - idleDelta) / totalDelta);
     }
 
     private async Task<CpuTimes?> ReadCpuStats()
@@ -176,25 +128,19 @@ public class CpuUsageMonitor : ICpuUsageMonitor, IHostedService, IDisposable
             var cpuLine = lines.FirstOrDefault(line => line.StartsWith("cpu "));
             if (cpuLine == null) return null;
 
-            var values = cpuLine.Split(' ', StringSplitOptions.RemoveEmptyEntries).Skip(1)
-                                .Select(v => long.TryParse(v, out var parsed) ? parsed : 0)
-                                .ToArray();
+            var parts = cpuLine.Split(' ', StringSplitOptions.RemoveEmptyEntries).Skip(1)
+                .Select(p => long.TryParse(p, out var v) ? v : 0)
+                .ToArray();
 
-            if (values.Length < 5) return null; // Not enough fields to calculate CPU usage
+            if (parts.Length < 4) return null;
 
-            long user = values[0];
-            long nice = values[1];
-            long system = values[2];
-            long idle = values[3];
-            long iowait = values.Length > 4 ? values[4] : 0; // Some systems may not have iowait
-
-            long irq = values.Length > 5 ? values[5] : 0;
-            long softirq = values.Length > 6 ? values[6] : 0;
-            long steal = values.Length > 7 ? values[7] : 0;
+            long user = parts[0], nice = parts[1], system = parts[2],
+                 idle = parts[3], iowait = parts.Length > 4 ? parts[4] : 0,
+                 irq = parts.Length > 5 ? parts[5] : 0, softirq = parts.Length > 6 ? parts[6] : 0,
+                 steal = parts.Length > 7 ? parts[7] : 0;
 
             long total = user + nice + system + idle + iowait + irq + softirq + steal;
-
-            return new CpuTimes { Total = total, Idle = idle + iowait }; // Including iowait in Idle
+            return new CpuTimes { Total = total, Idle = idle + iowait };
         }
         catch (Exception ex)
         {
@@ -203,177 +149,118 @@ public class CpuUsageMonitor : ICpuUsageMonitor, IHostedService, IDisposable
         }
     }
 
-    private class CpuTimes
+    private record CpuTimes
     {
-        public long Total { get; set; }
-        public long Idle { get; set; }
+        public long Total { get; init; }
+        public long Idle { get; init; }
     }
 
     public Task StopAsync(CancellationToken cancellationToken)
     {
-        _logger.LogInformation("CPU Usage Monitor stopped.");
+        _logger.LogInformation("Stopping CPU monitor...");
         _timer?.Change(Timeout.Infinite, 0);
         return Task.CompletedTask;
     }
 
-    /// <summary>
-    /// Checks if swap usage is too high to safely run a process.
-    /// </summary>
     public bool IsSwapTooHigh(float maxSwapUsagePercentage = 50f)
     {
-        float swapUsagePercentage = GetSwapUsagePercentage();
-        bool tooHigh = swapUsagePercentage > maxSwapUsagePercentage;
-
-        _logger.LogInformation($"Swap Usage: {swapUsagePercentage}%, Safe to Run: {!tooHigh}");
-
+        float percent = GetSwapUsagePercentage();
+        bool tooHigh = percent > maxSwapUsagePercentage;
+        _logger.LogInformation($"Swap Usage: {percent:F1}%, Safe: {!tooHigh}");
         return tooHigh;
     }
 
-    /// <summary>
-    /// Gets the percentage of swap space being used.
-    /// </summary>
     private float GetSwapUsagePercentage()
     {
         if (OperatingSystem.IsWindows())
-        {
-            // Swap handling in Windows would require another strategy (e.g., WMI or PerformanceCounters).
-            return 0; // Windows code for swap is not included in this version.
-        }
-        else
-        {
-            return GetLinuxMacSwapUsage();
-        }
+            return 0; // not implemented
+        return GetLinuxMacSwapUsage();
     }
 
-    /// <summary>
-    /// Gets swap usage percentage on Linux/macOS.
-    /// </summary>
     private float GetLinuxMacSwapUsage()
     {
         try
         {
             var lines = File.ReadAllLines("/proc/meminfo");
-            var swapTotalLine = lines.FirstOrDefault(l => l.StartsWith("SwapTotal"));
-            var swapFreeLine = lines.FirstOrDefault(l => l.StartsWith("SwapFree"));
+            long swapTotal = ParseMemValue(lines, "SwapTotal");
+            long swapFree = ParseMemValue(lines, "SwapFree");
 
-            if (swapTotalLine == null || swapFreeLine == null)
-            {
-                _logger.LogWarning("Could not read swap info from /proc/meminfo.");
-                return 0; // Return 0% swap usage if info is unavailable
-            }
-
-            long swapTotal = long.Parse(Regex.Match(swapTotalLine, @"\d+").Value);
-            long swapFree = long.Parse(Regex.Match(swapFreeLine, @"\d+").Value);
-
-            // Avoid division by zero in case swapTotal is 0
             return swapTotal == 0 ? 0 : (float)(swapTotal - swapFree) / swapTotal * 100;
         }
         catch (Exception ex)
         {
-            _logger.LogError($"Error reading swap info: {ex.Message}");
-            return 0; // Return 0% swap usage if unable to read the stats
+            _logger.LogError($"Swap read error: {ex.Message}");
+            return 0;
         }
     }
 
-    /// <summary>
-    /// Gets free memory percentage on Windows.
-    /// </summary>
-    private float GetWindowsMemoryUsage()
-    {
-        var gcMemoryInfo = GC.GetGCMemoryInfo();
-        ulong totalMemory = (ulong)gcMemoryInfo.TotalAvailableMemoryBytes;
-        ulong usedMemory = (ulong)gcMemoryInfo.HeapSizeBytes;
-        ulong freeMemory = totalMemory - usedMemory;
-
-        return (float)freeMemory / totalMemory * 100;
-    }
-
-    /// <summary>
-    /// Checks if memory is too low to safely run a process.
-    /// </summary>
     public bool IsMemoryTooLow(float minFreeMemoryPercentage = 50f)
     {
-        // Get the percentage of "truly" free memory (MemFree + Buffers + Cached).
-        float freeMemoryPercentage = GetFreeMemoryPercentage();
-
-        bool tooLow = freeMemoryPercentage < minFreeMemoryPercentage;
-
-        _logger.LogInformation($"Free Memory: {freeMemoryPercentage}%, Safe to Run: {!tooLow}");
-
+        float percent = GetFreeMemoryPercentage();
+        bool tooLow = percent < minFreeMemoryPercentage;
+        _logger.LogInformation($"Free Memory: {percent:F1}%, Safe: {!tooLow}");
         return tooLow;
     }
 
-    /// <summary>
-    /// Gets the percentage of free memory available (with MemFree + Buffers + Cached).
-    /// </summary>
     private float GetFreeMemoryPercentage()
     {
         if (OperatingSystem.IsWindows())
-        {
             return GetWindowsMemoryUsage();
-        }
-        else
-        {
-            return GetLinuxMacMemoryUsage();
-        }
+        return GetLinuxMacMemoryUsage();
     }
 
-    public bool IsMemoryAvailable(int memory)
+    private float GetWindowsMemoryUsage()
     {
-        try
-        {
-            var lines = File.ReadAllLines("/proc/meminfo");
-
-            var availLine = lines.FirstOrDefault(l => l.StartsWith("MemAvailable"));
-            var swapLine = lines.FirstOrDefault(l => l.StartsWith("SwapFree"));
-            if (availLine==null || swapLine==null ) return true;
-            long swap = long.Parse(Regex.Match(swapLine, @"\d+").Value);
-            long avail = long.Parse(Regex.Match(availLine, @"\d+").Value);
-            long total = swap + avail;
-            long needMemory = memory * 1000000;
-            _logger.LogInformation($" Needed memory {needMemory} available {total}");
-            return needMemory < total;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError($"Error reading memory info: {ex.Message}");
-            return false;
-        }
+        var info = GC.GetGCMemoryInfo();
+        ulong total = (ulong)info.TotalAvailableMemoryBytes;
+        ulong used = (ulong)info.HeapSizeBytes;
+        ulong free = total - used;
+        return total == 0 ? 100 : (float)free / total * 100;
     }
 
-    /// <summary>
-    /// Gets free memory percentage on Linux/macOS.
-    /// </summary>
     private float GetLinuxMacMemoryUsage()
     {
         try
         {
             var lines = File.ReadAllLines("/proc/meminfo");
-            var totalLine = lines.FirstOrDefault(l => l.StartsWith("MemTotal"));
-            var freeLine = lines.FirstOrDefault(l => l.StartsWith("MemFree"));
-            var buffersLine = lines.FirstOrDefault(l => l.StartsWith("Buffers"));
-            var cachedLine = lines.FirstOrDefault(l => l.StartsWith("Cached"));
+            long total = ParseMemValue(lines, "MemTotal");
+            long free = ParseMemValue(lines, "MemFree");
+            long buffers = ParseMemValue(lines, "Buffers");
+            long cached = ParseMemValue(lines, "Cached");
 
-            if (totalLine == null || freeLine == null || buffersLine == null || cachedLine == null)
-            {
-                _logger.LogWarning("Could not read memory info from /proc/meminfo.");
-                return 100; // Assume high availability if we cannot read
-            }
-
-            long totalMemory = long.Parse(Regex.Match(totalLine, @"\d+").Value);
-            long freeMemory = long.Parse(Regex.Match(freeLine, @"\d+").Value);
-            long buffers = long.Parse(Regex.Match(buffersLine, @"\d+").Value);
-            long cached = long.Parse(Regex.Match(cachedLine, @"\d+").Value);
-
-            // Sum MemFree + Buffers + Cached to get available memory
-            long availableMemory = freeMemory + buffers + cached;
-
-            return (float)availableMemory / totalMemory * 100;
+            long available = free + buffers + cached;
+            return total == 0 ? 100 : (float)available / total * 100;
         }
         catch (Exception ex)
         {
-            _logger.LogError($"Error reading memory info: {ex.Message}");
-            return 100; // Assume high availability if unable to determine actual value
+            _logger.LogError($"Memory read error: {ex.Message}");
+            return 100;
+        }
+    }
+
+    private long ParseMemValue(string[] lines, string key)
+    {
+        var line = lines.FirstOrDefault(l => l.StartsWith(key));
+        return line == null ? 0 : long.Parse(Regex.Match(line, @"\d+").Value);
+    }
+
+    public bool IsMemoryAvailable(int memoryInMB)
+    {
+        try
+        {
+            var lines = File.ReadAllLines("/proc/meminfo");
+            long avail = ParseMemValue(lines, "MemAvailable");
+            long swap = ParseMemValue(lines, "SwapFree");
+            long total = avail + swap;
+            long need = memoryInMB * 1024L; // memoryInMB in kB
+
+            _logger.LogInformation($"Memory needed: {need} kB, available: {total} kB");
+            return total > need;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"Memory availability check failed: {ex.Message}");
+            return false;
         }
     }
 

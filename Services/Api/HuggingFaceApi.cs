@@ -134,14 +134,45 @@ public class HuggingFaceApi : ILLMApi
             var payload = new
             {
                 model = _modelID,
-                messages = messages.Select(m => new
+      <<<<<<< SEARCH
+    public List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, bool noThink)
+    {
+
+        string toolsJson = ToolsWrapper(JsonToolsBuilder.BuildToolsJson(_toolsBuilder.Tools));
+        // List<ChatMessage> systemPrompt=_toolsBuilder.GetSystemPrompt(currentTime, serviceObj);
+        string footer = PromptFooter();
+        var systemMessages = _toolsBuilder.GetSystemPrompt(currentTime, serviceObj, "HugLLM") ?? new List<ChatMessage>() { ChatMessage.FromSystem("") };
+        string noThinkToken="";
+        if (noThink) noThinkToken=" "+_config.NoThinkToken+" ";
+        systemMessages[0].Content = toolsJson + systemMessages[0].Content + footer +noThinkToken;
+        //_logger.LogInformation($" Using SYSTEM prompt\n\n{systemMessages[0].Content}");
+        systemMessages.AddRange(NShotPromptFactory.GetPrompt(_serviceID, _isXml, currentTime, serviceObj, _config));
+        _systemPromptCount = systemMessages.Count;
+        return systemMessages;
+    }
+=======
+    public List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, bool noThink)
+    {
+        string footer = PromptFooter();
+        var systemMessages = _toolsBuilder.GetSystemPrompt(currentTime, serviceObj, "HugLLM") ?? new List<ChatMessage>() { ChatMessage.FromSystem("") };
+        string noThinkToken="";
+        if (noThink) noThinkToken=" "+_config.NoThinkToken+" ";
+        systemMessages[0].Content += footer + noThinkToken;
+        //_logger.LogInformation($" Using SYSTEM prompt\n\n{systemMessages[0].Content}");
+        systemMessages.AddRange(NShotPromptFactory.GetPrompt(_serviceID, _isXml, currentTime, serviceObj, _config));
+        _systemPromptCount = systemMessages.Count;
+        return systemMessages;
+    }
+>>>>>>> REPLACE
+          messages = messages.Select(m => new
                 {
                     role = m.Role,
                     content = m.Content
                 }).ToList(),
                 max_tokens = maxTokens,
                 stream = _isStream,
-                temperture = _temperture
+                temperture = _temperture,
+                tools = tools // <-- Add this line to include tools in the payload
             };
 
             string? responseContent = null;
