@@ -13,8 +13,12 @@ SERVICE_NAME_PASCAL="$2"
 SERVICE_NAME_LOWER=$(echo "$SERVICE_NAME_PASCAL" | tr '[:upper:]' '[:lower:]')
 
 SERVICE="NM-LLM-${REGION^^}-$SERVICE_NAME_PASCAL.service"
-TARGET_DIR="../../services/llm-$REGION-$SERVICE_NAME_LOWER"
-ENV_SOURCE="/home/mahadeva/code/securefiles/domain-env"
+TARGET_BASE="$HOME/code/services"
+TARGET_DIR="$TARGET_BASE/llm-$REGION-$SERVICE_NAME_LOWER"
+ENV_SOURCE="$HOME/code/securefiles/domain-env"
+
+# Ensure base and target directories exist
+mkdir -p "$TARGET_DIR"
 
 echo "Stopping service: $SERVICE"
 systemctl stop "$SERVICE"
