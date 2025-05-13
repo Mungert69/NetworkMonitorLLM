@@ -638,7 +638,7 @@ public class OpenAIRunner : ILLMRunner
             json = $"{{\"invalid_json_error\" : \"{errorMessage}\"}}";
 
         }
-        if (!isValidJson) _logger.LogError($" Error : invald json from model. Sending json error : {json}");
+        if (!isValidJson) _logger.LogError($" Error : invalid json from model. Sending json error : {json}");
 
         responseServiceObj.UserInput = serviceObj.UserInput;
         responseServiceObj.LlmMessage = "</functioncall>";
