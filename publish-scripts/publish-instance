@@ -11,11 +11,11 @@ fi
 REGION="$1"
 SERVICE_NAME_PASCAL="$2"
 SERVICE_NAME_LOWER=$(echo "$SERVICE_NAME_PASCAL" | tr '[:upper:]' '[:lower:]')
-
+ROOTDIR="/home/mahadeva"
 SERVICE="NM-LLM-${REGION^^}-$SERVICE_NAME_PASCAL.service"
-TARGET_BASE="$HOME/code/services"
+TARGET_BASE="$ROOTDIR/code/services"
 TARGET_DIR="$TARGET_BASE/llm-$REGION-$SERVICE_NAME_LOWER"
-ENV_SOURCE="$HOME/code/securefiles/domain-env"
+ENV_SOURCE="$ROOTDIR/code/securefiles/domain-env"
 
 # Ensure base and target directories exist
 mkdir -p "$TARGET_DIR"
