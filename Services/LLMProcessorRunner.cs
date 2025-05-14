@@ -142,7 +142,7 @@ public class LLMProcessRunner : ILLMRunner
         }
         _config = LLMConfigFactory.GetConfig(_mlParams.LlmVersion);
 
-        if (!_mlParams.StartThisTestLLM || _isStateStarting) return;
+        if (!_isEnabled || _isStateStarting) return;
         _isStateStarting = true;
         _isStateReady = false;
         _isStateFailed = false;
