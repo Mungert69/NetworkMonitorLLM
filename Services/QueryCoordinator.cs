@@ -1,4 +1,5 @@
 using System;
+using System.Text;
 using System.Linq;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
@@ -11,6 +12,7 @@ using NetworkMonitor.Data.Services;
 using Microsoft.Extensions.Logging;
 using Betalgo.Ranul.OpenAI.ObjectModels.ResponseModels;
 using Betalgo.Ranul.OpenAI.ObjectModels.RequestModels;
+using System.Security.Cryptography;
 
 namespace NetworkMonitor.LLM.Services
 {
@@ -25,17 +27,20 @@ namespace NetworkMonitor.LLM.Services
     }
     public class QueryCoordinator : IQueryCoordinator
     {
+        private readonly ConcurrentDictionary<int, (string result, DateTime timestamp)> _queryCache =
+     new ConcurrentDictionary<int, (string, DateTime)>();
+        private readonly TimeSpan _cacheTTL = TimeSpan.FromDays(5);
+        private readonly SHA256 _hashAlgorithm = SHA256.Create(); // Changed from HashAlgorithm to SHA256
         private readonly ConcurrentDictionary<string, TaskCompletionSource<string>> _pendingQueries =
             new ConcurrentDictionary<string, TaskCompletionSource<string>>();
         private readonly ConcurrentDictionary<string, string> _userQueries =
             new ConcurrentDictionary<string, string>();
 
 
-        private readonly TimeSpan _defaultTimeout = TimeSpan.FromSeconds(30); // Default timeout for queries
         private readonly IRabbitRepo _rabbitRepo;
         private readonly string _serviceID;
         private readonly string _authKey;
-
+        private readonly TimeSpan _defaultTimeout = TimeSpan.FromSeconds(10);
         private const string SystemRagMessage = "The following RAG data has been added.";
 
         private readonly ILogger _logger;
@@ -45,8 +50,8 @@ namespace NetworkMonitor.LLM.Services
             _logger = logger;
             _rabbitRepo = rabbitRepo;
             _serviceID = systemParamsHelper.GetSystemParams().ServiceID!;
-            _authKey=systemParamsHelper.GetSystemParams().ServiceAuthKey ;
-            
+            _authKey = systemParamsHelper.GetSystemParams().ServiceAuthKey;
+
         }
 
         public async Task AddSystemRag(string messageId, List<ChatMessage> localHistory)
@@ -119,6 +124,14 @@ namespace NetworkMonitor.LLM.Services
         }
         public async Task<string> ExecuteQueryAsync(string queryText, string messageId, string llmType, TimeSpan? timeout = null)
         {
+
+            var hashKey = GetQueryHash(queryText);
+            if (_queryCache.TryGetValue(hashKey, out var cached) &&
+                DateTime.UtcNow - cached.timestamp < _cacheTTL)
+            {
+                _logger.LogInformation($"Cache hit for query: {queryText}");
+                return cached.result;
+            }
             var tcs = new TaskCompletionSource<string>();
             if (!_pendingQueries.TryAdd(messageId, tcs) || !_userQueries.TryAdd(messageId, queryText))
             {
@@ -144,14 +157,42 @@ namespace NetworkMonitor.LLM.Services
                 QueryText = queryText,
                 MessageID = messageId,
                 AppID = llmType,
-                AuthKey=_authKey
+                AuthKey = _authKey
             };
 
             // Publish the query to RabbitMQ
             await _rabbitRepo.PublishAsync("queryIndex", queryIndexRequest);
 
-            // Wait for the RAG result
-            return await tcs.Task;
+            try
+            {
+                var result = await tcs.Task;
+                // Only cache successful results
+                _queryCache[hashKey] = (result, DateTime.UtcNow);
+                return result;
+            }
+            catch
+            {
+                // Don't cache failed results
+                throw;
+            }
+        }
+        private int GetQueryHash(string queryText)
+        {
+            // Normalize the query
+            var normalizedQuery = queryText?
+                .Trim()
+                .ToLowerInvariant()
+                .Replace("\r", "")
+                .Replace("\n", " ") ?? string.Empty;
+
+            // Compute hash and convert to int
+            byte[] hashBytes = _hashAlgorithm.ComputeHash(Encoding.UTF8.GetBytes(normalizedQuery));
+            return BitConverter.ToInt32(hashBytes, 0);
+        }
+        public void ClearCache()
+        {
+            _queryCache.Clear();
+            _logger.LogInformation("RAG query cache cleared");
         }
 
         public void CompleteQuery(string messageId, string result)

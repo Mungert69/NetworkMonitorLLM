@@ -179,7 +179,6 @@ public class OpenAIRunner : ILLMRunner
             _history.AddRange(resumeSystemPrompt);
         }
         _logger.LogInformation($"Started {_type} {_serviceID} Assistant with session id {serviceObj.SessionId} at {serviceObj.GetClientStartTime()}. with CTX size {_maxTokens} and Response tokens {_responseTokens}");
-        await _queryCoordinator.InitializeSession(serviceObj.SessionId);
 
         _isStateStarting = false;
         _isStateReady = true;
@@ -191,9 +190,6 @@ public class OpenAIRunner : ILLMRunner
     public Task RemoveProcess(string sessionId)
     {
         _isStateReady = false;
-
-        _queryCoordinator.CleanupSession(sessionId);
-
         _isStateReady = true;
         _isStateFailed = true;
         _logger.LogInformation($" Stopped {_type} {_serviceID} Assistant with session {sessionId}.  History has {_history.Count} messages.");
