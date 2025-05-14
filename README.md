@@ -195,5 +195,18 @@ dotnet build -c Release
 * Maintain interface compatibility
 * Include unit tests for new features
 * Document configuration changes
+* 
+## 🚀 Live Demo and Examples
+
+Explore real-world examples of the system in action:
+
+- 🔬 **ReadyForQuantum Demo (Hugging Face Space)**  
+  Interactive demo showcasing quantum-aware network analysis and LLM-driven diagnostics.  
+  [https://huggingface.co/spaces/Mungert/ReadyForQuantum](https://huggingface.co/spaces/Mungert/ReadyForQuantum)
+
+- 🌐 **Official Project Site**  
+  Detailed use cases, blog posts, and background on post-quantum security and LLM integration.  
+  [https://readyforquantum.com](https://readyforquantum.com)
+
 
 
