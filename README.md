@@ -68,18 +68,18 @@ This codebase implements a **modular**, **multi-backend** Large Language Model (
 ```mermaid
 flowchart TD
     subgraph User Interaction
-        A[User Input] --> B[RabbitListener]
+        A["User Input"] --> B["RabbitListener"]
     end
-    B --> C[LLMService]
-    C --> D{Session Exists?}
-    D -- No --> E[LLMFactory.CreateRunner]
-    D -- Yes --> F[Get Runner]
-    E & F --> G[LLMRunner (OpenAI/HF/Process)]
-    G --> H[TokenBroadcaster]
-    H --> I[LLMResponseProcessor]
-    I --> J[RabbitMQ: Output/Function/Timeout]
-    J --> K[Frontend/Consumer]
-    G -->|RAG| L[QueryCoordinator]
+    B --> C["LLMService"]
+    C --> D{"Session Exists?"}
+    D -- No --> E["LLMFactory.CreateRunner"]
+    D -- Yes --> F["Get Runner"]
+    E & F --> G["LLMRunner: OpenAI / HF / Process"]
+    G --> H["TokenBroadcaster"]
+    H --> I["LLMResponseProcessor"]
+    I --> J["RabbitMQ: Output / Function / Timeout"]
+    J --> K["Frontend / Consumer"]
+    G -->|RAG| L["QueryCoordinator"]
     L --> H
 ```
 
