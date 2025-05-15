@@ -112,19 +112,26 @@ public interface ILLMResponseProcessor {
 4. Session added to tracking dictionary
 
 ### 2. Message Processing
-
 ```mermaid
 sequenceDiagram
-    Client->>+LLMService: SendInputAndGetResponse()
-    LLMService->>+Runner: Route to appropriate runner
-    Runner->>+LLM: Forward query
+    participant Client
+    participant LLMService
+    participant Runner
+    participant LLM
+    participant ResponseProcessor
+
+    Client->>LLMService: SendInputAndGetResponse()
+    LLMService->>Runner: Route to appropriate runner
+    Runner->>LLM: Forward query
+    
     alt OpenAI
-        LLM-->>-Runner: API response
+        LLM-->>Runner: API response
     else LLama
-        LLM-->>-Runner: Streamed tokens
+        LLM-->>Runner: Streamed tokens
     end
-    Runner->>+ResponseProcessor: Process output
-    ResponseProcessor-->>-Client: Return results
+    
+    Runner->>ResponseProcessor: Process output
+    ResponseProcessor-->>Client: Return results
 ```
 
 ### 3. Function Calling
