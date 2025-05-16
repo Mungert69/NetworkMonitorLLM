@@ -38,7 +38,7 @@ dotnet publish ../NetworkMonitorLLM.csproj \
   --os linux --arch x64 \
   --output "$TARGET_DIR" \
   -c Release --self-contained true
-
+rm "$TARGET_DIR/.env"
 ln -sf "$ENV_SOURCE" "$TARGET_DIR/.env"
 
 echo "Starting service: $SERVICE"
