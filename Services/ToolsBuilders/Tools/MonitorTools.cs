@@ -76,29 +76,30 @@ public class MonitorTools
         "Retrieve monitoring data for hosts based on specified filters. By default, if no filters are provided (empty object {}), all host data will be returned. Add parameters to filter and restrict the results. Examples:\n" +
         "- Get all hosts with alerts: {'alert_flag': true}\n" +
         "- Get latest data for specific host: {'dataset_id': 0, 'address': 'test.com'}\n" +
-        "- Get historical data by time range: {'id': 2, 'date_start': '2024-04-11T19:20:00', 'date_end': '2024-04-12T19:20:00'}\n" +
+        "- Get historical data by time rangeand host id: {'id': 2, 'date_start': '2024-04-11T19:20:00', 'date_end': '2024-04-12T19:20:00'}\n" +
         "- Paginate through all hosts. Starting at page 1 with 10 hosts on it: {'page_number': 1, 'page_size': 10}\n\n" +
-        "Note: Multiple filters can be combined (AND logic). Leaving a filter out means that field won't be used to restrict results.")
+        "Note: Multiple filters can be combined (AND logic)." +
+        "IMPORTANT: ONLY SET FIELDS THAT YOU ARE FILTERING WITH. For example if you want the latest host data for host with a given address you only need to set the address and dataset_id all other fields are NOT needed. ")
     .AddParameter("detail_response", PropertyDefinition.DefineBoolean(
         "Set to true for comprehensive monitoring data including reponse time statistics, agent location, and other info."))
     .AddParameter("dataset_id", PropertyDefinition.DefineNumber(
         "Dataset identifier (0 = latest data). For historical data, set to null and specify date range."))
     .AddParameter("id", PropertyDefinition.DefineNumber(
-        "Filter by host ID. Omit to include all IDs."))
+        "Filter by host ID"))
     .AddParameter("address", PropertyDefinition.DefineString(
-        "Filter by host address (supports partial matchesa and wildcards * and ?). Omit to include all addresses."))
+        "Filter by host address (supports partial matchesa and wildcards * and ?)"))
     .AddParameter("email", PropertyDefinition.DefineString(
-        "Filter by associated email. Omit to include all emails."))
+        "Filter by associated email"))
     .AddParameter("enabled", PropertyDefinition.DefineBoolean(
-        "Filter by enabled status. Omit to include both enabled and disabled hosts."))
+        "Filter by enabled status"))
     .AddParameter("port", PropertyDefinition.DefineNumber(
-        "Filter by port number. Omit to include all ports."))
+        "Filter by port number"))
     .AddParameter("endpoint", PropertyDefinition.DefineString(
-        "Filter by endpoint type. Omit to include all endpoints."))
+        "Filter by endpoint type"))
     .AddParameter("alert_sent", PropertyDefinition.DefineBoolean(
-        "Filter by alert sent status. Omit to include regardless of alert status."))
+        "Filter by alert sent status"))
     .AddParameter("alert_flag", PropertyDefinition.DefineBoolean(
-        "Filter by alert flag status. Omit to include hosts with any alert status."))
+        "Filter by alert flag status"))
     .AddParameter("date_start", PropertyDefinition.DefineString(
         "Start time for historical data filtering. Requires date_end. Format: 'YYYY-MM-DDTHH:MM:SS'."))
     .AddParameter("date_end", PropertyDefinition.DefineString(
@@ -108,7 +109,7 @@ public class MonitorTools
     .AddParameter("page_size", PropertyDefinition.DefineNumber(
         "Pagination: results per page (default=4)."))
     .AddParameter("agent_location", PropertyDefinition.DefineString(
-        "Filter by agent location. Omit to include all locations."))
+        "Filter by agent location"))
     .Validate()
     .Build();
 }
@@ -121,27 +122,28 @@ public class MonitorTools
         "- Get only DNS endpoint hosts: {'endpoint': 'dns'}\n" +
         "- Get enabled hosts from specific location: {'enabled': true, 'agent_location': 'London - UK'}\n" +
         "- Paginate through all hosts, show page 1 with 10 hosts on it: {'page_number': 1, 'page_size': 10}\n\n" +
-        "Note: Multiple filters can be combined (AND logic). Leaving a filter out means that field won't be used to restrict results.")
+        "Note: Multiple filters can be combined (AND logic). Leaving a filter out means that field won't be used to restrict results."+
+        "IMPORTANT: ONLY SET FIELDS THAT YOU ARE FILTERING WITH. For example if you want the latest host config for host with a given address you only need to set the address all other fields are NOT needed. ")
     .AddParameter("detail_response", PropertyDefinition.DefineBoolean(
         "Set to true to include full configuration details (beyond just ID and address)."))
     .AddParameter("id", PropertyDefinition.DefineNumber(
-        "Filter by host ID. Omit to include all IDs."))
+        "Filter by host ID"))
     .AddParameter("address", PropertyDefinition.DefineString(
-        "Filter by host address (supports partial matchesa and wildcards * and ?). Omit to include all addresses."))
+        "Filter by host address (supports partial matchesa and wildcards * and ?)"))
     .AddParameter("email", PropertyDefinition.DefineString(
-        "Filter by associated email. Omit to include all emails."))
+        "Filter by associated email"))
     .AddParameter("enabled", PropertyDefinition.DefineBoolean(
-        "Filter by enabled status. Omit to include both enabled and disabled hosts."))
+        "Filter by enabled status"))
     .AddParameter("port", PropertyDefinition.DefineNumber(
-        "Filter by port number. Omit to include all ports."))
+        "Filter by port number"))
     .AddParameter("endpoint", PropertyDefinition.DefineString(
-        "Filter by endpoint type (e.g., 'http', 'dns'). Omit to include all endpoints."))
+        "Filter by endpoint type (e.g., 'http', 'dns')"))
     .AddParameter("page_number", PropertyDefinition.DefineNumber(
         "Pagination: page number (1-based). Use with page_size for large result sets."))
     .AddParameter("page_size", PropertyDefinition.DefineNumber(
         "Pagination: results per page (default=4)."))
     .AddParameter("agent_location", PropertyDefinition.DefineString(
-        "Filter by agent location. Omit to include all locations."))
+        "Filter by agent location"))
     .Validate()
     .Build();
 }
