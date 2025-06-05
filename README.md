@@ -1,6 +1,10 @@
 
 ---
 
+## NetworkMonitorLLM
+
+# A Free Network Monitor Service Component
+
 # High-Level Purpose
 
 This codebase implements a **modular**, **multi-backend** Large Language Model (LLM) orchestration and chat system, designed for **network monitoring**, **security**, and **automation** tasks. It supports:
@@ -139,7 +143,7 @@ Explore real-world examples of the system in action:
   [https://huggingface.co/spaces/Mungert/ReadyForQuantum](https://huggingface.co/spaces/Mungert/ReadyForQuantum)
 
 - 🌐 **Official Project Site**  
-  Detailed use cases, blog posts, and background on post-quantum security and LLM integration.  
+  The Full Free Network Monitor Service in action. 
   [https://readyforquantum.com](https://readyforquantum.com)
 
 
