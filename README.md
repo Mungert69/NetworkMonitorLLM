@@ -134,6 +134,12 @@ This codebase is a **robust**, **extensible** LLM orchestration platform for **n
 
 ---
 
+# Building
+
+* When building make sure to have the NetworkMonitorLib available. Copy NetworkMonitorLib repo to ../NetworkMonitorLib . [NetworkMonitorLib](https://github.com/Mungert69/NetworkMonitorLib/blob/main/README.md)
+
+---
+
 ## 🚀 Live Demo and Examples
 
 Explore real-world examples of the system in action:
