@@ -135,7 +135,7 @@ This codebase is a **robust**, **extensible** LLM orchestration platform for **n
 Explore real-world examples of the system in action:
 
 - 🔬 **ReadyForQuantum Demo (Hugging Face Space)**  
-  Interactive demo showcasing quantum-aware network analysis and LLM-driven diagnostics.  
+  Interactive demo showcasing quantum-aware network analysis and LLM-driven diagnostics. Uses NetworkMonitorLLM instances to drive the LLM experts and assistants.
   [https://huggingface.co/spaces/Mungert/ReadyForQuantum](https://huggingface.co/spaces/Mungert/ReadyForQuantum)
 
 - 🌐 **Official Project Site**  
