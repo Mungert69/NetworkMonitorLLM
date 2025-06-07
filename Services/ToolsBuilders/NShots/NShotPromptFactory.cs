@@ -379,9 +379,7 @@ namespace NetworkMonitor.Connection
             if (serviceObj.IsUserLoggedIn)
             {
                 content = $"The user logged in at {currentTime} with email {serviceObj.UserInfo.Email}. " +
-                          $"Users account type is {serviceObj.UserInfo.AccountType}. They have {serviceObj.UserInfo.TokensUsed} available tokens. " +
-                          $"Remind the user that upgrading accounts gives more tokens and access to more functions. " +
-                          $"See {AppConstants.FrontendUrl}/subscription for details.";
+                          $"They have {serviceObj.UserInfo.TokensUsed} available TurboLLM tokens. The tokens automatically topup daily" ;
             }
             else
             {
@@ -441,9 +439,7 @@ namespace NetworkMonitor.Connection
             if (serviceObj.IsUserLoggedIn)
             {
                 funcResponse = $"The user logged in at {currentTime} with email {serviceObj.UserInfo.Email}. " +
-                          $"Users account type is {serviceObj.UserInfo.AccountType}. They have {serviceObj.UserInfo.TokensUsed} available tokens. " +
-                          $"Remind the user that upgrading accounts gives more tokens and access to more functions. " +
-                          $"See {AppConstants.FrontendUrl}/subscription for details.";
+                          $" They have {serviceObj.UserInfo.TokensUsed} available TurboLLM tokens. " ;
             }
             else
             {
@@ -512,7 +508,7 @@ namespace NetworkMonitor.Connection
     - Provide detailed monitoring data for hosts.  
     - Generate reports on network performance and security status.  
 
-If you need help with any of these tasks, just let me know! You can also visit {AppConstants.FrontendUrl}/subscription to upgrade your account and unlock more features.";
+If you need help with any of these tasks, just let me know!";
 
 
             AddAssistantMessageWithToolCall(
