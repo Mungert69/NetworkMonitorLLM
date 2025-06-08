@@ -68,11 +68,6 @@ public class PenetrationTools
                 "Pagination control. Start with 1. Increment if 'more_results'=true"))
                 .AddParameter("agent_location", PropertyDefinition.DefineString(
             "Predefined agent locations. Default: auto-assign based on target geoIP"))
-        .AddParameter("number_lines", PropertyDefinition.DefineInteger(
-            "Output lines to return. Default: 20. Max: 100."))
-        .AddParameter("page", PropertyDefinition.DefineInteger(
-            "Pagination for large outputs. Start with 1. Increment if 'truncated' flag is set."))
-        
             .Validate()
             .Build();
     }
@@ -90,11 +85,10 @@ public class PenetrationTools
                 "Include usage examples. Default: true"))
                 .AddParameter("agent_location", PropertyDefinition.DefineString(
             "Predefined agent locations. Default: auto-assign based on target geoIP"))
-        .AddParameter("number_lines", PropertyDefinition.DefineInteger(
+            .AddParameter("number_lines", PropertyDefinition.DefineInteger(
             "Output lines to return. Default: 20. Max: 100."))
-        .AddParameter("page", PropertyDefinition.DefineInteger(
+            .AddParameter("page", PropertyDefinition.DefineInteger(
             "Pagination for large outputs. Start with 1. Increment if 'truncated' flag is set."))
-        
             .Validate()
             .Build();
     }
