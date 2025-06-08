@@ -556,7 +556,7 @@ public class OpenAIRunner : ILLMRunner
                     var toolResponse = ChatMessage.FromTool("{\"message\" : \"The function call " + funcName + " is currently running. There is no need to call are_functions_running because the system is actively monitoring the status and you will be informed as soon as the function completes..\"" + messageIdJson + "}", funcId!);
                     toolResponse.Role = "tool";
                     toolResponse.Name = funcName;
-                    toolResponces.Add(toolResponse);
+                    if (serviceObj.IsPrimaryLlm) toolResponces.Add(toolResponse);
 
                     if (!isDuplicateSet) isDuplicate = _recentFunctionCalls.Any(f =>
                     f.FunctionName == funcName &&
