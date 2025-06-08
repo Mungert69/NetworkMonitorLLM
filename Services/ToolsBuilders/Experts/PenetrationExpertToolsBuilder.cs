@@ -61,7 +61,7 @@ namespace NetworkMonitor.LLM.Services
      }
    }
 
-Phase 2: Intelligent Scanner Module Selection (IMPROVED)
+Phase 2: Intelligent Scanner Module Selection 
 
 For each discovered service (PORT/PROTOCOL/SERVICE/VERSION):
 
@@ -123,20 +123,18 @@ For each discovered service (PORT/PROTOCOL/SERVICE/VERSION):
 
             auxiliary/scanner/ssh/ssh_version
 
-Phase 3: Vulnerability Analysis (Enhanced)
+Phase 3: Find Modules that match services found
 
-For each scanner result showing potential vulnerabilities:
+For each scanner result showing potential modules:
 json
 
 {
   ""name"": ""search_metasploit_modules"",
   ""arguments"": {
-    ""module_type"": ""exploit,auxiliary"",
+    ""keywords"" : ""[KEYWORDS_TO_SEARCH_FOR]""
     ""platform"": ""[OS_IF_FOUND]"",
-    ""service"": ""[SERVICE_NAME_IF_FOUND]"",
-    ""version"": ""[EXACT_VERSION_IF_FOUND]"",
     ""cve"": ""[CVE_IF_FOUND]"",
-    ""rank"": ""excellent,great,good"",
+    ""rank"": ""[RANK_OPTIONAL]"",
     ""number_lines"": 10
   }
 }
@@ -169,12 +167,11 @@ json
 
 {
   ""phase"": ""[1-4]"",
-  ""action"": ""[scan/search/info/execute]"",
+  ""actions"": ""[scan/search/info]"",
   ""target"": ""[IP:PORT]"",
   ""service"": ""[PROTOCOL/SERVICE/VERSION]"",
-  ""scanner_used"": ""[MODULE_NAME]"",
   ""evidence"": ""[KEY_FINDINGS]"",
-  ""next_recommendations"": [""MODULE1"", ""MODULE2""]
+  ""next_recommendations"": [""call_function"", ""call_function""]
 }
 
 Example Enhanced Workflow
@@ -187,13 +184,13 @@ json
 
 {
   ""phase"":1,
-  ""action"":""scan"",
+  ""call_function"":""run_nmap"",
   ""target"":""192.168.1.100:1-1000"",
   ""service"":""tcp"",
   ""evidence"":""open:22/ssh(OpenSSH 7.9),80/http(Apache 2.4.49),443/https"",
   ""next_recommendations"":[
-    ""auxiliary/scanner/ssh/ssh_version"",
-    ""auxiliary/scanner/http/apache_normalize_path""
+    ""run_metasploit auxiliary/scanner/ssh/ssh_version"",
+    ""run_metasploit auxiliary/scanner/http/apache_normalize_path""
   ]
 }
 
@@ -203,20 +200,40 @@ json
 
 {
   ""phase"":2,
-  ""action"":""scan"",
+  ""call_function"":""run_metasploit"",
   ""target"":""192.168.1.100:443"",
-  ""service"":""http/Apache"",
   ""scanner_used"":""auxiliary/scanner/http/apache_normalize_path"",
   ""evidence"":""Vulnerable to path traversal (CVE-2021-41773)"",
   ""next_recommendations"":[
-    ""exploit/multi/http/apache_normalize_path_rce"",
-    ""auxiliary/scanner/http/http_put""
+    ""search_metasploit_modules using keywords apache_normalize_path_rce""
+  ]
+}
+
+json
+
+{
+  ""phase"":3,
+  ""call_function"":""search_metasploit_modules"",
+  ""keywords"":""apache_normalize_path_rce"",
+  ""evidence"":""Found module match"",
+  ""next_recommendations"":[
+    ""get_metasploit_module_info for module exploit/multi/http/apache_normalize_path_rce""
+  ]
+}
+
+json
+
+{
+  ""phase"":4,
+  ""call_function"":""get_metasploit_module_info"",
+  ""next_recommendations"":[
+    ""run_metasploit exploit/multi/http/apache_normalize_path_rce""
   ]
 }
 ";
 
       string prompt = @"
-You are an AI penetration testing controller with enhanced Metasploit integration. Key enhancements:
+You are an AI penetration testing controller with enhanced REAL WORLD Metasploit integration. Key enhancements:
 
 1. **Scanner Module Intelligence**:
    - Maintain an internal mapping of services to appropriate scanner modules
@@ -240,8 +257,6 @@ json
 {
   ""summary"": {
     ""target"": ""[FQDN/IP]"",
-    ""test_duration"": ""[HH:MM:SS]"",
-    ""scan_scope"": ""[external/internal]"",
     ""services_tested"": [""[PORT/PROTOCOL]"", ...],
     ""vulnerabilities_found"": [INTEGER],
     ""risk_level"": ""[low/medium/high/critical]""

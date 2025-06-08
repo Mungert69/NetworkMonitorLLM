@@ -47,7 +47,7 @@ public class PenetrationTools
             "Search modules with filters. Always start penetration tests with this to find appropriate modules. " +
             "Example: Find Windows SMB exploits: {'module_type':'exploit','platform':'windows','service':'smb'}")
             .AddParameter("module_type", PropertyDefinition.DefineEnum(
-                new List<string> { "exploit", "auxiliary", "post", "payload", "encoder", "nop" },
+                new List<string> { "exploit", "auxiliary", "post" },
                 "Category filter. Multiple allowed with commas. Example: 'exploit,auxiliary'"))
             .AddParameter("platform", PropertyDefinition.DefineString(
                 "OS filter. Use 'multi' for cross-platform"))
