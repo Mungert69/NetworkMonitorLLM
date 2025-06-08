@@ -556,10 +556,11 @@ public class OpenAIRunner : ILLMRunner
                     var funcId = fnCall.Id;
                     await HandleFunctionCallAsync(serviceObj, fnCall, responseServiceObj, assistantChatMessage);
                     await Task.Delay(500);
-                    var toolResponse = ChatMessage.FromTool("{\"message\" : \"The function call " + funcName + " is currently running. There is no need to call are_functions_running because the system is actively monitoring the status and you will be informed as soon as the function completes..\"" + messageIdJson + "}", funcId!);
+                    if (serviceObj.IsPrimaryLlm) string extraMessage = "There is no need to call are_functions_running because the system is actively monitoring the status and you will be informed as soon as the function completes..\"";
+                    var toolResponse = ChatMessage.FromTool("{\"message\" : \"The function call " + funcName + " is currently running. " + extraMessage + messageIdJson + "}", funcId!);
                     toolResponse.Role = "tool";
                     toolResponse.Name = funcName;
-                    if (serviceObj.IsPrimaryLlm) toolResponces.Add(toolResponse);
+                    toolResponces.Add(toolResponse);
 
                     if (!isDuplicateSet) isDuplicate = _recentFunctionCalls.Any(f =>
                     f.FunctionName == funcName &&
