@@ -205,7 +205,7 @@ json
   ""scanner_used"":""auxiliary/scanner/http/apache_normalize_path"",
   ""evidence"":""Vulnerable to path traversal (CVE-2021-41773)"",
   ""next_recommendations"":[
-    ""search_metasploit_modules using keywords apache_normalize_path_rce""
+    ""search_metasploit_modules using keywords CVE-2021-41773""
   ]
 }
 
@@ -214,7 +214,7 @@ json
 {
   ""phase"":3,
   ""call_function"":""search_metasploit_modules"",
-  ""keywords"":""apache_normalize_path_rce"",
+  ""keywords"":""CVE-2021-41773"",
   ""evidence"":""Found module match"",
   ""next_recommendations"":[
     ""get_metasploit_module_info for module exploit/multi/http/apache_normalize_path_rce""
