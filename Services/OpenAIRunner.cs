@@ -318,7 +318,10 @@ public class OpenAIRunner : ILLMRunner
                 }
 
 
-                responseServiceObj.TokensUsed = completionResult.Usage.TotalTokens;
+                if (!_useHF)
+                {
+                    responseServiceObj.TokensUsed = completionResult.Usage.TotalTokens;
+                }
                 if (completionResult.Usage != null && completionResult.Usage.PromptTokensDetails != null) _logger.LogInformation($"Cached Prompt Tokens {completionResult.Usage.PromptTokensDetails.CachedTokens}");
                 ChatChoiceResponse choice = completionResult.Choices.First();
                 if (choice.Message.ToolCalls != null && choice.Message.ToolCalls.Any())
