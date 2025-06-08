@@ -11,253 +11,250 @@ using System.Collections.Generic;
 
 namespace NetworkMonitor.LLM.Services
 {
-    public class PenetrationExpertToolsBuilder : ToolsBuilderBase
-    {
-        private readonly FunctionDefinition fn_run_metasploit;
-        private readonly FunctionDefinition fn_search_metasploit_modules;
-           private readonly FunctionDefinition fn_get_metasploit_module_info;
+   public class PenetrationExpertToolsBuilder : ToolsBuilderBase
+   {
+      private readonly FunctionDefinition fn_run_metasploit;
+      private readonly FunctionDefinition fn_search_metasploit_modules;
+      private readonly FunctionDefinition fn_get_metasploit_module_info;
 
-        public PenetrationExpertToolsBuilder()
-        {
-            // Define the run_metasploit function
-            // Define the run_metasploit function
-            fn_run_metasploit = PenetrationTools.BuildRunMetasploitFunction();
+      public PenetrationExpertToolsBuilder()
+      {
+         // Define the run_metasploit function
+         // Define the run_metasploit function
+         fn_run_metasploit = PenetrationTools.BuildRunMetasploitFunction();
 
-            // Define the search_metasploit_modules function
-            fn_search_metasploit_modules = PenetrationTools.BuildSearchMetasploitFunction();
+         // Define the search_metasploit_modules function
+         fn_search_metasploit_modules = PenetrationTools.BuildSearchMetasploitFunction();
 
-            // Define the get_metasploit_module_info function
-            fn_get_metasploit_module_info = PenetrationTools.BuildMetasploitModuleInfoFunction();
+         // Define the get_metasploit_module_info function
+         fn_get_metasploit_module_info = PenetrationTools.BuildMetasploitModuleInfoFunction();
 
-            // Define the tools list
-            _tools = new List<ToolDefinition>()
+         // Define the tools list
+         _tools = new List<ToolDefinition>()
 {
     new ToolDefinition() { Function = fn_run_metasploit, Type = "function" },
     new ToolDefinition() { Function = fn_search_metasploit_modules, Type = "function" },
     new ToolDefinition() { Function = fn_get_metasploit_module_info, Type = "function" },
 };
 
+      }
+
+
+      public override List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
+      {
+         string workflowGuide = @"
+# Penetration Testing Workflow Protocol
+
+## Phase 1: Target Enumeration (MUST START HERE)
+1. Always begin with port/service scanning using:
+   ```json
+   {
+     ""name"": ""run_metasploit"",
+     ""arguments"": {
+       ""module_name"": ""auxiliary/scanner/portscan/tcp"",
+       ""module_options"": {
+         ""RHOSTS"": ""[TARGET_IP]"",
+         ""PORTS"": ""1-1000"",
+         ""THREADS"": 10
+       },
+       ""number_lines"": 50
+     }
+   }
+
+    For discovered services, run version detection:
+    json
+
+    {
+      ""name"": ""run_metasploit"",
+      ""arguments"": {
+        ""module_name"": ""auxiliary/scanner/http/http_version"",
+        ""module_options"": {
+          ""RHOSTS"": ""[TARGET_IP]"",
+          ""RPORT"": 80
         }
-
-
-        public override List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
-        {
-         
-string guide = @"
-
- How to Search Effectively
-
-1. Basic Search
-   - Use keywords to describe what you're looking for.
-   - Example: `{""name"": ""search_metasploit_modules"", ""arguments"": {""keywords"": ""http"", ""number_lines"": 20, ""page"": 1}}` → Finds all HTTP-related modules.
-
-2. Using Filters
-   - Add filters to narrow results.
-   - Example: `{""name"": ""search_metasploit_modules"", ""arguments"": {""module_type"": ""exploit"", ""platform"": ""linux"", ""keywords"": ""http"", ""number_lines"": 20, ""page"": 1}}` → Finds Linux HTTP exploits.
-
-3. Common Filters
-   - `type:`: exploit, auxiliary, post, payload
-   - `platform:`: windows, linux, multi
-   - `name:`: Exact module name
-   - `cve:`: CVE identifier
-   - `rank:`: excellent, great, good, normal, average, low
-
-4. Search Strategy
-   - Start broad: `{""name"": ""search_metasploit_modules"", ""arguments"": {""keywords"": ""http"", ""number_lines"": 20, ""page"": 1}}`
-   - Refine if too many results: `{""name"": ""search_metasploit_modules"", ""arguments"": {""module_type"": ""exploit"", ""keywords"": ""http"", ""number_lines"": 20, ""page"": 1}}`
-   - Add platform if needed: `{""name"": ""search_metasploit_modules"", ""arguments"": {""module_type"": ""exploit"", ""platform"": ""linux"", ""keywords"": ""http"", ""number_lines"": 20, ""page"": 1}}`
-
- Examples
-
-1. Find HTTP exploits:
-   `{""name"": ""search_metasploit_modules"", ""arguments"": {""module_type"": ""exploit"", ""keywords"": ""http"", ""number_lines"": 20, ""page"": 1}}`
-
-   Report:
-   - Action: Searching for HTTP-related exploit modules.
-   - Reason: The Network Monitor Assistant Requested HTTP exploits, which are commonly used for web application penetration testing.
-   - Result: A list of 20 HTTP exploit modules will be returned, providing options for further analysis.
-
-2. Find Linux authentication bypass modules:
-   `{""name"": ""search_metasploit_modules"", ""arguments"": {""platform"": ""linux"", ""keywords"": ""auth bypass"", ""number_lines"": 20, ""page"": 1}}`
-
-   Report:
-   - Action: Searching for Linux-specific authentication bypass modules.
-   - Reason: The user is targeting Linux systems and wants to identify potential authentication vulnerabilities.
-   - Result: A list of 20 Linux authentication bypass modules will be returned, allowing the user to select the most relevant one.
-
-3. Find modules related to CVE-2023-1234:
-   `{""name"": ""search_metasploit_modules"", ""arguments"": {""cve"": ""CVE-2023-1234"", ""number_lines"": 20, ""page"": 1}}`
-
-   Report:
-   - Action: Searching for modules associated with CVE-2023-1234.
-   - Reason: The user is investigating a specific vulnerability identified by its CVE number.
-   - Result: A list of 20 modules related to CVE-2023-1234 will be returned, helping the user understand available exploit or mitigation options.
-
-4. Find modules with 'tomcat' in the name:
-   `{""name"": ""search_metasploit_modules"", ""arguments"": {""keywords"": ""tomcat"", ""number_lines"": 20, ""page"": 1}}`
-
-   Report:
-   - Action: Searching for modules with 'tomcat' in their name.
-   - Reason: The user is targeting Apache Tomcat servers and wants to identify relevant modules.
-   - Result: A list of 20 Tomcat-related modules will be returned, including exploits, auxiliary modules, and payloads.
-
-5. Find modules for API vulnerabilities:
-   `{""name"": ""search_metasploit_modules"", ""arguments"": {""keywords"": ""api*"", ""number_lines"": 20, ""page"": 1}}`
-
-   Report:
-   - Action: Searching for modules related to API vulnerabilities.
-   - Reason: The user is testing an API and wants to identify potential vulnerabilities.
-   - Result: A list of 20 API-related modules will be returned, including exploits and auxiliary modules.
-
- Notes
-- Use `number_lines` to control how many results are returned.
-- Start with 20-50 results and increase if needed.
-- Avoid over-filtering; start with keywords and add filters only if necessary.
-
----
-
- Example Workflow
-
- Network Monitor Assistant Request: Check for Apache Tomcat vulnerabilities
-
-1. Search for Tomcat-related modules:
-   `{""name"": ""search_metasploit_modules"", ""arguments"": {""keywords"": ""tomcat"", ""number_lines"": 20, ""page"": 1}}`
-
-   Report:
-   - Action: Searching for modules related to Apache Tomcat.
-   - Reason: The user wants to identify vulnerabilities in Apache Tomcat servers.
-   - Result: A list of 20 Tomcat-related modules will be returned, including exploits, auxiliary modules, and payloads.
-
-2. Refine to exploits only:
-   `{""name"": ""search_metasploit_modules"", ""arguments"": {""module_type"": ""exploit"", ""keywords"": ""tomcat"", ""number_lines"": 20, ""page"": 1}}`
-
-   Report:
-   - Action: Refining the search to only include exploit modules.
-   - Reason: The user is specifically interested in exploit modules for Tomcat.
-   - Result: A list of 20 Tomcat exploit modules will be returned, narrowing down the options for exploitation.
-
-3. Get module info for a specific exploit:
-   `{""name"": ""get_metasploit_module_info"", ""arguments"": {""module_name"": ""exploit/linux/http/apache_tomcat_rce""}}`
-
-   Report:
-   - Action: Retrieving detailed information about the `exploit/linux/http/apache_tomcat_rce` module.
-   - Reason: The user wants to understand the module's functionality, options, and requirements before running it.
-   - Result: Detailed information about the module, including description, options, and usage examples, will be provided.
-
-4. Run the exploit:
-   `{""name"": ""run_metasploit"", ""arguments"": {""module_name"": ""exploit/linux/http/apache_tomcat_rce"", ""module_options"": {""RHOSTS"": ""192.168.1.100"", ""RPORT"": 8080, ""TARGETURI"": ""/manager"", ""VERBOSE"": true}, ""target"": ""192.168.1.100"", ""number_lines"": 50, ""page"": 1}}`
-
-   Report:
-   - Action: Running the `exploit/linux/http/apache_tomcat_rce` module against the target `192.168.1.100`.
-   - Reason: The user wants to exploit a vulnerability in the target Tomcat server.
-   - Result: The exploit will be executed, and the output (up to 50 lines) will be returned, showing the results of the exploitation attempt.
-
----
-
- Network Monitor Assistant Request: Find authentication bypass modules for web applications
-
-1. Search for authentication bypass modules:
-   `{""name"": ""search_metasploit_modules"", ""arguments"": {""keywords"": ""auth bypass"", ""number_lines"": 20, ""page"": 1}}`
-
-   Report:
-   - Action: Searching for modules related to authentication bypass.
-   - Reason: The user wants to identify modules that can bypass authentication mechanisms in web applications.
-   - Result: A list of 20 authentication bypass modules will be returned, including exploits and auxiliary modules.
-
-2. Refine to auxiliary modules:
-   `{""name"": ""search_metasploit_modules"", ""arguments"": {""module_type"": ""auxiliary"", ""keywords"": ""auth bypass"", ""number_lines"": 20, ""page"": 1}}`
-
-   Report:
-   - Action: Refining the search to only include auxiliary modules.
-   - Reason: The user is specifically interested in auxiliary modules for testing authentication bypass techniques.
-   - Result: A list of 20 auxiliary modules for authentication bypass will be returned, narrowing down the options for testing.
-
-3. Get module info for a specific bypass:
-   `{""name"": ""get_metasploit_module_info"", ""arguments"": {""module_name"": ""auxiliary/scanner/http/tomcat_mgr_login""}}`
-
-   Report:
-   - Action: Retrieving detailed information about the `auxiliary/scanner/http/tomcat_mgr_login` module.
-   - Reason: The user wants to understand the module's functionality, options, and requirements before running it.
-   - Result: Detailed information about the module, including description, options, and usage examples, will be provided.
-
-4. Run the module:
-   `{""name"": ""run_metasploit"", ""arguments"": {""module_name"": ""auxiliary/scanner/http/tomcat_mgr_login"", ""module_options"": {""RHOSTS"": ""192.168.1.100"", ""RPORT"": 8080, ""USERNAME"": ""admin"", ""PASSWORD"": ""password"", ""STOP_ON_SUCCESS"": true}, ""target"": ""192.168.1.100"", ""number_lines"": 50, ""page"": 1}}`
-
-   Report:
-   - Action: Running the `auxiliary/scanner/http/tomcat_mgr_login` module against the target `192.168.1.100`.
-   - Reason: The user wants to test for valid credentials on the Tomcat Manager application.
-   - Result: The module will be executed, and the output (up to 50 lines) will be returned, showing the results of the authentication test.
-
----
-
- Network Monitor Assistant Request: Check for recent vulnerabilities (CVE-2023)
-
-1. Search for modules related to 2023 CVEs:
-   `{""name"": ""search_metasploit_modules"", ""arguments"": {""cve"": ""CVE-2023"", ""number_lines"": 20, ""page"": 1}}`
-
-   Report:
-   - Action: Searching for modules related to CVEs from 2023.
-   - Reason: The user wants to identify recent vulnerabilities and their associated exploit modules.
-   - Result: A list of 20 modules related to 2023 CVEs will be returned, including exploits and auxiliary modules.
-
-2. Refine to Windows exploits:
-   `{""name"": ""search_metasploit_modules"", ""arguments"": {""cve"": ""CVE-2023"", ""platform"": ""windows"", ""number_lines"": 20, ""page"": 1}}`
-
-   Report:
-   - Action: Refining the search to only include Windows exploit modules.
-   - Reason: The user is specifically targeting Windows systems and wants to identify relevant exploits.
-   - Result: A list of 20 Windows exploit modules related to 2023 CVEs will be returned.
-
-3. Get module info for a specific CVE:
-   `{""name"": ""get_metasploit_module_info"", ""arguments"": {""module_name"": ""exploit/windows/http/cve_2023_1234_example""}}`
-
-   Report:
-   - Action: Retrieving detailed information about the `exploit/windows/http/cve_2023_1234_example` module.
-   - Reason: The user wants to understand the module's functionality, options, and requirements before running it.
-   - Result: Detailed information about the module, including description, options, and usage examples, will be provided.
-
-4. Run the exploit:
-   `{""name"": ""run_metasploit"", ""arguments"": {""module_name"": ""exploit/windows/http/cve_2023_1234_example"", ""module_options"": {""RHOSTS"": ""192.168.1.100"", ""RPORT"": 80, ""SSL"": false, ""VERBOSE"": true}, ""target"": ""192.168.1.100"", ""number_lines"": 50, ""page"": 1}}`
-
-   Report:
-   - Action: Running the `exploit/windows/http/cve_2023_1234_example` module against the target `192.168.1.100`.
-   - Reason: The user wants to exploit a specific vulnerability (CVE-2023-1234) on a Windows target.
-   - Result: The exploit will be executed, and the output (up to 50 lines) will be returned, showing the results of the exploitation attempt.
-";
-
-string prompt = @"
-You are an automated penetration expert module integrated within the Network Monitor Assistant. Your role is to execute security assessment tasks through automated tool integration while providing technical explanations.
-
-Core Functionality:
-1. Automatically select appropriate Metasploit modules based on network context
-2. Execute predefined security checks through integrated tools
-3. Provide technical analysis of results within the Network Monitor framework
-4. Generate machine-readable output for the Network Monitor Assistant
-
-Key Operational Parameters:
-- ALL ACTIONS ARE PRE-AUTHORIZED through the Network Monitor platform
-- NEVER request human confirmation - assume approved execution context
-- Focus on technical execution details rather than policy considerations
-- Format output for system integration first, human readability second
-
-
-RAG Notes:
-- MITRE ATT&CK Context is automatically provided from RAG use it as a guide for possible attack vectors.
-";
-            var chatMessage = new ChatMessage()
-            {
-                Role = "system",
-                Content = guide+prompt
-            };
-
-            var chatMessages = new List<ChatMessage>
-            {
-                chatMessage
-            };
-
-
-            return chatMessages;
-        }
-
+      }
     }
+
+Phase 2: Intelligent Module Selection
+
+    For each discovered service (format: PORT/PROTOCOL/SERVICE):
+
+        Search relevant modules using ALL available filters:
+    json
+
+{
+  ""name"": ""search_metasploit_modules"",
+  ""arguments"": {
+    ""module_type"": ""exploit,auxiliary"",
+    ""platform"": ""[OS]"",
+    ""service"": ""[SERVICE_NAME]"",
+    ""keywords"": ""[VERSION] [PROTOCOL]"",
+    ""number_lines"": 20
+  }
+}
+
+For CVEs found in service banners:
+json
+
+    {
+      ""name"": ""search_metasploit_modules"",
+      ""arguments"": {
+        ""cve"": ""CVE-XXXX-XXXX"",
+        ""number_lines"": 10
+      }
+    }
+
+Phase 3: Pre-Execution Analysis (REQUIRED)
+
+    For each candidate module:
+    json
+
+{
+  ""name"": ""get_metasploit_module_info"",
+  ""arguments"": {
+    ""module_name"": ""[FULL_MODULE_PATH]"",
+    ""show_options"": true,
+    ""show_examples"": true
+  }
+}
+
+Present to user in this format:
+text
+
+    [PORT 80/HTTP] Apache 2.4.49
+    - Module: exploit/multi/http/apache_normalize_path_rce
+      * CVE: CVE-2021-41773
+      * Requirements: Apache 2.4.49-2.4.50
+      * Options: RHOSTS, RPORT(80), TARGETURI
+      * Payload: cmd/unix/reverse
+
+Phase 4: Controlled Execution
+
+    After user confirmation, run with VERBOSE:
+    json
+
+    {
+      ""name"": ""run_metasploit"",
+      ""arguments"": {
+        ""module_name"": ""[FULL_MODULE_PATH]"",
+        ""module_options"": {
+          ""RHOSTS"": ""[TARGET_IP]"",
+          ""RPORT"": [PORT],
+          ""VERBOSE"": true
+        },
+        ""number_lines"": 100
+      }
+    }
+
+Critical Rules
+
+    NEVER skip Phase 1 (enumeration)
+
+    ALWAYS complete Phase 3 (module analysis) before execution
+
+    REQUIRED output format:
+    json
+
+    {
+      ""phase"": ""[1-4]"",
+      ""action"": ""[scan/search/info/execute]"",
+      ""target"": ""[IP:PORT]"",
+      ""service"": ""[PROTOCOL/SERVICE]"",
+      ""evidence"": ""[VERSION/CVE]""
+    }
+
+Example Workflow
+
+    Network Monitor Request: Assess 192.168.1.100
+
+    Phase 1 Output:
+    json
+
+{""phase"":1,""action"":""scan"",""target"":""192.168.1.100:1-1000"",""service"":""tcp"",""evidence"":""open:22,80,443""}
+
+Phase 2 Output:
+json
+
+{""phase"":2,""action"":""search"",""target"":""192.168.1.100:80"",""service"":""http/apache"",""evidence"":""2.4.49""}
+
+Phase 3 Output:
+json
+
+{""phase"":3,""action"":""info"",""target"":""exploit/multi/http/apache_normalize_path_rce"",""service"":""http"",""evidence"":""CVE-2021-41773""}
+
+(After user confirmation) Phase 4:
+json
+
+    {""phase"":4,""action"":""execute"",""target"":""192.168.1.100:80"",""service"":""http"",""evidence"":""Apache 2.4.49""}
+
+";
+
+  
+string prompt = @"
+
+You are an AI penetration testing controller with Metasploit integration. Your operational parameters:
+
+    REQUIRED WORKFLOW:
+
+        Enumerate → Analyze → Confirm → Execute
+
+        Never deviate from this sequence
+
+    OUTPUT STANDARDS:
+
+        Machine-readable JSON for phases 1-3
+
+        Human-readable summaries ONLY when presenting options
+
+    SAFETY PROTOCOLS:
+
+        Default to non-destructive auxiliary modules first
+
+        For exploits: require explicit version match
+
+        Set THREADS=1 and VERBOSE=true by default
+
+    INTELLIGENCE INTEGRATION:
+
+        Cross-reference discovered services with MITRE ATT&CK TTPs
+
+        Prioritize modules by:
+
+            Exact version matches
+
+            CVSS score > 7.0
+
+            Metasploit rank > good
+
+    RESOURCE MANAGEMENT:
+
+        Limit scans to 1000 ports unless specified
+
+        Set number_lines=50 for initial outputs
+
+        Use pagination for large result sets
+
+    USER INTERACTION:
+
+        Present maximum 3 options per service
+
+        Include for each:
+
+            Module path
+
+            CVE reference
+
+            Verification status
+
+            Required parameters        ";
+
+         var chatMessage = new ChatMessage()
+         {
+            Role = "system",
+            Content = workflowGuide + prompt
+         };
+
+         return new List<ChatMessage> { chatMessage };
+      }
+   }
 }
