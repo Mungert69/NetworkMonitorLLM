@@ -16,28 +16,32 @@ namespace NetworkMonitor.LLM.Services
       private readonly FunctionDefinition fn_run_metasploit;
       private readonly FunctionDefinition fn_search_metasploit_modules;
       private readonly FunctionDefinition fn_get_metasploit_module_info;
+      private readonly FunctionDefinition fn_run_nmap;
 
       public PenetrationExpertToolsBuilder()
-      {
-         // Define the run_metasploit function
-         // Define the run_metasploit function
-         fn_run_metasploit = PenetrationTools.BuildRunMetasploitFunction();
+    {
+      // Define the run_metasploit function
+      // Define the run_metasploit function
+      fn_run_metasploit = PenetrationTools.BuildRunMetasploitFunction();
 
-         // Define the search_metasploit_modules function
-         fn_search_metasploit_modules = PenetrationTools.BuildSearchMetasploitFunction();
+      // Define the search_metasploit_modules function
+      fn_search_metasploit_modules = PenetrationTools.BuildSearchMetasploitFunction();
 
-         // Define the get_metasploit_module_info function
-         fn_get_metasploit_module_info = PenetrationTools.BuildMetasploitModuleInfoFunction();
+      // Define the get_metasploit_module_info function
+      fn_get_metasploit_module_info = PenetrationTools.BuildMetasploitModuleInfoFunction();
 
-         // Define the tools list
-         _tools = new List<ToolDefinition>()
+      fn_run_nmap = SecurityTools.BuildNmapFunction();
+
+      // Define the tools list
+      _tools = new List<ToolDefinition>()
 {
     new ToolDefinition() { Function = fn_run_metasploit, Type = "function" },
     new ToolDefinition() { Function = fn_search_metasploit_modules, Type = "function" },
     new ToolDefinition() { Function = fn_get_metasploit_module_info, Type = "function" },
+    new ToolDefinition() { Function = fn_run_nmap, Type = "function" },
 };
 
-      }
+    }
 
 
       public override List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
@@ -46,18 +50,14 @@ namespace NetworkMonitor.LLM.Services
 # Penetration Testing Workflow Protocol
 
 ## Phase 1: Target Enumeration (MUST START HERE)
-1. Always begin with port/service scanning using:
+1. Always begin with port/service scanning using nmap:
    ```json
    {
-     ""name"": ""run_metasploit"",
+     ""name"": ""run_nmap"",
      ""arguments"": {
-       ""module_name"": ""auxiliary/scanner/portscan/tcp"",
-       ""module_options"": {
-         ""RHOSTS"": ""[TARGET_IP]"",
-         ""PORTS"": ""1-1000"",
-         ""THREADS"": 10
-       },
-       ""number_lines"": 50
+       ""scan_options"": ""-Sv"",
+       ""target"" : ""[TARGET_IP]""
+       ""number_lines"": 100
      }
    }
 
@@ -70,7 +70,7 @@ namespace NetworkMonitor.LLM.Services
         ""module_name"": ""auxiliary/scanner/http/http_version"",
         ""module_options"": {
           ""RHOSTS"": ""[TARGET_IP]"",
-          ""RPORT"": 80
+          ""RPORT"": 443
         }
       }
     }
@@ -121,7 +121,7 @@ Phase 3: Pre-Execution Analysis (REQUIRED)
 Present to user in this format:
 text
 
-    [PORT 80/HTTP] Apache 2.4.49
+    [PORT 443/HTTP] Apache 2.4.49
     - Module: exploit/multi/http/apache_normalize_path_rce
       * CVE: CVE-2021-41773
       * Requirements: Apache 2.4.49-2.4.50
