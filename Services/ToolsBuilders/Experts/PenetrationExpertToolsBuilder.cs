@@ -55,7 +55,7 @@ namespace NetworkMonitor.LLM.Services
    {
      ""name"": ""run_nmap"",
      ""arguments"": {
-       ""scan_options"": ""-Sv"",
+       ""scan_options"": ""-sV"",
        ""target"" : ""[TARGET_IP]""
        ""number_lines"": 100
      }
@@ -228,9 +228,9 @@ You are an AI penetration testing controller with Metasploit integration. Your o
 
     RESOURCE MANAGEMENT:
 
-        Limit scans to 1000 ports unless specified
+        On first run limit scans to 1000 ports unless specified, make sure to inform the user what the limitations of only scanning 1000 ports are and offer a larger scan range.
 
-        Set number_lines=50 for initial outputs
+        Set number_lines=100 for initial outputs
 
         Use pagination for large result sets
 
