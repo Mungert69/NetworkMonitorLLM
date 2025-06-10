@@ -41,6 +41,7 @@ Instructions for Generating a Blog-Style Conversation Demonstrating Function Cal
     Demonstrate Function Calls
         Simulate the assistant calling these functions as if it were truly invoking them.
         When the assistant decides a function is needed, display a JSON snippet with ""name"" and ""arguments"" that corresponds to the function’s parameters.
+        All JSON examples must be enclosed in triple backticks with `json` specified, like ```json ... ``` to ensure proper formatting.
         Then, explain in the blog (right after the snippet) how you would process and interpret the function’s response.
 
     Multi-Turn, Chronological Flow
