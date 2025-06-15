@@ -508,7 +508,7 @@ namespace NetworkMonitor.Connection
     - Provide detailed monitoring data for hosts.  
     - Generate reports on network performance and security status.  
 
-If you need help with any of these tasks, just let me know!";
+If you need help with any of these tasks, just let me know! You can also visit {AppConstants.FrontendUrl}/subscription to upgrade your account and unlock more features.";
 
 
             AddAssistantMessageWithToolCall(

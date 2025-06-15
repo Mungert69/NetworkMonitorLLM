@@ -20,7 +20,7 @@ public class CommonTools
 
     public static FunctionDefinition BuildGetUserInfoFunction()
     {
-        return new FunctionDefinitionBuilder("get_user_info", $"Get user information. Set detail_response true to get the following user information : current_time, logged_in (are they logged in) email, name, account_type, email_verified, disabled_email_alerts (will they receive email alerts), host_limit (how many hosts can they add), turbo_llm_tokens (the number of tokens available for chats messages when talking to you")
+        return new FunctionDefinitionBuilder("get_user_info", $"Get user information. Set detail_response true to get the following user information : current_time, logged_in (are they logged in) email, name, account_type, email_verified, disabled_email_alerts (will they receive email alerts), host_limit (how many hosts can they add), turbo_llm_tokens (the number of tokens available for chats messages when talking to you, if the user requires more tokens than the daily topup then direct them to upgrade at [Subscription]({AppConstants.FrontendUrl}/subscription)")
             .AddParameter("detail_response", PropertyDefinition.DefineBoolean("Will this function return all user details. Set to false if only basic info is required"))
             .Validate()
             .Build();
