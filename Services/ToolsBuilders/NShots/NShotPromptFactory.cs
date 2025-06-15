@@ -378,8 +378,10 @@ namespace NetworkMonitor.Connection
             // Determine if the user is logged in and generate content accordingly
             if (serviceObj.IsUserLoggedIn)
             {
-                content = $"The user logged in at {currentTime} with email {serviceObj.UserInfo.Email}. " +
-                          $"They have {serviceObj.UserInfo.TokensUsed} available TurboLLM tokens. The tokens automatically topup daily" ;
+                               content = $"The user logged in at {currentTime} with email {serviceObj.UserInfo.Email}. " +
+                          $"Users account type is {serviceObj.UserInfo.AccountType}. They have {serviceObj.UserInfo.TokensUsed} available tokens. " +
+                          $"Remind the user that upgrading accounts gives more tokens and access to more functions. " +
+                          $"See {AppConstants.FrontendUrl}/subscription for details.";
             }
             else
             {
@@ -438,8 +440,10 @@ namespace NetworkMonitor.Connection
             // Determine if the user is logged in and generate content accordingly
             if (serviceObj.IsUserLoggedIn)
             {
-                funcResponse = $"The user logged in at {currentTime} with email {serviceObj.UserInfo.Email}. " +
-                          $" They have {serviceObj.UserInfo.TokensUsed} available TurboLLM tokens. " ;
+                             funcResponse = $"The user logged in at {currentTime} with email {serviceObj.UserInfo.Email}. " +
+                          $"Users account type is {serviceObj.UserInfo.AccountType}. They have {serviceObj.UserInfo.TokensUsed} available tokens. " +
+                          $"Remind the user that upgrading accounts gives more tokens and access to more functions. " +
+                          $"See {AppConstants.FrontendUrl}/subscription for details.";
             }
             else
             {
