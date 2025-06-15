@@ -3,7 +3,7 @@
 
 ## NetworkMonitorLLM
 
-# A Free Network Monitor Service Component
+# A Quantum Network Monitor Service Component
 
 # High-Level Purpose
 
@@ -149,7 +149,7 @@ Explore real-world examples of the system in action:
   [https://huggingface.co/spaces/Mungert/ReadyForQuantum](https://huggingface.co/spaces/Mungert/ReadyForQuantum)
 
 - 🌐 **Official Project Site**  
-  The Full Free Network Monitor Service in action.  
+  The Full Quantum Network Monitor Service in action.  
   [https://readyforquantum.com/?utm_source=github&utm_medium=referral&utm_campaign=readme](https://readyforquantum.com/?utm_source=github&utm_medium=referral&utm_campaign=networkmonitorllm_readme)
 
 

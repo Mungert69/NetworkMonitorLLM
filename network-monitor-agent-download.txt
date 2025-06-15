@@ -1,8 +1,8 @@
-# Introduction to the Free Network Monitor Agent
+# Introduction to the Quantum Network Monitor Agent
 
-Welcome to the Beta Tester Download Portal for the Free Network Monitor Agent, a robust and comprehensive tool for real-time network monitoring. Whether you're a seasoned network administrator or exploring network monitoring for the first time, our Agent provides seamless, efficient, and detailed insights into your network's health.
+Welcome to the Beta Tester Download Portal for the Quantum Network Monitor Agent, a robust and comprehensive tool for real-time network monitoring. Whether you're a seasoned network administrator or exploring network monitoring for the first time, our Agent provides seamless, efficient, and detailed insights into your network's health.
 
-## Key Features of the Free Network Monitor Agent
+## Key Features of the Quantum Network Monitor Agent
 
 ### Comprehensive Monitoring:
 - Track the performance and availability of any device on your local or remote network using ICMP (ping), HTTP(S), and other protocols.
@@ -22,11 +22,11 @@ Welcome to the Beta Tester Download Portal for the Free Network Monitor Agent, a
 - Weekly performance reports delivered to your inbox provide an overview of how your monitored devices have performed over time.
 
 ### Simple Authorization and Setup:
-- Authorize the Agent using OAuth authentication to securely link it with your Free Network Monitor account.
-- Effortlessly add hosts to monitor from the Free Network Monitor dashboard, and select whether to use predefined remote agents or your local Agent for monitoring.
+- Authorize the Agent using OAuth authentication to securely link it with your Quantum Network Monitor account.
+- Effortlessly add hosts to monitor from the Quantum Network Monitor dashboard, and select whether to use predefined remote agents or your local Agent for monitoring.
 
 ### Real-Time Data and Historical Analysis:
-- View detailed monitoring data directly from the Agent app or the [Free Network Monitor Dashboard](https://readyforquantum.com/dashboard).
+- View detailed monitoring data directly from the Agent app or the [Quantum Network Monitor Dashboard](https://readyforquantum.com/dashboard).
 - Use visual indicators such as pulsing circles and color-coded status icons to quickly assess the health and performance of monitored devices.
 
 ## Choose your platform:
@@ -35,13 +35,13 @@ Welcome to the Beta Tester Download Portal for the Free Network Monitor Agent, a
 
 **Exclusive Beta Testing Invitation**
 
-As a beta tester, you will have exclusive access to download the Free Network Monitor Agent app from the Google Play Store.
+As a beta tester, you will have exclusive access to download the Quantum Network Monitor Agent app from the Google Play Store.
 
 **How to Download:**
 
 1. **Access the Google Play Store**: Use the link provided below to navigate to our app on the Google Play Store.
    
-   [Free Network Monitor Agent on Google Play Store](https://play.google.com/store/apps/details?id=click.freenetworkmonitor.networkmonitormaui) 
+   [Quantum Network Monitor Agent on Google Play Store](https://play.google.com/store/apps/details?id=click.freenetworkmonitor.networkmonitormaui) 
  
    [Quantum Secure Agent on Google Play Store](https://play.google.com/store/apps/details?id=click.freenetworkmonitor.quantumsecure)
 
@@ -50,7 +50,7 @@ As a beta tester, you will have exclusive access to download the Free Network Mo
 
 **Beta Tester Rewards:**
 
-In appreciation of your valuable feedback and participation, all testers involved in the beta phase will receive an upgrade to a **Standard Subscription** at no cost. This upgrade is our way of saying thank you for helping us enhance the Free Network Monitor Agent app. Your insights are instrumental in ensuring the highest quality and performance of our network monitoring solutions.
+In appreciation of your valuable feedback and participation, all testers involved in the beta phase will receive an upgrade to a **Standard Subscription** at no cost. This upgrade is our way of saying thank you for helping us enhance the Quantum Network Monitor Agent app. Your insights are instrumental in ensuring the highest quality and performance of our network monitoring solutions.
 
 
 Note: Android version has a limitaion: Android's battery saving features may affect pollng frequency when not connected to a charger. If you don't want this limitation in your agent then use the fully featured docker version below.  
@@ -75,9 +75,9 @@ After installing the app:
 
 2. **Authorization**: Your device needs authorization to function as an agent. Click the 'Authorize' button on the main page, which redirects you to the OAuth authentication site. Follow the on-screen instructions to log in to your account. If you do not have an account, you can create one during this process. Close the browser window once you receive a message confirming your agent is authenticated.
 
-3. **Login to Free Network Monitor**: Click this task to be redirected to the [Free Network Monitor Dashboard](https://readyforquantum.com/dashboard). Login with the same email address you used for agent authorization. This is where you'll manage your network monitoring.
+3. **Login to Quantum Network Monitor**: Click this task to be redirected to the [Quantum Network Monitor Dashboard](https://readyforquantum.com/dashboard). Login with the same email address you used for agent authorization. This is where you'll manage your network monitoring.
 
-4. **Adding Hosts**: After logging into the Free Network Monitor site, navigate to the dashboard. To add a host for monitoring, click the flashing edit icon. For instance, to monitor a local router, input its IP address (e.g., 192.168.1.1) and select 'icmp' as the endpoint type. This action enables you to ping the router, monitoring its availability.
+4. **Adding Hosts**: After logging into the Quantum Network Monitor site, navigate to the dashboard. To add a host for monitoring, click the flashing edit icon. For instance, to monitor a local router, input its IP address (e.g., 192.168.1.1) and select 'icmp' as the endpoint type. This action enables you to ping the router, monitoring its availability.
 
 5. **Select Monitor Location**: You have the option to choose between predefined remote agents or your local agent for monitoring purposes. For local devices like a router at 192.168.1.1, select 'your email address - agent id' as the monitor location.
 
@@ -87,9 +87,9 @@ After installing the app:
 
 8. **Account Management**: Manage your account by clicking the profile icon.
 
-**View Monitoring Data**: You have two options for viewing detailed monitoring data. You can use the Free Network Monitor Dashboard or the Agent App, which displays current monitoring data for each dataset (6-hour set of response data).
+**View Monitoring Data**: You have two options for viewing detailed monitoring data. You can use the Quantum Network Monitor Dashboard or the Agent App, which displays current monitoring data for each dataset (6-hour set of response data).
 
-- **Using the Free Network Monitor Dashboard**: Access the dashboard to view comprehensive monitoring data and analyses. 
+- **Using the Quantum Network Monitor Dashboard**: Access the dashboard to view comprehensive monitoring data and analyses. 
 
 - **Using the Agent App**: To view data in the app, return to the Agent App and navigate to the Data tab. Here, monitoring data is visually represented:
     - **Indicator Circles**: Each host is indicated by a circle, which will appear green or red based on the host's current status.
@@ -112,7 +112,7 @@ Docker Compose is included when you install Docker Desktop. This is the easiest 
 
 For detailed instructions on installing Docker Desktop, refer to the [official Docker documentation](https://docs.docker.com/get-docker/).
 
-To set up the Free Network Monitor Agent within Docker, follow these steps:
+To set up the Quantum Network Monitor Agent within Docker, follow these steps:
 
 1. **Create a Docker Compose File**: Create a \`docker-compose.yml\` file with the following content:
 
@@ -141,7 +141,7 @@ docker-compose up -d
 
 ## Authorizing the Agent
 
-Unlike the app version, the Docker version of the Free Network Monitor Agent requires manual authorization:
+Unlike the app version, the Docker version of the Quantum Network Monitor Agent requires manual authorization:
 
 1. **Start the Authorization Process**: After starting the Docker container, use the following command to view the logs:
 
@@ -169,9 +169,9 @@ MessageAPI : SetAuthKey :  SetAuthKey :  Success : Set AuthKey and saved NetConn
 
 Once the agent is authorized, you can start adding hosts to monitor:
 
-1. **Monitor Hosts**: Add hosts to monitor via the Free Network Monitor Service dashboard at [https://readyforquantum.com/dashboard](https://readyforquantum.com/dashboard). Login with the same email address you used to authorize the agent.
+1. **Monitor Hosts**: Add hosts to monitor via the Quantum Network Monitor Service dashboard at [https://readyforquantum.com/dashboard](https://readyforquantum.com/dashboard). Login with the same email address you used to authorize the agent.
 
-2. **Adding Hosts**: Once logged into the Free Network Monitor site, go to the dashboard and add a host that you want to monitor, click the flashing edit icon. You might wish to monitor a local router at the IP address 192.168.1.1 using the endpoint type 'icmp' to ping the local router, thereby monitoring its availability.
+2. **Adding Hosts**: Once logged into the Quantum Network Monitor site, go to the dashboard and add a host that you want to monitor, click the flashing edit icon. You might wish to monitor a local router at the IP address 192.168.1.1 using the endpoint type 'icmp' to ping the local router, thereby monitoring its availability.
 
 3. **Select Monitor Location**: You can choose either predefined remote agents or your local agent. However, for monitoring local devices like a router at 192.168.1.1, you would need to choose 'your email address - agent id' when selecting a monitor location.
 

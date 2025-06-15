@@ -80,17 +80,17 @@
 2024-04-27 16:23:44 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
       MessageAPI : UserInput :  Processed UserInput :<|from|>get_host_data<|recipient|>all<|content|> [{"status" : "down", "address" : "test.com"}] 
 2024-04-27 16:23:44 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
-       Start User Input Error - The standard Network Monitor plugin has a host limit of 5 To allow free use for everyone . You can either remove or hide hosts, or login Free Network Monitor to monitor more hosts for free.
+       Start User Input Error - The standard Network Monitor plugin has a host limit of 5 To allow free use for everyone . You can either remove or hide hosts, or login Quantum Network Monitor to monitor more hosts for free.
 2024-04-27 16:23:44 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
         LLMService : SendInputAndGetResponse() :
 2024-04-27 16:23:44 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
-       ProcessLLMOutput(user input) -> <|from|>add_host<|recipient|>all<|content|>Error - The standard Network Monitor plugin has a host limit of 5 To allow free use for everyone . You can either remove or hide hosts, or login Free Network Monitor to monitor more hosts for free.
+       ProcessLLMOutput(user input) -> <|from|>add_host<|recipient|>all<|content|>Error - The standard Network Monitor plugin has a host limit of 5 To allow free use for everyone . You can either remove or hide hosts, or login Quantum Network Monitor to monitor more hosts for free.
 2024-04-27 16:23:44 warn: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
        Start BroadcastAsync() 
 2024-04-27 16:24:26 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
        --> Finished LLM Interaction 
 2024-04-27 16:24:26 info: NetworkMonitor.Objects.Repository.RabbitListenerBase[0]
-      MessageAPI : UserInput :  Processed UserInput :<|from|>add_host<|recipient|>all<|content|>Error - The standard Network Monitor plugin has a host limit of 5 To allow free use for everyone . You can either remove or hide hosts, or login Free Network Monitor to monitor more hosts for free.
+      MessageAPI : UserInput :  Processed UserInput :<|from|>add_host<|recipient|>all<|content|>Error - The standard Network Monitor plugin has a host limit of 5 To allow free use for everyone . You can either remove or hide hosts, or login Quantum Network Monitor to monitor more hosts for free.
 2024-04-27 16:24:48 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
        LLM Service : Remove Process for sessionsId 1d5bcadb-ad97-4321-ba66-d51dc915beec
 2024-04-27 16:24:48 info: NetworkMonitor.LLM.Services.LLMProcessRunner[0]
