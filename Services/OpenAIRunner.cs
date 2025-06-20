@@ -284,7 +284,7 @@ public class OpenAIRunner : ILLMRunner
             else
             {
 
-                if (_mlParams.AddSystemRag) _ = _queryCoordinator.ExecuteQueryAsync(serviceObj.UserInput, serviceObj.MessageID, serviceObj.DestinationLlm);
+                if (_mlParams.AddSystemRag) _ = _queryCoordinator.ExecuteQueryAsync(serviceObj.UserInput, serviceObj.MessageID, serviceObj.DestinationLlm, serviceObj.LLMRunnerType);
 
 
                 chatMessage = ChatMessage.FromUser(serviceObj.UserInput);

@@ -19,7 +19,7 @@ namespace NetworkMonitor.LLM.Services
 
     public interface IQueryCoordinator
     {
-        Task<string> ExecuteQueryAsync(string queryText, string messageId, string llmType, TimeSpan? timeout = null);
+        Task<string> ExecuteQueryAsync(string queryText, string messageId, string llmType, string llmRunnerType,TimeSpan? timeout = null);
         void CompleteQuery(string messageId, string result);
         void CancelQuery(string messageId);
         void RemoveSystemRag(List<ChatMessage> localHistory);
@@ -44,13 +44,14 @@ namespace NetworkMonitor.LLM.Services
         private const string SystemRagMessage = "The following RAG data has been added.";
 
         private readonly ILogger _logger;
-
+        private readonly Dictionary<string, string> _llmRunnerRoutingKeys;
         public QueryCoordinator(ILogger<QueryCoordinator> logger, IRabbitRepo rabbitRepo, ISystemParamsHelper systemParamsHelper)
         {
             _logger = logger;
             _rabbitRepo = rabbitRepo;
             _serviceID = systemParamsHelper.GetSystemParams().ServiceID!;
             _authKey = systemParamsHelper.GetSystemParams().ServiceAuthKey;
+            _llmRunnerRoutingKeys = systemParamsHelper.GetMLParams().LlmRunnerRoutingKeys;
 
         }
 
@@ -122,7 +123,7 @@ namespace NetworkMonitor.LLM.Services
                 _logger.LogWarning("No RAG system message found in local history.");
             }
         }
-        public async Task<string> ExecuteQueryAsync(string queryText, string messageId, string llmType, TimeSpan? timeout = null)
+        public async Task<string> ExecuteQueryAsync(string queryText, string messageId, string llmType, string llmRunnerType, TimeSpan? timeout = null)
         {
 
             var hashKey = GetQueryHash(queryText);
@@ -149,6 +150,7 @@ namespace NetworkMonitor.LLM.Services
                         removedTcs.TrySetException(new TimeoutException("Query timed out."));
                     }
                 }, TaskScheduler.Default);
+            string routingKey = RabbitConnectHelper.GetRoutingKey(llmRunnerType, _llmRunnerRoutingKeys);
 
             // Create the QueryIndexRequest
             var queryIndexRequest = new QueryIndexRequest
@@ -157,7 +159,8 @@ namespace NetworkMonitor.LLM.Services
                 QueryText = queryText,
                 MessageID = messageId,
                 AppID = llmType,
-                AuthKey = _authKey
+                AuthKey = _authKey,
+                RoutingKey = routingKey
             };
 
             // Publish the query to RabbitMQ
