@@ -46,6 +46,7 @@ public class LLMService : ILLMService
 
     private MLParams _mlParams;
     private string _serviceID;
+    private bool _ready = false;
     private ConcurrentDictionary<string, Session> _sessions = new ConcurrentDictionary<string, Session>();
 
     public LLMService(ILogger<LLMService> logger, IRabbitRepo rabbitRepo, ISystemParamsHelper systemParamsHelper, IServiceProvider serviceProvider, ILLMFactory llmFactory)
@@ -64,19 +65,41 @@ public class LLMService : ILLMService
     {
         _sessions = await _llmFactory.LoadAllSessionsAsync();
         _llmFactory.Sessions = _sessions;
+        _ready = true;
     }
 
     private string GetDisplayName(string serviceId)
-{
-    return ServiceIdMap.TryGetValue(serviceId, out var displayName) 
-        ? displayName 
-        : serviceId;  // Fallback to original ID if not found
-}
+    {
+        return ServiceIdMap.TryGetValue(serviceId, out var displayName)
+            ? displayName
+            : serviceId;  // Fallback to original ID if not found
+    }
     public async Task<LLMServiceObj> StartProcess(LLMServiceObj llmServiceObj)
     {
         llmServiceObj.SessionId = llmServiceObj.RequestSessionId + "_" + llmServiceObj.LLMRunnerType;
         try
         {
+            if (!_ready)
+            {
+                if (_serviceID == "monitor")
+                    await SetResultMessageAsync(llmServiceObj, $"Waiting for history to be ready", true, "llmServiceMessage", true);
+
+                // Wait asynchronously for _ready to be true, with timeout (e.g., 10 sec)
+                var waitTimeout = TimeSpan.FromSeconds(120);
+                var waitInterval = TimeSpan.FromMilliseconds(10);
+                var sw = Stopwatch.StartNew();
+                while (!_ready && sw.Elapsed < waitTimeout)
+                {
+                    await Task.Delay(waitInterval);
+                }
+                // Optionally, handle timeout
+                if (!_ready)
+                {
+                    if (_serviceID == "monitor") await SetResultMessageAsync(llmServiceObj, "Timed out waiting for initialization.", false, "llmServiceMessage", true);
+                    return llmServiceObj;
+                }
+            }
+
 
             bool exists = _sessions.TryGetValue(llmServiceObj.SessionId, out var checkSession);
             //bool isSwapLLMType = false;
@@ -304,6 +327,7 @@ public class LLMService : ILLMService
     {
         try
         {
+            // Note do not assume llmServiceObj has all parameters passed as it comes from a websocket and only contains what is added by the session info in the NetworkMonitorService UserInput method ie UserInput, DestinationLlm ,SourceLlm , SessionId and LLMRunnerType 
             // Check if session is valid
             if (string.IsNullOrEmpty(llmServiceObj.SessionId) || !_sessions.TryGetValue(llmServiceObj.SessionId, out var session))
             {
