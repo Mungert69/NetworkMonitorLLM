@@ -86,7 +86,7 @@ public class LLMService : ILLMService
 
                 // Wait asynchronously for _ready to be true, with timeout (e.g., 10 sec)
                 var waitTimeout = TimeSpan.FromSeconds(120);
-                var waitInterval = TimeSpan.FromMilliseconds(10);
+                var waitInterval = TimeSpan.FromSeconds(10);
                 var sw = Stopwatch.StartNew();
                 while (!_ready && sw.Elapsed < waitTimeout)
                 {
