@@ -43,7 +43,7 @@ public class LLMFactory : ILLMFactory
     private readonly IServiceProvider _serviceProvider;
     private readonly SemaphoreSlim _processRunnerSemaphore = new SemaphoreSlim(1, 1);
     private readonly ILLMResponseProcessor _responseProcessor;
-    private ConcurrentDictionary<string, Session> _sessions;
+    private ConcurrentDictionary<string, Session> _sessions= new ();
     public ConcurrentDictionary<string, Session> Sessions { set => _sessions = value; }
     private readonly ICpuUsageMonitor _cpuUsageMonitor;
     private readonly IQueryCoordinator _queryCoordinator;
