@@ -42,7 +42,7 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
 
         _llmService = llmService;
         _serviceID = systemParamsHelper.GetSystemParams().ServiceID ?? "monitor";
-        _exchangeType = systemParamsHelper.GetSystemParams().RabbitExhangeType;
+        _exchangeType = systemParamsHelper.GetSystemParams().RabbitExchangeType;
         _routingKey= systemParamsHelper.GetSystemParams().RabbitRoutingKey;
         _queryCoordinator = queryCoordinator;
 
