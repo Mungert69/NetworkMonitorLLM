@@ -59,8 +59,16 @@ public class CpuUsageMonitor : ICpuUsageMonitor, IHostedService, IDisposable
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Starting CPU monitor...");
+        try
+        {
+              _logger.LogInformation("Starting CPU monitor...");
         _timer = new Timer(SampleCpuUsage, null, 0, _sampleIntervalMs);
+         }
+        catch (Exception e)
+        {
+            _logger.LogError($" Error : failed to start CPU timer . Error was : {e.Message}");
+        }
+      
         return Task.CompletedTask;
     }
 
