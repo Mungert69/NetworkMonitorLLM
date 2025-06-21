@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using NetworkMonitor.LLM.Services;
 using System.Collections.Generic;
 namespace NetworkMonitor.LLM.Services;
+
 public static class LLMConfigFactory
 {
     private static readonly string _xmlPromptFooter = @"Each function call should be represented as an XML document with a root element <function_call> and a <parameters> element nested inside it.
@@ -214,7 +215,7 @@ Reminder:
                     new TokenBroadcasterPhi_4(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
             },
 
-             "phi_4_mini" => new LLMConfig
+            "phi_4_mini" => new LLMConfig
             {
                 UserReplace = "<|user|>\\\n",
                 FunctionReplace = "<|tool_response|>",
@@ -233,7 +234,7 @@ You are a helpful assistant with some tools.
 {0}
 <|/tool|>",
                 XmlPromptFooter = _xmlPromptFooter,
-                  PromptFooter = @"For each function call, return a json object with function name and arguments within <tool_call></tool_call> XML tags:
+                PromptFooter = @"For each function call, return a json object with function name and arguments within <tool_call></tool_call> XML tags:
 <tool_call>
 {""name"": <function-name>, ""arguments"": <args-json-object>}
 </tool_call>
@@ -254,14 +255,14 @@ Reminder:
             "qwen_2.5" => new LLMConfig
             {
                 UserReplace = "<|im_start|>user\\\n",
-                FunctionReplace = "<|im_start|>assistant\\\n<tool_response>",
+                FunctionReplace = "<|im_start|>user\\\n<tool_response>",
                 AssistantHeader = "<|im_start|>assistant\n",
                 UserInputTemplate = "<|im_start|>user\\\n{0}",
                 AssistantMessageTemplate = "<|im_start|>assistant\\\n{0}<|im_end|>",
                 SystemMessageTemplate = "<|im_start|>system\\\n{0}<|im_end|>",
                 EOTToken = "<|im_end|>",
-                FunctionResponseTemplate = "<|im_start|>assistant\\\n<tool_response>\\\n{1}\\\n</tool_response>",
-                NoThinkToken="/no_think",
+                FunctionResponseTemplate = "<|im_start|>user\\\n<tool_response>\\\n{1}\\\n</tool_response>",
+                NoThinkToken = "/no_think",
                 FunctionBuilder = "<tool_call>\n{1}\n</tool_call>",
                 FunctionResponse = "<tool_response>{1}</tool_response>",
                 FunctionDefsWrap = @"# Tools
@@ -286,6 +287,40 @@ Reminder:
 ",
                 CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
                         new TokenBroadcasterQwen_2_5(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
+            },
+
+            "xlam_2" => new LLMConfig
+            {
+                // User message formatting
+                UserReplace = "<|im_start|>user\\\n",
+                UserInputTemplate = "<|im_start|>user\\\n{0}",
+                FunctionReplace = "<|im_start|>tool\\\n",
+                // System prompt formatting
+                SystemMessageTemplate = "<|im_start|>system\\\n{0}<|im_end|>",
+
+                // Assistant message formatting
+                AssistantHeader = "<|im_start|>assistant\n",
+                AssistantMessageTemplate = "<|im_start|>assistant\\\n{0}<|im_end|>",
+
+                // Tool response formatting
+                FunctionResponseTemplate = "<|im_start|>tool\\\n{1}",   // {0} is the JSON or string content
+
+                // End of turn token
+                EOTToken = "<|im_end|>",
+
+                FunctionBuilder = "[{\"name\":\"{0}\", \"parameters\":{1}}]",
+                FunctionResponse = "[{1}]",
+                FunctionDefsWrap = @"You have access to a set of tools. When using tools, make calls in a single JSON array: 
+
+[{""name"": ""tool_call_name"", ""arguments"": {{...}}}, ... (additional parallel tool calls as needed)]
+
+If no tool is suitable, state that explicitly. If the user's input lacks required parameters, ask for clarification. Do not interpret or respond until tool results are returned. Once they are available, process them or make additional calls if needed. For tasks that don't require tools, such as casual conversation or general advice, respond directly in plain text. The available tools are:
+{0}
+",
+                PromptFooter = "",
+                XmlPromptFooter = _xmlPromptFooter,
+                CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
+                                    new TokenBroadcasterXlam2(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
             },
 
             // Configuration for qwen_2.5
@@ -352,7 +387,7 @@ public class LLMConfig
     public string FunctionBuilder { get; set; } = string.Empty;
     public string PromptFooter { get; set; } = string.Empty;
     public string XmlPromptFooter { get; set; } = string.Empty;
-    public string NoThinkToken{get;set;} = string.Empty;
+    public string NoThinkToken { get; set; } = string.Empty;
     public string ReversePrompt { get; set; } = string.Empty;
     public string ExtraReversePrompt { get; set; } = string.Empty;
     public Func<ILLMResponseProcessor, ILogger, bool, ITokenBroadcaster> CreateBroadcaster { get; set; } =
