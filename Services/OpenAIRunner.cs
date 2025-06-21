@@ -123,6 +123,8 @@ public class OpenAIRunner : ILLMRunner
             if (_serviceID == "meta") toolsBuilder = new PenetrationExpertToolsBuilder();
             if (_serviceID == "search") toolsBuilder = new SearchExpertToolsBuilder();
             if (_serviceID == "quantum") toolsBuilder = new QuantumExpertToolsBuilder();
+            if (_serviceID == "security_agent") toolsBuilder = new SecurityAgentNodeToolsBuilder();
+            if (_serviceID == "security_interpret") toolsBuilder = new SecurityInterpretNodeToolsBuilder();
 
             _type = "TurboLLM";
             _llmApi = new OpenAIApi(_logger, _mlParams, toolsBuilder, _serviceID, _responseProcessor, _openAiService);
@@ -136,6 +138,8 @@ public class OpenAIRunner : ILLMRunner
             if (_serviceID == "meta") toolsBuilder = new PenetrationExpertToolsBuilder();
             if (_serviceID == "search") toolsBuilder = new SearchExpertToolsBuilder();
             if (_serviceID == "quantum") toolsBuilder = new QuantumExpertToolsBuilder();
+            if (_serviceID == "security_agent") toolsBuilder = new SecurityAgentNodeToolsBuilder();
+            if (_serviceID == "security_interpret") toolsBuilder = new SecurityInterpretNodeToolsBuilder();
 
             _type = "HugLLM";
             _isStream = _mlParams.IsStream;
