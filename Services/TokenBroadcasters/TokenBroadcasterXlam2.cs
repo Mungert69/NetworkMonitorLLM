@@ -25,8 +25,8 @@ namespace NetworkMonitor.LLM.Services
         }
 
         /// <summary>
-        /// Parses JSON tool/function call(s) from the LLM output. Supports an array of calls.
-        /// Each call should be like: {"name": "search", "arguments": {...}}
+        /// Parses JSON tool/function call(s) from the LLM output. Supports both "arguments" and "parameters" keys.
+        /// Each call should be like: {"name": "search", "arguments": {...}} or {"name": "search", "parameters": {...}}
         /// </summary>
         public override List<(string json, string functionName)> ParseInputForJson(string input)
         {
@@ -40,9 +40,9 @@ namespace NetworkMonitor.LLM.Services
             if (input.StartsWith("[") && input.EndsWith("]"))
                 input = input.Substring(1, input.Length - 2);
 
-            // Regex pattern to match tool call objects
-            // Matches {"name": "...", "arguments": {...}}
-            var pattern = @"{""name""\s*:\s*""(?<name>[^""]+)""\s*,\s*""arguments""\s*:\s*(?<arguments>{(?:[^{}]*|\{(?:[^{}]*|\{.*?\})*\})*})}";
+            // Regex pattern to match tool call objects with "arguments" OR "parameters"
+            // Captures the group name ("arguments" or "parameters") for debugging if needed
+            var pattern = @"{""name""\s*:\s*""(?<name>[^""]+)""\s*,\s*""(?<argkey>arguments|parameters)""\s*:\s*(?<arguments>{(?:[^{}]*|\{(?:[^{}]*|\{.*?\})*\})*})}";
             var matches = Regex.Matches(input, pattern, RegexOptions.Singleline);
 
             foreach (Match match in matches)
@@ -51,8 +51,8 @@ namespace NetworkMonitor.LLM.Services
                 {
                     var functionName = match.Groups["name"].Value;
                     var argumentsJson = match.Groups["arguments"].Value;
+                    // var keyUsed = match.Groups["argkey"].Value; // "arguments" or "parameters", if you care for logging
 
-                    // Optionally sanitize/fix the JSON if needed
                     var sanitizedJson = JsonSanitizer.RepairJson(argumentsJson, _ignoreParameters) ?? "";
 
                     functionCalls.Add((sanitizedJson, functionName));
@@ -70,7 +70,6 @@ namespace NetworkMonitor.LLM.Services
         // Optionally, you can override/extend this if you want additional repair logic
         private string TryRepairJson(string jsonContent)
         {
-            // Remove extra braces, fix common issues
             if (jsonContent.StartsWith("{{") && jsonContent.EndsWith("}}"))
                 jsonContent = jsonContent.TrimStart('{').TrimEnd('}');
             jsonContent = jsonContent.Replace("}{", "},{");
