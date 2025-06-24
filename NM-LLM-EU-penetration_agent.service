@@ -1,14 +1,14 @@
 [Unit]
-Description=Network Monitor security_interpret
+Description=Network Monitor penetration_agent
 
 [Service]
 # will set the Current Working Directory (CWD)
-WorkingDirectory=/home/mahadeva/code/services/llm-eu-security_interpret
+WorkingDirectory=/home/mahadeva/code/services/llm-eu-penetration_agent
 # systemd will run this executable to start the service
 # if /usr/bin/dotnet doesn't work, use `which dotnet` to find correct dotnet executable path
-ExecStart=/usr/bin/dotnet /home/mahadeva/code/services/llm-eu-security_interpret/NetworkMonitorLLM.dll
+ExecStart=/usr/bin/dotnet /home/mahadeva/code/services/llm-eu-penetration_agent/NetworkMonitorLLM.dll
 # to query logs using journalctl, set a logical name here  
-SyslogIdentifier=NM-LLM-EU-security_interpret
+SyslogIdentifier=NM-LLM-EU-penetration_agent
 
 # Use your username to keep things simple, for production scenario's I recommend a dedicated user/group.
 # If you pick a different user, make sure dotnet and all permissions are set correctly to run the app.
