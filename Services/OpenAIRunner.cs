@@ -105,45 +105,25 @@ public class OpenAIRunner : ILLMRunner
         _history = history;
         _queryCoordinator = queryCoordinator;
 
+        var toolsFactory = new ToolsBuilderFactory();
+
         _useHF = useHF;
-        IToolsBuilder? toolsBuilder = null;
+        string toolsId = serviceObj.ToolsDefinitionId ?? _serviceID;
+        IToolsBuilder toolsBuilder = toolsFactory.Create(toolsId, serviceObj.UserInfo);
 
-        if (_serviceID == "blogmonitor") toolsBuilder = new BlogMonitorToolsBuilder(serviceObj.UserInfo);
-        if (_serviceID == "reportdata") toolsBuilder = new ReportDataToolsBuilder();
-        if (_serviceID == "monitorsys") toolsBuilder = new MonitorToolsBuilder(serviceObj.UserInfo);
-        if (_serviceID == "user") toolsBuilder = new UserToolsBuilder(serviceObj.UserInfo);
-
-        if (toolsBuilder == null) toolsBuilder = new MonitorToolsBuilder(serviceObj.UserInfo);
-
-        if (!_useHF)
+        if (!useHF)
         {
-            if (_serviceID == "monitor") toolsBuilder = new MonitorToolsBuilder(serviceObj.UserInfo);
-            if (_serviceID == "cmdprocessor") toolsBuilder = new CmdProcessorExpertToolsBuilder(serviceObj.UserInfo);
-            if (_serviceID == "nmap") toolsBuilder = new SecurityExpertToolsBuilder();
-            if (_serviceID == "meta") toolsBuilder = new PenetrationExpertToolsBuilder();
-            if (_serviceID == "search") toolsBuilder = new SearchExpertToolsBuilder();
-            if (_serviceID == "quantum") toolsBuilder = new QuantumExpertToolsBuilder();
-            if (_serviceID == "security_agent") toolsBuilder = new SecurityAgentNodeToolsBuilder();
-            if (_serviceID == "security_interpret") toolsBuilder = new SecurityInterpretNodeToolsBuilder();
-
             _type = "TurboLLM";
-            _llmApi = new OpenAIApi(_logger, _mlParams, toolsBuilder, _serviceID, _responseProcessor, _openAiService);
-
+            _llmApi = new OpenAIApi(_logger, _mlParams,
+                                    toolsBuilder, _serviceID,
+                                    _responseProcessor, _openAiService);
         }
         else
         {
-            if (_serviceID == "monitor") toolsBuilder = new MonitorToolsBuilder(serviceObj.UserInfo);
-            if (_serviceID == "cmdprocessor") toolsBuilder = new CmdProcessorExpertToolsBuilder(serviceObj.UserInfo);
-            if (_serviceID == "nmap") toolsBuilder = new SecurityExpertToolsBuilder();
-            if (_serviceID == "meta") toolsBuilder = new PenetrationExpertToolsBuilder();
-            if (_serviceID == "search") toolsBuilder = new SearchExpertToolsBuilder();
-            if (_serviceID == "quantum") toolsBuilder = new QuantumExpertToolsBuilder();
-            if (_serviceID == "security_agent") toolsBuilder = new SecurityAgentNodeToolsBuilder();
-            if (_serviceID == "security_interpret") toolsBuilder = new SecurityInterpretNodeToolsBuilder();
-
             _type = "HugLLM";
-            _isStream = _mlParams.IsStream;
-            _llmApi = new HuggingFaceApi(_logger, _mlParams, toolsBuilder, _serviceID, _responseProcessor, _isStream);
+            _llmApi = new HuggingFaceApi(_logger, _mlParams,
+                                         toolsBuilder, _serviceID,
+                                         _responseProcessor, _isStream);
         }
         string accountType = "Free";
         if (!string.IsNullOrEmpty(serviceObj.UserInfo.AccountType)) accountType = serviceObj.UserInfo.AccountType;

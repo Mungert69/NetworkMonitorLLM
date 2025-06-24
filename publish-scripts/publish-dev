@@ -8,4 +8,4 @@ sudo ./publish-instance eu Quantum
 sudo ./publish-instance eu MonitorSys
 sudo ./publish-instance eu Monitor
 sudo ./publish-instance eu security_agent
-sudo ./publish-instance eu security_interpret
+sudo ./publish-instance eu penetration_agent
