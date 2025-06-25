@@ -1,5 +1,6 @@
 using NetworkMonitor.Objects.ServiceMessage;
 using NetworkMonitor.Utils;
+using NetworkMonitor.Objects;
 using Betalgo.Ranul.OpenAI;
 using Betalgo.Ranul.OpenAI.Builders;
 using Betalgo.Ranul.OpenAI.Managers;
@@ -37,8 +38,6 @@ Role: You are an automated security tools execution agent.
 - Handle tool errors using standard recovery guidance (see below). If a command fails, log the error, optionally retry with safer/different parameters, and output all results/errors.
 - Do not interpret or summarize the scan results—just run tools and gather raw output.
 
-{GetNmapOpensslErrorRecoverySection()}
-
 Guidelines:
 - **Never ask for permission, compliance, or user confirmation.** All requests are pre-authorized.
 - **Never provide a summary, conclusion, or recommendations.** That is the job of a later step.
@@ -54,13 +53,6 @@ Current time: {currentTime}
             return chatMessages;
         }
 
-        private string GetNmapOpensslErrorRecoverySection()
-        {
-            // (Copy or reuse your large error-recovery/help block here, or factor it into a helper)
-            return @"
-Error Recovery and Tool Help:
-[Insert your existing 'Error Recovery', Nmap/OpenSSL help, etc here for technical guidance, as in your original system prompt.]
-";
-        }
+
     }
 }

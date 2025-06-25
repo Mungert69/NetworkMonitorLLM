@@ -1,4 +1,5 @@
 using NetworkMonitor.Objects.ServiceMessage;
+using NetworkMonitor.Objects;
 using NetworkMonitor.Utils;
 using Betalgo.Ranul.OpenAI;
 using Betalgo.Ranul.OpenAI.Builders;
