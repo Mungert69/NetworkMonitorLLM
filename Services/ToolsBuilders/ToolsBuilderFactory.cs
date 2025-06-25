@@ -6,18 +6,33 @@ using System.Collections.Generic;
 using System.Collections.Concurrent;    // GetOrAdd
 using System.Text.Json;    
 namespace NetworkMonitor.LLM.Services;
+ public interface IToolsBuilderFactory
+    {
+        /// <summary>
+        /// Create a tools builder by its identifier.
+        /// </summary>
+        /// <param name="toolsId">The tools identifier (e.g. "nmap", "json_dynamic").</param>
+        /// <param name="userInfo">Optional user context.</param>
+        /// <param name="jsonSpec">When using "json_dynamic", the serialized <see cref="ToolBuilderSpec"/>.</param>
+        IToolsBuilder Create(string toolsId, UserInfo? userInfo = null, string? jsonSpec = null);
 
+        /// <summary>
+        /// All statically-registered tools IDs.
+        /// </summary>
+        IEnumerable<string> AvailableIds();
+    }
 
-public sealed class ToolsBuilderFactory
+public sealed class ToolsBuilderFactory : IToolsBuilderFactory
 {
     private const string JSON_DYNAMIC_ID = "json_dynamic";
 
     private readonly Dictionary<string, Func<UserInfo?, IToolsBuilder>> _static;
-
+    IFunctionDefinitionRegistry _functionDefinitionRegistry;
     private readonly ConcurrentDictionary<string, IToolsBuilder> _dynamicCache = new(StringComparer.OrdinalIgnoreCase);
 
-    public ToolsBuilderFactory()
+    public ToolsBuilderFactory(IFunctionDefinitionRegistry functionDefinitionRegistry)
     {
+        _functionDefinitionRegistry = functionDefinitionRegistry;
         _static = new(StringComparer.OrdinalIgnoreCase)
         {
              { "blogmonitor", user => new BlogMonitorToolsBuilder(user) },
@@ -49,7 +64,7 @@ public sealed class ToolsBuilderFactory
             // cache by the *spec.Id* so the same builder is reused
             var spec = JsonSerializer.Deserialize<ToolBuilderSpec>(jsonSpec)!;
             return _dynamicCache.GetOrAdd(spec.Id,
-                _ => new JsonDrivenToolsBuilder(spec));
+                _ => new JsonDrivenToolsBuilder(spec, _functionDefinitionRegistry));
         }
 
         // 2️⃣  Static path (existing behaviour)

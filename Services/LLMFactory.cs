@@ -255,9 +255,9 @@ public class LLMFactory : ILLMFactory
 
         ILLMRunner runner = runnerType switch
         {
-            "TurboLLM" => _openAIRunnerFactory.CreateRunner(_serviceProvider, serviceObj, null, history,_cpuUsageMonitor, _queryCoordinator),
-            "HugLLM" => _hfRunnerFactory.CreateRunner(_serviceProvider, serviceObj, null, history,_cpuUsageMonitor, _queryCoordinator),
-            "TestLLM" => _processRunnerFactory.CreateRunner(_serviceProvider, serviceObj, _processRunnerSemaphore, history, _cpuUsageMonitor, _queryCoordinator),
+            "TurboLLM" => _openAIRunnerFactory.CreateRunner(_serviceProvider, serviceObj, null, history,_cpuUsageMonitor),
+            "HugLLM" => _hfRunnerFactory.CreateRunner(_serviceProvider, serviceObj, null, history,_cpuUsageMonitor),
+            "TestLLM" => _processRunnerFactory.CreateRunner(_serviceProvider, serviceObj, _processRunnerSemaphore, history, _cpuUsageMonitor),
             _ => throw new ArgumentException($"Invalid runner type: {runnerType}")
         };
 
@@ -358,7 +358,7 @@ public abstract class LLMRunnerFactoryBase : ILLMRunnerFactory
         }
     }
 
-    public abstract ILLMRunner CreateRunner(IServiceProvider serviceProvider, LLMServiceObj serviceObj, SemaphoreSlim? runnerSemaphore, List<ChatMessage> history, ICpuUsageMonitor cpuUsageMonitor,IQueryCoordinator queryCoordinator);
+    public abstract ILLMRunner CreateRunner(IServiceProvider serviceProvider, LLMServiceObj serviceObj, SemaphoreSlim? runnerSemaphore, List<ChatMessage> history, ICpuUsageMonitor cpuUsageMonitor);
 
 }
 
@@ -366,7 +366,7 @@ public abstract class LLMRunnerFactoryBase : ILLMRunnerFactory
 public interface ILLMRunnerFactory
 {
     int LoadCount { get; set; }
-    ILLMRunner CreateRunner(IServiceProvider serviceProvider, LLMServiceObj serviceObj, SemaphoreSlim? runnerSemaphore, List<ChatMessage> history, ICpuUsageMonitor cpuUsageMonitor,IQueryCoordinator queryCoordinator);
+    ILLMRunner CreateRunner(IServiceProvider serviceProvider, LLMServiceObj serviceObj, SemaphoreSlim? runnerSemaphore, List<ChatMessage> history, ICpuUsageMonitor cpuUsageMonitor);
 
 }
 
@@ -374,18 +374,18 @@ public interface ILLMRunnerFactory
 public class LLMProcessRunnerFactory : LLMRunnerFactoryBase
 {
 
-    public override ILLMRunner CreateRunner(IServiceProvider serviceProvider, LLMServiceObj serviceObj, SemaphoreSlim? runnerSemaphore, List<ChatMessage> history, ICpuUsageMonitor cpuUsageMonitor,IQueryCoordinator queryCoordinator)
+    public override ILLMRunner CreateRunner(IServiceProvider serviceProvider, LLMServiceObj serviceObj, SemaphoreSlim? runnerSemaphore, List<ChatMessage> history, ICpuUsageMonitor cpuUsageMonitor)
     {
-        return new LLMProcessRunner(serviceProvider.GetRequiredService<ILogger<LLMProcessRunner>>(), serviceProvider.GetRequiredService<ILLMResponseProcessor>(), serviceProvider.GetRequiredService<ISystemParamsHelper>(), serviceObj, runnerSemaphore, serviceProvider.GetRequiredService<IAudioGenerator>(), cpuUsageMonitor,queryCoordinator);
+        return new LLMProcessRunner(serviceProvider.GetRequiredService<ILogger<LLMProcessRunner>>(), serviceProvider.GetRequiredService<ILLMResponseProcessor>(), serviceProvider.GetRequiredService<ISystemParamsHelper>(), serviceObj, runnerSemaphore, serviceProvider.GetRequiredService<IAudioGenerator>(), cpuUsageMonitor,serviceProvider.GetRequiredService<IQueryCoordinator>() );
     }
 }
 
 public class OpenAIRunnerFactory : LLMRunnerFactoryBase
 {
 
-    public override ILLMRunner CreateRunner(IServiceProvider serviceProvider, LLMServiceObj serviceObj, SemaphoreSlim? runnerSemaphore, List<ChatMessage> history, ICpuUsageMonitor cpuUsageMonitor,IQueryCoordinator queryCoordinator)
+    public override ILLMRunner CreateRunner(IServiceProvider serviceProvider, LLMServiceObj serviceObj, SemaphoreSlim? runnerSemaphore, List<ChatMessage> history, ICpuUsageMonitor cpuUsageMonitor)
     {
-        return new OpenAIRunner(serviceProvider.GetRequiredService<ILogger<OpenAIRunner>>(), serviceProvider.GetRequiredService<ILLMResponseProcessor>(), serviceProvider.GetRequiredService<OpenAIService>(), serviceProvider.GetRequiredService<ISystemParamsHelper>(), serviceObj, null, serviceProvider.GetRequiredService<IAudioGenerator>(), false, history,queryCoordinator);
+        return new OpenAIRunner(serviceProvider.GetRequiredService<ILogger<OpenAIRunner>>(), serviceProvider.GetRequiredService<ILLMResponseProcessor>(), serviceProvider.GetRequiredService<OpenAIService>(), serviceProvider.GetRequiredService<ISystemParamsHelper>(), serviceObj, null, serviceProvider.GetRequiredService<IAudioGenerator>(), false, history, serviceProvider.GetRequiredService<IQueryCoordinator>(), serviceProvider.GetRequiredService<IToolsBuilderFactory>()  );
     }
 }
 
@@ -393,8 +393,8 @@ public class HFRunnerFactory : LLMRunnerFactoryBase
 {
 
 
-    public override ILLMRunner CreateRunner(IServiceProvider serviceProvider, LLMServiceObj serviceObj, SemaphoreSlim? runnerSemaphore, List<ChatMessage> history, ICpuUsageMonitor cpuUsageMonitor,IQueryCoordinator queryCoordinator)
+    public override ILLMRunner CreateRunner(IServiceProvider serviceProvider, LLMServiceObj serviceObj, SemaphoreSlim? runnerSemaphore, List<ChatMessage> history, ICpuUsageMonitor cpuUsageMonitor)
     {
-        return new OpenAIRunner(serviceProvider.GetRequiredService<ILogger<OpenAIRunner>>(), serviceProvider.GetRequiredService<ILLMResponseProcessor>(), serviceProvider.GetRequiredService<OpenAIService>(), serviceProvider.GetRequiredService<ISystemParamsHelper>(), serviceObj, null, serviceProvider.GetRequiredService<IAudioGenerator>(), true, history,queryCoordinator);
+        return new OpenAIRunner(serviceProvider.GetRequiredService<ILogger<OpenAIRunner>>(), serviceProvider.GetRequiredService<ILLMResponseProcessor>(), serviceProvider.GetRequiredService<OpenAIService>(), serviceProvider.GetRequiredService<ISystemParamsHelper>(), serviceObj, null, serviceProvider.GetRequiredService<IAudioGenerator>(), true, history,serviceProvider.GetRequiredService<IQueryCoordinator>(), serviceProvider.GetRequiredService<IToolsBuilderFactory>());
     }
 }

@@ -87,6 +87,8 @@ namespace NetworkMonitor.LLM
             services.Configure<HostOptions>(s => s.ShutdownTimeout = TimeSpan.FromMinutes(5));
             services.AddSingleton<ICpuUsageMonitor, CpuUsageMonitor>();
             services.AddSingleton<IQueryCoordinator, QueryCoordinator>();
+            services.AddSingleton<IFunctionDefinitionRegistry, FunctionDefinitionRegistry>();
+            services.AddSingleton<IToolsBuilderFactory, ToolsBuilderFactory>();
 
 
             services.AddHostedService<CpuUsageMonitor>();
