@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System;
 using System.Text.Json;
+using NetworkMonitor.Objects;
 namespace NetworkMonitor.LLM.Services;
 
 public class JsonDrivenToolsBuilder : ToolsBuilderBase
