@@ -8,7 +8,7 @@ using Newtonsoft.Json.Serialization;
 using StackExchange.Redis;
 using NetworkMonitor.Utils.Helpers;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices; 
+using System.Runtime.CompilerServices;
 
 namespace NetworkMonitor.LLM.Services
 {
@@ -36,7 +36,7 @@ namespace NetworkMonitor.LLM.Services
                 EndPoints = { redisUrl },  // e.g. "your-server:46379"
                 Password = redisSecret,
                 User = "admin",
-    
+
                 // TLS Configuration
                 Ssl = true,
                 SslProtocols = System.Security.Authentication.SslProtocols.Tls12,
@@ -53,102 +53,103 @@ namespace NetworkMonitor.LLM.Services
 
             return config;
         }
-    public async Task<ConcurrentDictionary<string, Session>> LoadAllSessionsAsync()
-{
-    var sessions = new ConcurrentDictionary<string, Session>();
-    var server = GetServer();
-
-    try
-    {
-        var keys = await GetKeysAsync(server, $"{_keyPrefix}*");
-        foreach (var key in keys)
+        public async Task<ConcurrentDictionary<string, Session>> LoadAllSessionsAsync()
         {
-            try
+            var sessions = new ConcurrentDictionary<string, Session>();
+
+            // 1) Grab your pre‐maintained index of history‐keys:
+            var rawKeys = await _db.SetMembersAsync("history:all-keys");
+            if (rawKeys.Length == 0)
+                return sessions;
+
+            // 2) Convert RedisValue[] to RedisKey[] so we can MGET
+            var redisKeys = rawKeys
+               .Select(rv => (RedisKey)(string)rv)   // step through string first
+               .ToArray();
+
+            // 3) MGET all values in one round‐trip
+            var rawValues = await _db.StringGetAsync(redisKeys);
+
+            // 4) Deserialize and build your session map
+            for (int i = 0; i < redisKeys.Length; i++)
             {
-                var history = await LoadFromKey(key);
-                if (history != null)
+                var json = rawValues[i];
+                if (!json.HasValue) continue;
+
+                var history = JsonConvert
+                    .DeserializeObject<HistoryDisplayName>(json!);
+                if (history == null) continue;
+
+                sessions.TryAdd(
+                    history.SessionId,
+                    new Session { HistoryDisplayName = history }
+                );
+            }
+
+            return sessions;
+        }
+
+        public async Task<List<HistoryDisplayName>> GetHistoryDisplayNamesAsync(string userId)
+        {
+            var historyDisplayNames = new List<HistoryDisplayName>();
+            var server = GetServer();
+            var keys = await GetKeysAsync(server, $"{_keyPrefix}*_{userId}_*");
+
+            foreach (var key in keys)
+            {
+                try
                 {
-                    sessions.TryAdd(history.SessionId, new Session
+                    var history = await LoadFromKey(key);
+                    if (history != null)
                     {
-                        HistoryDisplayName = history,
-                        Runner = null
-                    });
+                        historyDisplayNames.Add(history);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error loading history from Redis key {key}: {ex.Message}");
                 }
             }
-            catch (Exception ex)
+
+            return historyDisplayNames;
+        }
+
+        public async Task<HistoryDisplayName?> LoadHistoryAsync(string sessionId)
+        {
+            if (string.IsNullOrWhiteSpace(sessionId))
+                throw new ArgumentException("Session ID cannot be empty", nameof(sessionId));
+
+            var server = GetServer();
+            var keys = await GetKeysAsync(server, $"{_keyPrefix}*_{sessionId}");
+
+            foreach (var key in keys)
             {
-                Console.WriteLine($"Error loading session from Redis key {key}: {ex.Message}");
+                try
+                {
+                    return await LoadFromKey(key);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error loading session {sessionId} from Redis: {ex.Message}");
+                }
+            }
+
+            return null;
+        }
+
+        public async Task DeleteHistoryAsync(string sessionId)
+        {
+            if (string.IsNullOrWhiteSpace(sessionId))
+                throw new ArgumentException("Session ID cannot be empty", nameof(sessionId));
+
+            var server = GetServer();
+            var keys = await GetKeysAsync(server, $"{_keyPrefix}*_{sessionId}");
+
+            foreach (var key in keys)
+            {
+                await _db.KeyDeleteAsync(key);
             }
         }
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"Error scanning Redis keys: {ex.Message}");
-    }
-
-    return sessions;
-}
-      public async Task<List<HistoryDisplayName>> GetHistoryDisplayNamesAsync(string userId)
-{
-    var historyDisplayNames = new List<HistoryDisplayName>();
-    var server = GetServer();
-    var keys = await GetKeysAsync(server, $"{_keyPrefix}*_{userId}_*");
-
-    foreach (var key in keys)
-    {
-        try
-        {
-            var history = await LoadFromKey(key);
-            if (history != null)
-            {
-                historyDisplayNames.Add(history);
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error loading history from Redis key {key}: {ex.Message}");
-        }
-    }
-
-    return historyDisplayNames;
-}
-
-public async Task<HistoryDisplayName?> LoadHistoryAsync(string sessionId)
-{
-    if (string.IsNullOrWhiteSpace(sessionId))
-        throw new ArgumentException("Session ID cannot be empty", nameof(sessionId));
-
-    var server = GetServer();
-    var keys = await GetKeysAsync(server, $"{_keyPrefix}*_{sessionId}");
-
-    foreach (var key in keys)
-    {
-        try
-        {
-            return await LoadFromKey(key);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error loading session {sessionId} from Redis: {ex.Message}");
-        }
-    }
-
-    return null;
-}
-
-public async Task DeleteHistoryAsync(string sessionId)
-{
-    if (string.IsNullOrWhiteSpace(sessionId))
-        throw new ArgumentException("Session ID cannot be empty", nameof(sessionId));
-
-    var server = GetServer();
-    var keys = await GetKeysAsync(server, $"{_keyPrefix}*_{sessionId}");
-
-    foreach (var key in keys)
-    {
-        await _db.KeyDeleteAsync(key);
-    }
-}
         public async Task SaveHistoryAsync(HistoryDisplayName historyDisplayName)
         {
             if (historyDisplayName == null)
@@ -181,28 +182,28 @@ public async Task DeleteHistoryAsync(string sessionId)
             return _redis.GetServer(endpoints.First());
         }
 
-      private async Task<List<RedisKey>> GetKeysAsync(IServer server, string pattern)
-{
-    var keys = new List<RedisKey>();
-    var enumerator = server.KeysAsync(
-        database: _db.Database,
-        pattern: pattern,
-        pageSize: 100).GetAsyncEnumerator();
-    
-    try
-    {
-        while (await enumerator.MoveNextAsync().ConfigureAwait(false))
+        private async Task<List<RedisKey>> GetKeysAsync(IServer server, string pattern)
         {
-            keys.Add(enumerator.Current);
+            var keys = new List<RedisKey>();
+            var enumerator = server.KeysAsync(
+                database: _db.Database,
+                pattern: pattern,
+                pageSize: 100).GetAsyncEnumerator();
+
+            try
+            {
+                while (await enumerator.MoveNextAsync().ConfigureAwait(false))
+                {
+                    keys.Add(enumerator.Current);
+                }
+            }
+            finally
+            {
+                await enumerator.DisposeAsync().ConfigureAwait(false);
+            }
+
+            return keys;
         }
-    }
-    finally
-    {
-        await enumerator.DisposeAsync().ConfigureAwait(false);
-    }
-    
-    return keys;
-}
         public void Dispose()
         {
             Dispose(true);
