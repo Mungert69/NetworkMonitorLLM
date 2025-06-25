@@ -20,7 +20,7 @@ public class JsonDrivenToolsBuilder : ToolsBuilderBase
 
         _tools = _spec.Functions
                       .Select(id => {
-                          if (functionDefinitionRegistry.TryResolve(id, out var fd))
+                          if (!functionDefinitionRegistry.TryResolve(id, out var fd))
                               throw new InvalidOperationException($"Unknown function '{id}'");
 
                           return new ToolDefinition { Function = fd, Type = "function" };
