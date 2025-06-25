@@ -7,8 +7,8 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using StackExchange.Redis;
 using NetworkMonitor.Utils.Helpers;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using Microsoft.Extensions.Logging;
 
 namespace NetworkMonitor.LLM.Services
 {
@@ -18,12 +18,13 @@ namespace NetworkMonitor.LLM.Services
         private readonly IDatabase _db;
         private readonly string _keyPrefix = "history:";
         private bool _disposed = false;
+        private readonly ILogger _logger;
 
-        public RedisHistoryStorage(ISystemParamsHelper systemParamsHelper)
+        public RedisHistoryStorage(ILogger<RedisHistoryStorage> logger, ISystemParamsHelper systemParamsHelper)
         {
             var systemParams = systemParamsHelper.GetSystemParams();
             var configuration = BuildConfiguration(systemParams.RedisUrl, systemParams.RedisSecret);
-
+            _logger = logger;
             _redis = ConnectionMultiplexer.Connect(configuration);
             _db = _redis.GetDatabase();
         }
@@ -53,9 +54,26 @@ namespace NetworkMonitor.LLM.Services
 
             return config;
         }
+
+        private async Task EnsureIndexSetAsync()
+        {
+            if (await _db.SetLengthAsync("history:all-keys") > 0) return;
+
+            var server = GetServer();
+            var keys = await GetKeysAsync(server, $"{_keyPrefix}*"); // full scan *once*
+            if (keys.Count == 0) return;
+
+            await _db.SetAddAsync(
+     "history:all-keys",
+     keys.Select(k => (RedisValue)(string)k)   // RedisKey ➜ string ➜ RedisValue
+         .ToArray());
+        }
+
         public async Task<ConcurrentDictionary<string, Session>> LoadAllSessionsAsync()
         {
             var sessions = new ConcurrentDictionary<string, Session>();
+
+            //await EnsureIndexSetAsync(); /// remove this after first run 
 
             // 1) Grab your pre‐maintained index of history‐keys:
             var rawKeys = await _db.SetMembersAsync("history:all-keys");
@@ -85,7 +103,7 @@ namespace NetworkMonitor.LLM.Services
                     new Session { HistoryDisplayName = history }
                 );
             }
-
+            _logger.LogInformation($"Success : Got {sessions.Count} histories");
             return sessions;
         }
 
@@ -137,33 +155,49 @@ namespace NetworkMonitor.LLM.Services
             return null;
         }
 
-        public async Task DeleteHistoryAsync(string sessionId)
-        {
-            if (string.IsNullOrWhiteSpace(sessionId))
-                throw new ArgumentException("Session ID cannot be empty", nameof(sessionId));
 
-            var server = GetServer();
-            var keys = await GetKeysAsync(server, $"{_keyPrefix}*_{sessionId}");
 
-            foreach (var key in keys)
-            {
-                await _db.KeyDeleteAsync(key);
-            }
-        }
         public async Task SaveHistoryAsync(HistoryDisplayName historyDisplayName)
         {
             if (historyDisplayName == null)
                 throw new ArgumentNullException(nameof(historyDisplayName));
 
             var key = $"{_keyPrefix}{historyDisplayName.StartUnixTime}_{historyDisplayName.SessionId}";
-            var json = JsonConvert.SerializeObject(historyDisplayName, new JsonSerializerSettings
-            {
-                ContractResolver = new CamelCasePropertyNamesContractResolver(),
-                Formatting = Formatting.Indented
-            });
+            var json = JsonConvert.SerializeObject(historyDisplayName,
+                new JsonSerializerSettings
+                {
+                    ContractResolver = new CamelCasePropertyNamesContractResolver(),
+                    Formatting = Formatting.Indented
+                });
 
-            await _db.StringSetAsync(key, json);
+            // **atomic**: store the blob and add the key to the index-set
+            var tran = _db.CreateTransaction();
+            _ = tran.StringSetAsync(key, json);
+            _ = tran.SetAddAsync("history:all-keys", key);
+
+            await tran.ExecuteAsync().ConfigureAwait(false);
         }
+
+        public async Task DeleteHistoryAsync(string sessionId)
+        {
+            if (string.IsNullOrWhiteSpace(sessionId))
+                throw new ArgumentException(nameof(sessionId));
+
+            var pattern = $"{_keyPrefix}*_{sessionId}";
+            var server = GetServer();
+            var keys = await GetKeysAsync(server, pattern);
+
+            if (keys.Count == 0) return;
+
+            var tran = _db.CreateTransaction();
+            foreach (var k in keys)
+            {
+                _ = tran.KeyDeleteAsync(k);
+                _ = tran.SetRemoveAsync("history:all-keys", (RedisValue)(string)k);
+            }
+            await tran.ExecuteAsync().ConfigureAwait(false);
+        }
+
 
         private async Task<HistoryDisplayName?> LoadFromKey(RedisKey key)
         {
