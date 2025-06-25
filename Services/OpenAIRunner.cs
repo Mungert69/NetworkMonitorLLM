@@ -109,7 +109,13 @@ public class OpenAIRunner : ILLMRunner
 
         _useHF = useHF;
         string toolsId = serviceObj.ToolsDefinitionId ?? _serviceID;
-        IToolsBuilder toolsBuilder = toolsFactory.Create(toolsId, serviceObj.UserInfo);
+        _logger.LogInformation($"Building tools for {toolsId} ");
+
+        IToolsBuilder toolsBuilder = toolsFactory.Create(
+    toolsId,                         // "nmap", "security_agent_collector", …
+    serviceObj.UserInfo,             // may be null
+    serviceObj.JsonToolsBuilderSpec  // ← null for static, JSON when dynamic
+);
 
         if (!useHF)
         {

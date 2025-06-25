@@ -1,23 +1,26 @@
-using System;                            
-using System.Collections.Generic;        
+using System;                                  
 using NetworkMonitor.Objects;
-
-
+using System.Collections.Concurrent;              // ← NEW
+using System.Text.Json;   
+using System.Collections.Generic;
+using System.Collections.Concurrent;    // GetOrAdd
+using System.Text.Json;    
 namespace NetworkMonitor.LLM.Services;
+
+
 public sealed class ToolsBuilderFactory
 {
+    private const string JSON_DYNAMIC_ID = "json_dynamic";
 
-    // Map the string key you’ll pass in the request
-    // to a *builder-creating* lambda
-    private readonly Dictionary<string,
-        Func<UserInfo?, IToolsBuilder>> _map;
+    private readonly Dictionary<string, Func<UserInfo?, IToolsBuilder>> _static;
+
+    private readonly ConcurrentDictionary<string, IToolsBuilder> _dynamicCache = new(StringComparer.OrdinalIgnoreCase);
 
     public ToolsBuilderFactory()
     {
-
-        _map = new(StringComparer.OrdinalIgnoreCase)
+        _static = new(StringComparer.OrdinalIgnoreCase)
         {
-            { "blogmonitor", user => new BlogMonitorToolsBuilder(user) },
+             { "blogmonitor", user => new BlogMonitorToolsBuilder(user) },
             { "reportdata",  _    => new ReportDataToolsBuilder() },
             { "monitorsys",  user => new MonitorToolsBuilder(user) },
             { "user",        user => new UserToolsBuilder(user) },
@@ -27,25 +30,35 @@ public sealed class ToolsBuilderFactory
             { "search",      _    => new SearchExpertToolsBuilder() },
             { "quantum",     _    => new QuantumExpertToolsBuilder() },
             { "security_agent_collector",    _ => new SecurityAgentNodeToolsBuilder() },
-            { "security_agent_interpretor",_ => new SecurityInterpretNodeToolsBuilder() },
+            { "security_agent_interpretor",_ => new SecurityInterpretNodeToolsBuilder() }
         };
     }
 
-    // -------------- PUBLIC API --------------
-
-    /// <summary>
-    /// Returns an IToolsBuilder; falls back to MonitorToolsBuilder
-    /// if the id is unknown.
-    /// </summary>
-    public IToolsBuilder Create(string toolsDefinitionId,
-                                UserInfo? userInfo = null)
+    // MAIN ENTRY POINT ----------------------------------------------------
+    public IToolsBuilder Create(string toolsId,
+                                UserInfo? userInfo = null,
+                                string?  jsonSpec  = null)
     {
-        if (_map.TryGetValue(toolsDefinitionId, out var ctor))
+        // 1️⃣  Dynamic JSON path
+        if (toolsId.Equals(JSON_DYNAMIC_ID, StringComparison.OrdinalIgnoreCase))
+        {
+            if (string.IsNullOrWhiteSpace(jsonSpec))
+                throw new ArgumentException(
+                    "JsonToolsBuilderSpec must be supplied when toolsId = 'json_dynamic'");
+
+            // cache by the *spec.Id* so the same builder is reused
+            var spec = JsonSerializer.Deserialize<ToolBuilderSpec>(jsonSpec)!;
+            return _dynamicCache.GetOrAdd(spec.Id,
+                _ => new JsonDrivenToolsBuilder(spec));
+        }
+
+        // 2️⃣  Static path (existing behaviour)
+        if (_static.TryGetValue(toolsId, out var ctor))
             return ctor(userInfo);
 
-        // default / safe-fallback
-        return new MonitorToolsBuilder(userInfo);
+        return new MonitorToolsBuilder(userInfo); // fallback
     }
 
-    public IEnumerable<string> AvailableIds() => _map.Keys;
+    public IEnumerable<string> AvailableIds() => _static.Keys;
 }
+
