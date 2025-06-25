@@ -91,9 +91,10 @@ public class OpenAIRunner : ILLMRunner
     private const int MaxRecentFunctionCalls = 5;
 
     private readonly IQueryCoordinator _queryCoordinator;
+    private readonly IToolsBuilderFactory _toolsBuilderFactory;
 
 #pragma warning disable CS8618
-    public OpenAIRunner(ILogger<OpenAIRunner> logger, ILLMResponseProcessor responseProcessor, OpenAIService openAiService, ISystemParamsHelper systemParamsHelper, LLMServiceObj serviceObj, SemaphoreSlim? openAIRunnerSemaphore, IAudioGenerator audioGenerator, bool useHF, List<ChatMessage> history, IQueryCoordinator queryCoordinator)
+    public OpenAIRunner(ILogger<OpenAIRunner> logger, ILLMResponseProcessor responseProcessor, OpenAIService openAiService, ISystemParamsHelper systemParamsHelper, LLMServiceObj serviceObj, SemaphoreSlim? openAIRunnerSemaphore, IAudioGenerator audioGenerator, bool useHF, List<ChatMessage> history, IQueryCoordinator queryCoordinator, IToolsBuilderFactory toolsBuilderFactory)
     {
         _logger = logger;
         _responseProcessor = responseProcessor;
@@ -104,14 +105,13 @@ public class OpenAIRunner : ILLMRunner
         _noThink = _mlParams.LlmNoThink;
         _history = history;
         _queryCoordinator = queryCoordinator;
-
-        var toolsFactory = new ToolsBuilderFactory();
+        _toolsBuilderFactory = toolsBuilderFactory;
 
         _useHF = useHF;
         string toolsId = serviceObj.ToolsDefinitionId ?? _serviceID;
         _logger.LogInformation($"Building tools for {toolsId} ");
 
-        IToolsBuilder toolsBuilder = toolsFactory.Create(
+        IToolsBuilder toolsBuilder = _toolsBuilderFactory.Create(
     toolsId,                         // "nmap", "security_agent_collector", …
     serviceObj.UserInfo,             // may be null
     serviceObj.JsonToolsBuilderSpec  // ← null for static, JSON when dynamic

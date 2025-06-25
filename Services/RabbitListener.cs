@@ -3,6 +3,7 @@ using RabbitMQ.Client.Events;
 using NetworkMonitor.Objects.ServiceMessage;
 using NetworkMonitor.Objects;
 using NetworkMonitor.Data.Services;
+using NetworkMonitor.LLM.Services;
 using System.Collections.Generic;
 using System;
 using System.Text;
@@ -34,17 +35,19 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
     protected ILLMService _llmService;
     private string _serviceID = "monitor";
     private readonly IQueryCoordinator _queryCoordinator;
+    protected readonly IFunctionDefinitionRegistry _registryCache;
     private readonly string _exchangeType;
     private readonly string _routingKey;
 
-    public RabbitListener(ILLMService llmService, ILogger<RabbitListenerBase> logger, ISystemParamsHelper systemParamsHelper, IQueryCoordinator queryCoordinator) : base(logger, DeriveSystemUrl(systemParamsHelper))
+    public RabbitListener(ILLMService llmService, ILogger<RabbitListenerBase> logger, ISystemParamsHelper systemParamsHelper, IQueryCoordinator queryCoordinator, IFunctionDefinitionRegistry registryCache) : base(logger, DeriveSystemUrl(systemParamsHelper))
     {
 
         _llmService = llmService;
         _serviceID = systemParamsHelper.GetSystemParams().ServiceID ?? "monitor";
         _exchangeType = systemParamsHelper.GetSystemParams().RabbitExchangeType;
-        _routingKey= systemParamsHelper.GetSystemParams().RabbitRoutingKey;
+        _routingKey = systemParamsHelper.GetSystemParams().RabbitRoutingKey;
         _queryCoordinator = queryCoordinator;
+        _registryCache = registryCache;
 
     }
 
@@ -94,6 +97,14 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
         {
             ExchangeName = "queryIndexResult" + _serviceID,
             FuncName = "queryIndexResult",
+            MessageTimeout = 60000,
+            Type = _exchangeType,
+            RoutingKeys = new List<string> { _routingKey }
+        });
+        _rabbitMQObjs.Add(new RabbitMQObj()
+        {
+            ExchangeName = "getFunctionRegistry" + _serviceID,
+            FuncName = "getFunctionRegistry",
             MessageTimeout = 60000,
             Type = _exchangeType,
             RoutingKeys = new List<string> { _routingKey }
@@ -195,6 +206,21 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
                                     catch (Exception ex)
                                     {
                                         _logger.LogError(" Error : RabbitListener.DeclareConsumers.queryIndexResult " + ex.Message);
+                                    }
+                                };
+                              break;
+                          case "getFunctionRegistry":
+                              await rabbitMQObj.ConnectChannel.BasicQosAsync(prefetchSize: 0, prefetchCount: 1, global: false);
+                              rabbitMQObj.Consumer.ReceivedAsync += async (model, ea) =>
+                                {
+                                    try
+                                    {
+                                        GetFunctionRegistry();
+                                        await rabbitMQObj.ConnectChannel.BasicAckAsync(ea.DeliveryTag, false);
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        _logger.LogError(" Error : RabbitListener.DeclareConsumers.getFunctionRegistry " + ex.Message);
                                     }
                                 };
                               break;
@@ -392,5 +418,28 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
         if (!result.Success) _logger.LogError(result.Message);
         return result;
     }
+   
+public ResultObj GetFunctionRegistry()
+    {
+        var result = new ResultObj();
+        result.Success = false;
+        result.Message = "MessageAPI : GetFunctionRegistry : ";
 
+        try
+        {
+            string funcRegJson = _registryCache.GetFunctionCatalogJson();
+            result.Success = true;
+            result.Message = "Success : Got GetFunctionCatalogJson";
+            result.Data = funcRegJson; 
+
+        }
+        catch (Exception e)
+        {
+            result.Message = e.Message;
+            result.Success = false;
+        }
+
+        if (!result.Success) _logger.LogError(result.Message);
+        return result;
+    }
 }
