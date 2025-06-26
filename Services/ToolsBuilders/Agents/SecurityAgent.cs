@@ -20,9 +20,10 @@ public class SecurityAgent
     public static FunctionDefinition BuildSecurityBasicAgent()
     {
         return new FunctionDefinitionBuilder(
-                "call_security_basic_agent",
-                "Call the security agent to perform a basic security assessment on the target ")
-                .AddParameter(
+                "call_security_basic_flow",
+                "Start a multi-step flow that performs a basic security assessment on the specified target. " +
+                "Only call this function if the user clearly indicates they want to initiate a security assessment flow.")
+                    .AddParameter(
                     "target",
                     PropertyDefinition.DefineString(
                         "The target to scan - can be an IP address (e.g., '192.168.1.1'), " +
@@ -32,6 +33,6 @@ public class SecurityAgent
                 .Build();
     }
 
-  
+
 
 }
