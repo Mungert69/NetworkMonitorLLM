@@ -22,7 +22,8 @@ public class SecurityAgent
         return new FunctionDefinitionBuilder(
                 "call_security_basic_flow",
                 "Start a multi-step flow that performs a basic security assessment on the specified target. " +
-                "Only call this function if the user clearly indicates they want to initiate a security assessment flow.")
+                "Only call this function if the user clearly indicates they want to initiate a security assessment flow." +
+                "The result from this function call will be professionally presented report. Pass the report back to the user without any modifications.")
                     .AddParameter(
                     "target",
                     PropertyDefinition.DefineString(
