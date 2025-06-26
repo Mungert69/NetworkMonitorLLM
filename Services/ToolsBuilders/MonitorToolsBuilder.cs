@@ -70,7 +70,7 @@ public class MonitorToolsBuilder : ToolsBuilderBase
             new ToolDefinition() { Function = fn_call_search_expert, Type = "function" },
             new ToolDefinition() { Function = fn_call_cmd_processor_expert, Type = "function" },
             new ToolDefinition() { Function = fn_call_quantum_expert, Type = "function" },
-            new ToolDefinition() { Function = fn_call_security_basic_flow, Type = "function" }
+           // new ToolDefinition() { Function = fn_call_security_basic_flow, Type = "function" }
 
         };
 
