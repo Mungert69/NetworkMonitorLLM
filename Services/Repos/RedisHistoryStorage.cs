@@ -17,6 +17,7 @@ namespace NetworkMonitor.LLM.Services
         private readonly ConnectionMultiplexer _redis;
         private readonly IDatabase _db;
         private readonly string _keyPrefix = "history:";
+        private const  string IndexKey   = "idx:history:all"; 
         private bool _disposed = false;
         private readonly ILogger _logger;
 
@@ -57,14 +58,14 @@ namespace NetworkMonitor.LLM.Services
 
         private async Task EnsureIndexSetAsync()
         {
-            if (await _db.SetLengthAsync("history:all-keys") > 0) return;
+            if (await _db.SetLengthAsync(IndexKey) > 0) return;
 
             var server = GetServer();
             var keys = await GetKeysAsync(server, $"{_keyPrefix}*"); // full scan *once*
             if (keys.Count == 0) return;
 
             await _db.SetAddAsync(
-     "history:all-keys",
+     IndexKey,
      keys.Select(k => (RedisValue)(string)k)   // RedisKey ➜ string ➜ RedisValue
          .ToArray());
         }
@@ -76,7 +77,7 @@ namespace NetworkMonitor.LLM.Services
             //await EnsureIndexSetAsync(); /// remove this after first run 
 
             // 1) Grab your pre‐maintained index of history‐keys:
-            var rawKeys = await _db.SetMembersAsync("history:all-keys");
+            var rawKeys = await _db.SetMembersAsync(IndexKey);
             if (rawKeys.Length == 0)
                 return sessions;
 
@@ -173,7 +174,7 @@ namespace NetworkMonitor.LLM.Services
             // **atomic**: store the blob and add the key to the index-set
             var tran = _db.CreateTransaction();
             _ = tran.StringSetAsync(key, json);
-            _ = tran.SetAddAsync("history:all-keys", key);
+            _ = tran.SetAddAsync(IndexKey, key);
 
             await tran.ExecuteAsync().ConfigureAwait(false);
         }
@@ -193,7 +194,7 @@ namespace NetworkMonitor.LLM.Services
             foreach (var k in keys)
             {
                 _ = tran.KeyDeleteAsync(k);
-                _ = tran.SetRemoveAsync("history:all-keys", (RedisValue)(string)k);
+                _ = tran.SetRemoveAsync(IndexKey, (RedisValue)(string)k);
             }
             await tran.ExecuteAsync().ConfigureAwait(false);
         }
