@@ -429,7 +429,7 @@ public ResultObj GetFunctionRegistry()
         {
             string funcRegJson = _registryCache.GetFunctionCatalogJson();
             result.Success = true;
-            result.Message = "Success : Got GetFunctionCatalogJson";
+            result.Message = $"Success : Got GetFunctionCatalogJson : {funcRegJson}";
             result.Data = funcRegJson; 
 
         }
@@ -440,6 +440,7 @@ public ResultObj GetFunctionRegistry()
         }
 
         if (!result.Success) _logger.LogError(result.Message);
+        else _logger.LogInformation(result.Message);
         return result;
     }
 }
