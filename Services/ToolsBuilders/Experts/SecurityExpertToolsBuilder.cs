@@ -58,9 +58,10 @@ namespace NetworkMonitor.LLM.Services
 
 - OpenSSL Operations: Configure checks for:
   - Certificate chains (-showcerts)
-  - Protocol validation (-tls1_2, -no_ssl3)
+  - Protocol validation (-tls1_2)
   - Cipher strength analysis (-cipher)
   - Example: {""command_options"": ""s_client -showcerts"", ""target"": ""example.com:443""}
+  - Be carefull to only use valid Openssl command option. Do not mix invalid options
 
 3. Security Reporting:
 - Provide structured findings including:
