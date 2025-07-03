@@ -323,24 +323,24 @@ If no tool is suitable, state that explicitly. If the user's input lacks require
                                     new TokenBroadcasterXlam2(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
             },
 
-            // Configuration for qwen_2.5
-            "gemma_2" => new LLMConfig
+            // Configuration for gemma_3
+            "gemma_3" => new LLMConfig
             {
                 UserReplace = "<start_of_turn>user\\\n",
-                FunctionReplace = "<start_of_turn>user\\\nFunction response:",
+                FunctionReplace = "<start_of_turn>user\\\n```tool_output\\\n",
                 AssistantHeader = "<start_of_turn>model\n",
                 UserInputTemplate = "<start_of_turn>user\\\n{0}",
                 AssistantMessageTemplate = "<start_of_turn>model\\\n{0}<end_of_turn>",
                 SystemMessageTemplate = "<start_of_turn>model\\\n{0}<end_of_turn>",
                 EOTToken = "<end_of_turn>",
-                FunctionResponseTemplate = "<start_of_turn>user\\\nFunction response: {1}",
+                FunctionResponseTemplate = "<start_of_turn>user\\\n```tool_output\\\n{1}\\\n```",
 
-                FunctionBuilder = "Function call: {1}",
-                FunctionResponse = "Function response: {1}",
+                FunctionBuilder = "\n```tool_code\n{1}\n```",
+                FunctionResponse = "\n```tool_output\n{1}\n```",
                 FunctionDefsWrap = "{0}",
                 PromptFooter = "",
                 CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
-                        new TokenBroadcasterQwen_2_5(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
+                        new TokenBroadcasterGemma_3(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
             },
 
             // Configuration for standard
