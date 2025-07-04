@@ -14,7 +14,7 @@ public static class CmdProcessorFunctionExposer
     // Template for all dynamic processor functions (swap/cp_*) exposed to the LLM
     public static FunctionDefinition BuildCmdProcessorFunction(CmdProcessorFunctionSpec spec)
     {
-        var functionName = $"cp_{spec.Name}";
+        var functionName = spec.Name;
         var doc = spec.Description ?? $"Run the '{spec.Name}' cmd processor on a specified agent.";
 
         var builder = new FunctionDefinitionBuilder(functionName, doc);
