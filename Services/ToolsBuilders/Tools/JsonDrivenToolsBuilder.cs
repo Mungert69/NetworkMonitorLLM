@@ -18,14 +18,25 @@ public class JsonDrivenToolsBuilder : ToolsBuilderBase
     {
         _spec = spec;
 
+        // Existing static functions
         _tools = _spec.Functions
-                      .Select(id => {
-                          if (!functionDefinitionRegistry.TryResolve(id, out var fd))
-                              throw new InvalidOperationException($"Unknown function '{id}'");
+            .Select(id =>
+            {
+                if (!functionDefinitionRegistry.TryResolve(id, out var fd))
+                    throw new InvalidOperationException($"Unknown function '{id}'");
+                return new ToolDefinition { Function = fd, Type = "function" };
+            })
+            .ToList();
 
-                          return new ToolDefinition { Function = fd, Type = "function" };
-                      })
-                      .ToList();
+        // Add dynamic cp_... functions from JSON
+        if (_spec.CmdProcessorFunctions != null)
+        {
+            foreach (var cpSpec in _spec.CmdProcessorFunctions)
+            {
+                var fd = CmdProcessorFunctionExposer.BuildCmdProcessorFunction(cpSpec);
+                _tools.Add(new ToolDefinition { Function = fd, Type = "function" });
+            }
+        }
     }
 
     public override List<ChatMessage> GetSystemPrompt(
