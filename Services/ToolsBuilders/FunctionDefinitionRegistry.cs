@@ -4,6 +4,7 @@
 using System.Reflection;
 using Betalgo.Ranul.OpenAI.ObjectModels.RequestModels;
 using System.Collections.Generic;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Linq;
 using System.Text.Json;
@@ -37,12 +38,14 @@ public interface IFunctionDefinitionRegistry
 public class FunctionDefinitionRegistry : IFunctionDefinitionRegistry
 {
     private readonly IRabbitRepo _rabbitRepo;
+    private readonly ILogger _logger;
     private Dictionary<string, FunctionDefinition> _map =
         new(StringComparer.OrdinalIgnoreCase);
 
-    public FunctionDefinitionRegistry(IRabbitRepo rabbitRepo)
+    public FunctionDefinitionRegistry(ILogger<FunctionDefinitionRegistry> logger,IRabbitRepo rabbitRepo)
     {
         _rabbitRepo = rabbitRepo;
+        _logger = logger;
         BuildRegistry();
     }
 

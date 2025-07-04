@@ -4,7 +4,8 @@ using System.Collections.Concurrent;              // ← NEW
 using System.Text.Json;   
 using System.Collections.Generic;
 using System.Collections.Concurrent;    // GetOrAdd
-using System.Text.Json;    
+using System.Text.Json;
+using Microsoft.Extensions.Logging;    
 namespace NetworkMonitor.LLM.Services;
  public interface IToolsBuilderFactory
     {
@@ -25,14 +26,16 @@ namespace NetworkMonitor.LLM.Services;
 public sealed class ToolsBuilderFactory : IToolsBuilderFactory
 {
     private const string JSON_DYNAMIC_ID = "json_dynamic";
+      private readonly ILogger _logger;
 
     private readonly Dictionary<string, Func<UserInfo?, IToolsBuilder>> _static;
     IFunctionDefinitionRegistry _functionDefinitionRegistry;
     private readonly ConcurrentDictionary<string, IToolsBuilder> _dynamicCache = new(StringComparer.OrdinalIgnoreCase);
 
-    public ToolsBuilderFactory(IFunctionDefinitionRegistry functionDefinitionRegistry)
+    public ToolsBuilderFactory( ILogger<ToolsBuilderFactory> logger,IFunctionDefinitionRegistry functionDefinitionRegistry)
     {
         _functionDefinitionRegistry = functionDefinitionRegistry;
+        _logger = logger;
         _static = new(StringComparer.OrdinalIgnoreCase)
         {
              { "blogmonitor", user => new BlogMonitorToolsBuilder(user) },
@@ -63,6 +66,7 @@ public sealed class ToolsBuilderFactory : IToolsBuilderFactory
 
             // cache by the *spec.Id* so the same builder is reused
             var spec = JsonSerializer.Deserialize<ToolBuilderSpec>(jsonSpec)!;
+            _logger.LogInformation($"Success : got json spec for Tools Builder : {spec}");
             return _dynamicCache.GetOrAdd(spec.Id,
                 _ => new JsonDrivenToolsBuilder(spec, _functionDefinitionRegistry));
         }
