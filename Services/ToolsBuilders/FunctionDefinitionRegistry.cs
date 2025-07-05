@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Linq;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Reflection;
 using NetworkMonitor.Objects.Repository;
 using NetworkMonitor.Objects;
@@ -42,7 +43,7 @@ public class FunctionDefinitionRegistry : IFunctionDefinitionRegistry
     private Dictionary<string, FunctionDefinition> _map =
         new(StringComparer.OrdinalIgnoreCase);
 
-    public FunctionDefinitionRegistry(ILogger<FunctionDefinitionRegistry> logger,IRabbitRepo rabbitRepo)
+    public FunctionDefinitionRegistry(ILogger<FunctionDefinitionRegistry> logger, IRabbitRepo rabbitRepo)
     {
         _rabbitRepo = rabbitRepo;
         _logger = logger;
@@ -72,59 +73,77 @@ public class FunctionDefinitionRegistry : IFunctionDefinitionRegistry
             }
         }
     }
-
-public string GetFunctionCatalogJson(bool pretty = true)
-{
-    /* 1) Build a DTO that contains full parameter metadata
-           ------------------------------------------------
-       Betalgo.Ranul.OpenAI.FunctionDefinition exposes its JSON schema
-       via the `Parameters` collection created with the builder:
-
-           PropertyDefinition.DefineString("desc", isRequired: true)
-
-       Each PropertyDefinition implements:
-           - Name
-           - Type          (enum PropertyType)
-           - Description
-           - Required      (bool)
-    */
-    var payload = new
+    public string GetFunctionCatalogJson(bool pretty = true)
     {
-        functions = _map.Values.Select(fd => new
+        var payload = new
         {
-            id          = fd.Name,
-            description = fd.Description,
-            parameters  = fd.Parameters.Select(p => new
+            functions = _map.Values.Select(fd => new
             {
-                name        = p.Name,
-                type        = p.Type.ToString().ToLower(), // string | integer | boolean | object | array
-                description = p.Description,
-                required    = p.Required
+                id = fd.Name,
+                description = fd.Description,
+                parameters = string.Join(",", fd.Parameters.Properties.Select(kvp => kvp.Key))
             })
-        })
-    };
+        };
 
-    /* 2) Serialise  ----------------------------------------------------- */
-    var options = new JsonSerializerOptions
+        var options = new JsonSerializerOptions
+        {
+            WriteIndented = pretty,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+        };
+
+        var json = JsonSerializer.Serialize(payload, options);
+
+        var reply = new FunctionRegistryReply
+        {
+            CatalogJson = json,
+            Success = !string.IsNullOrEmpty(json),
+            Message = !string.IsNullOrEmpty(json)
+                            ? "Function catalog generated"
+                            : "Failed to generate function catalog"
+        };
+        _rabbitRepo.PublishAsync("functionRegistryReply", reply);
+
+        return json;
+    }
+
+    public string GetFunctionCatalogFullJson(bool pretty = true)
     {
-        WriteIndented         = pretty,
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-    };
-    var json = JsonSerializer.Serialize(payload, options);
+        var payload = new
+        {
+            functions = _map.Values.Select(fd => new
+            {
+                id = fd.Name,
+                description = fd.Description,
+                parameters = fd.Parameters.Properties.Select(kvp => new
+                {
+                    name = kvp.Key,
+                    type = kvp.Value.Type.ToString().ToLower(),         // string | integer | boolean | object | array
+                    description = kvp.Value.Description
+                })
+            })
+        };
 
-    /* 3) Publish a registry-reply message (unchanged) ------------------- */
-    var reply = new FunctionRegistryReply
-    {
-        CatalogJson = json,
-        Success     = !string.IsNullOrEmpty(json),
-        Message     = !string.IsNullOrEmpty(json)
-                        ? "Function catalog generated"
-                        : "Failed to generate function catalog"
-    };
-    _rabbitRepo.PublishAsync("functionRegistryReply", reply);
+        var options = new JsonSerializerOptions
+        {
+            WriteIndented = pretty,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+        };
 
-    return json;
-}
+        var json = JsonSerializer.Serialize(payload, options);
+
+        var reply = new FunctionRegistryReply
+        {
+            CatalogJson = json,
+            Success = !string.IsNullOrEmpty(json),
+            Message = !string.IsNullOrEmpty(json)
+                            ? "Function catalog generated"
+                            : "Failed to generate function catalog"
+        };
+        _rabbitRepo.PublishAsync("functionRegistryReply", reply);
+
+        return json;
+    }
+
 
     public bool TryResolve(string id, out FunctionDefinition fd)
         => _map.TryGetValue(id, out fd);
