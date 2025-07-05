@@ -88,7 +88,7 @@ public class OpenAIRunner : ILLMRunner
     public string Type { get => _type; set => _type = value; }
 
     private readonly Queue<(string? FunctionName, string? ArgumentsJson)> _recentFunctionCalls = new Queue<(string?, string?)>();
-    private const int MaxRecentFunctionCalls = 5;
+    private const int MaxRecentFunctionCalls = 10;
 
     private readonly IQueryCoordinator _queryCoordinator;
     private readonly IToolsBuilderFactory _toolsBuilderFactory;

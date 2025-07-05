@@ -51,7 +51,7 @@ public class MonitorToolsBuilder : ToolsBuilderBase
         fn_call_cmd_processor_expert = ExpertTools.BuildCmdProcessorExpertFunction();
         fn_call_quantum_expert = ExpertTools.BuildQuantumExpertFunction();
 
-        //fn_call_security_basic_flow = SecurityAgent.BuildSecurityBasicAgent();
+        fn_call_security_basic_flow = SecurityAgent.BuildSecurityBasicAgent();
         fn_call_cmd_processor_builder_flow = CmdProcessorBuilderAgent.BuildCmdProcessorBuilderAgent();
 
 
@@ -72,7 +72,7 @@ public class MonitorToolsBuilder : ToolsBuilderBase
             new ToolDefinition() { Function = fn_call_search_expert, Type = "function" },
             new ToolDefinition() { Function = fn_call_cmd_processor_expert, Type = "function" },
             new ToolDefinition() { Function = fn_call_quantum_expert, Type = "function" },
-            //new ToolDefinition() { Function = fn_call_security_basic_flow, Type = "function" }
+            new ToolDefinition() { Function = fn_call_security_basic_flow, Type = "function" },
              new ToolDefinition() { Function = fn_call_cmd_processor_builder_flow, Type = "function" }
 
         };
