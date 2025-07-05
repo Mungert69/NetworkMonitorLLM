@@ -46,9 +46,7 @@ public sealed class ToolsBuilderFactory : IToolsBuilderFactory
             { "nmap",        _    => new SecurityExpertToolsBuilder() },
             { "meta",        _    => new PenetrationExpertToolsBuilder() },
             { "search",      _    => new SearchExpertToolsBuilder() },
-            { "quantum",     _    => new QuantumExpertToolsBuilder() },
-            { "security_agent_collector",    _ => new SecurityAgentNodeToolsBuilder() },
-            { "security_agent_interpretor",_ => new SecurityInterpretNodeToolsBuilder() }
+            { "quantum",     _    => new QuantumExpertToolsBuilder() }
         };
     }
 
