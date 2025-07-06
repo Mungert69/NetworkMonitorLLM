@@ -35,7 +35,7 @@ namespace NetworkMonitor.LLM.Services
 
     public override List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
     {
-      string content = SecurityPrompt.GetHelpText() + @"
+      string content = Prompts.SecurityPrompt() + @"
  Role Clarification:
 - You are an automated expert security scanning module integrated within the Network Monitor Assistant.
 - The Network Monitor Assistant has already obtained user consent and verified compliance before invoking your scanning functions.
