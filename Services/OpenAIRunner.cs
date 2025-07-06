@@ -88,7 +88,9 @@ public class OpenAIRunner : ILLMRunner
     public string Type { get => _type; set => _type = value; }
 
     private readonly Queue<(string? FunctionName, string? ArgumentsJson)> _recentFunctionCalls = new Queue<(string?, string?)>();
-    private const int MaxRecentFunctionCalls = 10;
+    private const int MaxRecentFunctionCalls = 5;
+    private const int MaxFunctionCallsInARow = 10;
+    private int _funcsInARow = 0;
 
     private readonly IQueryCoordinator _queryCoordinator;
     private readonly IToolsBuilderFactory _toolsBuilderFactory;
@@ -147,6 +149,7 @@ public class OpenAIRunner : ILLMRunner
         _isStateStarting = true;
         _isStateReady = false;
         _responseProcessor.IsManagedMultiFunc = true;
+
 
         var systemPrompt = _llmApi.GetSystemPrompt(serviceObj.GetClientStartTime().ToString("yyyy-MM-ddTHH:mm:ss"), serviceObj, _noThink);
 
@@ -584,7 +587,7 @@ public class OpenAIRunner : ILLMRunner
         int numDequeue = MaxRecentFunctionCalls;
         if (isDuplicate && duplicateCount > 1)
         {
-            _logger.LogWarning($"Possible loop detected when calling functions");
+            _logger.LogWarning($"Possible loop detected when calling the same function with the same parameters");
             var duplicateMessage = ChatMessage.FromSystem(
                 $" You are possibly stuck in a loop. Take a summary of what you have been doing and give the user feedback before continuing. If the user wants to call the same function again that is ok. Just check first.");
             localHistory.Add(duplicateMessage);
@@ -593,6 +596,15 @@ public class OpenAIRunner : ILLMRunner
         while (_recentFunctionCalls.Count > numDequeue)
         {
             _recentFunctionCalls.Dequeue(); // Maintain queue size
+        }
+         _funcsInARow++;
+        if (_funcsInARow > MaxFunctionCallsInARow)
+        {
+            _logger.LogWarning($"Warning : Possible loop detected : {_funcsInARow} functions have been called in a row");
+            var duplicateMessage = ChatMessage.FromSystem(
+                $" Possible loop detected. You have called {_funcsInARow} functions in a row. It is ok to continue only if you are batch calling functions and you are sure which parameters to use. If you are just attempting to get the parameters correct by guesssing then stop and explain why you have stopped.");
+            localHistory.Add(duplicateMessage);
+            _funcsInARow = 0; 
         }
         return;
     }
@@ -655,8 +667,6 @@ public class OpenAIRunner : ILLMRunner
 
         responseServiceObj.LlmMessage = "<Function Call:> " + functionName + " " + json + "\n";
         if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
-        // This is disabled until I find out how to set this without confusing chatgpt
-        //assistantChatMessage.Content = $"Please wait I am calling the function {functionName}. Some functions take a long time to complete so please be patient...";
     }
 
     private (bool failed, string json) AttemptJsonRepair(FunctionCall fn, JsonException e)
@@ -748,7 +758,9 @@ public class OpenAIRunner : ILLMRunner
         }
 
         responseServiceObj.LlmMessage = "<end-of-line>";
+        _funcsInARow = 0;
         if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+
     }
 
 
