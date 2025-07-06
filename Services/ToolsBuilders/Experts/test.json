@@ -1,0 +1,104 @@
+{
+    "version": 1,
+    "startNode": "generate_processor",
+    "initState": {
+      "RetryLimit": 2
+    },
+    "nodes": [
+      {
+        "id": "generate_processor",
+        "type": "template-llm",
+        "toolSpecId": "cmd_processor_generator",
+        "promptTemplate": "You must create a new .NET Cmd Processor called {{CmdProcessorName}}.\\nGoal:\\n{{DesiredBehavior}}\\n\\n➤ Write **complete source code** (including usings, class, helper types).\\n When adding a cmd processor, supply its source code in the 'source_code' parameter. The code must inherit from the base class CmdProcessor namespace NetworkMonitor.Connection\n{\n    public interface ICmdProcessor : IDisposable\n    {\n         Task<ResultObj> RunCommand(string arguments, CancellationToken cancellationToken, ProcessorScanDataObj? processorScanDataObj = null);\n          string GetCommandHelp();\n    }\n    public abstract class CmdProcessor : ICmdProcessor\n    {\n        protected readonly ILogger _logger;\n        protected readonly ILocalCmdProcessorStates _cmdProcessorStates;\n        protected readonly IRabbitRepo _rabbitRepo;\n        protected readonly NetConnectConfig _netConfig;\n        protected string _rootFolder; // the folder to read and write files to.\n        protected CancellationTokenSource _cancellationTokenSource; // the cmd processor is cancelled using this.\n        protected string _frontendUrl = AppConstants.FrontendUrl;\n     \n\n        public bool UseDefaultEndpoint { get => _cmdProcessorStates.UseDefaultEndpointType; set => _cmdProcessorStates.UseDefaultEndpointType = value; }\n#pragma warning disable CS8618\n        public CmdProcessor(ILogger logger, ILocalCmdProcessorStates cmdProcessorStates, IRabbitRepo rabbitRepo, NetConnectConfig netConfig)\n        {\n            _logger = logger;\n            _cmdProcessorStates = cmdProcessorStates;\n            _rabbitRepo = rabbitRepo;\n            _netConfig = netConfig;\n            _rootFolder = netConfig.CommandPath;  // use _rootFolder to access the agents file system\n        }\n\n        // You will override this method with your implementation.\n        public virtual async Task<ResultObj> RunCommand(string arguments, CancellationToken cancellationToken, ProcessorScanDataObj? processorScanDataObj = null)\n        {\n            var result = new ResultObj();\n            string output = \"\";\n            try\n            {\n               \n                using (var process = new Process())\n                {\n                    process.StartInfo.FileName = _netConfig.CommandPath + _cmdProcessorStates.CmdName;\n                    process.StartInfo.Arguments = arguments;\n                    process.StartInfo.UseShellExecute = false;\n                    process.StartInfo.RedirectStandardOutput = true;\n                    process.StartInfo.RedirectStandardError = true; // Add this to capture standard error\n\n                    process.StartInfo.CreateNoWindow = true;\n                    process.StartInfo.WorkingDirectory = _netConfig.CommandPath;\n\n                    var outputBuilder = new StringBuilder();\n                    var errorBuilder = new StringBuilder();\n\n                    process.OutputDataReceived += (sender, e) =>\n                    {\n                        if (e.Data != null)\n                        {\n                            outputBuilder.AppendLine(e.Data);\n                        }\n                    };\n\n                    process.ErrorDataReceived += (sender, e) =>\n                    {\n                        if (e.Data != null)\n                        {\n                            errorBuilder.AppendLine(e.Data);\n                        }\n                    };\n\n                    process.Start();\n                    process.BeginOutputReadLine();\n                    process.BeginErrorReadLine();\n\n                    // Register a callback to kill the process if cancellation is requested\n                    using (cancellationToken.Register(() =>\n                    {\n                        if (!process.HasExited)\n                        {\n                            _logger.LogInformation(\\\"Cancellation requested, killing the {_cmdProcessorStates.CmdDisplayName} process...\\\");\n                            process.Kill();\n                        }\n                    }))\n                    {\n                        // Wait for the process to exit or the cancellation token to be triggered\n                        await process.WaitForExitAsync(cancellationToken);\n                        cancellationToken.ThrowIfCancellationRequested(); // Check if cancelled before processing output\n\n                        output = outputBuilder.ToString();\n                        string errorOutput = errorBuilder.ToString();\n\n                        if (!string.IsNullOrWhiteSpace(errorOutput) && processorScanDataObj != null)\n                        {\n                            output = $\\\"RedirectStandardError : {errorOutput}. \\n RedirectStandardOutput : {output}\\\";\n                        }\n                        result.Success = true;\n                    }\n                }\n            }\n            catch (Exception e)\n            {\n                _logger.LogError(\\\"Error : running {_cmdProcessorStates.CmdName} command. Error was : {e.Message}\\\");\n                output += $\\\"Error : running {_cmdProcessorStates.CmdName} command. Error was : {e.Message}\\n\\\";\n                result.Success = false;\n            }\n            result.Message = output;\n            return result;\n        }\n\n        // You can use this helper method in your cmd processor for argument parsing\n        protected virtual Dictionary<string, string> ParseArguments(string arguments)\n        {\n            var args = new Dictionary<string, string>();\n            var regex = new Regex(@\\\"--(?<key>\\\\w+)\\\\s+(?<value>[^\\\\s]+)\\\");\n            var matches = regex.Matches(arguments);\n\n            foreach (Match match in matches)\n            {\n                args[match.Groups[\\\"key\\\"].Value.ToLower()] = match.Groups[\\\"value\\\"].Value;\n            }\n\n            return args;\n        }      \n        public virtual string GetCommandHelp()\n        {\n            // override this method and provide the help as a returned string.\n        }\n   \n    }\n\n}\\n➤ Then invoke **add_cmd_processor** with:\\n    • cmd_processor_type = \\\"{{CmdProcessorName}}\\\"\\n    • agent_location    = \\\"{{AgentLocation|defaultAgentLocation}}\\\"\\n    • source_code       = <your full .NET source>\\nReturn ONLY the function call; no extra prose.",
+        "saveKey": "AddResult",
+        "next": "extract_args",
+        "constants": {
+          "defaultAgentLocation": "Scanner - EU"
+        },
+        "requires": [
+          "CmdProcessorName",
+          "DesiredBehavior",
+          "AgentLocation"
+        ],
+        "timeoutSec": 600
+      },
+      {
+        "id": "extract_args",
+        "type": "template-llm",
+        "toolSpecId": "cmd_processor_helper",
+        "promptTemplate": "You are given the name of a just-added .NET Cmd Processor: {{CmdProcessorName}}.\n\nFirst, call **get_cmd_processor_help** with:\n  • cmd_processor_type = \"{{CmdProcessorName}}\"\n  • agent_location = \"{{AgentLocation|defaultAgentLocation}}\"\n\nFrom the returned help text, extract and output ONLY one valid arguments string (for example, '--url https://example.com' or any suitable value) that will exercise the main/primary functionality of the Cmd Processor. Output ONLY this CLI argument string—do NOT include any commentary, code, or explanation.",
+        "saveKey": "TestArguments",
+        "requires": [
+          "CmdProcessorName",
+          "AgentLocation"
+        ],
+        "next": "run_test",
+        "timeoutSec": 60
+      },
+      {
+        "id": "run_test",
+        "type": "template-llm",
+        "toolSpecId": "cmd_processor_tester",
+        "promptTemplate": "Verify that the newly-added Cmd Processor works.\\nCall **run_cmd_processor** with:\\n    • cmd_processor_type = \\\"{{CmdProcessorName}}\\\"\\n    • agent_location    = \\\"{{AgentLocation}}\\\"\\n    • arguments         = \\\"{{TestArguments}}\\\"\\nReturn ONLY the function call; no commentary.",
+        "saveKey": "TestOutput",
+        "next": "evaluate",
+        "requires": [
+          "CmdProcessorName",
+          "AgentLocation",
+          "TestArguments"
+        ],
+        "timeoutSec": 300
+      },
+      {
+        "id": "evaluate",
+        "type": "branch-llm",
+        "toolSpecId": "cmd_processor_evaluator",
+        "promptTemplate": "Below is the result of add_cmd_processor and the subsequent run_cmd_processor.\n---ADD RESULT---\n{{AddResult}}\n---RUN OUTPUT---\n{{TestOutput}}\n---TEST ARGUMENTS---\n{{TestArguments}}\nAnalyse:\n1. Did the processor compile and add successfully?\n2. Did the test run complete without unhandled exceptions?\n3. Were the test arguments appropriate for the DesiredBehavior?\n4. Does the output fulfil the DesiredBehavior ({{DesiredBehavior}})?\n\nOutput **one** of the following JSON objects *only*:\n• { \"status\": \"success\", \"summary\": \"<brief ok message>\" }\n• { \"status\": \"retry\",   \"reason\":  \"<what to fix>\", \"retryCount\": <n> }\n• { \"status\": \"fail\",    \"reason\":  \"<fatal reason>\" }",
+        "saveKey": "Evaluation",
+        "branches": {
+          "success": null,
+          "retry": "generate_processor",
+          "fail": null
+        },
+        "requires": [
+          "AddResult",
+          "TestOutput",
+          "DesiredBehavior",
+          "TestArguments"
+        ],
+        "timeoutSec": 120
+      }
+    ],
+    "toolSpecs": [
+      {
+        "id": "cmd_processor_generator",
+        "systemPrompt": "Role: **Cmd Processor Code Generator**.\\nYou create, update and register .NET Cmd Processors that extend the CmdProcessor base class.\\nYour responsibilities:\\n  • From the user prompt, craft fully-working C# code.\\n  • Immediately call **add_cmd_processor** with the code.\\n  • Never ask questions; make reasonable assumptions.\\n  ",
+        "functions": [
+          "add_cmd_processor",
+          "get_cmd_processor_help",
+          "get_cmd_processor_source_code",
+          "get_cmd_processor_list"
+        ]
+      },
+      {
+        "id": "cmd_processor_tester",
+        "systemPrompt": "Role: **Cmd Processor Tester**.\\nYour task is to run an existing Cmd Processor with specified arguments, capture its full output (no summaries), and return it.",
+        "functions": [
+          "run_cmd_processor"
+        ]
+      },
+      {
+        "id": "cmd_processor_evaluator",
+        "systemPrompt": "Role: **Cmd Processor QA Evaluator**.\\nYou judge whether the newly added processor compiled, executed, and met its behavioural spec.\\nProduce a strict JSON verdict as instructed—no other text.",
+        "functions": []
+      },
+      {
+        "id": "cmd_processor_helper",
+        "systemPrompt": "Role: **Cmd Processor Helper**.\\nYou provide usage/help info for Cmd Processors via get_cmd_processor_help.",
+        "functions": [
+          "get_cmd_processor_help"
+        ]
+      }
+    ]
+  }
+  

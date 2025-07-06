@@ -31,7 +31,7 @@ namespace NetworkMonitor.LLM.Services
 
         public override List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
         {
-            string content = SecurityPrompt.GetHelpText() + $@"
+            string content = Prompts.SecurityPrompt() + $@"
 Role: You are an automated security tools execution agent.
 - Your job is to **decide which security tools to run (such as Nmap or OpenSSL), choose parameters, and execute the tools as needed** to perform a security assessment of the specified target(s).
 - Return the **full raw output** of each tool call (even if verbose or contains errors), along with all command arguments actually used.
