@@ -23,6 +23,12 @@ public class QuantumTools
             .AddParameter("port", PropertyDefinition.DefineInteger("The TLS port to test, optional. Default is 443."))
             .AddParameter("algorithms", PropertyDefinition.DefineArray(PropertyDefinition.DefineString("The list of quantum-safe algorithms to test, optional. Examples include 'Kyber512', 'Dilithium2', 'Falcon512'. If not provided, all enabled algorithms will be tested.")))
             .AddParameter("timeout", PropertyDefinition.DefineInteger("The maximum time (in milliseconds) to wait for the test to complete, optional. Default is 59000ms."))
+            .AddParameter(
+                    "agent_location",
+                    PropertyDefinition.DefineString(
+                        "Optional. Preferred agent location if testing from different network perspectives. " +
+                        "Important for testing internal vs external services or geographic-specific configurations."))
+
             .Validate()
             .Build();
     }
@@ -36,6 +42,12 @@ public class QuantumTools
             .AddParameter("algorithms", PropertyDefinition.DefineArray(PropertyDefinition.DefineString("The list of quantum-safe algorithms to test, optional. Examples include 'Kyber512', 'Dilithium2', 'Falcon512'. If not provided, all enabled algorithms will be tested.")))
             .AddParameter("timeout", PropertyDefinition.DefineInteger("The maximum time (in milliseconds) to wait for the scan to complete, optional. Default is 59000ms."))
             .AddParameter("nmap_options", PropertyDefinition.DefineString("Custom Nmap options for port scanning, optional. Default is '-T4 --open'."))
+            .AddParameter(
+                    "agent_location",
+                    PropertyDefinition.DefineString(
+                        "Optional. Preferred agent location if testing from different network perspectives. " +
+                        "Important for testing internal vs external services or geographic-specific configurations."))
+              
             .Validate()
             .Build();
     }
@@ -45,6 +57,12 @@ public class QuantumTools
     {
         return new FunctionDefinitionBuilder("get_quantum_algorithm_info", "Retrieves detailed information about a specific quantum-safe algorithm. Use this to understand the properties, strengths, and weaknesses of a given algorithm.")
                 .AddParameter("algorithm_name", PropertyDefinition.DefineString("The name of the quantum-safe algorithm to retrieve information for, required. Examples include 'Kyber512', 'Dilithium2', 'Falcon512'."))
+                .AddParameter(
+                    "agent_location",
+                    PropertyDefinition.DefineString(
+                        "Optional. Preferred agent location if testing from different network perspectives. " +
+                        "Important for testing internal vs external services or geographic-specific configurations."))
+              
                 .Validate()
                 .Build();
     }
