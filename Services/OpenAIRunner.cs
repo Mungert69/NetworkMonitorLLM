@@ -12,6 +12,8 @@ using System.Threading;
 using System.Diagnostics;
 using System.Linq;
 using System.Text.Json;
+using System.Text;
+using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 using Microsoft.Extensions.Logging;
@@ -597,14 +599,14 @@ public class OpenAIRunner : ILLMRunner
         {
             _recentFunctionCalls.Dequeue(); // Maintain queue size
         }
-         _funcsInARow++;
+        _funcsInARow++;
         if (_funcsInARow > MaxFunctionCallsInARow)
         {
             _logger.LogWarning($"Warning : Possible loop detected : {_funcsInARow} functions have been called in a row");
             var duplicateMessage = ChatMessage.FromSystem(
                 $" Possible loop detected. You have called {_funcsInARow} functions in a row. It is ok to continue only if you are batch calling functions and you are sure which parameters to use. If you are just attempting to get the parameters correct by guesssing then stop and explain why you have stopped.");
             localHistory.Add(duplicateMessage);
-            _funcsInARow = 0; 
+            _funcsInARow = 0;
         }
         return;
     }
@@ -749,6 +751,15 @@ public class OpenAIRunner : ILLMRunner
             else
             {
                 if (!_isSystemLlm) responseServiceObj.SetAsResponseComplete();
+                if (!string.IsNullOrEmpty(_llmApi.Config.ThinkBeginToken) && !string.IsNullOrEmpty(_llmApi.Config.ThinkEndToken))
+                {
+                    string beginToken = Regex.Escape(_llmApi.Config.ThinkBeginToken);
+                    string endToken = Regex.Escape(_llmApi.Config.ThinkEndToken);
+                    string pattern = $@"{beginToken}.*?{endToken}";
+
+                    responseChoiceStr = Regex.Replace(responseChoiceStr, pattern, "", RegexOptions.Singleline);
+                }
+
                 responseServiceObj.LlmMessage = responseChoiceStr;
                 if (!_isStream) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
             }
