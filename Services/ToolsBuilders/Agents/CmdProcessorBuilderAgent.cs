@@ -25,17 +25,17 @@ public class CmdProcessorBuilderAgent
                 "Only call this function if the user clearly indicates they want to initiate a cmd processor builder flow ." +
                 "The result from this function call will be professionally presented report. Give the user the report without any modifications.")
                     .AddParameter(
-                    "DesiredBehavior",
+                    "user_input",
                     PropertyDefinition.DefineString(
-                        "The desired behavior of the cmd processor "))
+                        "Required: The desired behavior of the cmd processor "))
                          .AddParameter(
-                    "AgentLocation",
+                    "agent_location",
                     PropertyDefinition.DefineString(
-                        "The location of the agent. This is required"))
+                        "The location of the agent."))
                          .AddParameter(
-                    "CmdProcessorName",
+                    "cmd_processor_type",
                     PropertyDefinition.DefineString(
-                        "The cmd processor name. Do not to include the word CmdProcessor in the name. This is forbibben and will cause the cmd processor to fail." ))
+                        "Required: The cmd processor name. Do not to include the word CmdProcessor in the name. This is forbibben and will cause the cmd processor to fail."))
                 .Validate()
                 .Build();
     }
