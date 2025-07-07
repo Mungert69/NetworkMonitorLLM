@@ -30,6 +30,10 @@ public class SecurityAgent
                         "The target to scan - can be an IP address (e.g., '192.168.1.1'), " +
                         "IP range ('192.168.1.0/24'), domain name ('example.com'), " +
                         "or hostname. Validate the target with the user if ambiguous."))
+                     .AddParameter(
+                    "agent_location",
+                    PropertyDefinition.DefineString(
+                        "The location of the agent. This is required"))
                 .Validate()
                 .Build();
     }
