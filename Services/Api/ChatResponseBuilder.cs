@@ -33,11 +33,12 @@ public class ChatResponseBuilder
     private ITokenBroadcaster _tokenBroadcaster;
     private ILogger _logger;
     private bool _isXml;
-    public ChatResponseBuilder(ILLMResponseProcessor responseProcessor,LLMConfig config, bool isXml, ILogger logger)
+    public ChatResponseBuilder(ILLMResponseProcessor responseProcessor, LLMConfig config, bool isXml, ILogger logger)
     {
         _logger = logger;
         _isXml = isXml;
         _tokenBroadcaster = config!.CreateBroadcaster(responseProcessor, _logger, false);
+        _tokenBroadcaster.Init(config);
     }
 
     // Add this method to the ChatResponseBuilder class

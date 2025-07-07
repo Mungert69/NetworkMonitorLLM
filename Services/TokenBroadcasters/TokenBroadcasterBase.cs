@@ -51,7 +51,10 @@ namespace NetworkMonitor.LLM.Services
         protected string _assistantHeader = "";
         protected int _stopAfter = 2;
         protected List<string> _endTokens = new List<string>();
-        protected LLMConfig _config;
+
+        protected string _thinkBeginToken = "";
+        protected string _thinkEndToken = "";
+        //protected LLMConfig _config;
         protected HashSet<string> _ignoreParameters;
         private bool _isAddAssistant = false;
         private bool _useHttpProcess = false;
@@ -64,6 +67,7 @@ namespace NetworkMonitor.LLM.Services
         public bool IsAddAssistant { get => _isAddAssistant; set => _isAddAssistant = value; }
         public bool UseHttpProcess { get => _useHttpProcess; set => _useHttpProcess = value; }
 
+        
         protected TokenBroadcasterBase(ILLMResponseProcessor responseProcessor, ILogger logger, bool xmlFunctionParsing, HashSet<string> ignoreParameters)
         {
             _responseProcessor = responseProcessor;
@@ -93,10 +97,10 @@ namespace NetworkMonitor.LLM.Services
         protected virtual string RemoveThinking(string input, string thinkTag = "think")
         {
             string pattern = "";
-            if (!string.IsNullOrEmpty(_config.ThinkBeginToken) && !string.IsNullOrEmpty(_config.ThinkEndToken))
+            if (!string.IsNullOrEmpty(_thinkBeginToken) && !string.IsNullOrEmpty(_thinkEndToken))
             {
-                string beginToken = Regex.Escape(_config.ThinkBeginToken);
-                string endToken = Regex.Escape(_config.ThinkEndToken);
+                string beginToken = Regex.Escape(_thinkBeginToken);
+                string endToken = Regex.Escape(_thinkEndToken);
                 pattern = $@"{beginToken}.*?{endToken}";
             }
             else
@@ -144,6 +148,8 @@ namespace NetworkMonitor.LLM.Services
             _userReplace = config.UserReplace;
             _functionReplace = config.FunctionReplace;
             _assistantHeader = config.AssistantHeader;
+            _thinkBeginToken = config.ThinkBeginToken;
+            _thinkEndToken = config.ThinkEndToken;
             _endTokens = new List<string>();
             _endTokens.Add(config.EOTToken);
             if (!string.IsNullOrEmpty(config.EOMToken)) _endTokens.Add(config.EOMToken);

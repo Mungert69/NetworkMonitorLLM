@@ -185,7 +185,8 @@ VERY IMPORTANT : Only call functions using this format :  {""name"": ""function_
                 SystemMessageTemplate = "<|im_start|>system<|im_sep|>\\\n{0}<|im_end|>",
                 EOTToken = "<|im_end|>",
                 FunctionResponseTemplate = "<|im_start|>user<|im_sep|>\\\n<function_response name={0}>\\\n{1}\\\n</function_response>",
-
+                ThinkBeginToken = "<reasoning>",
+                ThinkEndToken = "</reasoning>",
                 FunctionBuilder = "<function={0}>{1}</function>",
                 FunctionResponse = "{1}",
                 FunctionDefsWrap = @"

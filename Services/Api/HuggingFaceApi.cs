@@ -43,7 +43,7 @@ public class HuggingFaceApi : ILLMApi
     private readonly MLParams _mlParams;
     private readonly LLMConfig _config;
 
-       public LLMConfig Config => _config;
+    public LLMConfig Config => _config;
     private bool _isStream;
 
     private IToolsBuilder _toolsBuilder;
@@ -100,7 +100,8 @@ public class HuggingFaceApi : ILLMApi
         else return _config.PromptFooter;
     }
 
-    public string  GetFunctionNamesAsString(string separator = ", "){
+    public string GetFunctionNamesAsString(string separator = ", ")
+    {
         return _toolsBuilder.GetFunctionNamesAsString();
     }
 
@@ -111,9 +112,9 @@ public class HuggingFaceApi : ILLMApi
         // List<ChatMessage> systemPrompt=_toolsBuilder.GetSystemPrompt(currentTime, serviceObj);
         string footer = PromptFooter();
         var systemMessages = _toolsBuilder.GetSystemPrompt(currentTime, serviceObj, "HugLLM") ?? new List<ChatMessage>() { ChatMessage.FromSystem("") };
-        string noThinkToken="";
-        if (noThink) noThinkToken=" "+_config.NoThinkToken+" ";
-        systemMessages[0].Content = toolsJson + systemMessages[0].Content + footer +noThinkToken;
+        string noThinkToken = "";
+        if (noThink) noThinkToken = " " + _config.NoThinkToken + " ";
+        systemMessages[0].Content = toolsJson + systemMessages[0].Content + footer + noThinkToken;
         //_logger.LogInformation($" Using SYSTEM prompt\n\n{systemMessages[0].Content}");
         systemMessages.AddRange(NShotPromptFactory.GetPrompt(_serviceID, _isXml, currentTime, serviceObj, _config));
         _systemPromptCount = systemMessages.Count;
@@ -167,6 +168,7 @@ public class HuggingFaceApi : ILLMApi
                 var process = new HuggingFaceProcessWrapper(_httpClient);
                 await process.InitializeRequest(_apiUrl, payloadJson);
                 var tokenBroadcaster = _config.CreateBroadcaster(_responseProcessor, _logger, false);
+                tokenBroadcaster.Init(_config);
                 tokenBroadcaster.UseHttpProcess = true;
                 tokenBroadcaster.IsAddAssistant = true;
                 await tokenBroadcaster.SetUp(serviceObj, true, 1);
@@ -189,7 +191,8 @@ public class HuggingFaceApi : ILLMApi
 
 
             }
-            if (responseObject == null) {
+            if (responseObject == null)
+            {
                 throw new Exception(" Reponse is null");
             }
             var chatResponseBuilder = new ChatResponseBuilder(_responseProcessor, _config, _isXml, _logger);
@@ -202,7 +205,7 @@ public class HuggingFaceApi : ILLMApi
             _logger.LogError($"Exception in CreateCompletionAsync: {ex.Message}");
 
             // Create a ChatCompletionCreateResponse with error details
-          var errorChatResponse =GetErrorResponse (ex.Message);
+            var errorChatResponse = GetErrorResponse(ex.Message);
             return new ChatCompletionCreateResponseSuccess
             {
                 Success = false,
@@ -213,27 +216,27 @@ public class HuggingFaceApi : ILLMApi
 
     }
 
-    private ChatCompletionCreateResponse GetErrorResponse (string message) =>
+    private ChatCompletionCreateResponse GetErrorResponse(string message) =>
           new ChatCompletionCreateResponse
-            {
-                Id = Guid.NewGuid().ToString(),
-                Model = _modelID,
-                Choices = new List<ChatChoiceResponse>(),
-                Usage = new UsageResponse
-                {
-                    PromptTokens = 0,
-                    CompletionTokens = 0,
-                    TotalTokens = 0
-                },
-                Error = new Error
-                {
-                    MessageObject = message,
-                    Type = "Exception",
-                    Code = "500"
-                }
-            };
+          {
+              Id = Guid.NewGuid().ToString(),
+              Model = _modelID,
+              Choices = new List<ChatChoiceResponse>(),
+              Usage = new UsageResponse
+              {
+                  PromptTokens = 0,
+                  CompletionTokens = 0,
+                  TotalTokens = 0
+              },
+              Error = new Error
+              {
+                  MessageObject = message,
+                  Type = "Exception",
+                  Code = "500"
+              }
+          };
 
-    
+
     private async Task<string?> SendHttpRequestAsync(string payloadJson)
     {
         const int maxRetries = 3;
