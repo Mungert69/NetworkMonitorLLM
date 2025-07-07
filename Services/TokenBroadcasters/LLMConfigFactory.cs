@@ -262,7 +262,6 @@ Reminder:
                 SystemMessageTemplate = "<|im_start|>system\\\n{0}<|im_end|>",
                 EOTToken = "<|im_end|>",
                 FunctionResponseTemplate = "<|im_start|>user\\\n<tool_response>\\\n{1}\\\n</tool_response>",
-                NoThinkToken = "/no_think",
                 FunctionBuilder = "<tool_call>\n{1}\n</tool_call>",
                 FunctionResponse = "<tool_response>{1}</tool_response>",
                 FunctionDefsWrap = @"# Tools
@@ -288,6 +287,46 @@ Reminder:
                 CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
                         new TokenBroadcasterQwen_2_5(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
             },
+
+            "qwen_3" => new LLMConfig
+            {
+                UserReplace = "<|im_start|>user\\\n",
+                FunctionReplace = "<|im_start|>user\\\n<tool_response>",
+                AssistantHeader = "<|im_start|>assistant\n",
+                UserInputTemplate = "<|im_start|>user\\\n{0}",
+                AssistantMessageTemplate = "<|im_start|>assistant\\\n{0}<|im_end|>",
+                SystemMessageTemplate = "<|im_start|>system\\\n{0}<|im_end|>",
+                EOTToken = "<|im_end|>",
+                FunctionResponseTemplate = "<|im_start|>user\\\n<tool_response>\\\n{1}\\\n</tool_response>",
+                NoThinkToken = "/no_think",
+                ThinkBeginToken = "<think>",
+                ThinkEndToken = "</think>",
+                FunctionBuilder = "<tool_call>\n{1}\n</tool_call>",
+                FunctionResponse = "<tool_response>{1}</tool_response>",
+                FunctionDefsWrap = @"# Tools
+
+You may call one or more functions to assist with the user query.
+
+You are provided with function signatures within <tools></tools> XML tags:
+<tools>
+{0}
+</tools>",
+                XmlPromptFooter = _xmlPromptFooter,
+                PromptFooter = @"For each function call, return a json object with function name and arguments within <tool_call></tool_call> XML tags:
+<tool_call>
+{""name"": <function-name>, ""arguments"": <args-json-object>}
+</tool_call>
+Reminder:
+- Function calls MUST follow the specified format : <tool_call> {""name"": <function-name>, ""arguments"": <args-json-object>} </tool_call>
+- The function call repsonses are between tags <tool_response> and </tool_response> 
+- Required parameters MUST be specified
+- Only call one function at a time
+- Important: You will call functions only when necessary. Checking with the user before calling more functions.
+",
+                CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
+                        new TokenBroadcasterQwen_3(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
+            },
+
 
             "xlam_2" => new LLMConfig
             {
@@ -381,6 +420,8 @@ public class LLMConfig
     public string SystemMessageTemplate { get; set; } = string.Empty;
     public string EOTToken { get; set; } = string.Empty;
     public string EOMToken { get; set; } = string.Empty;
+    public string ThinkBeginToken { get; set; } = string.Empty;
+    public string ThinkEndToken { get; set; } = string.Empty;
     public string FunctionResponseTemplate { get; set; } = string.Empty;
     public string FunctionResponse { get; set; } = string.Empty;
     public string FunctionDefsWrap { get; set; } = string.Empty;
