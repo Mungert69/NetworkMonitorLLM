@@ -716,7 +716,16 @@ public class OpenAIRunner : ILLMRunner
 
         if (choice.FinishReason == "stop")
         {
+            if (!string.IsNullOrEmpty(_llmApi.Config.ThinkBeginToken) && !string.IsNullOrEmpty(_llmApi.Config.ThinkEndToken))
+            {
+                string beginToken = Regex.Escape(_llmApi.Config.ThinkBeginToken);
+                string endToken = Regex.Escape(_llmApi.Config.ThinkEndToken);
+                string pattern = $@"{beginToken}.*?{endToken}";
+
+                responseChoiceStr = Regex.Replace(responseChoiceStr, pattern, "", RegexOptions.Singleline);
+            }
             assistantChatMessage.Content = responseChoiceStr;
+
             responseServiceObj.SetAsNotCall();
             if (_isPrimaryLlm)
             {
@@ -751,14 +760,7 @@ public class OpenAIRunner : ILLMRunner
             else
             {
                 if (!_isSystemLlm) responseServiceObj.SetAsResponseComplete();
-                if (!string.IsNullOrEmpty(_llmApi.Config.ThinkBeginToken) && !string.IsNullOrEmpty(_llmApi.Config.ThinkEndToken))
-                {
-                    string beginToken = Regex.Escape(_llmApi.Config.ThinkBeginToken);
-                    string endToken = Regex.Escape(_llmApi.Config.ThinkEndToken);
-                    string pattern = $@"{beginToken}.*?{endToken}";
 
-                    responseChoiceStr = Regex.Replace(responseChoiceStr, pattern, "", RegexOptions.Singleline);
-                }
 
                 responseServiceObj.LlmMessage = responseChoiceStr;
                 if (!_isStream) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
