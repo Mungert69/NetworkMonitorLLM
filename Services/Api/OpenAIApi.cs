@@ -39,6 +39,7 @@ public class OpenAIApi : ILLMApi
 
     public int SystemPromptCount { get => _systemPromptCount; }
 
+    public LLMConfig Config => _config;
 
     public OpenAIApi(ILogger logger, MLParams mlParams, IToolsBuilder toolsBuilder, string serviceID,ILLMResponseProcessor responseProcessor, OpenAIService openAiService)
     {
@@ -65,7 +66,7 @@ public class OpenAIApi : ILLMApi
     private string PromptFooter()
     {
         // For chatgpt we only alter the footer is we are using xml function calling
-        if (_mlParams.XmlFunctionParsing) return _config.XmlPromptFooter;
+        if (_mlParams.XmlFunctionParsing) return Config.XmlPromptFooter;
         else return "";
     }
     public List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, bool noThink=false)
@@ -75,7 +76,7 @@ public class OpenAIApi : ILLMApi
          _systemPromptCount=systemMessages.Count;
         systemMessages[0].Content = systemMessages[0].Content + footer;
 
-        systemMessages.AddRange(NShotPromptFactory.GetPrompt(_serviceID, _mlParams.XmlFunctionParsing, currentTime, serviceObj, _config));
+        systemMessages.AddRange(NShotPromptFactory.GetPrompt(_serviceID, _mlParams.XmlFunctionParsing, currentTime, serviceObj, Config));
          _systemPromptCount=systemMessages.Count;
         return systemMessages;
 
@@ -109,7 +110,7 @@ public class OpenAIApi : ILLMApi
             });
             if (_isXml)
             {
-                var chatResponseBuilder = new ChatResponseBuilder(_responseProcessor,_config, _isXml, _logger);
+                var chatResponseBuilder = new ChatResponseBuilder(_responseProcessor,Config, _isXml, _logger);
                 chatResponse = chatResponseBuilder.BuildResponseFromOpenAI(chatResponse);
             }
             return new ChatCompletionCreateResponseSuccess() { Success = chatResponse.Successful, Response = chatResponse };

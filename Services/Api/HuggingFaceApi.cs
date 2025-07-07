@@ -42,6 +42,8 @@ public class HuggingFaceApi : ILLMApi
     private readonly float _temperture;
     private readonly MLParams _mlParams;
     private readonly LLMConfig _config;
+
+       public LLMConfig Config => _config;
     private bool _isStream;
 
     private IToolsBuilder _toolsBuilder;

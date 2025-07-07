@@ -28,6 +28,7 @@ public interface ILLMApi
     string GetFunctionNamesAsString(string separator = ", ");
      List<ChatMessage> GetResumeSystemPrompt(string currentTime, LLMServiceObj serviceObj);
       int SystemPromptCount { get ; }
+      LLMConfig Config { get; }
     string WrapFunctionResponse(string name, string funcStr);
     
 }

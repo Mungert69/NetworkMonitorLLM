@@ -89,13 +89,23 @@ namespace NetworkMonitor.LLM.Services
             _cancellationTokenSource = new CancellationTokenSource();
         }
 
+        
         protected virtual string RemoveThinking(string input, string thinkTag = "think")
         {
-            // Escape the tag to handle special regex characters if present
-            string escapedTag = Regex.Escape(thinkTag);
+            string pattern = "";
+            if (!string.IsNullOrEmpty(_config.ThinkBeginToken) && !string.IsNullOrEmpty(_config.ThinkEndToken))
+            {
+                string beginToken = Regex.Escape(_config.ThinkBeginToken);
+                string endToken = Regex.Escape(_config.ThinkEndToken);
+                pattern = $@"{beginToken}.*?{endToken}";
+            }
+            else
+            {
+                string escapedTag = Regex.Escape(thinkTag);
+                pattern = $@"<{escapedTag}>.*?</{escapedTag}>";
+            }
 
-            // Build the regex pattern dynamically
-            string pattern = $@"<{escapedTag}>.*?</{escapedTag}>";
+
 
             // Perform the replacement
             string result = Regex.Replace(input, pattern, "", RegexOptions.Singleline);
@@ -270,6 +280,7 @@ namespace NetworkMonitor.LLM.Services
                     }
                     else llmOutput = llmOutput.Replace("\n", " ");
                     var finalServiceObj = new LLMServiceObj(serviceObj, fs => fs.SetAsResponseComplete());
+                    llmOutput = RemoveThinking(llmOutput);
                     finalServiceObj.LlmMessage = llmOutput;
                     await _responseProcessor.ProcessLLMOutput(finalServiceObj);
                     _logger.LogInformation($" --> Sent redirected LLM Output {extraMessage}{finalServiceObj.LlmMessage}");
@@ -359,13 +370,13 @@ namespace NetworkMonitor.LLM.Services
                 }
             }
             if (makeAssistantMessage && _assistantMessage != null) _assistantMessage.Append($" using message_id {serviceObj.MessageID}");
-            int numDequeue=MaxRecentFunctionCalls;
-            if (isDuplicate && duplicateCount>1)
+            int numDequeue = MaxRecentFunctionCalls;
+            if (isDuplicate && duplicateCount > 1)
             {
                 _logger.LogWarning($"Possible loop detected when calling functions");
                 if (SystemMessage == null) SystemMessage = new StringBuilder();
                 SystemMessage.AppendLine("You are possibly stuck in a loop. You need to stop calling functions and check what the user wants to do.");
-                numDequeue=0;
+                numDequeue = 0;
             }
             while (_recentFunctionCalls.Count > numDequeue)
             {
