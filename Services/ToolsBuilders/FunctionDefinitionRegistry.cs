@@ -9,6 +9,7 @@ using System;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.Encodings.Web;
 using System.Reflection;
 using NetworkMonitor.Objects.Repository;
 using NetworkMonitor.Objects;
@@ -88,7 +89,9 @@ public class FunctionDefinitionRegistry : IFunctionDefinitionRegistry
         var options = new JsonSerializerOptions
         {
             WriteIndented = pretty,
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+
         };
 
         var json = JsonSerializer.Serialize(payload, options);
@@ -126,7 +129,9 @@ public class FunctionDefinitionRegistry : IFunctionDefinitionRegistry
         var options = new JsonSerializerOptions
         {
             WriteIndented = pretty,
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+
         };
 
         var json = JsonSerializer.Serialize(payload, options);
