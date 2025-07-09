@@ -778,9 +778,14 @@ public class OpenAIRunner : ILLMRunner
 
 
 
-
     private void TruncateTokens(List<ChatMessage> history, LLMServiceObj serviceObj)
     {
+        if (history == null || history.Count == 0)
+        {
+            _logger.LogWarning("Attempted to truncate an empty or null history list. No action taken.");
+            return;
+        }
+
         int tokenCount = CalculateTokens(history);
         _logger.LogInformation($"History Token count: {tokenCount}");
 
@@ -788,39 +793,54 @@ public class OpenAIRunner : ILLMRunner
         {
             _logger.LogInformation($"Token count ({tokenCount}) exceeded the limit, truncating history.");
 
-            // Keep the first system message intact
-            var systemMessage = history.First();
-            history = history.Skip(1).ToList();
+            // Safely get the system message if available
+            ChatMessage? systemMessage = history.FirstOrDefault();
+            if (systemMessage == null)
+            {
+                _logger.LogWarning("History missing system message! Truncation aborted.");
+                return;
+            }
+
+            // Skip the system message for removals
+            var trimmedHistory = history.Skip(1).ToList();
 
             // Remove messages until the token count is under the limit
             while (tokenCount > (_promptTokens - _systemPromptTokens))
             {
-                var firstMessage = history[0];
+                if (trimmedHistory.Count == 0)
+                {
+                    _logger.LogWarning("History truncated to only the system message. Cannot remove more.");
+                    break;
+                }
+
+                var firstMessage = trimmedHistory[0];
+
                 if (firstMessage.ToolCalls != null && firstMessage.ToolCalls.Any())
                 {
                     foreach (var toolCall in firstMessage.ToolCalls)
                     {
-                        history.RemoveAll(m => m.ToolCallId == toolCall.Id);
+                        trimmedHistory.RemoveAll(m => m.ToolCallId == toolCall.Id);
                     }
                 }
 
-                history.RemoveAt(0);
+                trimmedHistory.RemoveAt(0);
 
                 // Recalculate tokens after removal
-                tokenCount = CalculateTokens(history);
+                tokenCount = CalculateTokens(trimmedHistory);
             }
+
             // Tidy up in case any tool calls have missing tool responses
-            RemoveUnansweredToolCalls(serviceObj.SessionId, history);
-            RemoveOrphanToolResponses(serviceObj.SessionId, history);
+            RemoveUnansweredToolCalls(serviceObj.SessionId, trimmedHistory);
+            RemoveOrphanToolResponses(serviceObj.SessionId, trimmedHistory);
 
-            // Re-add the system message to the beginning of the list
-            history.Insert(0, systemMessage);
+            // Rebuild the full history list: system message + trimmed messages
+            history.Clear();
+            history.Add(systemMessage);
+            history.AddRange(trimmedHistory);
 
-            // Update the session history
             _logger.LogInformation($"History truncated to {tokenCount} tokens.");
         }
     }
-
     private int CalculateTokens(IEnumerable<ChatMessage> messages)
     {
         int tokenCount = 0;
