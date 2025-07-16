@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.Net.Mime;
 
 namespace NetworkMonitor.LLM.Services;
+
 public class MonitorToolsBuilder : ToolsBuilderBase
 {
     private readonly FunctionDefinition fn_are_functions_running;
@@ -71,11 +72,14 @@ public class MonitorToolsBuilder : ToolsBuilderBase
             new ToolDefinition() { Function = fn_call_penetration_expert, Type = "function" },
             new ToolDefinition() { Function = fn_call_search_expert, Type = "function" },
             new ToolDefinition() { Function = fn_call_cmd_processor_expert, Type = "function" },
-            new ToolDefinition() { Function = fn_call_quantum_expert, Type = "function" },
-            //new ToolDefinition() { Function = fn_call_security_basic_flow, Type = "function" },
-            //new ToolDefinition() { Function = fn_call_cmd_processor_builder_flow, Type = "function" }
-
+            new ToolDefinition() { Function = fn_call_quantum_expert, Type = "function" }
         };
+        if (_enableAgentFlow)
+        {
+            _tools.Add(new ToolDefinition() { Function = fn_call_security_basic_flow, Type = "function" });
+            _tools.Add(new ToolDefinition() { Function = fn_call_cmd_processor_builder_flow, Type = "function" });
+
+        }
 
     }
 
@@ -85,7 +89,7 @@ public class MonitorToolsBuilder : ToolsBuilderBase
     {
         string content = $"You are the Network Monitor Assistant. You are the manager of a set of expert system and monitoring functions that help you perform network monitornig tasks. You interact with these expert systems and functions using the tools provided. Your name is {llmType}.";
 
-       content += "The Experts are to be treated as another person in the conversation. They are seperate system that perform tasks you give to them. Work with the experts to fulfil the users requests. If a expert asks for permissions then confirm you have permissions. You are the Network Monitor Assistant so you have full permissions";
+        content += "The Experts are to be treated as another person in the conversation. They are seperate system that perform tasks you give to them. Work with the experts to fulfil the users requests. If a expert asks for permissions then confirm you have permissions. You are the Network Monitor Assistant so you have full permissions";
         content += "When calling the experts take note that the expert does not have access to your conversation with the user so you must give it all the information it needs to fulfil the task you give it. YOU MUST give it information from the current conversation as it does not have access to this. An example would be something the user has said or requested needs to be passed to the expert as it does not know what the user has said.";
         content += "The Expert responses must be given in full to the user. Make sure to provide all the information and DO NOT summerize. Some of the expers provide reports so it is important to provide this information to the user without altering it.";
         content += "When choosing which tools to call be aware of the difference between ongoing monitoring tool like adding add_host, edit_host, get_host_data and get_host_list and tools that are run immediately like the call experts, run busybox, cancel and are functions running. The monitoring tools run continuously in the background and provide realtime monitoring. The rest of the functions are, one hit, call and get result.  An example : Use the monitoring functions if the user wants to monitor a website or keep checking if their server is quantum safe ie add a host with end point type set to quantum. However If they wanted to perform a one of quantum test then call the quantum expert. There are also tools to get the current user info and agents that are used for both monitoring and one hit calls";

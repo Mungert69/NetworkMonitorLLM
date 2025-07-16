@@ -26,6 +26,7 @@ namespace NetworkMonitor.LLM.Services
     {
         protected List<ToolDefinition> _tools;
         public List<ToolDefinition> Tools => _tools;
+        protected bool _enableAgentFlow = false;
 
         public void ParseToolsFromJson(string json)
         {
