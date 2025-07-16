@@ -15,7 +15,7 @@ namespace NetworkMonitor.LLM.Services;
         /// <param name="toolsId">The tools identifier (e.g. "nmap", "json_dynamic").</param>
         /// <param name="userInfo">Optional user context.</param>
         /// <param name="jsonSpec">When using "json_dynamic", the serialized <see cref="ToolBuilderSpec"/>.</param>
-        IToolsBuilder Create(string toolsId, UserInfo? userInfo = null, string? jsonSpec = null);
+        IToolsBuilder Create(string toolsId, UserInfo? userInfo = null, string? jsonSpec = null,bool enableAgentFlow=false);
 
         /// <summary>
         /// All statically-registered tools IDs.
@@ -53,7 +53,7 @@ public sealed class ToolsBuilderFactory : IToolsBuilderFactory
     // MAIN ENTRY POINT ----------------------------------------------------
     public IToolsBuilder Create(string toolsId,
                                 UserInfo? userInfo = null,
-                                string?  jsonSpec  = null)
+                                string?  jsonSpec  = null, bool enableAgentFlow=false)
     {
         // 1️⃣  Dynamic JSON path
         if (toolsId.Equals(JSON_DYNAMIC_ID, StringComparison.OrdinalIgnoreCase))
@@ -71,9 +71,12 @@ public sealed class ToolsBuilderFactory : IToolsBuilderFactory
 
         // 2️⃣  Static path (existing behaviour)
         if (_static.TryGetValue(toolsId, out var ctor))
+        { 
             return ctor(userInfo);
+        }
 
-        return new MonitorToolsBuilder(userInfo); // fallback
+
+        return new MonitorToolsBuilder(userInfo,enableAgentFlow); // fallback
     }
 
     public IEnumerable<string> AvailableIds() => _static.Keys;

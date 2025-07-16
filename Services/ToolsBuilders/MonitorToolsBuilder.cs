@@ -32,9 +32,8 @@ public class MonitorToolsBuilder : ToolsBuilderBase
     private readonly FunctionDefinition fn_call_quantum_expert;
     private readonly FunctionDefinition fn_call_security_basic_flow;
     private readonly FunctionDefinition fn_call_cmd_processor_builder_flow;
-    public MonitorToolsBuilder(UserInfo userInfo)
+    public MonitorToolsBuilder(UserInfo userInfo, bool enableAgentFlow = false)
     {
-        // Initialize all function definitions
 
         fn_add_host = MonitorTools.BuildAddHostFunction();
         fn_edit_host = MonitorTools.BuildEditHostFunction();
@@ -74,7 +73,7 @@ public class MonitorToolsBuilder : ToolsBuilderBase
             new ToolDefinition() { Function = fn_call_cmd_processor_expert, Type = "function" },
             new ToolDefinition() { Function = fn_call_quantum_expert, Type = "function" }
         };
-        if (_enableAgentFlow)
+        if (enableAgentFlow)
         {
             _tools.Add(new ToolDefinition() { Function = fn_call_security_basic_flow, Type = "function" });
             _tools.Add(new ToolDefinition() { Function = fn_call_cmd_processor_builder_flow, Type = "function" });
