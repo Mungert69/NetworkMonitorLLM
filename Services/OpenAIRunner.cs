@@ -106,6 +106,7 @@ public class OpenAIRunner : ILLMRunner
         _openAIRunnerSemaphore = new SemaphoreSlim(1);
         _serviceID = systemParamsHelper.GetSystemParams().ServiceID!;
         _mlParams = systemParamsHelper.GetMLParams();
+        bool enableAgentFlow = _mlParams.EnableAgentFlow;
         _noThink = _mlParams.LlmNoThink;
         _history = history;
         _queryCoordinator = queryCoordinator;
@@ -116,9 +117,10 @@ public class OpenAIRunner : ILLMRunner
         _logger.LogInformation($"Building tools for {toolsId} ");
 
         IToolsBuilder toolsBuilder = _toolsBuilderFactory.Create(
-    toolsId,                         // "nmap", "security_agent_collector", …
-    serviceObj.UserInfo,             // may be null
-    serviceObj.JsonToolsBuilderSpec  // ← null for static, JSON when dynamic
+    toolsId,
+    serviceObj.UserInfo,
+    serviceObj.JsonToolsBuilderSpec,
+    enableAgentFlow
 );
 
         if (!useHF)
