@@ -160,8 +160,8 @@ namespace NetworkMonitor.LLM.Services
                 MessageID = messageId,
                 AppID = llmType,
                 AuthKey = _authKey,
-                RoutingKey = routingKey
-            };
+                RoutingKey = routingKey,
+                llmRunnerType=llmRunnerType            };
 
             // Publish the query to RabbitMQ
             await _rabbitRepo.PublishAsync("queryIndex", queryIndexRequest);
