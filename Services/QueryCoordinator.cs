@@ -19,7 +19,7 @@ namespace NetworkMonitor.LLM.Services
 
     public interface IQueryCoordinator
     {
-        Task<string> ExecuteQueryAsync(string queryText, string messageId, string llmType, string llmRunnerType,TimeSpan? timeout = null);
+        Task<string> ExecuteQueryAsync(string queryText, string messageId, string llmType, string llmRunnerType, TimeSpan? timeout = null);
         void CompleteQuery(string messageId, string result);
         void CancelQuery(string messageId);
         void RemoveSystemRag(List<ChatMessage> localHistory);
@@ -65,6 +65,11 @@ namespace NetworkMonitor.LLM.Services
 
                 if (_pendingQueries.TryGetValue(messageId, out var tcs))
                 {
+                    if (tcs.Task.IsCompleted)
+                    {
+                        _logger.LogInformation($"AddSystemRag: RAG result already handled for message ID {messageId}, skipping duplicate call.");
+                        return;
+                    }
                     // Wait for the RAG result (if the query is still pending)
                     try
                     {
@@ -150,7 +155,7 @@ namespace NetworkMonitor.LLM.Services
                         removedTcs.TrySetException(new TimeoutException("Query timed out."));
                     }
                 }, TaskScheduler.Default);
-           
+
             // Create the QueryIndexRequest
             var queryIndexRequest = new QueryIndexRequest
             {
@@ -160,7 +165,8 @@ namespace NetworkMonitor.LLM.Services
                 AppID = llmType,
                 AuthKey = _authKey,
                 RoutingKey = _routingKey,
-                LLMRunnerType=llmRunnerType            };
+                LLMRunnerType = llmRunnerType
+            };
 
             // Publish the query to RabbitMQ
             await _rabbitRepo.PublishAsync("queryIndex", queryIndexRequest);
