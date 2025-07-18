@@ -44,14 +44,14 @@ namespace NetworkMonitor.LLM.Services
         private const string SystemRagMessage = "The following RAG data has been added.";
 
         private readonly ILogger _logger;
-        private readonly Dictionary<string, string> _llmRunnerRoutingKeys;
+        private readonly string _routingKey;
         public QueryCoordinator(ILogger<QueryCoordinator> logger, IRabbitRepo rabbitRepo, ISystemParamsHelper systemParamsHelper)
         {
             _logger = logger;
             _rabbitRepo = rabbitRepo;
             _serviceID = systemParamsHelper.GetSystemParams().ServiceID!;
             _authKey = systemParamsHelper.GetSystemParams().ServiceAuthKey;
-            _llmRunnerRoutingKeys = systemParamsHelper.GetMLParams().LlmRunnerRoutingKeys;
+            _routingKey = systemParamsHelper.GetSystemParams().RabbitRoutingKey;
 
         }
 
@@ -150,8 +150,7 @@ namespace NetworkMonitor.LLM.Services
                         removedTcs.TrySetException(new TimeoutException("Query timed out."));
                     }
                 }, TaskScheduler.Default);
-            string routingKey = RabbitConnectHelper.GetRoutingKey(llmRunnerType, _llmRunnerRoutingKeys);
-
+           
             // Create the QueryIndexRequest
             var queryIndexRequest = new QueryIndexRequest
             {
@@ -160,7 +159,7 @@ namespace NetworkMonitor.LLM.Services
                 MessageID = messageId,
                 AppID = llmType,
                 AuthKey = _authKey,
-                RoutingKey = routingKey,
+                RoutingKey = _routingKey,
                 LLMRunnerType=llmRunnerType            };
 
             // Publish the query to RabbitMQ
