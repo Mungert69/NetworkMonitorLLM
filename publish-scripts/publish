@@ -13,4 +13,5 @@ sudo ./publish-instance eu ReportData
 sudo ./publish-instance eu BlogMonitor
 sudo ./publish-instance eu Quantum
 sudo ./publish-instance eu Monitor
+sudo ./publish-instance eu json_dynamic
 
