@@ -43,7 +43,7 @@ public class LLMFactory : ILLMFactory
     private readonly IServiceProvider _serviceProvider;
     private readonly SemaphoreSlim _processRunnerSemaphore = new SemaphoreSlim(1, 1);
     private readonly ILLMResponseProcessor _responseProcessor;
-    private ConcurrentDictionary<string, Session> _sessions= new ();
+    private ConcurrentDictionary<string, Session> _sessions = new();
     public ConcurrentDictionary<string, Session> Sessions { set => _sessions = value; }
     private readonly ICpuUsageMonitor _cpuUsageMonitor;
     private readonly IQueryCoordinator _queryCoordinator;
@@ -51,17 +51,17 @@ public class LLMFactory : ILLMFactory
 
     private readonly ConcurrentDictionary<string, List<ChatMessage>> _sessionHistories = new();
 
-    public LLMFactory(ILogger<LLMFactory> logger, IServiceProvider serviceProvider, IHistoryStorage historyStorage, ILLMResponseProcessor responseProcessor,  ICpuUsageMonitor cpuUsageMonitor, IQueryCoordinator queryCoordinator)
+    public LLMFactory(ILogger<LLMFactory> logger, IServiceProvider serviceProvider, IHistoryStorage historyStorage, ILLMResponseProcessor responseProcessor, ICpuUsageMonitor cpuUsageMonitor, IQueryCoordinator queryCoordinator)
     {
         _logger = logger;
         _serviceProvider = serviceProvider;
         _historyStorage = historyStorage;
-        _cpuUsageMonitor=cpuUsageMonitor;
+        _cpuUsageMonitor = cpuUsageMonitor;
         _processRunnerFactory = new LLMProcessRunnerFactory();
         _openAIRunnerFactory = new OpenAIRunnerFactory();
         _hfRunnerFactory = new HFRunnerFactory();
         _responseProcessor = responseProcessor;
-        _queryCoordinator=queryCoordinator;
+        _queryCoordinator = queryCoordinator;
 
     }
 
@@ -114,7 +114,7 @@ public class LLMFactory : ILLMFactory
         return await _historyStorage.GetHistoryDisplayNamesAsync(userId);
     }
 
- 
+
     public async Task SendHistoryDisplayNames(LLMServiceObj serviceObj)
     {
         if (!serviceObj.IsPrimaryLlm) return;
@@ -189,7 +189,7 @@ public class LLMFactory : ILLMFactory
     {
         try
         {
-            await SendHistoryDisplayNames( serviceObj);
+            await SendHistoryDisplayNames(serviceObj);
         }
         catch (Exception e)
         {
@@ -243,8 +243,8 @@ public class LLMFactory : ILLMFactory
             if (history.Count == 0)
             {
                 var historyDisplayName = await _historyStorage.LoadHistoryAsync(serviceObj.SessionId);
-                if (historyDisplayName!=null) history.AddRange(historyDisplayName.History);
-                
+                if (historyDisplayName != null) history.AddRange(historyDisplayName.History);
+
             }
             //await SendHistoryDisplayNames(serviceObj);
         }
@@ -255,8 +255,8 @@ public class LLMFactory : ILLMFactory
 
         ILLMRunner runner = runnerType switch
         {
-            "TurboLLM" => _openAIRunnerFactory.CreateRunner(_serviceProvider, serviceObj, null, history,_cpuUsageMonitor),
-            "HugLLM" => _hfRunnerFactory.CreateRunner(_serviceProvider, serviceObj, null, history,_cpuUsageMonitor),
+            "TurboLLM" => _openAIRunnerFactory.CreateRunner(_serviceProvider, serviceObj, null, history, _cpuUsageMonitor),
+            "HugLLM" => _hfRunnerFactory.CreateRunner(_serviceProvider, serviceObj, null, history, _cpuUsageMonitor),
             "TestLLM" => _processRunnerFactory.CreateRunner(_serviceProvider, serviceObj, _processRunnerSemaphore, history, _cpuUsageMonitor),
             _ => throw new ArgumentException($"Invalid runner type: {runnerType}")
         };
@@ -270,10 +270,10 @@ public class LLMFactory : ILLMFactory
      {
          await DeleteHistoryForSessionAsync(sessionId, serviceObj);
      };
-      runner.SendHistory += async (serviceObj) =>
-     {
-         await SendHistoryAsync( serviceObj);
-     };
+        runner.SendHistory += async (serviceObj) =>
+       {
+           await SendHistoryAsync(serviceObj);
+       };
 
         return runner;
     }
@@ -376,7 +376,7 @@ public class LLMProcessRunnerFactory : LLMRunnerFactoryBase
 
     public override ILLMRunner CreateRunner(IServiceProvider serviceProvider, LLMServiceObj serviceObj, SemaphoreSlim? runnerSemaphore, List<ChatMessage> history, ICpuUsageMonitor cpuUsageMonitor)
     {
-        return new LLMProcessRunner(serviceProvider.GetRequiredService<ILogger<LLMProcessRunner>>(), serviceProvider.GetRequiredService<ILLMResponseProcessor>(), serviceProvider.GetRequiredService<ISystemParamsHelper>(), serviceObj, runnerSemaphore, serviceProvider.GetRequiredService<IAudioGenerator>(), cpuUsageMonitor,serviceProvider.GetRequiredService<IQueryCoordinator>() );
+        return new LLMProcessRunner(serviceProvider.GetRequiredService<ILogger<LLMProcessRunner>>(), serviceProvider.GetRequiredService<ILLMResponseProcessor>(), serviceProvider.GetRequiredService<SystemParams>(), serviceProvider.GetRequiredService<MLParams>(), serviceObj, runnerSemaphore, serviceProvider.GetRequiredService<IAudioGenerator>(), cpuUsageMonitor, serviceProvider.GetRequiredService<IQueryCoordinator>());
     }
 }
 
@@ -385,7 +385,7 @@ public class OpenAIRunnerFactory : LLMRunnerFactoryBase
 
     public override ILLMRunner CreateRunner(IServiceProvider serviceProvider, LLMServiceObj serviceObj, SemaphoreSlim? runnerSemaphore, List<ChatMessage> history, ICpuUsageMonitor cpuUsageMonitor)
     {
-        return new OpenAIRunner(serviceProvider.GetRequiredService<ILogger<OpenAIRunner>>(), serviceProvider.GetRequiredService<ILLMResponseProcessor>(), serviceProvider.GetRequiredService<OpenAIService>(), serviceProvider.GetRequiredService<ISystemParamsHelper>(), serviceObj, null, serviceProvider.GetRequiredService<IAudioGenerator>(), false, history, serviceProvider.GetRequiredService<IQueryCoordinator>(), serviceProvider.GetRequiredService<IToolsBuilderFactory>()  );
+        return new OpenAIRunner(serviceProvider.GetRequiredService<ILogger<OpenAIRunner>>(), serviceProvider.GetRequiredService<ILLMResponseProcessor>(), serviceProvider.GetRequiredService<OpenAIService>(), serviceProvider.GetRequiredService<SystemParams>(), serviceProvider.GetRequiredService<MLParams>(), serviceObj, null, serviceProvider.GetRequiredService<IAudioGenerator>(), false, history, serviceProvider.GetRequiredService<IQueryCoordinator>(), serviceProvider.GetRequiredService<IToolsBuilderFactory>());
     }
 }
 
@@ -395,6 +395,6 @@ public class HFRunnerFactory : LLMRunnerFactoryBase
 
     public override ILLMRunner CreateRunner(IServiceProvider serviceProvider, LLMServiceObj serviceObj, SemaphoreSlim? runnerSemaphore, List<ChatMessage> history, ICpuUsageMonitor cpuUsageMonitor)
     {
-        return new OpenAIRunner(serviceProvider.GetRequiredService<ILogger<OpenAIRunner>>(), serviceProvider.GetRequiredService<ILLMResponseProcessor>(), serviceProvider.GetRequiredService<OpenAIService>(), serviceProvider.GetRequiredService<ISystemParamsHelper>(), serviceObj, null, serviceProvider.GetRequiredService<IAudioGenerator>(), true, history,serviceProvider.GetRequiredService<IQueryCoordinator>(), serviceProvider.GetRequiredService<IToolsBuilderFactory>());
+        return new OpenAIRunner(serviceProvider.GetRequiredService<ILogger<OpenAIRunner>>(), serviceProvider.GetRequiredService<ILLMResponseProcessor>(), serviceProvider.GetRequiredService<OpenAIService>(), serviceProvider.GetRequiredService<SystemParams>(), serviceProvider.GetRequiredService<MLParams>(), serviceObj, null, serviceProvider.GetRequiredService<IAudioGenerator>(), true, history, serviceProvider.GetRequiredService<IQueryCoordinator>(), serviceProvider.GetRequiredService<IToolsBuilderFactory>());
     }
 }

@@ -82,14 +82,23 @@ namespace NetworkMonitor.LLM
             services.AddTransient<ILLMResponseProcessor, LLMResponseProcessor>();
             services.AddSingleton<ILLMService, LLMService>();
             services.AddSingleton<ILLMFactory, LLMFactory>();
-            services.AddSingleton<IHistoryStorage,RedisHistoryStorage >();
+            services.AddSingleton<IHistoryStorage, RedisHistoryStorage>();
             services.AddSingleton(_cancellationTokenSource);
             services.Configure<HostOptions>(s => s.ShutdownTimeout = TimeSpan.FromMinutes(5));
             services.AddSingleton<ICpuUsageMonitor, CpuUsageMonitor>();
             services.AddSingleton<IQueryCoordinator, QueryCoordinator>();
             services.AddSingleton<IFunctionDefinitionRegistry, FunctionDefinitionRegistry>();
             services.AddSingleton<IToolsBuilderFactory, ToolsBuilderFactory>();
-
+            services.AddSingleton<MLParams>(sp =>
+                       {
+                           var systemParamsHelper = sp.GetRequiredService<ISystemParamsHelper>();
+                           return systemParamsHelper.GetMLParams();
+                       });
+            services.AddSingleton<SystemParams>(sp =>
+           {
+               var systemParamsHelper = sp.GetRequiredService<ISystemParamsHelper>();
+               return systemParamsHelper.GetSystemParams();
+           });
 
             services.AddHostedService<CpuUsageMonitor>();
 

@@ -10,6 +10,7 @@ using System.IO;
 using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 using NetworkMonitor.Utils.Helpers;
+using NetworkMonitor.Objects;
 
 namespace NetworkMonitor.LLM.Services
 {
@@ -20,12 +21,12 @@ namespace NetworkMonitor.LLM.Services
         private string _outputDirectory = ""; // Centralized property
         private string _frontendUrl = "";
         private ILogger _logger;
-        public AudioGenerator(ILogger<OpenAIRunner> logger, ISystemParamsHelper systemParamsHelper)
+        public AudioGenerator(ILogger<OpenAIRunner> logger, SystemParams systemParams)
         {
-            _apiEndpoint = systemParamsHelper.GetSystemParams().AudioServiceUrl + "/generate_audio";
-            _baseUrl = systemParamsHelper.GetSystemParams().AudioServiceUrl + "/files/";
-            _outputDirectory = systemParamsHelper.GetSystemParams().AudioServiceOutputDir;
-            _frontendUrl = systemParamsHelper.GetSystemParams().FrontEndUrl;
+            _apiEndpoint = systemParams.AudioServiceUrl + "/generate_audio";
+            _baseUrl = systemParams.AudioServiceUrl + "/files/";
+            _outputDirectory = systemParams.AudioServiceOutputDir;
+            _frontendUrl = systemParams.FrontEndUrl;
             _logger = logger;
         }
 

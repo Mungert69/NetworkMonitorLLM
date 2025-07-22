@@ -49,13 +49,13 @@ public class LLMService : ILLMService
     private bool _ready = false;
     private ConcurrentDictionary<string, Session> _sessions = new ConcurrentDictionary<string, Session>();
 
-    public LLMService(ILogger<LLMService> logger, IRabbitRepo rabbitRepo, ISystemParamsHelper systemParamsHelper, IServiceProvider serviceProvider, ILLMFactory llmFactory)
+    public LLMService(ILogger<LLMService> logger, IRabbitRepo rabbitRepo, SystemParams systemParams, MLParams mlParams,IServiceProvider serviceProvider, ILLMFactory llmFactory)
     {
 
         _serviceProvider = serviceProvider;
         _rabbitRepo = rabbitRepo;
-        _mlParams = systemParamsHelper.GetMLParams();
-        _serviceID = systemParamsHelper.GetSystemParams().ServiceID!;
+        _mlParams = mlParams;
+        _serviceID = systemParams.ServiceID!;
         _logger = logger;
         _llmFactory = llmFactory;
 
