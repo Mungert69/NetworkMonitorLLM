@@ -103,13 +103,6 @@ public class LLMProcessRunner : ILLMRunner
         }
 
         string permissionSuffix = "";
-        // Old way of doing permission is to load different context. new way is to let the api deal with it
-        /*string permissionSuffix = "_free";
-        if (!_mlParams.StartThisTestLLM) permissionSuffix = AccountTypeFactory.GetPermissionSuffix(
-            _startServiceoObj.UserInfo.AccountType,
-            _startServiceoObj.LlmSessionStartName,
-            _startServiceoObj.LlmChainStartName
-        );*/
 
         var promptName = mlParams.LlmSystemPrompt + permissionSuffix;
         string contextFileName;
