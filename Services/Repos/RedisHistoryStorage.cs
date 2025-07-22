@@ -7,6 +7,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using StackExchange.Redis;
 using NetworkMonitor.Utils.Helpers;
+using NetworkMonitor.Objects;
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Logging;
 
@@ -21,9 +22,8 @@ namespace NetworkMonitor.LLM.Services
         private bool _disposed = false;
         private readonly ILogger _logger;
 
-        public RedisHistoryStorage(ILogger<RedisHistoryStorage> logger, ISystemParamsHelper systemParamsHelper)
+        public RedisHistoryStorage(ILogger<RedisHistoryStorage> logger, SystemParams systemParams)
         {
-            var systemParams = systemParamsHelper.GetSystemParams();
             var configuration = BuildConfiguration(systemParams.RedisUrl, systemParams.RedisSecret);
             _logger = logger;
             _redis = ConnectionMultiplexer.Connect(configuration);

@@ -45,13 +45,13 @@ namespace NetworkMonitor.LLM.Services
 
         private readonly ILogger _logger;
         private readonly string _routingKey;
-        public QueryCoordinator(ILogger<QueryCoordinator> logger, IRabbitRepo rabbitRepo, ISystemParamsHelper systemParamsHelper)
+        public QueryCoordinator(ILogger<QueryCoordinator> logger, IRabbitRepo rabbitRepo, SystemParams systemParams)
         {
             _logger = logger;
             _rabbitRepo = rabbitRepo;
-            _serviceID = systemParamsHelper.GetSystemParams().ServiceID!;
-            _authKey = systemParamsHelper.GetSystemParams().ServiceAuthKey;
-            _routingKey = systemParamsHelper.GetSystemParams().RabbitRoutingKey;
+            _serviceID = systemParams.ServiceID!;
+            _authKey = systemParams.ServiceAuthKey;
+            _routingKey = systemParams.RabbitRoutingKey;
 
         }
 

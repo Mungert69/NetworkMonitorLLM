@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using NetworkMonitor.Utils.Helpers;
+using NetworkMonitor.Objects;
 
 namespace NetworkMonitor.LLM.Services
 {
@@ -20,10 +21,10 @@ namespace NetworkMonitor.LLM.Services
         private readonly HttpClient _httpClient;
         private const string ApiBaseUrl = "https://huggingface.co/api/datasets/";
 
-        public HuggingFaceDatasetStorage(ISystemParamsHelper systemParamsHelper)
+        public HuggingFaceDatasetStorage(MLParams mlParams)
         {
-            _dataRepoId=systemParamsHelper.GetMLParams().DataRepoId;
-            _token=systemParamsHelper.GetMLParams().HFToken;
+            _dataRepoId=mlParams.DataRepoId;
+            _token=mlParams.HFToken;
             _httpClient = new HttpClient();
             _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {_token}");
         }

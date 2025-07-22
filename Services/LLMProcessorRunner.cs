@@ -60,14 +60,14 @@ public class LLMProcessRunner : ILLMRunner
     private ConcurrentDictionary<string, StringBuilder?> _assistantMessages = new ConcurrentDictionary<string, StringBuilder?>();
     private ConcurrentDictionary<string, StringBuilder?> _systemMessages = new ConcurrentDictionary<string, StringBuilder?>();
 
-    public LLMProcessRunner(ILogger<LLMProcessRunner> logger, ILLMResponseProcessor responseProcessor, ISystemParamsHelper systemParamsHelper, LLMServiceObj startServiceObj, SemaphoreSlim? processRunnerSemaphore, IAudioGenerator audioGenerator, ICpuUsageMonitor cpuUsageMonitor, IQueryCoordinator queryCoordinator)
+    public LLMProcessRunner(ILogger<LLMProcessRunner> logger, ILLMResponseProcessor responseProcessor,   SystemParams systemParams,  MLParams mlParams, LLMServiceObj startServiceObj, SemaphoreSlim? processRunnerSemaphore, IAudioGenerator audioGenerator, ICpuUsageMonitor cpuUsageMonitor, IQueryCoordinator queryCoordinator)
     {
         _logger = logger;
         _responseProcessor = responseProcessor;
         _startServiceoObj = startServiceObj;
-        _mlParams = systemParamsHelper.GetMLParams();
+        _mlParams = _mlParams;
         _noThink=_mlParams.LlmNoThink;
-        _serviceID = systemParamsHelper.GetSystemParams().ServiceID!;
+        _serviceID = systemParams.ServiceID!;
         if (processRunnerSemaphore == null) throw new Exception(" Processor Runner Semaphore is null");
         _processRunnerSemaphore = processRunnerSemaphore;
         _audioGenerator = audioGenerator;

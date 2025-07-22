@@ -98,14 +98,14 @@ public class OpenAIRunner : ILLMRunner
     private readonly IToolsBuilderFactory _toolsBuilderFactory;
 
 #pragma warning disable CS8618
-    public OpenAIRunner(ILogger<OpenAIRunner> logger, ILLMResponseProcessor responseProcessor, OpenAIService openAiService, ISystemParamsHelper systemParamsHelper, LLMServiceObj serviceObj, SemaphoreSlim? openAIRunnerSemaphore, IAudioGenerator audioGenerator, bool useHF, List<ChatMessage> history, IQueryCoordinator queryCoordinator, IToolsBuilderFactory toolsBuilderFactory)
+    public OpenAIRunner(ILogger<OpenAIRunner> logger, ILLMResponseProcessor responseProcessor, OpenAIService openAiService,   SystemParams systemParams,  MLParams mlParams, LLMServiceObj serviceObj, SemaphoreSlim? openAIRunnerSemaphore, IAudioGenerator audioGenerator, bool useHF, List<ChatMessage> history, IQueryCoordinator queryCoordinator, IToolsBuilderFactory toolsBuilderFactory)
     {
         _logger = logger;
         _responseProcessor = responseProcessor;
         _openAiService = openAiService;
         _openAIRunnerSemaphore = new SemaphoreSlim(1);
-        _serviceID = systemParamsHelper.GetSystemParams().ServiceID!;
-        _mlParams = systemParamsHelper.GetMLParams();
+        _serviceID = systemParams.ServiceID!;
+        _mlParams = _mlParams;
         bool enableAgentFlow = _mlParams.EnableAgentFlow;
         _noThink = _mlParams.LlmNoThink;
         _history = history;

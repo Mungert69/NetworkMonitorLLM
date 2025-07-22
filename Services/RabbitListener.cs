@@ -39,21 +39,21 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
     private readonly string _exchangeType;
     private readonly string _routingKey;
 
-    public RabbitListener(ILLMService llmService, ILogger<RabbitListenerBase> logger, ISystemParamsHelper systemParamsHelper, IQueryCoordinator queryCoordinator, IFunctionDefinitionRegistry registryCache) : base(logger, DeriveSystemUrl(systemParamsHelper))
+    public RabbitListener(ILLMService llmService, ILogger<RabbitListenerBase> logger, SystemParams systemParams, IQueryCoordinator queryCoordinator, IFunctionDefinitionRegistry registryCache) : base(logger, DeriveSystemUrl(systemParams))
     {
 
         _llmService = llmService;
-        _serviceID = systemParamsHelper.GetSystemParams().ServiceID ?? "monitor";
-        _exchangeType = systemParamsHelper.GetSystemParams().RabbitExchangeType;
-        _routingKey = systemParamsHelper.GetSystemParams().RabbitRoutingKey;
+        _serviceID = systemParams.ServiceID ?? "monitor";
+        _exchangeType = systemParams.RabbitExchangeType;
+        _routingKey = systemParams.RabbitRoutingKey;
         _queryCoordinator = queryCoordinator;
         _registryCache = registryCache;
 
     }
 
-    private static SystemUrl DeriveSystemUrl(ISystemParamsHelper systemParamsHelper)
+    private static SystemUrl DeriveSystemUrl(SystemParams systemParams)
     {
-        return systemParamsHelper.GetSystemParams().ThisSystemUrl;
+        return systemParams.ThisSystemUrl;
     }
     protected override void InitRabbitMQObjs()
     {
