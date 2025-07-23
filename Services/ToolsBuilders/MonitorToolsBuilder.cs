@@ -32,6 +32,9 @@ public class MonitorToolsBuilder : ToolsBuilderBase
     private readonly FunctionDefinition fn_call_quantum_expert;
     private readonly FunctionDefinition fn_call_security_basic_flow;
     private readonly FunctionDefinition fn_call_cmd_processor_builder_flow;
+
+    private readonly FunctionDefinition fn_execute_query;
+
     public MonitorToolsBuilder(UserInfo userInfo, bool enableAgentFlow = false)
     {
 
@@ -54,7 +57,7 @@ public class MonitorToolsBuilder : ToolsBuilderBase
         fn_call_security_basic_flow = SecurityAgent.BuildSecurityBasicAgent();
         fn_call_cmd_processor_builder_flow = CmdProcessorBuilderAgent.BuildCmdProcessorBuilderAgent();
 
-
+        fn_execute_query = QueryTools.BuildQueryFunction();
         // Static tools list assignment
         _tools = new List<ToolDefinition>()
         {
@@ -71,7 +74,7 @@ public class MonitorToolsBuilder : ToolsBuilderBase
             new ToolDefinition() { Function = fn_call_penetration_expert, Type = "function" },
             new ToolDefinition() { Function = fn_call_search_expert, Type = "function" },
             new ToolDefinition() { Function = fn_call_cmd_processor_expert, Type = "function" },
-            new ToolDefinition() { Function = fn_call_quantum_expert, Type = "function" }
+            new ToolDefinition() { Function = fn_execute_query, Type = "function" }
         };
         if (enableAgentFlow)
         {
