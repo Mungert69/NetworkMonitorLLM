@@ -47,7 +47,8 @@ public class OpenAIRunner : ILLMRunner
     private bool _isStream = false;
     private bool _isEnabled = true;
     //private bool _isFuncCalled;
-    private string _serviceID;
+    private readonly string _serviceID;
+    private readonly string _serviceAuthKey;
     private int _maxTokens = 32000;
     private int _responseTokens = 4000;
     private int _promptTokens = 28000;
@@ -106,6 +107,7 @@ public class OpenAIRunner : ILLMRunner
         _openAiService = openAiService;
         _openAIRunnerSemaphore = new SemaphoreSlim(1);
         _serviceID = systemParams.ServiceID!;
+        _serviceAuthKey=systemParams.ServiceAuthKey!;
         _mlParams = mlParams;
         bool enableAgentFlow = _mlParams.EnableAgentFlow;
         _noThink = _mlParams.LlmNoThink;
@@ -281,8 +283,18 @@ public class OpenAIRunner : ILLMRunner
             }
             else
             {
-
-                if (_mlParams.AddSystemRag) _ = _queryCoordinator.ExecuteQueryAsync(serviceObj.UserInput, serviceObj.MessageID, serviceObj.DestinationLlm, serviceObj.LLMRunnerType);
+                var queryIndexRequest = new QueryIndexRequest
+                {
+                    IndexName = _mlParams.OpenSearchDefaultIndex,
+                    QueryText = serviceObj.UserInput,
+                    VectorSearchMode=_mlParams.VectorSearchMode,
+                    MessageID = serviceObj.MessageID,
+                    AppID = _serviceID,
+                    AuthKey = _serviceAuthKey,
+                    RoutingKey = "",
+                    LLMRunnerType = serviceObj.LLMRunnerType
+                };
+                if (_mlParams.AddSystemRag) _ = _queryCoordinator.ExecuteQueryAsync(queryIndexRequest);
 
 
                 chatMessage = ChatMessage.FromUser(serviceObj.UserInput);
