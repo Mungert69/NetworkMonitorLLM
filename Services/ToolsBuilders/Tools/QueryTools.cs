@@ -29,12 +29,12 @@ public static class QueryTools
                 "query_text",
                 PropertyDefinition.DefineString(
                     "The search query or question. This will be embedded and used for the vector search against the selected embedding field."))
-            .AddParameter(
+             .AddParameter(
                 "index_name",
                 PropertyDefinition.DefineString(
                     "The name of the index to search. This determines which knowledge base or document set is queried. " +
-                    "Examples: Use 'mitre' to search the MITRE ATT&CK document set, 'securitybooks' for a selection of security books."))
-            .AddParameter(
+                    "Examples: Use 'documents' to search general FAQs and user help, 'mitre' to search the MITRE ATT&CK document set, or 'securitybooks' for a selection of security books."))
+              .AddParameter(
                 "vector_search_mode",
                 PropertyDefinition.DefineString(
                     "Optional. Determines which embedding field to use for the vector search. " +
