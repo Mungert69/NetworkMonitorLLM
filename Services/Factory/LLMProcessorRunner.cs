@@ -66,7 +66,7 @@ public class LLMProcessRunner : ILLMRunner
         _logger = logger;
         _responseProcessor = responseProcessor;
         _startServiceoObj = startServiceObj;
-        _mlParams = _mlParams;
+        _mlParams = mlParams;
         _noThink=_mlParams.LlmNoThink;
         _serviceID = systemParams.ServiceID!;
         if (processRunnerSemaphore == null) throw new Exception(" Processor Runner Semaphore is null");

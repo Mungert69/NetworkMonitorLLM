@@ -106,7 +106,7 @@ public class OpenAIRunner : ILLMRunner
         _openAiService = openAiService;
         _openAIRunnerSemaphore = new SemaphoreSlim(1);
         _serviceID = systemParams.ServiceID!;
-        _mlParams = _mlParams;
+        _mlParams = mlParams;
         bool enableAgentFlow = _mlParams.EnableAgentFlow;
         _noThink = _mlParams.LlmNoThink;
         _history = history;

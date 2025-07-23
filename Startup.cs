@@ -91,10 +91,10 @@ namespace NetworkMonitor.LLM
             services.AddSingleton<IFunctionDefinitionRegistry, FunctionDefinitionRegistry>();
             services.AddSingleton<IToolsBuilderFactory, ToolsBuilderFactory>();
             services.AddSingleton<MLParams>(sp =>
-                       {
-                           var systemParamsHelper = sp.GetRequiredService<ISystemParamsHelper>();
-                           return systemParamsHelper.GetMLParams();
-                       });
+            {
+                var systemParamsHelper = sp.GetRequiredService<ISystemParamsHelper>();
+                return systemParamsHelper.GetMLParams();
+            });
             services.AddSingleton<SystemParams>(sp =>
            {
                var systemParamsHelper = sp.GetRequiredService<ISystemParamsHelper>();
