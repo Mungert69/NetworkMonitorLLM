@@ -7,6 +7,7 @@ using Microsoft.Extensions.Hosting;
 using NetworkMonitor.LLM.Services;
 using NetworkMonitor.Data;
 using NetworkMonitor.Objects;
+using NetworkMonitor.Coordinator;
 using Microsoft.AspNetCore.Http;
 using System;
 using System.Threading;

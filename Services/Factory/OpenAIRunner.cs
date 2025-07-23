@@ -22,6 +22,7 @@ using NetworkMonitor.Objects;
 using NetworkMonitor.Utils.Helpers;
 using NetworkMonitor.Objects.Factory;
 using NetworkMonitor.Utils;
+using NetworkMonitor.Coordinator;
 
 namespace NetworkMonitor.LLM.Services;
 
