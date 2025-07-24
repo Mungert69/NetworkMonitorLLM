@@ -113,8 +113,8 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
         });
         _rabbitMQObjs.Add(new RabbitMQObj()
         {
-            ExchangeName = "getFilteredFunctionRegistry" + _serviceID,
-            FuncName = "getFilteredFunctionRegistry",
+            ExchangeName = "getFunctionRegistryFiltered" + _serviceID,
+            FuncName = "getFunctionRegistryFiltered",
             MessageTimeout = 60000,
             Type = _exchangeType,
             RoutingKeys = new List<string> { _routingKey }
@@ -233,13 +233,13 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
                                     }
                                 };
                               break;
-                          case "getFilteredFunctionRegistry":
+                          case "getFunctionRegistryFiltered":
                               await rabbitMQObj.ConnectChannel.BasicQosAsync(prefetchSize: 0, prefetchCount: 1, global: false);
                               rabbitMQObj.Consumer.ReceivedAsync += async (model, ea) =>
                                 {
                                     try
                                     {
-                                        GetFilteredFunctionRegistry();
+                                        GetFunctionRegistry(true);
                                         await rabbitMQObj.ConnectChannel.BasicAckAsync(ea.DeliveryTag, false);
                                     }
                                     catch (Exception ex)
@@ -442,7 +442,7 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
         return result;
     }
 
-    public ResultObj GetFunctionRegistry()
+    public ResultObj GetFunctionRegistry(bool filter=false)
     {
         var result = new ResultObj();
         result.Success = false;
@@ -450,7 +450,9 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
 
         try
         {
-            string funcRegJson = _registryCache.GetFunctionCatalogJson();
+            string funcRegJson;
+            if (filter) funcRegJson= _registryCache.GetFilteredFunctionCatalogJson();
+            else funcRegJson= _registryCache.GetFunctionCatalogJson();
             result.Success = true;
             result.Message = $"Success : Got GetFunctionCatalogJson : {funcRegJson}";
             result.Data = funcRegJson;
@@ -467,29 +469,5 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
         return result;
     }
 
-     public ResultObj GetFilteredFunctionRegistry()
-    {
-        var result = new ResultObj();
-        result.Success = false;
-        result.Message = "MessageAPI : GetFilteredFunctionRegistry : ";
-
-        try
-        {
-            string funcRegJson = _registryCache.GetFilteredFunctionCatalogJson();
-            result.Success = true;
-            result.Message = $"Success : Got GetFilteredFunctionCatalogJson : {funcRegJson}";
-            result.Data = funcRegJson; 
-
-        }
-        catch (Exception e)
-        {
-            result.Message = e.Message;
-            result.Success = false;
-        }
-
-        if (!result.Success) _logger.LogError(result.Message);
-        else _logger.LogInformation(result.Message);
-        return result;
-    }
-    
+     
 }
