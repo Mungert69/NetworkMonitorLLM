@@ -24,6 +24,7 @@ public interface IFunctionDefinitionRegistry
     /// <param name="pretty">If true, formats the JSON with indentation.</param>
     /// <returns>A JSON string containing function id & description pairs.</returns>
     string GetFunctionCatalogJson(bool pretty = true);
+    string GetFilteredFunctionCatalogJson(bool pretty = true);
 
     /// <summary>
     /// Tries to resolve a function by its identifier.
@@ -143,6 +144,49 @@ public class FunctionDefinitionRegistry : IFunctionDefinitionRegistry
             Message = !string.IsNullOrEmpty(json)
                             ? "Function catalog generated"
                             : "Failed to generate function catalog"
+        };
+        _rabbitRepo.PublishAsync("functionRegistryReply", reply);
+
+        return json;
+    }
+
+    /// <summary>
+    /// Returns a JSON list of functions whose names do NOT end with "_expert".
+    /// </summary>
+    /// <param name="pretty">If true, formats the JSON with indentation.</param>
+    /// <returns>A JSON string containing filtered function id & description pairs.</returns>
+    public string GetFilteredFunctionCatalogJson(bool pretty = true)
+    {
+        var filteredFunctions = _map.Values
+            .Where(fd => !fd.Name.EndsWith("_expert", StringComparison.OrdinalIgnoreCase))
+            .Select(fd => new
+            {
+                id = fd.Name,
+                description = fd.Description,
+                parameters = string.Join(",", fd.Parameters.Properties.Select(kvp => kvp.Key))
+            });
+
+        var payload = new
+        {
+            functions = filteredFunctions
+        };
+
+        var options = new JsonSerializerOptions
+        {
+            WriteIndented = pretty,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+        };
+
+        var json = JsonSerializer.Serialize(payload, options);
+
+        var reply = new FunctionRegistryReply
+        {
+            CatalogJson = json,
+            Success = !string.IsNullOrEmpty(json),
+            Message = !string.IsNullOrEmpty(json)
+                            ? "Filtered function catalog generated"
+                            : "Failed to generate filtered function catalog"
         };
         _rabbitRepo.PublishAsync("functionRegistryReply", reply);
 
