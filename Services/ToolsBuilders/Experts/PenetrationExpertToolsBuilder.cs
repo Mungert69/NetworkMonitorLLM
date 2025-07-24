@@ -17,7 +17,7 @@ namespace NetworkMonitor.LLM.Services
     private readonly FunctionDefinition fn_search_metasploit_modules;
     private readonly FunctionDefinition fn_get_metasploit_module_info;
     private readonly FunctionDefinition fn_run_nmap;
-    private readonly FunctionDefinition fn_execute_securitybooks_query;
+    private readonly FunctionDefinition fn_execute_query_penetration;
 
 
     public PenetrationExpertToolsBuilder()
@@ -34,7 +34,7 @@ namespace NetworkMonitor.LLM.Services
 
       fn_run_nmap = SecurityTools.BuildNmapFunction();
 
-      fn_execute_securitybooks_query = PenetrationTools.BuildPentestSecurityBooksQueryFunction();
+      fn_execute_query_penetration = PenetrationTools.BuildPentestSecurityBooksQueryFunction();
 
 
       // Define the tools list
@@ -44,7 +44,7 @@ namespace NetworkMonitor.LLM.Services
     new ToolDefinition() { Function = fn_search_metasploit_modules, Type = "function" },
     new ToolDefinition() { Function = fn_get_metasploit_module_info, Type = "function" },
     new ToolDefinition() { Function = fn_run_nmap, Type = "function" },
-     new ToolDefinition() { Function = fn_execute_securitybooks_query, Type = "function" },
+     new ToolDefinition() { Function = fn_execute_query_penetration, Type = "function" },
 };
 
     }
