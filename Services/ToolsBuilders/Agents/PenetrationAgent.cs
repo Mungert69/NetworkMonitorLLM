@@ -14,15 +14,15 @@ using System.Net.Mime;
 
 namespace NetworkMonitor.LLM.Services;
 
-public class SecurityAgent
+public class PenetrationAgent
 {
 
-    public static FunctionDefinition BuildSecurityBasicAgent()
+    public static FunctionDefinition BuildPenetrationAgent()
     {
         return new FunctionDefinitionBuilder(
-                "call_security_basic_flow",
-                "Security Basic Flow. Use the Secutiry flow to start a multi-step flow that performs a basic security assessment on the specified target. " +
-                "Only call this function if the user clearly indicates they want to initiate a security flow ." +
+                "call_penetration_flow",
+                "Penetration Flow. Use the Penetration flow to start a multi-step flow that performs a penetration test on the specified target. " +
+                "Only call this function if the user clearly indicates they want to initiate a penetration flow ." +
                 "The result from this function call will be professionally presented report. Give the user the report without any modifications.")
                     .AddParameter(
                     "target",
