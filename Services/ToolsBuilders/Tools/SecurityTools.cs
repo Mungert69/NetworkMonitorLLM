@@ -106,5 +106,61 @@ public class SecurityTools
                 .Build();
     }
 
+    public static FunctionDefinition BuildSecurityBooksQueryFunction()
+    {
+        const string description = @"
+Search a **local** RAG/OpenSearch index for information from various sources. 
+This tool never uses the public internet.
+
+It executes a semantic (vector) or keyword search against a specified index that represents the data source. 
+The OpenSearch backend uses the 'vector_search_mode' parameter to determine which embedding field to search.
+
+The 'query_text' will be embedded and compared against the selected embedding field (e.g., 'content', 'question', or 'summary') in the index.
+
+Use this function to retrieve relevant documents, answers, or summaries from the knowledge base.
+
+This **specialized version** is for security workflows. It is intended to support other security tools such as 'run_nmap' and 'run_openssl' by providing:
+  - Hardening guidance, remediation steps, and best practices extracted from security literature.
+  - Contextual explanations of findings (e.g., vulnerable cipher suites, misconfigured services, weak SSL/TLS settings).
+  - References and summaries from security books to justify or prioritize remediation actions.
+
+You must specify:
+  - 'query_text': The natural-language query or keywords. This will be embedded and used for the vector search against the selected embedding field.
+  - 'index_name': Must be 'securitybooks'. This determines which knowledge base is queried.
+Optionally:
+  - 'vector_search_mode': Which embedding field to use for the vector search. Valid values: 'content', 'question', 'summary'. Defaults to 'content'.
+
+Examples:
+  - After parsing Nmap results (e.g., open port with outdated service), query: 
+    'Recommended hardening steps for Apache HTTP server version 2.4' 
+    (index_name='securitybooks', vector_search_mode='content').
+  - After OpenSSL analysis reveals weak cipher suites, query: 
+    'Best practices for disabling vulnerable TLS cipher suites and enabling modern alternatives' 
+    (index_name='securitybooks', vector_search_mode='summary').
+  - For general remediation guidance: 
+    'Mitigation strategies for SSLv3 and TLS 1.0 deprecation' 
+    (index_name='securitybooks', vector_search_mode='question' or 'summary').
+
+Use this function whenever you need information from the local security knowledge base to interpret or act upon results from the other security tools.
+";
+
+        return new FunctionDefinitionBuilder(
+                name: "execute_query",
+                description: description)
+            .AddParameter(
+                "query_text",
+                PropertyDefinition.DefineString(
+                    "The search query or question. This will be embedded and used for the vector search against the selected embedding field."))
+            .AddParameter(
+                "index_name",
+                PropertyDefinition.DefineString(
+                    "Must be 'securitybooks'. This index contains curated security books and references to support analysis and remediation of findings from tools like Nmap and OpenSSL."))
+            .AddParameter(
+                "vector_search_mode",
+                PropertyDefinition.DefineString(
+                    "Optional. Determines which embedding field to use for the vector search: 'content', 'question', or 'summary'. Defaults to 'content'."))
+            .Validate()
+            .Build();
+    }
 
 }
