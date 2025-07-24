@@ -31,6 +31,7 @@ public class MonitorToolsBuilder : ToolsBuilderBase
     private readonly FunctionDefinition fn_call_cmd_processor_expert;
     private readonly FunctionDefinition fn_call_quantum_expert;
     private readonly FunctionDefinition fn_call_security_basic_flow;
+    private readonly FunctionDefinition fn_call_penetration_flow;
     private readonly FunctionDefinition fn_call_cmd_processor_builder_flow;
 
     private readonly FunctionDefinition fn_execute_query;
@@ -55,6 +56,7 @@ public class MonitorToolsBuilder : ToolsBuilderBase
         fn_call_quantum_expert = ExpertTools.BuildQuantumExpertFunction();
 
         fn_call_security_basic_flow = SecurityAgent.BuildSecurityBasicAgent();
+        fn_call_penetration_flow = PenetrationAgent.BuildPenetrationAgent();
         fn_call_cmd_processor_builder_flow = CmdProcessorBuilderAgent.BuildCmdProcessorBuilderAgent();
 
         fn_execute_query = QueryTools.BuildQueryFunction();
@@ -70,8 +72,6 @@ public class MonitorToolsBuilder : ToolsBuilderBase
             new ToolDefinition() { Function = fn_get_host_list, Type = "function" },
             new ToolDefinition() { Function = fn_get_user_info, Type = "function" },
             new ToolDefinition() { Function = fn_get_agents, Type = "function" },
-            new ToolDefinition() { Function = fn_call_security_expert, Type = "function" },
-            new ToolDefinition() { Function = fn_call_penetration_expert, Type = "function" },
             new ToolDefinition() { Function = fn_call_search_expert, Type = "function" },
             new ToolDefinition() { Function = fn_call_cmd_processor_expert, Type = "function" },
             new ToolDefinition() { Function = fn_execute_query, Type = "function" }
@@ -79,8 +79,14 @@ public class MonitorToolsBuilder : ToolsBuilderBase
         if (enableAgentFlow)
         {
             _tools.Add(new ToolDefinition() { Function = fn_call_security_basic_flow, Type = "function" });
+            _tools.Add(new ToolDefinition() { Function = fn_call_penetration_flow, Type = "function" });
             _tools.Add(new ToolDefinition() { Function = fn_call_cmd_processor_builder_flow, Type = "function" });
 
+        }
+        else
+        {
+            _tools.Add(new ToolDefinition() { Function = fn_call_security_expert, Type = "function" });
+            _tools.Add(new ToolDefinition() { Function = fn_call_penetration_expert, Type = "function" });   
         }
 
     }
