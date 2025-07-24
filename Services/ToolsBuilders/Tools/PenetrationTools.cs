@@ -132,7 +132,7 @@ Use this function whenever you need information from the local security knowledg
 ";
 
         return new FunctionDefinitionBuilder(
-                name: "execute_query",
+                name: "execute_query_penetration",
                 description: description)
             .AddParameter(
                 "query_text",
