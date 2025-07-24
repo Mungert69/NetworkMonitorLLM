@@ -92,4 +92,62 @@ public class PenetrationTools
             .Validate()
             .Build();
     }
+
+    public static FunctionDefinition BuildPentestSecurityBooksQueryFunction()
+    {
+        const string description = @"
+Search a **local** RAG/OpenSearch index for information from various sources. 
+This tool never uses the public internet.
+
+It executes a semantic (vector) or keyword search against a specified index that represents the data source. 
+The OpenSearch backend uses the 'vector_search_mode' parameter to determine which embedding field to search.
+
+The 'query_text' will be embedded and compared against the selected embedding field (e.g., 'content', 'question', or 'summary') in the index.
+
+Use this function to retrieve relevant documents, answers, or summaries from the knowledge base.
+
+This **specialized version** is for penetration testing workflows and is intended to support Metasploit-based operations:
+  - Correlate discovered CVEs (from 'search_metasploit_modules') with remediation guidance, exploit prerequisites, and post-exploitation steps.
+  - Validate exploit conditions, required privileges, and mitigation strategies (before/after 'run_metasploit').
+  - Provide hardening guidance, defense-in-depth recommendations, and authoritative references from security literature.
+  - Help justify exploit choice (rank, reliability) and prioritize remediation actions.
+
+You must specify the query text, the index to search, and optionally the vector search mode:
+  - 'query_text': Natural-language query or keywords. This will be embedded and used for the vector search against the selected embedding field.
+  - 'index_name': Must be 'securitybooks'. This determines which knowledge base is queried.
+  - 'vector_search_mode' (optional): Which embedding field to use for the vector search. Valid values: 'content', 'question', 'summary'. Defaults to 'content'.
+
+Examples:
+  - After finding a Metasploit module for CVE-2017-0144 (EternalBlue), query: 
+    'Mitigation steps and detection strategies for EternalBlue (MS17-010)'
+    (index_name='securitybooks', vector_search_mode='summary').
+  - Before running an exploit, query:
+    'Prerequisites and safe rollback procedures for exploiting Windows SMB vulnerabilities'
+    (index_name='securitybooks', vector_search_mode='question').
+  - After successful exploitation, query:
+    'Post-exploitation best practices and lateral movement prevention for Windows environments'
+    (index_name='securitybooks', vector_search_mode='content').
+
+Use this function whenever you need information from the local security knowledge base to interpret, justify, or act upon results from penetration testing tools.
+";
+
+        return new FunctionDefinitionBuilder(
+                name: "execute_query",
+                description: description)
+            .AddParameter(
+                "query_text",
+                PropertyDefinition.DefineString(
+                    "The search query or question. This will be embedded and used for the vector search against the selected embedding field."))
+            .AddParameter(
+                "index_name",
+                PropertyDefinition.DefineString(
+                    "Must be 'securitybooks'. This index contains curated security books and references to support penetration testing workflows and Metasploit usage."))
+            .AddParameter(
+                "vector_search_mode",
+                PropertyDefinition.DefineString(
+                    "Optional. Determines which embedding field to use for the vector search: 'content', 'question', or 'summary'. Defaults to 'content'."))
+            .Validate()
+            .Build();
+    }
+
 }

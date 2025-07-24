@@ -17,6 +17,8 @@ namespace NetworkMonitor.LLM.Services
     private readonly FunctionDefinition fn_search_metasploit_modules;
     private readonly FunctionDefinition fn_get_metasploit_module_info;
     private readonly FunctionDefinition fn_run_nmap;
+    private readonly FunctionDefinition fn_execute_securitybooks_query;
+
 
     public PenetrationExpertToolsBuilder()
     {
@@ -32,6 +34,9 @@ namespace NetworkMonitor.LLM.Services
 
       fn_run_nmap = SecurityTools.BuildNmapFunction();
 
+      fn_execute_securitybooks_query = PenetrationTools.BuildPentestSecurityBooksQueryFunction();
+
+
       // Define the tools list
       _tools = new List<ToolDefinition>()
 {
@@ -39,6 +44,7 @@ namespace NetworkMonitor.LLM.Services
     new ToolDefinition() { Function = fn_search_metasploit_modules, Type = "function" },
     new ToolDefinition() { Function = fn_get_metasploit_module_info, Type = "function" },
     new ToolDefinition() { Function = fn_run_nmap, Type = "function" },
+     new ToolDefinition() { Function = fn_execute_securitybooks_query, Type = "function" },
 };
 
     }
@@ -150,86 +156,8 @@ json
     ""module_name"": ""[FULL_MODULE_PATH]"",
   }
 }
+  
 
-Critical Rules (Enhanced)
-
-    Scanner Selection:
-
-        MUST verify scanner module compatibility with service version
-
-        MUST use non-intrusive checks first
-
-        MUST document scanner results before proceeding
-
-    Output Format:
-
-json
-
-{
-  ""phase"": ""[1-4]"",
-  ""actions"": ""[scan/search/info]"",
-  ""target"": ""[IP:PORT]"",
-  ""service"": ""[PROTOCOL/SERVICE/VERSION]"",
-  ""evidence"": ""[KEY_FINDINGS]"",
-  ""next_recommendations"": [""call_function"", ""call_function""]
-}
-
-Example Enhanced Workflow
-
-    Network Monitor Request: Assess 192.168.1.100
-
-    Phase 1 Output:
-
-json
-
-{
-  ""phase"":1,
-  ""call_function"":""run_nmap"",
-  ""target"":""192.168.1.100:1-1000"",
-  ""service"":""tcp"",
-  ""evidence"":""open:22/ssh(OpenSSH 7.9),80/http(Apache 2.4.49),443/https"",
-  ""next_recommendations"":[
-    ""run_metasploit auxiliary/scanner/ssh/ssh_version"",
-    ""run_metasploit auxiliary/scanner/http/apache_normalize_path""
-  ]
-}
-
-    Phase 2 Scanner Execution:
-
-json
-
-{
-  ""phase"":2,
-  ""call_function"":""run_metasploit"",
-  ""target"":""192.168.1.100:443"",
-  ""scanner_used"":""auxiliary/scanner/http/apache_normalize_path"",
-  ""evidence"":""Vulnerable to path traversal (CVE-2021-41773)"",
-  ""next_recommendations"":[
-    ""search_metasploit_modules using keywords CVE-2021-41773""
-  ]
-}
-
-json
-
-{
-  ""phase"":3,
-  ""call_function"":""search_metasploit_modules"",
-  ""keywords"":""CVE-2021-41773"",
-  ""evidence"":""Found module match"",
-  ""next_recommendations"":[
-    ""get_metasploit_module_info for module exploit/multi/http/apache_normalize_path_rce""
-  ]
-}
-
-json
-
-{
-  ""phase"":4,
-  ""call_function"":""get_metasploit_module_info"",
-  ""next_recommendations"":[
-    ""run_metasploit exploit/multi/http/apache_normalize_path_rce""
-  ]
-}
 ";
 
       string prompt = @"

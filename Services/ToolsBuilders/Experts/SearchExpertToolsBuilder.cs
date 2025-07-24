@@ -16,6 +16,7 @@ namespace NetworkMonitor.LLM.Services
 
         private readonly FunctionDefinition fn_run_search_web;
         private readonly FunctionDefinition fn_run_crawl_page;
+        private readonly FunctionDefinition fn_execute_query;
 
         public SearchExpertToolsBuilder()
         {
@@ -23,11 +24,14 @@ namespace NetworkMonitor.LLM.Services
             fn_run_search_web = SearchTools.BuildSearchWebFunction();
             fn_run_crawl_page = SearchTools.BuildCrawlPageFunction();
 
+            fn_execute_query = QueryTools.BuildQueryFunction();
+
             // Define the tools list
             _tools = new List<ToolDefinition>()
             {
-                   new ToolDefinition() { Function = fn_run_search_web, Type = "function" },
-                     new ToolDefinition() { Function = fn_run_crawl_page, Type = "function" },
+                    new ToolDefinition() { Function = fn_run_search_web, Type = "function" },
+                    new ToolDefinition() { Function = fn_run_crawl_page, Type = "function" },
+                    new ToolDefinition() { Function = fn_execute_query, Type = "function" }
 
             };
         }
