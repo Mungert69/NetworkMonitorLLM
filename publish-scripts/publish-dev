@@ -3,8 +3,8 @@ sudo ./publish-instance eu Meta
 sudo ./publish-instance eu Search
 sudo ./publish-instance eu CmdProcessor
 sudo ./publish-instance eu ReportData
-sudo ./publish-instance eu BlogMonitor
+#sudo ./publish-instance eu BlogMonitor
 sudo ./publish-instance eu Quantum
-sudo ./publish-instance eu MonitorSys
+#sudo ./publish-instance eu MonitorSys
 sudo ./publish-instance eu Monitor
 sudo ./publish-instance eu json_dynamic
