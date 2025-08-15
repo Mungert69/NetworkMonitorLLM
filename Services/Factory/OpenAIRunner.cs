@@ -100,14 +100,14 @@ public class OpenAIRunner : ILLMRunner
     private readonly IToolsBuilderFactory _toolsBuilderFactory;
 
 #pragma warning disable CS8618
-    public OpenAIRunner(ILogger<OpenAIRunner> logger, ILLMResponseProcessor responseProcessor, OpenAIService openAiService,   SystemParams systemParams,  MLParams mlParams, LLMServiceObj serviceObj, SemaphoreSlim? openAIRunnerSemaphore, IAudioGenerator audioGenerator, bool useHF, List<ChatMessage> history, IQueryCoordinator queryCoordinator, IToolsBuilderFactory toolsBuilderFactory)
+    public OpenAIRunner(ILogger<OpenAIRunner> logger, ILLMResponseProcessor responseProcessor, OpenAIService openAiService, SystemParams systemParams, MLParams mlParams, LLMServiceObj serviceObj, SemaphoreSlim? openAIRunnerSemaphore, IAudioGenerator audioGenerator, bool useHF, List<ChatMessage> history, IQueryCoordinator queryCoordinator, IToolsBuilderFactory toolsBuilderFactory)
     {
         _logger = logger;
         _responseProcessor = responseProcessor;
         _openAiService = openAiService;
         _openAIRunnerSemaphore = new SemaphoreSlim(1);
         _serviceID = systemParams.ServiceID!;
-        _serviceAuthKey=systemParams.ServiceAuthKey!;
+        _serviceAuthKey = systemParams.ServiceAuthKey!;
         _mlParams = mlParams;
         bool enableAgentFlow = _mlParams.EnableAgentFlow;
         _noThink = _mlParams.LlmNoThink;
@@ -287,7 +287,7 @@ public class OpenAIRunner : ILLMRunner
                 {
                     IndexName = _mlParams.OpenSearchDefaultIndex,
                     QueryText = serviceObj.UserInput,
-                    VectorSearchMode=_mlParams.VectorSearchMode,
+                    VectorSearchMode = _mlParams.VectorSearchMode,
                     MessageID = serviceObj.MessageID,
                     AppID = _serviceID,
                     AuthKey = _serviceAuthKey,
