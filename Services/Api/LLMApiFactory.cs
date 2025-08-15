@@ -19,6 +19,11 @@ using NetworkMonitor.Objects;
 using NetworkMonitor.Utils.Helpers;
 using NetworkMonitor.Objects.Factory;
 using NetworkMonitor.Utils;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using NetworkMonitor.LLM.Api;
+
+
 
 namespace NetworkMonitor.LLM.Services;
 public interface ILLMApi
@@ -33,15 +38,50 @@ public interface ILLMApi
     
 }
 
-public static class LLMApiFactory
+
+
+namespace NetworkMonitor.LLM.Services
 {
-    /*public static ILLMApi CreateApi(string llmProvider, OpenAIService openAiService = null, string hfApiUrl = null, string hfAuthToken = null)
+    public static class LLMApiFactory
     {
-        return llmProvider switch
+        public static ILLMApi CreateApi(
+            IConfiguration cfg,
+            ILogger logger,
+            MLParams mlParams,
+            IToolsBuilder toolsBuilder,
+            string serviceID,
+            ILLMResponseProcessor responseProcessor,
+            OpenAIService openAiService // you already pass this today for OpenAI HTTP
+        )
         {
-            "OpenAI" => new OpenAIApi(openAiService),
-            "HuggingFace" => new HuggingFaceApi(hfApiUrl, hfAuthToken),
-            _ => throw new ArgumentException($"Unknown LLM provider: {llmProvider}")
-        };
-    }*/
+            var provider = cfg["LLM:Provider"] ?? "OpenAI";
+
+            if (string.Equals(provider, "OpenAI", StringComparison.OrdinalIgnoreCase))
+            {
+                // your existing HTTP (what you showed)
+                return new OpenAIApi(logger, mlParams, toolsBuilder, serviceID, responseProcessor, openAiService);
+            }
+
+            if (string.Equals(provider, "HuggingFace", StringComparison.OrdinalIgnoreCase))
+            {
+                var hfApiUrl = cfg["LLM:HuggingFace:BaseUrl"];
+                var hfToken  = cfg["LLM:HuggingFace:ApiKey"];
+                return new HuggingFaceApi(hfApiUrl, hfToken);
+            }
+
+            if (string.Equals(provider, "OpenAIRabbit", StringComparison.OrdinalIgnoreCase))
+            {
+                var amqpUrl     = cfg["LLM:Rabbit:AmqpUrl"] ?? "";
+                var routingKey  = cfg["LLM:Rabbit:RoutingKey"] ?? "";
+                var source      = cfg["LLM:Rabbit:ServiceSource"] ?? "openai.mq.client";
+
+                var rabbit = new OpenAIApiRabbit(amqpUrl, routingKey, source);
+                return new OpenAIApiRabbitApi(logger, mlParams, toolsBuilder, serviceID, responseProcessor, rabbit);
+            }
+
+            throw new ArgumentException($"Unknown LLM provider: {provider}");
+        }
+    }
 }
+
+
