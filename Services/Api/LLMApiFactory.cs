@@ -19,69 +19,62 @@ using NetworkMonitor.Objects;
 using NetworkMonitor.Utils.Helpers;
 using NetworkMonitor.Objects.Factory;
 using NetworkMonitor.Utils;
+using NetworkMonitor.Objects.Repository;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using NetworkMonitor.LLM.Api;
-
 
 
 namespace NetworkMonitor.LLM.Services;
+
 public interface ILLMApi
 {
     Task<ChatCompletionCreateResponseSuccess> CreateCompletionAsync(List<ChatMessage> messages, int maxTokens, LLMServiceObj serviceObj);
-    List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, bool noThink=false);
+    List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, bool noThink = false);
     string GetFunctionNamesAsString(string separator = ", ");
-     List<ChatMessage> GetResumeSystemPrompt(string currentTime, LLMServiceObj serviceObj);
-      int SystemPromptCount { get ; }
-      LLMConfig Config { get; }
+    List<ChatMessage> GetResumeSystemPrompt(string currentTime, LLMServiceObj serviceObj);
+    int SystemPromptCount { get; }
+    LLMConfig Config { get; }
     string WrapFunctionResponse(string name, string funcStr);
-    
+
 }
 
 
-
-namespace NetworkMonitor.LLM.Services
+public class LLMApiFactory
 {
-    public static class LLMApiFactory
+    public  ILLMApi CreateApi(
+ ILogger logger,
+ MLParams mlParams,
+ IToolsBuilder toolsBuilder,
+ string serviceID,
+ ILLMResponseProcessor responseProcessor,
+SystemParams systemParams,
+string provider,
+ OpenAIService openAiService // you already pass this today for OpenAI HTTP
+)
     {
-        public static ILLMApi CreateApi(
-            IConfiguration cfg,
-            ILogger logger,
-            MLParams mlParams,
-            IToolsBuilder toolsBuilder,
-            string serviceID,
-            ILLMResponseProcessor responseProcessor,
-            OpenAIService openAiService // you already pass this today for OpenAI HTTP
-        )
+        
+        if (string.Equals(provider, "OpenAI", StringComparison.OrdinalIgnoreCase))
         {
-            var provider = cfg["LLM:Provider"] ?? "OpenAI";
-
-            if (string.Equals(provider, "OpenAI", StringComparison.OrdinalIgnoreCase))
-            {
-                // your existing HTTP (what you showed)
-                return new OpenAIApi(logger, mlParams, toolsBuilder, serviceID, responseProcessor, openAiService);
-            }
-
-            if (string.Equals(provider, "HuggingFace", StringComparison.OrdinalIgnoreCase))
-            {
-                var hfApiUrl = cfg["LLM:HuggingFace:BaseUrl"];
-                var hfToken  = cfg["LLM:HuggingFace:ApiKey"];
-                return new HuggingFaceApi(hfApiUrl, hfToken);
-            }
-
-            if (string.Equals(provider, "OpenAIRabbit", StringComparison.OrdinalIgnoreCase))
-            {
-                var amqpUrl     = cfg["LLM:Rabbit:AmqpUrl"] ?? "";
-                var routingKey  = cfg["LLM:Rabbit:RoutingKey"] ?? "";
-                var source      = cfg["LLM:Rabbit:ServiceSource"] ?? "openai.mq.client";
-
-                var rabbit = new OpenAIApiRabbit(amqpUrl, routingKey, source);
-                return new OpenAIApiRabbitApi(logger, mlParams, toolsBuilder, serviceID, responseProcessor, rabbit);
-            }
-
-            throw new ArgumentException($"Unknown LLM provider: {provider}");
+            // your existing HTTP (what you showed)
+            return new OpenAIApi(logger, mlParams, toolsBuilder, serviceID, responseProcessor, openAiService);
         }
+
+        if (string.Equals(provider, "HuggingFace", StringComparison.OrdinalIgnoreCase))
+        {
+
+            return new HuggingFaceApi(logger, mlParams, toolsBuilder, serviceID, responseProcessor, false);
+        }
+
+        if (string.Equals(provider, "OpenAIRabbit", StringComparison.OrdinalIgnoreCase))
+        {
+
+            var rabbit = new OpenAIRabbitTransport(responseProcessor, systemParams.ThisSystemUrl, systemParams.RabbitRoutingKey, logger);
+            return new OpenAIRabbitApi(logger, mlParams, toolsBuilder, serviceID, responseProcessor, rabbit);
+        }
+
+        throw new ArgumentException($"Unknown LLM provider: {provider}");
     }
 }
+
 
 

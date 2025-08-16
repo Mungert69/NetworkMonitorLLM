@@ -115,7 +115,6 @@ public class OpenAIRunner : ILLMRunner
         _queryCoordinator = queryCoordinator;
         _toolsBuilderFactory = toolsBuilderFactory;
 
-        _useHF = useHF;
         string toolsId = serviceObj.ToolsDefinitionId ?? _serviceID;
         _logger.LogInformation($"Building tools for {toolsId} ");
 
@@ -126,20 +125,23 @@ public class OpenAIRunner : ILLMRunner
     enableAgentFlow
 );
 
-        if (!useHF)
-        {
-            _type = "TurboLLM";
-            _llmApi = new OpenAIApi(_logger, _mlParams,
-                                    toolsBuilder, _serviceID,
-                                    _responseProcessor, _openAiService);
-        }
-        else
-        {
-            _type = "HugLLM";
-            _llmApi = new HuggingFaceApi(_logger, _mlParams,
-                                         toolsBuilder, _serviceID,
-                                         _responseProcessor, _isStream);
-        }
+    _useHF = useHF;
+    _type  = _useHF ? "HugLLM" : "TurboLLM";
+    string llmProvider= _mlParams.LlmProvider.ToString();
+    if (useHF) llmProvider = "HuggingFace";
+
+            // Build the ILLMApi via the factory
+            var llmApiFactory = new LLMApiFactory();
+    _llmApi = llmApiFactory.CreateApi(
+        _logger,
+        _mlParams,
+        toolsBuilder,
+        _serviceID,
+        _responseProcessor,     
+        systemParams,
+        llmProvider,
+        openAiService     
+    );
         string accountType = "Free";
         if (!string.IsNullOrEmpty(serviceObj.UserInfo.AccountType)) accountType = serviceObj.UserInfo.AccountType;
         _maxTokens = AccountTypeFactory.GetAccountTypeByName(accountType).ContextSize;

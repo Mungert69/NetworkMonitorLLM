@@ -34,6 +34,8 @@ public interface ILLMResponseProcessor
     bool IsFunctionCallResponse(string input);
     bool IsManagedMultiFunc { get; set; }
     bool SendOutput { get; set; }
+    Task PublishAsync(string requestExchange, object obj, string routingKey);
+
 }
 
 public class LLMResponseProcessor : ILLMResponseProcessor
@@ -74,45 +76,45 @@ public class LLMResponseProcessor : ILLMResponseProcessor
         //return Task.CompletedTask;
     }
 
-   public async Task ProcessLLMOutputInChunks(LLMServiceObj serviceObj)
-{
-    const int batchSize = 3; // Number of chunks to send at once
-    const int maxBatchChars = 100; // Maximum characters per batch
-    const int baseDelay = 30; // Base delay in ms
-    const int delayPerChar = 2; // Additional delay per character
-    
-    char[] delimiters = { ' ', ',', '!', '?', '{', '}', '.', ':', '\n' };
-    var splitResult = StringUtils.SplitAndPreserveDelimiters(serviceObj.LlmMessage, delimiters);
-    
-    var buffer = new StringBuilder();
-    var batchCount = 0;
-
-    foreach (string chunk in splitResult)
+    public async Task ProcessLLMOutputInChunks(LLMServiceObj serviceObj)
     {
-        buffer.Append(chunk);
-        batchCount++;
+        const int batchSize = 3; // Number of chunks to send at once
+        const int maxBatchChars = 100; // Maximum characters per batch
+        const int baseDelay = 30; // Base delay in ms
+        const int delayPerChar = 2; // Additional delay per character
 
-        // Send batch when either condition is met
-        if (batchCount >= batchSize || buffer.Length >= maxBatchChars)
+        char[] delimiters = { ' ', ',', '!', '?', '{', '}', '.', ':', '\n' };
+        var splitResult = StringUtils.SplitAndPreserveDelimiters(serviceObj.LlmMessage, delimiters);
+
+        var buffer = new StringBuilder();
+        var batchCount = 0;
+
+        foreach (string chunk in splitResult)
+        {
+            buffer.Append(chunk);
+            batchCount++;
+
+            // Send batch when either condition is met
+            if (batchCount >= batchSize || buffer.Length >= maxBatchChars)
+            {
+                serviceObj.LlmMessage = buffer.ToString();
+                await ProcessLLMOutput(serviceObj);
+
+                // Dynamic delay based on content size
+                await Task.Delay(baseDelay + (buffer.Length * delayPerChar));
+
+                buffer.Clear();
+                batchCount = 0;
+            }
+        }
+
+        // Send remaining content
+        if (buffer.Length > 0)
         {
             serviceObj.LlmMessage = buffer.ToString();
             await ProcessLLMOutput(serviceObj);
-            
-            // Dynamic delay based on content size
-            await Task.Delay(baseDelay + (buffer.Length * delayPerChar));
-            
-            buffer.Clear();
-            batchCount = 0;
         }
     }
-
-    // Send remaining content
-    if (buffer.Length > 0)
-    {
-        serviceObj.LlmMessage = buffer.ToString();
-        await ProcessLLMOutput(serviceObj);
-    }
-}
 
 
 
@@ -160,12 +162,12 @@ public class LLMResponseProcessor : ILLMResponseProcessor
     }
 
     public static string GenerateFunctionCallId()
-{
-    // Generate a random numeric component
-    var random = new Random();
-    int randomNumber = random.Next(10000000, 99999999); // 8-digit number
-    return $"call_{randomNumber}";
-}
+    {
+        // Generate a random numeric component
+        var random = new Random();
+        int randomNumber = random.Next(10000000, 99999999); // 8-digit number
+        return $"call_{randomNumber}";
+    }
 
     public void MarkFunctionAsProcessed(LLMServiceObj serviceObj)
     {
@@ -239,4 +241,16 @@ public class LLMResponseProcessor : ILLMResponseProcessor
             return false;
         }
     }
+
+    public Task PublishAsync(string requestExchange, object obj, string routingKey)
+    { 
+        if (_rabbitRepo == null)
+        {
+            throw new InvalidOperationException("Rabbit repository is not initialized.");
+        }
+
+        return _rabbitRepo.PublishAsync(requestExchange, obj, routingKey: routingKey);
+
+    }
+
 }

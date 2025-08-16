@@ -1,15 +1,25 @@
-// OpenAIApiRabbitApi.cs
+using Betalgo.Ranul.OpenAI.Managers;
 using Betalgo.Ranul.OpenAI.ObjectModels.RequestModels;
-using Betalgo.Ranul.OpenAI.ObjectModels.ResponseModels;
+using Betalgo.Ranul.OpenAI.Tokenizer.GPT3;
 using Betalgo.Ranul.OpenAI.ObjectModels.SharedModels;
-using Microsoft.Extensions.Logging;
-using NetworkMonitor.LLM.Api; // your OpenAIApiRabbit transport
-using NetworkMonitor.LLM.Services;
-using NetworkMonitor.Objects;
-using NetworkMonitor.Objects.ServiceMessage;
-using NetworkMonitor.Utils;
-using NetworkMonitor.Utils.Helpers;
+using Betalgo.Ranul.OpenAI.ObjectModels.ResponseModels;
+using System;
+using System.IO;
+using System.Text;
+using System.Threading.Tasks;
+using System.Threading;
+using System.Diagnostics;
+using System.Linq;
 using System.Text.Json;
+using System.Collections.Generic;
+using System.Collections.Concurrent;
+using Microsoft.Extensions.Logging;
+using NetworkMonitor.Objects.ServiceMessage;
+using NetworkMonitor.Objects;
+using NetworkMonitor.Utils.Helpers;
+using NetworkMonitor.Objects.Factory;
+using NetworkMonitor.Utils;
+using Newtonsoft.Json;
 
 namespace NetworkMonitor.LLM.Services
 {
@@ -17,9 +27,9 @@ namespace NetworkMonitor.LLM.Services
     /// ILLMApi over RabbitMQ (OpenAI-compatible server).
     /// Matches OpenAIApi constructor shape; only the transport differs.
     /// </summary>
-    public sealed class OpenAIApiRabbitApi : ILLMApi, IDisposable
+    public sealed class OpenAIRabbitApi : ILLMApi, IDisposable
     {
-        private readonly OpenAIApiRabbit _mq;               // Rabbit transport
+        private readonly OpenAIRabbitTransport _mq;               // Rabbit transport
         private readonly IToolsBuilder _toolsBuilder;
         private readonly ILogger _logger;
         private readonly bool _isXml;
@@ -35,13 +45,13 @@ namespace NetworkMonitor.LLM.Services
         public LLMConfig Config => _config;
 
         // Keep same ctor “shape” as OpenAIApi, but last arg is the Rabbit transport
-        public OpenAIApiRabbitApi(
+        public OpenAIRabbitApi(
             ILogger logger,
             MLParams mlParams,
             IToolsBuilder toolsBuilder,
             string serviceID,
             ILLMResponseProcessor responseProcessor,
-            OpenAIApiRabbit rabbitTransport
+            OpenAIRabbitTransport rabbitTransport
         )
         {
             _logger = logger;
@@ -93,7 +103,14 @@ namespace NetworkMonitor.LLM.Services
         {
             try
             {
-                var req = BuildOpenAIChatRequest(messages, maxTokens, serviceObj, _toolsBuilder, _gptModel);
+                var req = BuildOpenAIChatRequest(
+     messages,
+     maxTokens,
+     serviceObj,
+     _toolsBuilder,
+     _gptModel,
+     _mlParams // <-- pass it
+ );
 
                 // Accumulate streaming chunks
                 var content = new System.Text.StringBuilder();
@@ -110,7 +127,7 @@ namespace NetworkMonitor.LLM.Services
                     if (je.RootElement.TryGetProperty("object", out var objEl) &&
                         objEl.GetString() == "chat.completion")
                     {
-                        var finalFromServer = JsonSerializer.Deserialize<ChatCompletionCreateResponse>(chunkJson);
+                        var finalFromServer = JsonConvert.DeserializeObject<ChatCompletionCreateResponse>(chunkJson);
                         if (finalFromServer != null)
                         {
                             // Optionally run XML transform
@@ -208,12 +225,15 @@ namespace NetworkMonitor.LLM.Services
 
         // ---------- helpers ----------
 
+        // OpenAIApiRabbit.cs
         private static object BuildOpenAIChatRequest(
             List<ChatMessage> messages,
             int maxTokens,
             LLMServiceObj svc,
             IToolsBuilder toolsBuilder,
-            string model)
+            string model,
+            MLParams mlParams // <-- add this
+        )
         {
             var msgWire = messages.Select(m => new Dictionary<string, object?>
             {
@@ -221,7 +241,6 @@ namespace NetworkMonitor.LLM.Services
                 ["content"] = m.Content
             }).ToList();
 
-            // Convert your Tools (if present) to OpenAI wire shape
             object? tools = null;
             if (toolsBuilder?.Tools is not null && toolsBuilder.Tools.Any())
             {
@@ -232,22 +251,24 @@ namespace NetworkMonitor.LLM.Services
                     {
                         name = t.Function?.Name,
                         description = t.Function?.Description,
-                        parameters = t.Function?.Parameters // already JSON schema in your stack
+                        parameters = t.Function?.Parameters
                     }
                 }).ToList();
             }
 
             return new
             {
-                model = svc?.Model ?? model,
+                model = string.IsNullOrWhiteSpace(model) ? "gpt-4o-mini" : model,
                 messages = msgWire,
-                temperature = svc?.Temperature ?? 0.2,
-                top_p = svc?.TopP ?? 1.0,
+                temperature = mlParams?.LlmTemperature ?? 0.2,
+                top_p = mlParams?.LlmTopP ?? 1.0,
                 max_tokens = maxTokens,
                 stream = true,
                 tools,
                 tool_choice = tools is null ? "none" : "auto"
+                // NOTE: reply_key is appended later by the transport
             };
         }
+
     }
 }
