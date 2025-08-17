@@ -56,7 +56,7 @@ namespace NetworkMonitor.LLM.Services
         {
             _logger = logger;
             _mlParams = mlParams;
-            _gptModel = mlParams.LlmGptModel;
+            _gptModel = mlParams.LlmSpaceModelID;
             _toolsBuilder = toolsBuilder;
             _serviceID = serviceID;
             _responseProcessor = responseProcessor;
