@@ -33,6 +33,7 @@ namespace NetworkMonitor.LLM.Services
         private readonly SystemUrl _sys;             // for ephemeral consumer connection
         private readonly string _routingKey;         // shard/tenant routing you already use
         private readonly ILogger _log;
+        private readonly string _replyExchange = "oa.reply"; // fixed reply exchange
 
         public OpenAIRabbitTransport(ILLMResponseProcessor responseProcessor, SystemUrl sys, string routingKey, ILogger log)
         {
