@@ -27,7 +27,7 @@ public class OpenAIApi : ILLMApi
 {
     private readonly OpenAIService _openAiService;
     private IToolsBuilder _toolsBuilder;
-    private string _gptModel = "gpt-4o-mini";
+    private string _gptModel = "gpt-5-mini";
     private ILogger _logger;
     private readonly bool _isXml;
     private readonly MLParams _mlParams;
