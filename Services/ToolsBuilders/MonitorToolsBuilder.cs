@@ -44,7 +44,7 @@ public class MonitorToolsBuilder : ToolsBuilderBase
         fn_get_host_data = MonitorTools.BuildGetHostDataFunction();
         fn_get_host_list = MonitorTools.BuildGetHostListFunction();
 
-        //fn_are_functions_running = CommonTools.BuildAreFunctionsRunning();
+        fn_are_functions_running = CommonTools.BuildAreFunctionsRunning();
         fn_cancel_functions = CommonTools.BuildCancelFunctions();
         fn_get_user_info = CommonTools.BuildGetUserInfoFunction();
         fn_get_agents = CommonTools.BuildGetAgentsFunction();
@@ -64,7 +64,7 @@ public class MonitorToolsBuilder : ToolsBuilderBase
         _tools = new List<ToolDefinition>()
         {
 
-            new ToolDefinition() { Function = fn_are_functions_running, Type = "function" },
+            //new ToolDefinition() { Function = fn_are_functions_running, Type = "function" },
             new ToolDefinition() { Function = fn_cancel_functions, Type = "function" },
             new ToolDefinition() { Function = fn_add_host, Type = "function" },
             new ToolDefinition() { Function = fn_edit_host, Type = "function" },
