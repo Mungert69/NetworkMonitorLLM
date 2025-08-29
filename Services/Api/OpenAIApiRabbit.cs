@@ -262,7 +262,7 @@ namespace NetworkMonitor.LLM.Services
                 messages = msgWire,
                 temperature = mlParams?.LlmTemperature ?? 0.2,
                 top_p = mlParams?.LlmTopP ?? 1.0,
-                max_completion_tokens = maxTokens,
+                max_tokens = maxTokens,
                 stream = true,
                 tools,
                 tool_choice = tools is null ? "none" : "auto"
