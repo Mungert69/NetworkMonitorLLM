@@ -25,7 +25,7 @@ namespace NetworkMonitor.LLM.Services
         private readonly FunctionDefinition fn_get_cmd_processor_source_code;
 
 
-        public CmdProcessorExpertToolsBuilder(UserInfo userInfo)
+        public CmdProcessorExpertToolsBuilder()
         {
             
             fn_get_cmd_processor_list = CmdProcessorTools.BuildListFunction();

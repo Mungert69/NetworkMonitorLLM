@@ -120,28 +120,27 @@ public class OpenAIRunner : ILLMRunner
 
         IToolsBuilder toolsBuilder = _toolsBuilderFactory.Create(
     toolsId,
-    serviceObj.UserInfo,
     serviceObj.JsonToolsBuilderSpec,
     enableAgentFlow
 );
 
-    _useHF = useHF;
-    _type  = _useHF ? "HugLLM" : "TurboLLM";
-    string llmProvider= _mlParams.LlmProvider.ToString();
-    if (useHF) llmProvider = "HuggingFace";
+        _useHF = useHF;
+        _type = _useHF ? "HugLLM" : "TurboLLM";
+        string llmProvider = _mlParams.LlmProvider.ToString();
+        if (useHF) llmProvider = "HuggingFace";
 
-            // Build the ILLMApi via the factory
-            var llmApiFactory = new LLMApiFactory();
-    _llmApi = llmApiFactory.CreateApi(
-        _logger,
-        _mlParams,
-        toolsBuilder,
-        _serviceID,
-        _responseProcessor,     
-        systemParams,
-        llmProvider,
-        openAiService     
-    );
+        // Build the ILLMApi via the factory
+        var llmApiFactory = new LLMApiFactory();
+        _llmApi = llmApiFactory.CreateApi(
+            _logger,
+            _mlParams,
+            toolsBuilder,
+            _serviceID,
+            _responseProcessor,
+            systemParams,
+            llmProvider,
+            openAiService
+        );
         string accountType = "Free";
         if (!string.IsNullOrEmpty(serviceObj.UserInfo.AccountType)) accountType = serviceObj.UserInfo.AccountType;
         _maxTokens = AccountTypeFactory.GetAccountTypeByName(accountType).ContextSize;
@@ -307,34 +306,15 @@ public class OpenAIRunner : ILLMRunner
                 isFuncMessage = false;
             }
 
-
-            var currentHistory = new List<ChatMessage>(_history.Concat(localHistory));
             TruncateTokens(_history, serviceObj);
+            var currentHistory = new List<ChatMessage>(_history.Concat(localHistory));
+
             var completionSuccessResult = await _llmApi.CreateCompletionAsync(currentHistory, _responseTokens, serviceObj);
             var completionResult = completionSuccessResult.Response;
             var completionSuccess = completionSuccessResult.Success;
 
             if (completionSuccess)
             {
-                int tokensUsed = completionResult.Usage.TotalTokens;
-
-                if (_useHF)
-                {
-
-                    tokensUsed = tokensUsed / 2;
-                    _logger.LogInformation($"TOKENS USED {tokensUsed} useHF is set to {_useHF} so Actual Tokens used {tokensUsed * 2}");
-                }
-                else
-                {
-                    _logger.LogInformation($"TOKENS USED {tokensUsed}");
-                }
-
-
-                if (!_useHF)
-                {
-                    responseServiceObj.TokensUsed = completionResult.Usage.TotalTokens;
-                }
-                if (completionResult.Usage != null && completionResult.Usage.PromptTokensDetails != null) _logger.LogInformation($"Cached Prompt Tokens {completionResult.Usage.PromptTokensDetails.CachedTokens}");
                 ChatChoiceResponse choice = completionResult.Choices.First();
                 if (choice.Message.ToolCalls != null && choice.Message.ToolCalls.Any())
                 {
@@ -345,6 +325,37 @@ public class OpenAIRunner : ILLMRunner
                     await ProcessAssistantMessageAsync(choice, responseServiceObj, assistantChatMessage, localHistory, _history, serviceObj);
                 }
 
+                int tokensUsed = completionResult.Usage.TotalTokens;
+                _logger.LogInformation($"TOKENS USED {tokensUsed}");
+                if (!_useHF)
+                {
+                    var usage = completionResult.Usage;
+                    int prompt = usage?.PromptTokens ?? 0;
+                    int completion = usage?.CompletionTokens ?? 0;
+                    int cached = usage?.PromptTokensDetails?.CachedTokens ?? 0;
+
+                    // Guards
+                    cached = Math.Min(cached, prompt);
+                    var d = Math.Clamp(_mlParams.PromptCacheDiscountFraction, 0m, 1m); // 0..1
+                    var k = _mlParams.CompletionCostMultiplier;
+                    if (k < 1m) k = 1m;
+
+                    // Billable prompt tokens = non-cached + discounted-cached
+                    decimal billedPrompt = (prompt - cached) + (cached * (1m - d));
+
+                    // Billable completion tokens = completion * multiplier
+                    decimal billedCompletion = completion * k;
+
+                    // Adjusted “cost-weighted tokens”
+                    int adjusted = (int)Math.Round(billedPrompt + billedCompletion, MidpointRounding.AwayFromZero);
+                    responseServiceObj.TokensUsed = adjusted;
+
+                    _logger.LogInformation(
+                      $"Usage raw: total={usage?.TotalTokens}, prompt={prompt}, completion={completion}, cached={cached}. " +
+                      $"Pricing: cacheDiscount={d:P0}, completionX={k}. " +
+                      $"Billed: prompt={billedPrompt}, completion={billedCompletion}, adjusted={adjusted}");
+
+                }
 
             }
             else
@@ -797,67 +808,66 @@ public class OpenAIRunner : ILLMRunner
 
     private void TruncateTokens(List<ChatMessage> history, LLMServiceObj serviceObj)
     {
-        if (history == null || history.Count == 0)
+        if (history == null || history.Count == 0) return;
+
+        // 1) How many head messages to keep intact?
+        int headCount = Math.Max(1, _llmApi.SystemPromptCount); // includes system + n-shot
+        if (history.Count <= headCount) return;
+
+        // 2) Split head and tail
+        var head = history.Take(headCount).ToList();          // pinned, stable
+        var tail = history.Skip(headCount).ToList();          // prune from here
+
+        // 3) Compute budgets
+        int headTokens = CalculateTokens(head);
+        int maxPrompt = _promptTokens;                        // full budget available to messages
+        int tailBudget = Math.Max(0, maxPrompt - headTokens); // how many tokens we can spend on tail
+
+        // 4) If tail already fits, early-out
+        int tailTokens = CalculateTokens(tail);
+        if (tailTokens <= tailBudget) return;
+
+        // 5) Trim from the OLDEST tail messages forward
+        //    while keeping tool-call integrity
+        //    (Remove in blocks and re-check token count each step)
+        while (tail.Count > 0 && tailTokens > tailBudget)
         {
-            _logger.LogWarning("Attempted to truncate an empty or null history list. No action taken.");
-            return;
-        }
-
-        int tokenCount = CalculateTokens(history);
-        _logger.LogInformation($"History Token count: {tokenCount}");
-
-        if (tokenCount > _promptTokens)
-        {
-            _logger.LogInformation($"Token count ({tokenCount}) exceeded the limit, truncating history.");
-
-            // Safely get the system message if available
-            ChatMessage? systemMessage = history.FirstOrDefault();
-            if (systemMessage == null)
+            // If the oldest is an assistant tool-call message, remove it + its tool responses
+            var first = tail[0];
+            if (first.ToolCalls != null && first.ToolCalls.Any())
             {
-                _logger.LogWarning("History missing system message! Truncation aborted.");
-                return;
+                // remove matching tool responses in the tail
+                var toolIds = first.ToolCalls.Where(tc => tc.Id != null).Select(tc => tc.Id!).ToHashSet();
+                tail.RemoveAt(0);
+                tail.RemoveAll(m => m.Role == "tool" && m.ToolCallId != null && toolIds.Contains(m.ToolCallId));
+            }
+            else
+            {
+                // If it's a tool message but its assistant caller isn't in tail/head anymore,
+                // just drop it (orphan cleanup)
+                if (first.Role == "tool")
+                {
+                    tail.RemoveAt(0);
+                }
+                else
+                {
+                    // Otherwise drop a single message (oldest)
+                    tail.RemoveAt(0);
+                }
             }
 
-            // Skip the system message for removals
-            var trimmedHistory = history.Skip(1).ToList();
+            // Also clean up any remaining orphan tool responses
+            RemoveOrphanToolResponses(serviceObj.SessionId, tail);
 
-            // Remove messages until the token count is under the limit
-            while (tokenCount > (_promptTokens - _systemPromptTokens))
-            {
-                if (trimmedHistory.Count == 0)
-                {
-                    _logger.LogWarning("History truncated to only the system message. Cannot remove more.");
-                    break;
-                }
-
-                var firstMessage = trimmedHistory[0];
-
-                if (firstMessage.ToolCalls != null && firstMessage.ToolCalls.Any())
-                {
-                    foreach (var toolCall in firstMessage.ToolCalls)
-                    {
-                        trimmedHistory.RemoveAll(m => m.ToolCallId == toolCall.Id);
-                    }
-                }
-
-                trimmedHistory.RemoveAt(0);
-
-                // Recalculate tokens after removal
-                tokenCount = CalculateTokens(trimmedHistory);
-            }
-
-            // Tidy up in case any tool calls have missing tool responses
-            RemoveUnansweredToolCalls(serviceObj.SessionId, trimmedHistory);
-            RemoveOrphanToolResponses(serviceObj.SessionId, trimmedHistory);
-
-            // Rebuild the full history list: system message + trimmed messages
-            history.Clear();
-            history.Add(systemMessage);
-            history.AddRange(trimmedHistory);
-
-            _logger.LogInformation($"History truncated to {tokenCount} tokens.");
+            tailTokens = CalculateTokens(tail);
         }
+
+        // 6) Rebuild history: head + trimmed tail
+        history.Clear();
+        history.AddRange(head);
+        history.AddRange(tail);
     }
+
     private int CalculateTokens(IEnumerable<ChatMessage> messages)
     {
         int tokenCount = 0;

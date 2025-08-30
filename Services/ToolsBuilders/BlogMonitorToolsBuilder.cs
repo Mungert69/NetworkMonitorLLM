@@ -15,7 +15,7 @@ using System.Net.Mime;
 namespace NetworkMonitor.LLM.Services;
 public class BlogMonitorToolsBuilder : MonitorToolsBuilder 
 {
-    public BlogMonitorToolsBuilder(UserInfo userInfo) : base(userInfo) {}
+    public BlogMonitorToolsBuilder() {}
 
     public override List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
 {

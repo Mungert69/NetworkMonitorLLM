@@ -16,7 +16,7 @@ namespace NetworkMonitor.LLM.Services
     {
 
         private readonly FunctionDefinition fn_call_monitor_sys;
-        public UserToolsBuilder(UserInfo userInfo)
+        public UserToolsBuilder()
         {
             // Define the call_monitor_sys function
             fn_call_monitor_sys = BuildCallMonitorLLMFunction();
