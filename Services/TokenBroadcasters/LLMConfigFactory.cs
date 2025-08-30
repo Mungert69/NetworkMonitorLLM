@@ -397,7 +397,10 @@ If no tool is suitable, state that explicitly. If the user's input lacks require
                 FunctionBuilder = "{1}",
                 FunctionResponse = "{1}",
                 FunctionDefsWrap = "{0}",
-                PromptFooter = ""
+                PromptFooter = "",
+                 CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
+                        new TokenBroadcasterBase(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
+       
             },
 
 
