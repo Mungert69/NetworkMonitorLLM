@@ -35,7 +35,7 @@ public static class CmdProcessorFunctionExposer
             }
         }
 
-        // merge explicit Required list from spec
+        // Merge explicit Required list from spec
         if (spec.Required != null)
         {
             foreach (var req in spec.Required)
@@ -60,7 +60,7 @@ public static class CmdProcessorFunctionExposer
         return fd;
     }
 
-    private static bool IsParameterRequired(CmdProcessorParamSpec p)
+    private static bool IsParameterRequired(CmdProcessorFunctionParameter p)
     {
         if (p.Required)
             return true;
