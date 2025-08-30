@@ -78,9 +78,9 @@ public class MonitorToolsBuilder : ToolsBuilderBase
         };
         if (enableAgentFlow)
         {
-            _tools.Add(new ToolDefinition() { Function = fn_call_security_basic_flow, Type = "function" });
-            _tools.Add(new ToolDefinition() { Function = fn_call_penetration_flow, Type = "function" });
-            _tools.Add(new ToolDefinition() { Function = fn_call_cmd_processor_builder_flow, Type = "function" });
+            //_tools.Add(new ToolDefinition() { Function = fn_call_security_basic_flow, Type = "function" });
+            //_tools.Add(new ToolDefinition() { Function = fn_call_penetration_flow, Type = "function" });
+            //_tools.Add(new ToolDefinition() { Function = fn_call_cmd_processor_builder_flow, Type = "function" });
 
         }
         else

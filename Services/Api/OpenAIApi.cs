@@ -34,24 +34,28 @@ public class OpenAIApi : ILLMApi
     private readonly LLMConfig _config;
     private readonly string _modelVersion;
     private string _serviceID;
-       private ILLMResponseProcessor _responseProcessor;
-          private int _systemPromptCount;
+    private ILLMResponseProcessor _responseProcessor;
+    private int _systemPromptCount;
 
     public int SystemPromptCount { get => _systemPromptCount; }
 
     public LLMConfig Config => _config;
 
-    public OpenAIApi(ILogger logger, MLParams mlParams, IToolsBuilder toolsBuilder, string serviceID,ILLMResponseProcessor responseProcessor, OpenAIService openAiService)
+    public OpenAIApi(ILogger logger, MLParams mlParams, IToolsBuilder toolsBuilder, string serviceID, ILLMResponseProcessor responseProcessor, OpenAIService openAiService)
     {
         _mlParams = mlParams;
         _gptModel = mlParams.LlmGptModel;
         _serviceID = serviceID;
-        _responseProcessor=responseProcessor;
+        _responseProcessor = responseProcessor;
         _logger = logger;
         _openAiService = openAiService;
         _toolsBuilder = toolsBuilder;
         _modelVersion = mlParams.LlmHFModelVersion;
         _isXml = _mlParams.XmlFunctionParsing;
+        if (_gptModel.Contains("gpt"))
+        {
+            _modelVersion = "gpt";
+        }
         _config = LLMConfigFactory.GetConfig(_modelVersion);
 
     }
@@ -69,48 +73,50 @@ public class OpenAIApi : ILLMApi
         if (_mlParams.XmlFunctionParsing) return Config.XmlPromptFooter;
         else return "";
     }
-    public List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, bool noThink=false)
+    public List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, bool noThink = false)
     {
         string footer = PromptFooter();
-        var systemMessages = _toolsBuilder.GetSystemPrompt(currentTime, serviceObj, "TurboLLM") ?? new List<ChatMessage>() {ChatMessage.FromSystem("")};
-         _systemPromptCount=systemMessages.Count;
+        var systemMessages = _toolsBuilder.GetSystemPrompt(currentTime, serviceObj, "TurboLLM") ?? new List<ChatMessage>() { ChatMessage.FromSystem("") };
+        _systemPromptCount = systemMessages.Count;
         systemMessages[0].Content = systemMessages[0].Content + footer;
 
         systemMessages.AddRange(NShotPromptFactory.GetPrompt(_serviceID, _mlParams.XmlFunctionParsing, currentTime, serviceObj, Config));
-         _systemPromptCount=systemMessages.Count;
+        _systemPromptCount = systemMessages.Count;
         return systemMessages;
 
     }
 
-     public string  GetFunctionNamesAsString(string separator = ", "){
+    public string GetFunctionNamesAsString(string separator = ", ")
+    {
         return _toolsBuilder.GetFunctionNamesAsString();
     }
-      public List<ChatMessage> GetResumeSystemPrompt(string currentTime, LLMServiceObj serviceObj)
+    public List<ChatMessage> GetResumeSystemPrompt(string currentTime, LLMServiceObj serviceObj)
     {
         var resumeSystemMessages = _toolsBuilder.GetResumeSystemPrompt(currentTime, serviceObj, "TurboLLM");
-       
+
         return resumeSystemMessages;
 
     }
 
-    public async Task<ChatCompletionCreateResponseSuccess> CreateCompletionAsync(List<ChatMessage> messages, int maxTokens,LLMServiceObj serviceObj)
+    public async Task<ChatCompletionCreateResponseSuccess> CreateCompletionAsync(List<ChatMessage> messages, int maxTokens, LLMServiceObj serviceObj)
     {
         try
         {
-             //  string payloadJson = JsonConvert.SerializeObject(messages, Formatting.Indented);
-             //_logger.LogInformation($"{payloadJson}");
-          
-            var chatResponse = await _openAiService.ChatCompletion.CreateCompletion(new ChatCompletionCreateRequest
+            _logger.LogInformation(JsonConvert.SerializeObject(_toolsBuilder.Tools, Formatting.Indented));
+
+            //  string payloadJson = JsonConvert.SerializeObject(messages, Formatting.Indented);
+            //_logger.LogInformation($"{payloadJson}");
+            var chatCompletionCreateRequest = new ChatCompletionCreateRequest
             {
                 Messages = messages,
-                MaxTokens = maxTokens,
+                MaxCompletionTokens = maxTokens,
                 Model = _gptModel,
-                Tools = _toolsBuilder.Tools,
-                ToolChoice = _toolsBuilder.Tools != null ? ToolChoice.Auto : ToolChoice.None
-            });
+                Tools = _toolsBuilder.Tools
+            };
+            var chatResponse = await _openAiService.ChatCompletion.CreateCompletion(chatCompletionCreateRequest);
             if (_isXml)
             {
-                var chatResponseBuilder = new ChatResponseBuilder(_responseProcessor,Config, _isXml, _logger);
+                var chatResponseBuilder = new ChatResponseBuilder(_responseProcessor, Config, _isXml, _logger);
                 chatResponse = chatResponseBuilder.BuildResponseFromOpenAI(chatResponse);
             }
             return new ChatCompletionCreateResponseSuccess() { Success = chatResponse.Successful, Response = chatResponse };
@@ -148,5 +154,5 @@ public class OpenAIApi : ILLMApi
         }
 
     }
-    
+
 }
