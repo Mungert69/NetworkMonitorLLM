@@ -383,6 +383,24 @@ If no tool is suitable, state that explicitly. If the user's input lacks require
                         new TokenBroadcasterGemma_3(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
             },
 
+            "gpt" => new LLMConfig
+            {
+                UserReplace = "",
+                FunctionReplace = "",
+                AssistantHeader = "",
+                UserInputTemplate = "{0}",
+                AssistantMessageTemplate = "{0}",
+                SystemMessageTemplate = "{0}",
+                EOTToken = "",
+                FunctionResponseTemplate = "{1}",
+
+                FunctionBuilder = "{1}",
+                FunctionResponse = "{1}",
+                FunctionDefsWrap = "{0}",
+                PromptFooter = ""
+            },
+
+
             // Configuration for standard
             _ => new LLMConfig
             {

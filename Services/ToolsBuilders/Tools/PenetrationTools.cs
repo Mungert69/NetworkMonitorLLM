@@ -16,81 +16,172 @@ namespace NetworkMonitor.LLM.Services;
 
 public class PenetrationTools
 {
-
     public static FunctionDefinition BuildRunMetasploitFunction()
     {
-        return new FunctionDefinitionBuilder("run_metasploit",
-            "Executes a Metasploit module with parameter validation. Structure requests as: " +
-            "1. First search modules with search_metasploit_modules " +
-            "2. Get module details with get_metasploit_module_info " +
-            "3. Execute with required parameters. " +
-            "Example: To exploit EternalBlue: {'module_name':'exploit/windows/smb/ms17_010_eternalblue','target':'192.168.1.5','module_options':{'RHOSTS':'192.168.1.5','LHOST':'10.0.0.1'}}")
-        .AddParameter("module_name", PropertyDefinition.DefineString(
-            "[REQUIRED] Full module path from search results. Example: 'exploit/windows/smb/ms17_010_eternalblue'"))
-        .AddParameter("module_options", PropertyDefinition.DefineString(
-            "JSON object with Metasploit module options. Must include 'RHOSTS'. " +
-            "Example: { \"RHOSTS\": \"192.168.1.5\", \"LHOST\": \"10.0.0.1\", \"PAYLOAD\": \"windows/meterpreter/reverse_tcp\" }"))
-        .AddParameter("target", PropertyDefinition.DefineString(
-            "[REQUIRED] IP/Domain/CIDR range. Validate format first. Example: '192.168.1.0/24'"))
-        .AddParameter("agent_location", PropertyDefinition.DefineString(
-            "Predefined agent locations. Default: auto-assign based on target geoIP"))
-        .AddParameter("number_lines", PropertyDefinition.DefineInteger(
-            "Output lines to return. Default: 20. Max: 100."))
-        .AddParameter("page", PropertyDefinition.DefineInteger(
-            "Pagination for large outputs. Start with 1. Increment if 'truncated' flag is set."))
-        .Validate()
-        .Build();
+        return new FunctionDefinition
+        {
+            Name = "run_metasploit",
+            Description = "Executes a Metasploit module with parameter validation. Structure requests as: " +
+                          "1. First search modules with search_metasploit_modules " +
+                          "2. Get module details with get_metasploit_module_info " +
+                          "3. Execute with required parameters. " +
+                          "Example: To exploit EternalBlue: {'module_name':'exploit/windows/smb/ms17_010_eternalblue','target':'192.168.1.5','module_options':{'RHOSTS':'192.168.1.5','LHOST':'10.0.0.1'}}",
+            Parameters = new PropertyDefinition
+            {
+                Type = "object",
+                Properties = new Dictionary<string, PropertyDefinition>
+                {
+                    ["module_name"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "[REQUIRED] Full module path from search results. Example: 'exploit/windows/smb/ms17_010_eternalblue'"
+                    },
+                    ["module_options"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "JSON object with Metasploit module options. Must include 'RHOSTS'. " +
+                                      "Example: { \"RHOSTS\": \"192.168.1.5\", \"LHOST\": \"10.0.0.1\", \"PAYLOAD\": \"windows/meterpreter/reverse_tcp\" }"
+                    },
+                    ["target"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "[REQUIRED] IP/Domain/CIDR range. Validate format first. Example: '192.168.1.0/24'"
+                    },
+                    ["agent_location"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Predefined agent locations. Default: auto-assign based on target geoIP"
+                    },
+                    ["number_lines"] = new PropertyDefinition
+                    {
+                        Type = "integer",
+                        Description = "Output lines to return. Default: 20. Max: 100."
+                    },
+                    ["page"] = new PropertyDefinition
+                    {
+                        Type = "integer",
+                        Description = "Pagination for large outputs. Start with 1. Increment if 'truncated' flag is set."
+                    }
+                },
+                Required = new List<string> { "module_name", "target" }
+            }
+        };
     }
+
     public static FunctionDefinition BuildSearchMetasploitFunction()
     {
-        return new FunctionDefinitionBuilder("search_metasploit_modules",
-            "Search modules with filters. Always start penetration tests with this to find appropriate modules. " +
-            "Example: Find Windows SMB exploits: {'module_type':'exploit','platform':'windows','service':'smb'}")
-            .AddParameter("module_type", PropertyDefinition.DefineEnum(
-                new List<string> { "exploit", "auxiliary", "post" },
-                "Category filter. Multiple allowed with commas. Example: 'exploit,auxiliary'"))
-            .AddParameter("platform", PropertyDefinition.DefineString(
-                "OS filter. Use 'multi' for cross-platform"))
-            .AddParameter("service", PropertyDefinition.DefineString(
-                "Affected service filter"))
-            .AddParameter("cve", PropertyDefinition.DefineString(
-                "CVE ID with validation. Format: CVE-YYYY-NNNNN. Example: CVE-2017-0144"))
-            .AddParameter("edb", PropertyDefinition.DefineString(
-                "Exploit-DB ID. Must be numeric. Example: 42315"))
-            .AddParameter("rank", PropertyDefinition.DefineEnum(
-                new List<string> { "excellent", "great", "good", "average" },
-                "Minimum reliability rating. Default: 'good'"))
-            .AddParameter("keywords", PropertyDefinition.DefineString(
-                "Space-separated search terms. Example: 'exchange privilege escalation'"))
-            .AddParameter("number_lines", PropertyDefinition.DefineInteger(
-                "Results per page. Default: 10. Max: 50."))
-            .AddParameter("page", PropertyDefinition.DefineInteger(
-                "Pagination control. Start with 1. Increment if 'more_results'=true"))
-                .AddParameter("agent_location", PropertyDefinition.DefineString(
-            "Predefined agent locations. Default: auto-assign based on target geoIP"))
-            .Validate()
-            .Build();
+        return new FunctionDefinition
+        {
+            Name = "search_metasploit_modules",
+            Description = "Search modules with filters. Always start penetration tests with this to find appropriate modules. " +
+                          "Example: Find Windows SMB exploits: {'module_type':'exploit','platform':'windows','service':'smb'}",
+            Parameters = new PropertyDefinition
+            {
+                Type = "object",
+                Properties = new Dictionary<string, PropertyDefinition>
+                {
+                    ["module_type"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Category filter. Multiple allowed with commas. Example: 'exploit,auxiliary'"
+                    },
+                    ["platform"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "OS filter. Use 'multi' for cross-platform"
+                    },
+                    ["service"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Affected service filter"
+                    },
+                    ["cve"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "CVE ID with validation. Format: CVE-YYYY-NNNNN. Example: CVE-2017-0144"
+                    },
+                    ["edb"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Exploit-DB ID. Must be numeric. Example: 42315"
+                    },
+                    ["rank"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Minimum reliability rating. Default: 'good'"
+                    },
+                    ["keywords"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Space-separated search terms. Example: 'exchange privilege escalation'"
+                    },
+                    ["number_lines"] = new PropertyDefinition
+                    {
+                        Type = "integer",
+                        Description = "Results per page. Default: 10. Max: 50."
+                    },
+                    ["page"] = new PropertyDefinition
+                    {
+                        Type = "integer",
+                        Description = "Pagination control. Start with 1. Increment if 'more_results'=true"
+                    },
+                    ["agent_location"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Predefined agent locations. Default: auto-assign based on target geoIP"
+                    }
+                },
+                Required = new List<string> { "keywords" }
+            }
+        };
     }
 
     public static FunctionDefinition BuildMetasploitModuleInfoFunction()
     {
-        return new FunctionDefinitionBuilder("get_metasploit_module_info",
-            "Get module requirements BEFORE execution. Required step between search and run. " +
-            "Example: {'module_name':'exploit/windows/smb/ms17_010_eternalblue'}")
-            .AddParameter("module_name", PropertyDefinition.DefineString(
-                "[REQUIRED] Exact module path from search results. Case-sensitive."))
-            .AddParameter("show_options", PropertyDefinition.DefineBoolean(
-                "Include full parameter details. Default: true"))
-            .AddParameter("show_examples", PropertyDefinition.DefineBoolean(
-                "Include usage examples. Default: true"))
-                .AddParameter("agent_location", PropertyDefinition.DefineString(
-            "Predefined agent locations. Default: auto-assign based on target geoIP"))
-            .AddParameter("number_lines", PropertyDefinition.DefineInteger(
-            "Output lines to return. Default: 20. Max: 100."))
-            .AddParameter("page", PropertyDefinition.DefineInteger(
-            "Pagination for large outputs. Start with 1. Increment if 'truncated' flag is set."))
-            .Validate()
-            .Build();
+        return new FunctionDefinition
+        {
+            Name = "get_metasploit_module_info",
+            Description = "Get module requirements BEFORE execution. Required step between search and run. " +
+                          "Example: {'module_name':'exploit/windows/smb/ms17_010_eternalblue'}",
+            Parameters = new PropertyDefinition
+            {
+                Type = "object",
+                Properties = new Dictionary<string, PropertyDefinition>
+                {
+                    ["module_name"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "[REQUIRED] Exact module path from search results. Case-sensitive."
+                    },
+                    ["show_options"] = new PropertyDefinition
+                    {
+                        Type = "boolean",
+                        Description = "Include full parameter details. Default: true"
+                    },
+                    ["show_examples"] = new PropertyDefinition
+                    {
+                        Type = "boolean",
+                        Description = "Include usage examples. Default: true"
+                    },
+                    ["agent_location"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Predefined agent locations. Default: auto-assign based on target geoIP"
+                    },
+                    ["number_lines"] = new PropertyDefinition
+                    {
+                        Type = "integer",
+                        Description = "Output lines to return. Default: 20. Max: 100."
+                    },
+                    ["page"] = new PropertyDefinition
+                    {
+                        Type = "integer",
+                        Description = "Pagination for large outputs. Start with 1. Increment if 'truncated' flag is set."
+                    }
+                },
+                Required = new List<string> { "module_name" }
+            }
+        };
     }
 
     public static FunctionDefinition BuildPentestSecurityBooksQueryFunction()
@@ -131,23 +222,33 @@ Examples:
 Use this function whenever you need information from the local security knowledge base to interpret, justify, or act upon results from penetration testing tools.
 ";
 
-        return new FunctionDefinitionBuilder(
-                name: "execute_query_penetration",
-                description: description)
-            .AddParameter(
-                "query_text",
-                PropertyDefinition.DefineString(
-                    "The search query or question. This will be embedded and used for the vector search against the selected embedding field."))
-            .AddParameter(
-                "index_name",
-                PropertyDefinition.DefineString(
-                    "Must be 'securitybooks'. This index contains curated security books and references to support penetration testing workflows and Metasploit usage."))
-            .AddParameter(
-                "vector_search_mode",
-                PropertyDefinition.DefineString(
-                    "Optional. Determines which embedding field to use for the vector search: 'content', 'question', or 'summary'. Defaults to 'content'."))
-            .Validate()
-            .Build();
+        return new FunctionDefinition
+        {
+            Name = "execute_query_penetration",
+            Description = description,
+            Parameters = new PropertyDefinition
+            {
+                Type = "object",
+                Properties = new Dictionary<string, PropertyDefinition>
+                {
+                    ["query_text"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "The search query or question. This will be embedded and used for the vector search against the selected embedding field."
+                    },
+                    ["index_name"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Must be 'securitybooks'. This index contains curated security books and references to support penetration testing workflows and Metasploit usage."
+                    },
+                    ["vector_search_mode"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Optional. Determines which embedding field to use for the vector search: 'content', 'question', or 'summary'. Defaults to 'content'."
+                    }
+                },
+                Required = new List<string> { "query_text", "index_name","vector_search_mode" }
+            }
+        };
     }
-
 }

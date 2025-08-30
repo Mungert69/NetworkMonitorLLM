@@ -11,6 +11,7 @@ using Betalgo.Ranul.OpenAI.ObjectModels.SharedModels;
 using System;
 using System.Collections.Generic;
 using System.Net.Mime;
+
 namespace NetworkMonitor.LLM.Services;
 
 public static class QueryTools
@@ -41,24 +42,34 @@ Examples:
 Use this function whenever you need information from the local knowledge base.
 ";
 
-        return new FunctionDefinitionBuilder(
-                name: "execute_query",
-                description: description)
-            .AddParameter(
-                "query_text",
-                PropertyDefinition.DefineString(
-                    "The search query or question. This will be embedded and used for the vector search against the selected embedding field."))
-            .AddParameter(
-                "index_name",
-                PropertyDefinition.DefineString(
-                    "The name of the index to search. This determines which knowledge base or document set is queried. " +
-                    "Examples: Use 'documents' to search general FAQs and user help, 'mitre' to search the MITRE ATT&CK document set, or 'securitybooks' for a selection of security books."))
-            .AddParameter(
-                "vector_search_mode",
-                PropertyDefinition.DefineString(
-                    "Optional. Determines which embedding field to use for the vector search: 'content', 'question', or 'summary'. Defaults to 'content'."))
-            .Validate()
-            .Build();
+        return new FunctionDefinition
+        {
+            Name = "execute_query",
+            Description = description,
+            Parameters = new PropertyDefinition
+            {
+                Type = "object",
+                Properties = new Dictionary<string, PropertyDefinition>
+                {
+                    ["query_text"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "The search query or question. This will be embedded and used for the vector search against the selected embedding field."
+                    },
+                    ["index_name"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "The name of the index to search. This determines which knowledge base or document set is queried. " +
+                                      "Examples: Use 'documents' to search general FAQs and user help, 'mitre' to search the MITRE ATT&CK document set, or 'securitybooks' for a selection of security books."
+                    },
+                    ["vector_search_mode"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Determines which embedding field to use for the vector search: 'content', 'question', or 'summary'. Defaults to 'content'."
+                    }
+                },
+                Required = new List<string> { "query_text", "index_name","vector_search_mode" }
+            }
+        };
     }
-
 }
