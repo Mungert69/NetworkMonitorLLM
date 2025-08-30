@@ -7,6 +7,8 @@ using Betalgo.Ranul.OpenAI.ObjectModels;
 using Betalgo.Ranul.OpenAI.ObjectModels.RequestModels;
 using Betalgo.Ranul.OpenAI.ObjectModels.SharedModels;
 using System;
+using System.Collections.Generic;
+
 namespace NetworkMonitor.LLM.Services;
 
 public static class CmdProcessorFunctionExposer
@@ -18,15 +20,58 @@ public static class CmdProcessorFunctionExposer
         var doc = spec.Description ?? $"Run the '{spec.Name}' cmd processor on a specified agent.";
 
         var builder = new FunctionDefinitionBuilder(functionName, doc);
+        var requiredParams = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         if (spec.Parameters != null)
         {
             foreach (var p in spec.Parameters)
+            {
                 builder.AddParameter(p.Name, MapTypeToPropertyDef(p.Type, p.Description));
+
+                if (IsParameterRequired(p))
+                {
+                    requiredParams.Add(p.Name);
+                }
+            }
         }
 
-        return builder.Validate().Build();
+        // merge explicit Required list from spec
+        if (spec.Required != null)
+        {
+            foreach (var req in spec.Required)
+            {
+                if (!string.IsNullOrWhiteSpace(req))
+                    requiredParams.Add(req);
+            }
+        }
+
+        var fd = builder.Validate().Build();
+
+        // Ensure schema type is "object"
+        if (fd.Parameters != null)
+        {
+            if (string.IsNullOrEmpty(fd.Parameters.Type))
+                fd.Parameters.Type = "object";
+
+            if (requiredParams.Count > 0)
+                fd.Parameters.Required = new List<string>(requiredParams);
+        }
+
+        return fd;
     }
+
+    private static bool IsParameterRequired(CmdProcessorParamSpec p)
+    {
+        if (p.Required)
+            return true;
+
+        if (!string.IsNullOrEmpty(p.Description) &&
+            p.Description.Contains("[REQUIRED]", StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        return false;
+    }
+
     private static PropertyDefinition MapTypeToPropertyDef(string type, string? description)
     {
         switch (type.ToLowerInvariant())
@@ -43,11 +88,8 @@ public static class CmdProcessorFunctionExposer
             case "float":
             case "double":
                 return PropertyDefinition.DefineNumber(description ?? "");
-            // Add more types if your LLM tool supports them
             default:
                 throw new ArgumentException($"Unknown parameter type '{type}'");
         }
     }
-
-
 }
