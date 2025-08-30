@@ -36,6 +36,7 @@ public class OpenAIApi : ILLMApi
     private string _serviceID;
     private ILLMResponseProcessor _responseProcessor;
     private int _systemPromptCount;
+    private readonly IList<ToolDefinition> _stableTools;
 
     public int SystemPromptCount { get => _systemPromptCount; }
 
@@ -57,6 +58,8 @@ public class OpenAIApi : ILLMApi
             _modelVersion = "gpt";
         }
         _config = LLMConfigFactory.GetConfig(_modelVersion);
+        _stableTools = toolsBuilder.Tools.OrderBy(t => t.Function?.Name).ToList();
+
 
     }
 
@@ -98,20 +101,21 @@ public class OpenAIApi : ILLMApi
 
     }
 
-    public async Task<ChatCompletionCreateResponseSuccess> CreateCompletionAsync(List<ChatMessage> messages, int maxTokens, LLMServiceObj serviceObj)
+    public async Task<ChatCompletionCreateResponseSuccess> CreateCompletionAsync(List<ChatMessage> messages, int maxCompletionTokens, LLMServiceObj serviceObj)
     {
         try
         {
             //_logger.LogInformation(JsonConvert.SerializeObject(_toolsBuilder.Tools, Formatting.Indented));
+            _logger.LogInformation($"TOOLS_SHA256={HashHelper.ComputeSha256Hash(JsonConvert.SerializeObject(_stableTools))}");
 
             //  string payloadJson = JsonConvert.SerializeObject(messages, Formatting.Indented);
             //_logger.LogInformation($"{payloadJson}");
             var chatCompletionCreateRequest = new ChatCompletionCreateRequest
             {
                 Messages = messages,
-                MaxCompletionTokens = maxTokens,
+                MaxCompletionTokens = maxCompletionTokens,
                 Model = _gptModel,
-                Tools = _toolsBuilder.Tools
+                Tools = _stableTools
             };
             var chatResponse = await _openAiService.ChatCompletion.CreateCompletion(chatCompletionCreateRequest);
             if (_isXml)

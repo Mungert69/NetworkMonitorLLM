@@ -36,7 +36,7 @@ public class MonitorToolsBuilder : ToolsBuilderBase
 
     private readonly FunctionDefinition fn_execute_query;
 
-    public MonitorToolsBuilder(UserInfo userInfo, bool enableAgentFlow = false)
+    public MonitorToolsBuilder( bool enableAgentFlow = false)
     {
 
         fn_add_host = MonitorTools.BuildAddHostFunction();

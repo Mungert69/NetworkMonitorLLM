@@ -1,7 +1,7 @@
 // -------------------------------------------------------------------------
 // File: FunctionDefinitionRegistry.cs
 // -------------------------------------------------------------------------
-using System.Reflection;
+
 using Betalgo.Ranul.OpenAI.ObjectModels.RequestModels;
 using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
@@ -83,7 +83,9 @@ public class FunctionDefinitionRegistry : IFunctionDefinitionRegistry
             {
                 id = fd.Name,
                 description = fd.Description,
-                parameters = string.Join(",", fd.Parameters.Properties.Select(kvp => kvp.Key))
+                parameters = fd.Parameters?.Properties != null
+                    ? string.Join(",", fd.Parameters.Properties.Select(kvp => kvp.Key))
+                    : string.Empty
             })
         };
 
@@ -99,7 +101,7 @@ public class FunctionDefinitionRegistry : IFunctionDefinitionRegistry
 
         var reply = new FunctionRegistryReply
         {
-            CatalogJson = json,
+            CatalogJson = json ?? string.Empty,
             Success = !string.IsNullOrEmpty(json),
             Message = !string.IsNullOrEmpty(json)
                             ? "Function catalog generated"
@@ -107,7 +109,7 @@ public class FunctionDefinitionRegistry : IFunctionDefinitionRegistry
         };
         _rabbitRepo.PublishAsync("functionRegistryReply", reply);
 
-        return json;
+        return json ?? string.Empty;
     }
 
     public string GetFunctionCatalogFullJson(bool pretty = true)
@@ -118,12 +120,14 @@ public class FunctionDefinitionRegistry : IFunctionDefinitionRegistry
             {
                 id = fd.Name,
                 description = fd.Description,
-                parameters = fd.Parameters.Properties.Select(kvp => new
-                {
-                    name = kvp.Key,
-                    type = kvp.Value.Type.ToString().ToLower(),         // string | integer | boolean | object | array
-                    description = kvp.Value.Description
-                })
+                parameters = fd.Parameters?.Properties != null
+                    ? fd.Parameters.Properties.Select(kvp => new
+                        {
+                            name = kvp.Key,
+                            type = kvp.Value.Type.ToString().ToLower(),         // string | integer | boolean | object | array
+                            description = kvp.Value.Description
+                        })
+                    : Enumerable.Empty<object>()
             })
         };
 
@@ -182,7 +186,7 @@ public class FunctionDefinitionRegistry : IFunctionDefinitionRegistry
 
         var reply = new FunctionRegistryReply
         {
-            CatalogJson = json,
+            CatalogJson = json ?? string.Empty,
             Success = !string.IsNullOrEmpty(json),
             Message = !string.IsNullOrEmpty(json)
                             ? "Filtered function catalog generated"
@@ -190,7 +194,7 @@ public class FunctionDefinitionRegistry : IFunctionDefinitionRegistry
         };
         _rabbitRepo.PublishAsync("functionRegistryReply", reply);
 
-        return json;
+        return json ?? string.Empty;
     }
 
 
