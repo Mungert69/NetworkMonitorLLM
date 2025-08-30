@@ -102,7 +102,7 @@ public class OpenAIApi : ILLMApi
     {
         try
         {
-            _logger.LogInformation(JsonConvert.SerializeObject(_toolsBuilder.Tools, Formatting.Indented));
+            //_logger.LogInformation(JsonConvert.SerializeObject(_toolsBuilder.Tools, Formatting.Indented));
 
             //  string payloadJson = JsonConvert.SerializeObject(messages, Formatting.Indented);
             //_logger.LogInformation($"{payloadJson}");
