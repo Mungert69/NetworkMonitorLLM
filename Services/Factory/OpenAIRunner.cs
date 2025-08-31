@@ -641,12 +641,12 @@ public class OpenAIRunner : ILLMRunner
         {
             _recentFunctionCalls.Dequeue(); // Maintain queue size
         }
-         if (++_funcsInARow >= _mlParams.MaxFunctionCallsInARow)
+        if (++_funcsInARow >= _mlParams.MaxFunctionCallsInARow)
         {
-             _logger.LogWarning($"Possible loop detected when calling functions without user feedback");
+            _logger.LogWarning($"Possible loop detected when calling functions without user feedback");
             var duplicateMessage = ChatMessage.FromSystem(
                 $"You have called {_funcsInARow} functions in a row without giving the user any feedback. Take a summary of what you have been doing and give the user feedback before continuing. If the user wants to continue that is ok. Just check first.");
-          localHistory.Add(duplicateMessage);
+            localHistory.Add(duplicateMessage);
             _funcsInARow = 0;
         }
         return;
