@@ -93,7 +93,6 @@ public class OpenAIRunner : ILLMRunner
 
     private readonly Queue<(string? FunctionName, string? ArgumentsJson)> _recentFunctionCalls = new Queue<(string?, string?)>();
     private const int MaxRecentFunctionCalls = 5;
-    private const int MaxFunctionCallsInARow = 10;
     private int _funcsInARow = 0;
 
     private readonly IQueryCoordinator _queryCoordinator;
@@ -379,17 +378,32 @@ public class OpenAIRunner : ILLMRunner
             }
 
         }
-        catch
+        catch (OperationCanceledException oce)
         {
-            throw;
+            _logger.LogWarning(oce, "Request cancelled for MessageID {MessageID}", serviceObj.MessageID);
+            await NotifyUserErrorAsync(serviceObj,
+                "That request was cancelled before it completed.", oce, detailed: false);
+        }
+        catch (TimeoutException te)
+        {
+            _logger.LogError(te, "Timeout in SendInputAndGetResponse for MessageID {MessageID}", serviceObj.MessageID);
+            await NotifyUserErrorAsync(serviceObj,
+                "Sorry — the request timed out. Please try again or shorten your last message.", te, detailed: false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unhandled exception in SendInputAndGetResponse for MessageID {MessageID}", serviceObj.MessageID);
+            await NotifyUserErrorAsync(serviceObj,
+                "I hit an unexpected error and stopped this request. The issue was logged, and you can continue with a new message.",
+                ex, detailed: false /* or _mlParams.ExposeInternalErrors */);
         }
         finally
         {
-            _openAIRunnerSemaphore.Release(); // Release the semaphore
+            try { _openAIRunnerSemaphore.Release(); } catch { /* best effort */ }
             _isStateReady = true;
-            LoadChanged?.Invoke(-1, _type); // Increment load for this _type
-
+            LoadChanged?.Invoke(-1, _type);
         }
+
     }
 
     private List<ChatMessage> HandleFunctionCallStatus(LLMServiceObj serviceObj)
@@ -627,13 +641,12 @@ public class OpenAIRunner : ILLMRunner
         {
             _recentFunctionCalls.Dequeue(); // Maintain queue size
         }
-        _funcsInARow++;
-        if (_funcsInARow > MaxFunctionCallsInARow)
+         if (++_funcsInARow >= _mlParams.MaxFunctionCallsInARow)
         {
-            _logger.LogWarning($"Warning : Possible loop detected : {_funcsInARow} functions have been called in a row");
+             _logger.LogWarning($"Possible loop detected when calling functions without user feedback");
             var duplicateMessage = ChatMessage.FromSystem(
-                $" Possible loop detected. You have called {_funcsInARow} functions in a row. It is ok to continue only if you are batch calling functions and you are sure which parameters to use. If you are just attempting to get the parameters correct by guesssing then stop and explain why you have stopped.");
-            localHistory.Add(duplicateMessage);
+                $"You have called {_funcsInARow} functions in a row without giving the user any feedback. Take a summary of what you have been doing and give the user feedback before continuing. If the user wants to continue that is ok. Just check first.");
+          localHistory.Add(duplicateMessage);
             _funcsInARow = 0;
         }
         return;
@@ -697,6 +710,40 @@ public class OpenAIRunner : ILLMRunner
 
         responseServiceObj.LlmMessage = "<Function Call:> " + functionName + " " + json + "\n";
         if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+    }
+    // ADD to OpenAIRunner class
+    private async Task NotifyUserErrorAsync(LLMServiceObj serviceObj, string userFacing, Exception? ex = null, bool detailed = false)
+    {
+        try
+        {
+            var msg = new StringBuilder();
+            msg.AppendLine($"⚠️ {userFacing}");
+            msg.AppendLine();
+            msg.AppendLine($"Session: {serviceObj.SessionId}");
+            msg.AppendLine($"Message ID: {serviceObj.MessageID}");
+
+            if (detailed && ex != null)
+            {
+                // Only include details if you want to surface internals
+                msg.AppendLine();
+                msg.AppendLine($"Details: {ex.GetType().Name}: {ex.Message}");
+            }
+
+            var resp = new LLMServiceObj(serviceObj, fs => fs.SetAsResponseErrorComplete())
+            {
+                LlmMessage = msg.ToString()
+            };
+
+            if (_isPrimaryLlm || _isSystemLlm)
+                await _responseProcessor.ProcessLLMOutputError(resp);
+            else
+                await _responseProcessor.ProcessLLMOutput(resp);
+        }
+        catch (Exception notifyEx)
+        {
+            _logger.LogError(notifyEx, "Failed to notify user about an error.");
+            // last-ditch: we tried.
+        }
     }
 
     private (bool failed, string json) AttemptJsonRepair(FunctionCall fn, JsonException e)
