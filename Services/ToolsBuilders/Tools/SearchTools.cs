@@ -21,7 +21,7 @@ public class SearchTools
         return new FunctionDefinition
         {
             Name = "run_search_web",
-            Description = "Search function to gather information from web sources. Use this function to perform a Google search. It will either return the full page content and links from the top pages in the search or just the urls of those pages",
+            Description = "Search function to gather information from web sources. Use this function to perform a Google search. It will either return the full page content and links from the top pages in the search or just the urls of those pages. Warning the search is slow. Prefer the local RAG index (execute_query) if possible.",
             Parameters = new PropertyDefinition
             {
                 Type = "object",
