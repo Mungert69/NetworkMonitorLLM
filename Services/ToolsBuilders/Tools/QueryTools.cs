@@ -19,8 +19,8 @@ public static class QueryTools
     public static FunctionDefinition BuildQueryFunction()
     {
         const string description = @"
-Search a **local** RAG/OpenSearch index for information from various sources. 
-This tool never uses the public internet.
+Search the Local RAG index for information from various sources. 
+This tool does not use the public internet.
 
 It executes a semantic (vector) or keyword search against a specified index that represents the data source. 
 The OpenSearch backend uses the 'vector_search_mode' parameter to determine which embedding field to search.
@@ -60,12 +60,12 @@ Use this function whenever you need information from the local knowledge base.
                     {
                         Type = "string",
                         Description = "The name of the index to search. This determines which knowledge base or document set is queried. " +
-                                      "Examples: Use 'documents' to search general FAQs and user help, 'mitre' to search the MITRE ATT&CK document set, or 'securitybooks' for a selection of security books."
+                                      "Examples: Use 'documents' to search general FAQs and user help, 'mitre' to search the MITRE ATT&CK document set, or 'securitybooks' for security related information."
                     },
                     ["vector_search_mode"] = new PropertyDefinition
                     {
                         Type = "string",
-                        Description = "Determines which embedding field to use for the vector search: 'content', 'question', or 'summary'. Defaults to 'content'."
+                        Description = "Determines which embedding field to use for the vector search: 'content', 'question', or 'summary'. Defaults to 'content'. Use 'question' to search the questions, 'content' for full text search, and 'summary' for searching summaries.",
                     }
                 },
                 Required = new List<string> { "query_text", "index_name","vector_search_mode" }
