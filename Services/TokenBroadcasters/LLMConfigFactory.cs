@@ -398,11 +398,72 @@ If no tool is suitable, state that explicitly. If the user's input lacks require
                 FunctionResponse = "{1}",
                 FunctionDefsWrap = "{0}",
                 PromptFooter = "",
-                 CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
-                        new TokenBroadcasterStandard(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
-       
+                CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
+                       new TokenBroadcasterStandard(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
+
             },
 
+             "gpt_oss_min" => new LLMConfig
+            {
+                UserReplace = "",
+                FunctionReplace = "",
+                AssistantHeader = "<|start|>assistant",
+                UserInputTemplate = "{0}",
+                AssistantMessageTemplate = "{0}",
+                SystemMessageTemplate = "{0}",
+                EOTToken = "",
+                FunctionResponseTemplate = "{1}",
+
+                FunctionBuilder = "{1}",
+                FunctionResponse = "{1}",
+                FunctionDefsWrap = "{0}",
+                PromptFooter = "",
+                CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
+                       new TokenBroadcasterStandard(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
+
+            },
+
+
+            // in LLMConfigFactory.GetConfig(...)
+            "gptoss" => new LLMConfig
+            {
+                // Core per-turn wrappers
+                UserReplace = "<|start|>user<|message|>",
+                FunctionReplace = "<|start|>tool<|message|>", // only used by your UI header replacement, not by the model
+                AssistantHeader = "<|start|>assistant<|channel|>final\n\n",
+
+                // Full message templates (produce complete framed segments)
+                UserInputTemplate = "<|start|>user<|message|>{0}<|end|>",
+                AssistantMessageTemplate = "<|start|>assistant<|channel|>final<|message|>{0}<|end|>",
+                SystemMessageTemplate = "<|start|>system<|message|>{0}<|end|>",
+
+                // Segment terminators
+                EOTToken = "<|end|>",
+                // no EOM for this format
+
+                // Tool *result* you send back to the model
+                // {0} must be "functions.NAME", {1} is raw JSON (string)
+                FunctionResponseTemplate =
+                    "<|start|>{0} to=assistant<|channel|>commentary<|message|>{1}<|end|>",
+
+                // Tool *call* the model emits (for reference; your broadcaster detects it with regex)
+                // {0} must be "functions.NAME"
+                // {1} is JSON arguments
+                FunctionBuilder =
+                    "<|start|>assistant to={0}<|channel|>commentary json<|message|>{1}<|call|>",
+
+                // Not used by parsing, but kept for consistency
+                FunctionResponse = "{1}",
+                FunctionDefsWrap = "{0}",
+
+                // Optional footer (helps the model keep channels straight)
+                PromptFooter =
+            @"# Valid channels: analysis, commentary, final. Channel must be included for every message.
+Calls to these tools must go to the commentary channel: 'functions'.",
+
+                CreateBroadcaster = (rp, log, xmlParsing) =>
+                    new TokenBroadcasterGptOss(rp, log, xmlParsing, IgnoreParameters)
+            },
 
             // Configuration for standard
             _ => new LLMConfig

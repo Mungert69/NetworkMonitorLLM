@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using NetworkMonitor.LLM.Services;
 using NetworkMonitor.Data;
 using NetworkMonitor.Objects;
@@ -26,6 +27,9 @@ using Betalgo.Ranul.OpenAI.Managers;
 using Betalgo.Ranul.OpenAI.ObjectModels;
 using Betalgo.Ranul.OpenAI.ObjectModels.RequestModels;
 using Betalgo.Ranul.OpenAI.ObjectModels.SharedModels;
+using System.Net;
+using System.Net.Http;
+
 namespace NetworkMonitor.LLM
 {
     public class Startup
@@ -57,23 +61,50 @@ namespace NetworkMonitor.LLM
 
                           });
 
+
+
+
             services.AddSingleton(provider =>
-             {
-                 var systemParamsHelper = provider.GetRequiredService<ISystemParamsHelper>();
-                 string openAIApiKey = "";
-                 if (systemParamsHelper != null)
-                 {
-                     openAIApiKey = systemParamsHelper.GetMLParams().OpenAIApiKey;
-                 }
-                 if (string.IsNullOrEmpty(openAIApiKey)) openAIApiKey = "Api Key Missing";
+            {
+                var loggerFactory = provider.GetRequiredService<ILoggerFactory>();
+                var httpLogger = loggerFactory.CreateLogger<OpenAILoggingHandler>();
+                var systemParamsHelper = provider.GetRequiredService<ISystemParamsHelper>();
+                var apiKey = systemParamsHelper.GetMLParams().LlmHFKey ?? string.Empty;
 
-                 var openAIOptions = new OpenAIOptions()
-                 {
-                     ApiKey = openAIApiKey
-                 };
+                var openAIOptions = new OpenAIOptions
+                {
+                    ApiKey = apiKey,
+                    BaseDomain = "https://api.novita.ai"   // domain only; we’ll inject /openai via handler
+                };
 
-                 return new OpenAIService(openAIOptions);
-             });
+                // Inner (native) handler
+#if NETSTANDARD2_0
+    HttpMessageHandler inner = new HttpClientHandler
+    {
+        AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
+    };
+#else
+                HttpMessageHandler inner = new SocketsHttpHandler
+                {
+                    AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+                    PooledConnectionLifetime = TimeSpan.FromMinutes(5)
+                };
+#endif
+
+                // URL rewriter -> logger -> inner
+                var rewriter = new NovitaPathFixHandler { InnerHandler = inner };
+                var logging = new OpenAILoggingHandler(httpLogger) { InnerHandler = rewriter };
+
+                var httpClient = new HttpClient(logging) { Timeout = TimeSpan.FromSeconds(120) };
+
+                // IMPORTANT: when passing HttpClient, wrap options as IOptions
+                var svc = new OpenAIService(Options.Create(openAIOptions), httpClient);
+
+                loggerFactory.CreateLogger("OpenAI.Bootstrap")
+                    .LogInformation("OpenAI BaseDomain={BaseDomain}", openAIOptions.BaseDomain);
+
+                return svc;
+            });
 
             services.AddSingleton<IAudioGenerator, AudioGenerator>();
             services.AddSingleton<IRabbitListener, RabbitListener>();
