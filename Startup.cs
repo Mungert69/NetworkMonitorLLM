@@ -69,12 +69,12 @@ namespace NetworkMonitor.LLM
                 var loggerFactory = provider.GetRequiredService<ILoggerFactory>();
                 var httpLogger = loggerFactory.CreateLogger<OpenAILoggingHandler>();
                 var systemParamsHelper = provider.GetRequiredService<ISystemParamsHelper>();
-                var apiKey = systemParamsHelper.GetMLParams().LlmHFKey ?? string.Empty;
+                var apiKey = systemParamsHelper.GetMLParams().OpenAIApiKey ?? string.Empty;
 
                 var openAIOptions = new OpenAIOptions
                 {
                     ApiKey = apiKey,
-                    BaseDomain = "https://api.novita.ai"   // domain only; we’ll inject /openai via handler
+                    //BaseDomain = "https://api.novita.ai"   // domain only; we’ll inject /openai via handler
                 };
 
                 // Inner (native) handler
