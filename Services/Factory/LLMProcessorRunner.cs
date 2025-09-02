@@ -381,17 +381,7 @@ public class LLMProcessRunner : ILLMRunner
         // Replace line breaks with spaces
         string userInput = pendingServiceObj.UserInput.Replace("\r\n", " ").Replace("\n", " ");
 
-        /*if (pendingServiceObj.FunctionName != "are_functions_running")
-        {
-            int firstBraceIndex = userInput.IndexOf('{');
-            if (firstBraceIndex != -1)
-            {
-                // Insert the new field after the first '{'
-                string messageIdField = $"\"message_id\" : \"{pendingServiceObj.MessageID}\", ";
-                userInput = userInput.Insert(firstBraceIndex + 1, messageIdField);
-            }
-        }*/
-
+       
         // Return the formatted response
         return string.Format(_config.FunctionResponseTemplate, pendingServiceObj.FunctionName, userInput);
     }

@@ -37,6 +37,9 @@ public class OpenAIRunner : ILLMRunner
     private ConcurrentDictionary<string, ChatMessage> _pendingFunctionCalls = new ConcurrentDictionary<string, ChatMessage>();
     private ConcurrentDictionary<string, ChatMessage> _pendingFunctionResponses = new ConcurrentDictionary<string, ChatMessage>();
     // Add these private fields to your OpenAIRunner class
+    private readonly ConcurrentDictionary<string, Dictionary<string, string>> _toolCallIdMaps
+    = new(StringComparer.Ordinal);
+
     private string _type = "TurboLLM";
 
     private bool _isStateReady = false;
@@ -413,7 +416,7 @@ public class OpenAIRunner : ILLMRunner
 
         // if (!_useHF)
         //{
-        var fakeFunctionCallId = "call_" + StringUtils.GetNanoid();
+        var fakeFunctionCallId = StringUtils.NewToolCallId();
         var fakeFunctionCallMessage = ChatMessage.FromAssistant("");
         fakeFunctionCallMessage.ToolCalls = new List<ToolCall>()
                     {
@@ -423,7 +426,7 @@ public class OpenAIRunner : ILLMRunner
                                 Id = fakeFunctionCallId,
                                 FunctionCall = new FunctionCall
                                 {
-                                    Name = "are_functions_running",
+                                    Name = "function_status_with_message_id",
                                     Arguments = $"{{\"message_id\":\"{serviceObj.RootMessageID}\"}}"
                                 }
                             }
@@ -434,7 +437,7 @@ public class OpenAIRunner : ILLMRunner
         // Create a fake function response as if the tool returned a result
         var fakeFunctionResponseMessage = ChatMessage.FromTool(serviceObj.UserInput, fakeFunctionCallId);
         fakeFunctionResponseMessage.Role = "tool";
-        fakeFunctionResponseMessage.Name = "are_functions_running";
+        fakeFunctionResponseMessage.Name = "function_status_with_message_id";
         fakeFunctionResponseMessage.Content = _llmApi.WrapFunctionResponse(serviceObj.FunctionName, serviceObj.UserInput) + "\n";
         // Add the fake function response to the message history
         localHistory.Add(fakeFunctionResponseMessage);
@@ -448,44 +451,52 @@ public class OpenAIRunner : ILLMRunner
     }
 
 
-    private async Task<List<ChatMessage>> HandleFunctionCallResponse(LLMServiceObj serviceObj, LLMServiceObj responseServiceObj)
+    private async Task<List<ChatMessage>> HandleFunctionCallResponse(
+       LLMServiceObj serviceObj,
+       LLMServiceObj responseServiceObj)
     {
         ChatMessage funcResponseChatMessage;
         var localHistory = new List<ChatMessage>();
         bool isComplete = false;
-        // Check if there are any pending function calls associated with the current message
+
         _pendingFunctionCalls.TryGetValue(serviceObj.MessageID, out var funcCallChatMessage);
-        if (funcCallChatMessage != null && funcCallChatMessage.ToolCalls != null && funcCallChatMessage.ToolCalls.Count > 0)
+
+        // Resolve the function call id through the mapping if needed
+        string effectiveFuncCallId = serviceObj.FunctionCallId;
+        if (_toolCallIdMaps.TryGetValue(serviceObj.MessageID, out var idMap))
         {
-            // Check if a response for the given FunctionCallId already exists in the dictionary
-            if (_pendingFunctionResponses.TryGetValue(serviceObj.FunctionCallId, out var existingFuncResponseChatMessage))
+            // If the response came back with an ORIGINAL id, translate to the copy’s id
+            if (idMap.TryGetValue(serviceObj.FunctionCallId, out var mappedId))
             {
-                // Update the existing response with the new content
+                effectiveFuncCallId = mappedId;
+            }
+        }
+
+        if (funcCallChatMessage != null && funcCallChatMessage.ToolCalls?.Count > 0)
+        {
+            // Use effectiveFuncCallId instead of serviceObj.FunctionCallId
+            if (_pendingFunctionResponses.TryGetValue(effectiveFuncCallId, out var existingFuncResponseChatMessage))
+            {
                 funcResponseChatMessage = existingFuncResponseChatMessage;
-                funcResponseChatMessage.Content = _llmApi.WrapFunctionResponse(serviceObj.FunctionName, serviceObj.UserInput) + "\n";
+                funcResponseChatMessage.Content =
+                    _llmApi.WrapFunctionResponse(serviceObj.FunctionName, serviceObj.UserInput) + "\n";
             }
             else
             {
-                // Create a new ChatMessage for the function response if it doesn't exist
-                funcResponseChatMessage = ChatMessage.FromTool("", serviceObj.FunctionCallId);
+                funcResponseChatMessage = ChatMessage.FromTool("", effectiveFuncCallId);
                 funcResponseChatMessage.Role = "tool";
                 funcResponseChatMessage.Name = serviceObj.FunctionName;
-                funcResponseChatMessage.Content = _llmApi.WrapFunctionResponse(serviceObj.FunctionName, serviceObj.UserInput) + "\n";
+                funcResponseChatMessage.Content =
+                    _llmApi.WrapFunctionResponse(serviceObj.FunctionName, serviceObj.UserInput) + "\n";
 
-
-                // Add the new response to the dictionary
-                _pendingFunctionResponses.TryAdd(serviceObj.FunctionCallId, funcResponseChatMessage);
+                _pendingFunctionResponses.TryAdd(effectiveFuncCallId, funcResponseChatMessage);
             }
 
-
             bool allResponsesReceived = funcCallChatMessage.ToolCalls
-              .All(tc => _pendingFunctionResponses.ContainsKey(tc.Id!));
-
+                .All(tc => _pendingFunctionResponses.ContainsKey(tc.Id!));
 
             if (allResponsesReceived)
             {
-                // Add the function call and responses to the message history only if its OpenAI. HF we have aleady added it
-                //if (!_useHF) 
                 localHistory.Add(funcCallChatMessage);
                 int count = 0;
                 foreach (var toolCall in funcCallChatMessage.ToolCalls)
@@ -499,6 +510,7 @@ public class OpenAIRunner : ILLMRunner
                         count++;
                     }
                 }
+
                 if (count == funcCallChatMessage.ToolCalls.Count)
                 {
                     isComplete = true;
@@ -510,45 +522,67 @@ public class OpenAIRunner : ILLMRunner
 
                 _pendingFunctionCalls.TryRemove(serviceObj.MessageID, out _);
 
-                // Mark the function call as complete
+                // Clean up the mapping too
+                _toolCallIdMaps.TryRemove(serviceObj.MessageID, out _);
+
                 responseServiceObj.LlmMessage = "</functioncall-complete>";
                 if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
-
             }
         }
         else if (serviceObj.IsFunctionCallStatus == false)
         {
-            responseServiceObj.LlmMessage = $"Function Error: No pending function call found for Message ID: {serviceObj.MessageID}\n\n";
+            responseServiceObj.LlmMessage =
+                $"Function Error: No pending function call found for Message ID: {serviceObj.MessageID}\n\n";
 
-            // Process the LLM output if it's the primary LLM
-            if (_isPrimaryLlm || _isSystemLlm) await _responseProcessor.ProcessLLMOutputError(responseServiceObj);
+            if (_isPrimaryLlm || _isSystemLlm)
+                await _responseProcessor.ProcessLLMOutputError(responseServiceObj);
 
             _logger.LogWarning($"No pending function call found for Message ID: {serviceObj.MessageID}");
         }
+
         if (isComplete) return localHistory;
         return new List<ChatMessage>();
     }
+    // OpenAI-style: "call_" + 26-char base62
 
     private async Task HandleFunctionProcessing(LLMServiceObj serviceObj, ChatMessage choiceMessage, List<ChatMessage> localHistory, LLMServiceObj responseServiceObj, ChatMessage assistantChatMessage, bool isFuncMessage)
     {
 
         if (choiceMessage == null) return;
         // Create a deep copy of the choiceMessage to avoid modifying the original
+        // Map original tool_call_id -> copied tool_call_id
+        var toolCallIdMap = new Dictionary<string, string>(StringComparer.Ordinal);
+        var copyToolCallIds = new List<string>(); // (kept if you still want the list)
+
+        // --- Build a deep copy with NEW ToolCall Ids ---
         var choiceMessageCopy = new ChatMessage
         {
             Role = choiceMessage.Role,
             Content = choiceMessage.Content,
-            ToolCalls = choiceMessage.ToolCalls?.Select(tc => new ToolCall
+            ToolCalls = choiceMessage.ToolCalls?.Select(tc =>
             {
-                Id = tc.Id,
-                Type = tc.Type,
-                FunctionCall = tc.FunctionCall != null ? new FunctionCall
+                var oldId = tc.Id ?? string.Empty;
+                var newId = StringUtils.NewToolCallId();     // ← NEW id for the copy
+                if (!string.IsNullOrEmpty(oldId))
+                    toolCallIdMap[oldId] = newId;
+                copyToolCallIds.Add(newId);
+
+                return new ToolCall
                 {
-                    Name = tc.FunctionCall.Name,
-                    Arguments = tc.FunctionCall.Arguments
-                } : null
+                    Id = newId,
+                    Type = tc.Type,
+                    FunctionCall = tc.FunctionCall != null
+                        ? new FunctionCall
+                        {
+                            Name = "get_function_result",
+                            Arguments = @"{{""message_id"": """ + serviceObj.MessageID + @""", ""function_name"": """ + tc.FunctionCall.Name + @"""}}"
+                        }
+                        : null
+                };
             }).ToList()
         };
+        _toolCallIdMaps[serviceObj.MessageID] = toolCallIdMap;
+
         bool usePlaceHolder = true;
         string messageIdStr = "";
         string messageIdJson = "";
@@ -558,14 +592,19 @@ public class OpenAIRunner : ILLMRunner
             messageIdStr = $"using message_id {serviceObj.MessageID}";
             messageIdJson = " , \"message_id\" : \"" + serviceObj.MessageID + "\"";
         }
-        if (choiceMessageCopy.ToolCalls != null && choiceMessageCopy.ToolCalls.Count > 0)
-        {
-            if (choiceMessageCopy.ToolCalls.Any(fnCall => fnCall.FunctionCall?.Name != null &&
-                                                          fnCall.FunctionCall.Name.Equals("are_functions_running")))
+        // usePlaceHolder should be false if ANY tool call is one of these control functions
+        if (messageCopy.ToolCalls is { Count: > 0 } &&
+            messageCopy.ToolCalls.Any(tc =>
             {
-                usePlaceHolder = false;
-            }
+                var name = tc.FunctionCall?.Name;
+                return name == "function_status_with_message_id"
+                    || name == "cancel_functions"
+                    || name == "get_function_result";
+            }))
+        {
+            usePlaceHolder = false;
         }
+
 
 
         // Store the original message content
@@ -575,8 +614,8 @@ public class OpenAIRunner : ILLMRunner
         if (choiceMessage.ToolCalls != null && choiceMessage.ToolCalls.Count > 1) { plural = "are"; pluralCall = "calls"; }
 
         // Update the copy's content for the pending function call
-        choiceMessageCopy.Content = $"The function {pluralCall} {messageIdStr} has now completed.";
-        _pendingFunctionCalls.TryAdd(serviceObj.MessageID, choiceMessageCopy);
+        choiceMessageCopy.Content = $"";
+        //_pendingFunctionCalls.TryAdd(serviceObj.MessageID, choiceMessageCopy);
         //TODO make a copy of the choiceMesage and use that instead 
         var toolResponces = new List<ChatMessage>();
         bool isDuplicateSet = false;
@@ -594,7 +633,7 @@ public class OpenAIRunner : ILLMRunner
                     await HandleFunctionCallAsync(serviceObj, fnCall, responseServiceObj, assistantChatMessage);
                     await Task.Delay(500);
                     string extraMessage = "";
-                    if (serviceObj.IsPrimaryLlm) extraMessage = "There is no need to call are_functions_running because the system is actively monitoring the status and you will be informed as soon as the function completes..\"";
+                    if (serviceObj.IsPrimaryLlm) extraMessage = "There is no need to call function_status_with_message_id because the system is actively monitoring the status and you will be informed as soon as the function completes..\"";
                     var toolResponse = ChatMessage.FromTool("{\"message\" : \"The function call " + funcName + " is currently running. " + extraMessage + messageIdJson + "}", funcId!);
                     toolResponse.Role = "tool";
                     toolResponse.Name = funcName;
@@ -626,6 +665,8 @@ public class OpenAIRunner : ILLMRunner
             localHistory.AddRange(toolResponces);
             var assistantResponse = ChatMessage.FromAssistant($"Function {pluralCall} {messageIdStr} {plural} running. I will inform you of the result when it completes");
             localHistory.Add(assistantResponse);
+            _toolCallIdMaps[serviceObj.MessageID] = toolCallIdMap;
+
         }
         else _pendingFunctionCalls.TryAdd(serviceObj.MessageID, choiceMessage);
         int numDequeue = MaxRecentFunctionCalls;

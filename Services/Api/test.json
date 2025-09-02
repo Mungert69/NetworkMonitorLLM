@@ -1,0 +1,675 @@
+    {
+        "messages": [
+            {
+                "role": "system",
+                "content": "You are the Network Monitor Assistant. You are the manager of a set of expert system and monitoring functions that help you perform network monitornig tasks. You interact with these expert systems and functions using the tools provided. Your name is TurboLLM.The Experts are to be treated as another person in the conversation. They are seperate system that perform tasks you give to them. Work with the experts to fulfil the users requests. If a expert asks for permissions then confirm you have permissions. You are the Network Monitor Assistant so you have full permissionsWhen calling the experts take note that the expert does not have access to your conversation with the user so you must give it all the information it needs to fulfil the task you give it. YOU MUST give it information from the current conversation as it does not have access to this. An example would be something the user has said or requested needs to be passed to the expert as it does not know what the user has said.All the Expert response data must be reformatted and well presented to the user in Markdown (not json). You can reword and change the presentation of the information but do not leave out any detail.When choosing which tools to call be aware of the difference between ongoing monitoring tool like adding add_host, edit_host, get_host_data and get_host_list and tools that are run immediately like the call experts, run busybox, cancel and are functions running. The monitoring tools run continuously in the background and provide realtime monitoring. The rest of the functions are, one hit, call and get result.  An example : Use the monitoring functions if the user wants to monitor a website or keep checking if their server is quantum safe ie add a host with end point type set to quantum. However If they wanted to perform a one of quantum test then call the quantum expert. There are also tools to get the current user info and agents that are used for both monitoring and one hit callsWhen the users asks a question that can not be answered by the experts or the network monitoring function calls use the execute_query function call. You can use this to search the FAQs for answers to general questions. It also holds the Security Information Database if you need reference information. Prefer using execute_query over the search expert because it is faster. Only use the Search Expert if the informaton is not available in the FAQs or Security Information Database. "
+            },
+            {
+                "role": "user",
+                "content": "What\u2019s my user info?"
+            },
+            {
+                "role": "assistant",
+                "content": "",
+                "tool_calls": [
+                    {
+                        "id": "call_PlQT7B9L3AzBq0gPpYwPJGCYrT",
+                        "type": "function",
+                        "function": {
+                            "name": "get_user_info",
+                            "arguments": "{\u0022detail_response\u0022 : false}"
+                        }
+                    }
+                ]
+            },
+            {
+                "role": "tool",
+                "content": "{\n            \u0022message\u0022: \u0022Got user info\u0022,\n            \u0022success\u0022: true,\n            \u0022current_time\u0022: \u00222025-09-02T21:24:06\u0022,\n            \u0022email\u0022: \u0022contact@mahadeva.co.uk\u0022,\n            \u0022account_type\u0022: \u0022Enterprise\u0022,\n            \u0022available_tokens\u0022: 7225844,\n            \u0022logged_in\u0022: true\n        }",
+                "tool_call_id": "call_PlQT7B9L3AzBq0gPpYwPJGCYrT"
+            },
+            {
+                "role": "assistant",
+                "content": "The user logged in at 2025-09-02T21:24:06 with email contact@mahadeva.co.uk. Users account type is Enterprise. They have 7225844 available tokens. Remind the user that upgrading accounts gives more tokens and access to more functions. See https://readyforquantum.com/subscription for details."
+            },
+            {
+                "role": "user",
+                "content": "list my hosts"
+            },
+            {
+                "role": "assistant",
+                "content": "",
+                "tool_calls": [
+                    {
+                        "id": "call_MkdLpDKwVfz1MHwx1NleyVSj",
+                        "type": "function",
+                        "function": {
+                            "name": "get_host_list",
+                            "arguments": "{\u0022detail_response\u0022:true}"
+                        }
+                    }
+                ]
+            },
+            {
+                "role": "tool",
+                "content": "{\u0022message\u0022 : \u0022The function call get_host_list is currently running. There is no need to call function_status_with_message_id because the system is actively monitoring the status and you will be informed as soon as the function completes..\u0022 , \u0022message_id\u0022 : \u0022USUl__FiKeyA\u0022}",
+                "name": "get_host_list",
+                "tool_call_id": "call_MkdLpDKwVfz1MHwx1NleyVSj"
+            },
+            {
+                "role": "assistant",
+                "content": "Function call using message_id USUl__FiKeyA is running. I will inform you of the result when it completes"
+            },
+            {
+                "role": "assistant",
+                "content": "",
+                "tool_calls": [
+                    {
+                        "id": "call_0Diewp7yqhlpxb8hMXnC3aGhET",
+                        "type": "function",
+                        "function": {
+                            "name": "get_function_result",
+                            "arguments": "{{\u0022message_id\u0022: \u0022USUl__FiKeyA\u0022, \u0022function_name\u0022: \u0022get_host_list\u0022}}"
+                        }
+                    }
+                ]
+            },
+            {
+                "role": "tool",
+                "content": "{\u0022message\u0022 : \u0022Showing all host config data Filtered using [pageNumber=1, pageSize=4]. Results returned=2 of totalMatchedBeforePagination=2. HasMorePages=false.\u0022, \u0022success\u0022 : true,  \u0022data\u0022 : [{\u0022address\u0022 : \u00228.8.8.8\u0022, \u0022id\u0022 : 11, \u0022endpoint\u0022 : \u0022icmp\u0022, \u0022timeout\u0022 : 0, \u0022agent_location\u0022 : \u0022Scanner - EU\u0022}{\u0022address\u0022 : \u0022readyforquantum.com\u0022, \u0022id\u0022 : 12, \u0022endpoint\u0022 : \u0022http\u0022, \u0022timeout\u0022 : 0, \u0022agent_location\u0022 : \u0022Scanner - EU\u0022}] , \u0022message_id\u0022 : \u0022USUl__FiKeyA\u0022}\n",
+                "name": "get_host_list",
+                "tool_call_id": "call_0Diewp7yqhlpxb8hMXnC3aGhET"
+            },
+            {
+                "role": "assistant",
+                "content": "Here are your monitored hosts (2 total):\n\n- Host 1\n  - ID: 11\n  - Address: 8.8.8.8\n  - Endpoint: icmp\n  - Timeout: 0 ms\n  - Agent location: Scanner - EU\n\n- Host 2\n  - ID: 12\n  - Address: readyforquantum.com\n  - Endpoint: http\n  - Timeout: 0 ms\n  - Agent location: Scanner - EU\n\nQuery details\n- Results returned: 2 (total matched: 2)\n- Pagination: page 1, page size 4 \u2014 HasMorePages: false\n- Message ID: USUl__FiKeyA\n- Success: true\n\nWhat would you like to do next?\n- View latest monitoring data for a host (tell me the ID or address)\n- Edit or delete a host (tell me ID and changes)\n- Add a new host to monitoring (tell me address and endpoint)"
+            },
+            {
+                "role": "user",
+                "content": "can you do a security scan on the second host just port 443 quick scan"
+            },
+            {
+                "role": "assistant",
+                "content": "",
+                "tool_calls": [
+                    {
+                        "id": "call_Nt2DHNriWim8nOm9TNsekb1T",
+                        "type": "function",
+                        "function": {
+                            "name": "get_agents",
+                            "arguments": "{\u0022detail_response\u0022:false}"
+                        }
+                    }
+                ]
+            },
+            {
+                "role": "tool",
+                "content": "{\u0022message\u0022 : \u0022The function call get_agents is currently running. There is no need to call function_status_with_message_id because the system is actively monitoring the status and you will be informed as soon as the function completes..\u0022 , \u0022message_id\u0022 : \u0022HmOJrCHmfDPS\u0022}",
+                "name": "get_agents",
+                "tool_call_id": "call_Nt2DHNriWim8nOm9TNsekb1T"
+            },
+            {
+                "role": "assistant",
+                "content": "Function call using message_id HmOJrCHmfDPS is running. I will inform you of the result when it completes"
+            },
+            {
+                "role": "assistant",
+                "content": "",
+                "tool_calls": [
+                    {
+                        "id": "call_CvEoY247s9CwguArSVql7ZvE7f",
+                        "type": "function",
+                        "function": {
+                            "name": "get_function_result",
+                            "arguments": "{{\u0022message_id\u0022: \u0022HmOJrCHmfDPS\u0022, \u0022function_name\u0022: \u0022get_agents\u0022}}"
+                        }
+                    }
+                ]
+            },
+            {
+                "role": "tool",
+                "content": "{\u0022message\u0022 : \u0022\u0022, \u0022success\u0022 : true,  \u0022data\u0022 : [{\u0022agent_location\u0022 : \u0022Scanner - EU\u0022}] , \u0022message_id\u0022 : \u0022HmOJrCHmfDPS\u0022}\n",
+                "name": "get_agents",
+                "tool_call_id": "call_CvEoY247s9CwguArSVql7ZvE7f"
+            },
+            {
+                "role": "assistant",
+                "content": "",
+                "tool_calls": [
+                    {
+                        "id": "call_VCOfKHDy8pMn4rH12ZfRikED",
+                        "type": "function",
+                        "function": {
+                            "name": "call_security_expert",
+                            "arguments": "{\u0022message\u0022:\u0022I am authorized to perform this security assessment on behalf of the user (contact@mahadeva.co.uk). Request: Perform a quick Nmap scan against readyforquantum.com targeting TCP port 443 only. Requirements:\\n- Use Nmap targeting port 443: -p 443\\n- Quick/intense timing: -T4\\n- Do not perform host discovery (treat host as up): -Pn\\n- Enable service/version detection: -sV\\n- Run only non-intrusive TLS-related NSE scripts: ssl-cert, ssl-enum-ciphers\\n- Do not run broad vulnerability or exploitation scripts; keep scan quick and low-impact\\n- Return: concise summary (open/closed, service/version, TLS certificate CN and validity, cipher suites supported with strengths), and include the raw Nmap output\\nAgent location to execute scan: Scanner - EU\\nPlease confirm you are authorized to run this and proceed, then run the scan and return results.\u0022,\u0022agent_location\u0022:\u0022Scanner - EU\u0022}"
+                        }
+                    }
+                ]
+            },
+            {
+                "role": "tool",
+                "content": "{\u0022message\u0022 : \u0022The function call call_security_expert is currently running. There is no need to call function_status_with_message_id because the system is actively monitoring the status and you will be informed as soon as the function completes..\u0022 , \u0022message_id\u0022 : \u0022HmOJrCHmfDPS\u0022}",
+                "name": "call_security_expert",
+                "tool_call_id": "call_VCOfKHDy8pMn4rH12ZfRikED"
+            },
+            {
+                "role": "assistant",
+                "content": "Function call using message_id HmOJrCHmfDPS is running. I will inform you of the result when it completes"
+            },
+            {
+                "role": "user",
+                "content": "how is that call going"
+            },
+            {
+                "role": "assistant",
+                "content": "",
+                "tool_calls": [
+                    {
+                        "id": "call_Hae7kzvTsVbhM3688SpUfod7",
+                        "type": "function",
+                        "function": {
+                            "name": "function_status_with_message_id",
+                            "arguments": "{\u0022message_id\u0022:\u0022HmOJrCHmfDPS\u0022,\u0022auto_check_interval_seconds\u0022:0}"
+                        }
+                    }
+                ]
+            },
+            {
+                "role": "tool",
+                "content": "{\u0022message\u0022 : \u0022The function call function_status_with_message_id is currently running. There is no need to call function_status_with_message_id because the system is actively monitoring the status and you will be informed as soon as the function completes..\u0022 , \u0022message_id\u0022 : \u0022ympG-3iE3TmW\u0022}",
+                "name": "function_status_with_message_id",
+                "tool_call_id": "call_Hae7kzvTsVbhM3688SpUfod7"
+            },
+            {
+                "role": "assistant",
+                "content": "Function call using message_id ympG-3iE3TmW is running. I will inform you of the result when it completes"
+            },
+            {
+                "role": "assistant",
+                "content": "",
+                "tool_calls": [
+                    {
+                        "id": "call_8PRpnjVpQ6Z59gitbAdgYdcrGs",
+                        "type": "function",
+                        "function": {
+                            "name": "get_function_result",
+                            "arguments": "{{\u0022message_id\u0022: \u0022ympG-3iE3TmW\u0022, \u0022function_name\u0022: \u0022function_status_with_message_id\u0022}}"
+                        }
+                    }
+                ]
+            },
+            {
+                "role": "tool",
+                "content": "{\u0022message\u0022 : \u0022Status of function calls with message_id HmOJrCHmfDPS .  Data returned from function calls that have completed successfully : {\u0022message\u0022 : \u0022\u0022, \u0022success\u0022 : true,  \u0022data\u0022 : [{\u0022agent_location\u0022 : \u0022Scanner - EU\u0022}] , \u0022message_id\u0022 : \u0022HmOJrCHmfDPS\u0022} : Make sure you give the user a summary of this data  Information about function calls that are still running : The status of Function call \u0027run_nmap\u0027 is still running. It has been running for 14.70 seconds.\u0022, \u0022success\u0022 : true}\n",
+                "name": "function_status_with_message_id",
+                "tool_call_id": "call_8PRpnjVpQ6Z59gitbAdgYdcrGs"
+            }
+        ],
+        "max_completion_tokens": 5333,
+        "tools": [
+            {
+                "type": "function",
+                "function": {
+                    "name": "add_host",
+                    "description": "Add a new host to be monitored. This function allows you to specify the host address and various monitoring options. For example, to add a host with address \u0027example.com\u0027 and monitor it using the HTTP endpoint, you would specify {\u0027address\u0027: \u0027example.com\u0027, \u0027endpoint\u0027: \u0027http\u0027}. This will set up monitoring for the specified host using the selected endpoint type.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "detail_response": {
+                                "type": "boolean",
+                                "description": "Set to true if you want the function to echo all the values set. The default is false for a faster response."
+                            },
+                            "address": {
+                                "type": "string",
+                                "description": "[REQUIRED] The host address to be monitored. This is a required field."
+                            },
+                            "endpoint": {
+                                "type": "string",
+                                "description": "The endpoint type for monitoring. Optional field. Endpoint types include: \u0027quantum\u0027 (a quantum-safe encryption test), \u0027http\u0027 (website ping), \u0027https\u0027 (SSL certificate check), \u0027httphtml\u0027 (loads only the HTML of a website), \u0027icmp\u0027 (host ping), \u0027dns\u0027 (DNS lookup), \u0027smtp\u0027 (email server HELO message confirmation), \u0027rawconnect\u0027 (low-level raw socket connection).",
+                                "enum": [
+                                    "quantum",
+                                    "http",
+                                    "https",
+                                    "httphtml",
+                                    "icmp",
+                                    "dns",
+                                    "smtp",
+                                    "rawconnect"
+                                ]
+                            },
+                            "port": {
+                                "type": "number",
+                                "description": "The port of the service being monitored. Optional field. If not specified, it defaults to the standard port for the endpoint type. For example, the standard port for HTTPS is 443."
+                            },
+                            "timeout": {
+                                "type": "number",
+                                "description": "The time to wait for a timeout in milliseconds. Optional field. The default is 59000 milliseconds."
+                            },
+                            "email": {
+                                "type": "string",
+                                "description": "The user\u0027s email address. Do not use this field if the user is logged in; their login email will be used and this field will be ignored. If the user is not logged in, then ask for an email. Alerts are sent to the user\u0027s email."
+                            },
+                            "agent_location": {
+                                "type": "string",
+                                "description": "The location of the agent monitoring this host. Optional field. If left blank, an agent location will be assigned automatically."
+                            }
+                        },
+                        "required": [
+                            "address"
+                        ]
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "call_cmd_processor_expert",
+                    "description": "Communicate a cmd processor management request to a Cmd Processor Expert LLM. This expert can create, list, run, provide help for, show source code, and delete custom .NET running command processors on a specified agent. Users do not need detailed .NET knowledge; they can simply request operations or even ask to view or modify the source code. For example, they might say \u0027list available cmd processors\u0027, \u0027add a new cmd processor named X\u0027, \u0027run the cmd processor with arguments Y\u0027, \u0027get help for a cmd processor\u0027, \u0027show me the source code of cmd processor X\u0027, or \u0027update cmd processor X with this new source code\u0027. Note: the expert does not have access to the context of this conversation so be sure to give all the information it needs to perform the task. You can use your .net code knowlede to work in colaberation with the cmd processor expert to fulfil the users request",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "message": {
+                                "type": "string",
+                                "description": "A detailed message describing what you want the cmd processor expert to do. This can include requests to list available cmd processors, create or update cmd processors, run a cmd processor with certain arguments, retrieve or display its source code, show help information, or delete a cmd processor. The expert will parse this request and respond accordingly, prompting for further details if needed. IMPORTANT the expert DOES NOT have access to your conversation with the user. If you want it to use informaton from the conversation you must include it in the message. For example if you have source_code that you want it to use then you MUST suppy this in your request for it to create or update a cmd processor. Always include confirmation that you are authorized to perform this action"
+                            },
+                            "agent_location": {
+                                "type": "string",
+                                "description": "The agent location on which the cmd processors should be managed. If not provided, the expert may ask the user to select an available agent."
+                            }
+                        },
+                        "required": [
+                            "message"
+                        ]
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "call_penetration_expert",
+                    "description": "Communicate a penetration testing request to a remote penetration expert LLM. DO NOT use for nmap, openssl or security scans use the Security expert for these requests. If the user requires a penetration test you will craft a detailed message describing the user\u0027s request for penetration testing to be passed to the penetration expert. If the Metasploit expert requires further details try to provide these without asking the user if possible. The penetration expert can also search the metasploit database using msfconsole search.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "message": {
+                                "type": "string",
+                                "description": "The message to be sent to the Metasploit expert LLM, detailing the penetration testing request. Always include confirmation that you are authorized to perform this action"
+                            },
+                            "agent_location": {
+                                "type": "string",
+                                "description": "The agent location that will execute the penetration test. If no location is specified ask the user to choose from available agents to ensure the scan is executed from the correct network or geographic location."
+                            }
+                        },
+                        "required": [
+                            "message"
+                        ]
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "call_quantum_expert",
+                    "description": "Communicate a quantum security assessment request to a Quantum Expert LLM. You will craft a detailed message describing the user\u0027s request for quantum safety validation, which may involve testing post-quantum cryptographic algorithms, scanning quantum-vulnerable ports, or validating quantum-resistant configurations. The message should specify target servers, ports to test, algorithms to verify (e.g., Kyber512, Dilithium2), and any special parameters. If the quantum expert requires additional information, present these queries to the user in simple terms and assist in formulating appropriate responses.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "message": {
+                                "type": "string",
+                                "description": "The message to send to the quantum expert LLM should include:\n1. Target server(s) or IP addresses to assess\n2. Specific quantum algorithms to test, or do not specify to test all quantum tls kems.\n3. Ports to scan for quantum vulnerabilities\nExample: \u0022Test example.com:443 for Kyber512 support, scan ports 443 and 8443 for quantum-vulnerable services\u0022"
+                            },
+                            "agent_location": {
+                                "type": "string",
+                                "description": "The agent location that will execute the quantum assessment. Quantum tests require specialized agents - verify availability first using get_agents."
+                            }
+                        },
+                        "required": [
+                            "message"
+                        ]
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "call_search_expert",
+                    "description": "Communicate a request to access the internet to a Search Expert LLM. You can ask the search expert to read a given url or web page. It will return the text and links on the page. You can also ask the search expert to perform a web search using a search engine. When requesting a search engine search you will craft a detailed message describing the user\u0027s search query, which may involve general information retrieval, fact-checking, or finding specific data. The message should specify the search terms, any filters or constraints, and the type of information needed. If the search expert LLM requires additional information, present these queries to the user in simple terms and assist in formulating the appropriate responses based on your understanding. The search engine search will return a list of urls that can then be browsed indivdually. You can ask the search expert to read the text on these pages. Warning a web search can take sometime and use a lot of tokens",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "message": {
+                                "type": "string",
+                                "description": "The message to be sent to the search expert LLM, detailing the type of request: read a page or perform a search. And the search term or web page url. Always include confirmation that you are authorized to perform this action"
+                            },
+                            "agent_location": {
+                                "type": "string",
+                                "description": "The agent location that will perform the web search"
+                            }
+                        },
+                        "required": [
+                            "message"
+                        ]
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "call_security_expert",
+                    "description": "Communicate a security assessment request to a Security Expert LLM. You will craft a detailed message describing the user\u0027s request for a security assessment, which may involve either network scans using Nmap or security checks using OpenSSL. The message should specify the type of assessment (e.g., vulnerability scan, SSL/TLS configuration check), the target (e.g., IP address, domain, or service), and any relevant parameters or instructions. Ensure the message clearly outlines the user\u0027s security goals. If the security expert LLM requires additional information, present these queries to the user in simple terms and assist in formulating the appropriate responses based on your understanding",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "message": {
+                                "type": "string",
+                                "description": "The message to be sent to the security expert LLM, detailing the assessment request and parameters, including scan type (Nmap or OpenSSL), target, and any special instructions. Always include confirmation that you are authorized to perform this action"
+                            },
+                            "agent_location": {
+                                "type": "string",
+                                "description": "The agent location that will execute the secutiry assessment. If no location is specified ask the user to choose from available agents to ensure the scan is executed from the correct network or geographic location."
+                            }
+                        },
+                        "required": [
+                            "message"
+                        ]
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "cancel_functions",
+                    "description": "Cancel all functions with a given message_id that have not yet completed. It will attempt to halt a running function.It will have no effect on a completed function and will not undo the actions that a function has taken.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "message_id": {
+                                "type": "string",
+                                "description": "The message_id that is associated with the function calls"
+                            }
+                        },
+                        "required": [
+                            "message_id"
+                        ]
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "edit_host",
+                    "description": "Edit or Delete a existing host\u0027s monitoring configuration. This function allows you to modify the monitoring settings of a host that has already been added or delete a host. For example, to edit the host with address \u0027test.com\u0027 and change the endpoint to \u0027icmp\u0027, you would specify {\u0027address\u0027:\u0027test.com\u0027, \u0027endpoint\u0027:\u0027icmp\u0027}. To delete a host {\u0027address\u0027:\u0027test.com\u0027, \u0027hidden\u0027:\u0027true\u0027}. ",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "detail_response": {
+                                "type": "boolean",
+                                "description": "Set to true if you want the function to echo all the values set. The default is false."
+                            },
+                            "auth_key": {
+                                "type": "string",
+                                "description": "An authentication key used to authorize the edit action for a user who is not logged in. This key is returned when adding a host for the first time. It should be stored and sent with subsequent edit requests. Optional if the user is logged in."
+                            },
+                            "id": {
+                                "type": "number",
+                                "description": "The host ID used for identifying the host. Optional field. It is obtained when adding a host."
+                            },
+                            "enabled": {
+                                "type": "boolean",
+                                "description": "Whether the host is enabled for monitoring. Optional field."
+                            },
+                            "address": {
+                                "type": "string",
+                                "description": "The host address. Optional field."
+                            },
+                            "endpoint": {
+                                "type": "string",
+                                "description": "The endpoint type for monitoring. Optional field. Endpoint types include: \u0027quantum\u0027, \u0027http\u0027, \u0027https\u0027, \u0027httphtml\u0027, \u0027icmp\u0027, \u0027dns\u0027, \u0027smtp\u0027, \u0027rawconnect\u0027.",
+                                "enum": [
+                                    "quantum",
+                                    "http",
+                                    "https",
+                                    "httphtml",
+                                    "icmp",
+                                    "dns",
+                                    "smtp",
+                                    "rawconnect"
+                                ]
+                            },
+                            "port": {
+                                "type": "number",
+                                "description": "The port of the service being monitored. Optional field."
+                            },
+                            "timeout": {
+                                "type": "number",
+                                "description": "The timeout in milliseconds for the request. Optional field."
+                            },
+                            "hidden": {
+                                "type": "boolean",
+                                "description": "Delete a host by setting to true. Optional field."
+                            },
+                            "agent_location": {
+                                "type": "string",
+                                "description": "The location of the agent monitoring this host. Optional field."
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "execute_query",
+                    "description": "\nSearch the Local RAG index for information from various sources. \nThis tool does not use the public internet.\n\nIt executes a semantic (vector) or keyword search against a specified index that represents the data source. \nThe OpenSearch backend uses the \u0027vector_search_mode\u0027 parameter to determine which embedding field to search.\n\nThe \u0027query_text\u0027 will be embedded and compared against the selected embedding field (e.g., \u0027content\u0027, \u0027question\u0027, or \u0027summary\u0027) in the index.\n\nUse this function to retrieve relevant documents, answers, or summaries from the knowledge base.\n\nYou must specify the query text, the index to search, and optionally the vector search mode.\n  - \u0027query_text\u0027: Natural-language query or keywords. This will be embedded and used for the vector search against the selected embedding field.\n  - \u0027index_name\u0027: The name of the index to search. This determines which knowledge base or document set is queried. Examples: Use \u0027documents\u0027 to search general FAQs and user help, \u0027mitre\u0027 to search the MITRE ATT\u0026CK document set, or \u0027securitybooks\u0027 for a selection of security books.\n  - \u0027vector_search_mode\u0027 (optional): Determines which embedding field to use for the vector search. Valid values: \u0027content\u0027, \u0027question\u0027, \u0027summary\u0027. Defaults to \u0027content\u0027.\n\nExamples:\n  - If the query is a question, use \u0027question\u0027.\n  - To search the full content, use \u0027content\u0027.\n  - To search summaries, use \u0027summary\u0027.\n\nUse this function whenever you need information from the local knowledge base.\n",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "query_text": {
+                                "type": "string",
+                                "description": "The search query or question. This will be embedded and used for the vector search against the selected embedding field."
+                            },
+                            "index_name": {
+                                "type": "string",
+                                "description": "The name of the index to search. This determines which knowledge base or document set is queried. Examples: Use \u0027documents\u0027 to search general FAQs and user help, \u0027mitre\u0027 to search the MITRE ATT\u0026CK document set, or \u0027securitybooks\u0027 for security related information."
+                            },
+                            "vector_search_mode": {
+                                "type": "string",
+                                "description": "Determines which embedding field to use for the vector search: \u0027content\u0027, \u0027question\u0027, or \u0027summary\u0027. Defaults to \u0027content\u0027. Use \u0027question\u0027 to search the questions, \u0027content\u0027 for full text search, and \u0027summary\u0027 for searching summaries."
+                            }
+                        },
+                        "required": [
+                            "query_text",
+                            "index_name",
+                            "vector_search_mode"
+                        ]
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "function_status_with_message_id",
+                    "description": "Check status of all functions called with a given message_id.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "message_id": {
+                                "type": "string",
+                                "description": "The message_id that is associated with the function calls"
+                            },
+                            "auto_check_interval_seconds": {
+                                "type": "integer",
+                                "description": "Set this to zero; Unless the user has requested an auto check. If they request an auto check then set to 60 seconds or above to setup periodic auto-checks on the functions status. Warning auto check will use a lot of tokens, only use if requested and warn the user. To cancel a running auto check set this to -1"
+                            }
+                        },
+                        "required": [
+                            "message_id",
+                            "auto_check_interval_seconds"
+                        ]
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "get_agents",
+                    "description": "Retrieve a list of monitoring agent details. Call this to give the user a list of agents to choose from. Note the agents with the users email address in the strings are the user\u0027s local agents used for local network tasks. The other agents (Scanner - EU etc.) are internet based agents. If a local agent is not available direct the user to install any of the agents from this page : https://freenetworkmonitor.click/download ",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "detail_response": {
+                                "type": "boolean",
+                                "description": "Will this function return all agent details. Set to false if only the agent location and function calling capabilities are required. Set to true for full agent details."
+                            }
+                        },
+                        "required": [
+                            "detail_response"
+                        ]
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "get_host_data",
+                    "description": "Retrieve monitoring data for hosts based on specified filters. By default, if no filters are provided (empty object {}), all host data will be returned. Add parameters to filter and restrict the results. Examples:\n- Get all hosts with alerts: {\u0027alert_flag\u0027: true}\n- Get latest data for specific host: {\u0027dataset_id\u0027: 0, \u0027address\u0027: \u0027test.com\u0027}\n- Get historical data by time rangeand host id: {\u0027id\u0027: 2, \u0027date_start\u0027: \u00272024-04-11T19:20:00\u0027, \u0027date_end\u0027: \u00272024-04-12T19:20:00\u0027}\n- Paginate through all hosts. Starting at page 1 with 10 hosts on it: {\u0027page_number\u0027: 1, \u0027page_size\u0027: 10}\n\nNote: Multiple filters can be combined (AND logic).IMPORTANT: ONLY SET FIELDS THAT YOU ARE FILTERING WITH. For example if you want the latest host data for host with a given address you only need to set the address and dataset_id all other fields are NOT needed. ",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "detail_response": {
+                                "type": "boolean",
+                                "description": "Set to true for comprehensive monitoring data including reponse time statistics, agent location, and other info."
+                            },
+                            "dataset_id": {
+                                "type": "number",
+                                "description": "Dataset identifier (0 = latest data). For historical data, set to null and specify date range."
+                            },
+                            "id": {
+                                "type": "number",
+                                "description": "Filter by host ID"
+                            },
+                            "address": {
+                                "type": "string",
+                                "description": "Filter by host address (supports partial matchesa and wildcards * and ?)"
+                            },
+                            "email": {
+                                "type": "string",
+                                "description": "Filter by associated email"
+                            },
+                            "enabled": {
+                                "type": "boolean",
+                                "description": "Filter by enabled status"
+                            },
+                            "port": {
+                                "type": "number",
+                                "description": "Filter by port number"
+                            },
+                            "endpoint": {
+                                "type": "string",
+                                "description": "Filter by endpoint type"
+                            },
+                            "alert_sent": {
+                                "type": "boolean",
+                                "description": "Filter by alert sent status"
+                            },
+                            "alert_flag": {
+                                "type": "boolean",
+                                "description": "Filter by alert flag status"
+                            },
+                            "date_start": {
+                                "type": "string",
+                                "description": "Start time for historical data filtering. Requires date_end. Format: \u0027YYYY-MM-DDTHH:MM:SS\u0027."
+                            },
+                            "date_end": {
+                                "type": "string",
+                                "description": "End time for historical data filtering. Format: \u0027YYYY-MM-DDTHH:MM:SS\u0027."
+                            },
+                            "page_number": {
+                                "type": "number",
+                                "description": "Pagination: page number (1-based). Use with page_size for large datasets."
+                            },
+                            "page_size": {
+                                "type": "number",
+                                "description": "Pagination: results per page (default=4)."
+                            },
+                            "agent_location": {
+                                "type": "string",
+                                "description": "Filter by agent location"
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "get_host_list",
+                    "description": "Retrieve a list of monitored hosts and their configurations based on specified filters. By default, if no filters are provided (empty object {}), all hosts will be returned. Add parameters to filter and restrict the results. Examples:\n- Get all hosts with \u0027.com\u0027 addresses: {\u0027address\u0027: \u0027.com\u0027}\n- Get only DNS endpoint hosts: {\u0027endpoint\u0027: \u0027dns\u0027}\n- Get enabled hosts from specific location: {\u0027enabled\u0027: true, \u0027agent_location\u0027: \u0027London - UK\u0027}\n- Paginate through all hosts, show page 1 with 10 hosts on it: {\u0027page_number\u0027: 1, \u0027page_size\u0027: 10}\n\nNote: Multiple filters can be combined (AND logic). Leaving a filter out means that field won\u0027t be used to restrict results.IMPORTANT: ONLY SET FIELDS THAT YOU ARE FILTERING WITH. For example if you want the latest host config for host with a given address you only need to set the address all other fields are NOT needed. ",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "detail_response": {
+                                "type": "boolean",
+                                "description": "Set to true to include full configuration details (beyond just ID and address)."
+                            },
+                            "id": {
+                                "type": "number",
+                                "description": "Filter by host ID"
+                            },
+                            "address": {
+                                "type": "string",
+                                "description": "Filter by host address (supports partial matchesa and wildcards * and ?)"
+                            },
+                            "email": {
+                                "type": "string",
+                                "description": "Filter by associated email"
+                            },
+                            "enabled": {
+                                "type": "boolean",
+                                "description": "Filter by enabled status"
+                            },
+                            "port": {
+                                "type": "number",
+                                "description": "Filter by port number"
+                            },
+                            "endpoint": {
+                                "type": "string",
+                                "description": "Filter by endpoint type (e.g., \u0027http\u0027, \u0027dns\u0027)"
+                            },
+                            "page_number": {
+                                "type": "number",
+                                "description": "Pagination: page number (1-based). Use with page_size for large result sets."
+                            },
+                            "page_size": {
+                                "type": "number",
+                                "description": "Pagination: results per page (default=4)."
+                            },
+                            "agent_location": {
+                                "type": "string",
+                                "description": "Filter by agent location"
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "get_user_info",
+                    "description": "Get user information. Set detail_response true to get the following user information : current_time, logged_in (are they logged in) email, name, account_type, email_verified, disabled_email_alerts (will they receive email alerts), host_limit (how many hosts can they add), turbo_llm_tokens (the number of tokens available for chats messages when talking to you, if the user requires more tokens than the daily topup then direct them to upgrade at [Subscription](https://readyforquantum.com/subscription)",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "detail_response": {
+                                "type": "boolean",
+                                "description": "Will this function return all user details. Set to false if only basic info is required"
+                            }
+                        },
+                        "required": [
+                            "detail_response"
+                        ]
+                    }
+                }
+            }
+        ],
+        "model": "gpt-5-mini"
+    }

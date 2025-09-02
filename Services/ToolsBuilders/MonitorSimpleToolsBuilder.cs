@@ -15,7 +15,7 @@ using System.Net.Mime;
 namespace NetworkMonitor.LLM.Services;
 public class MonitorSimpleToolsBuilder : ToolsBuilderBase
 {
-    private readonly FunctionDefinition fn_are_functions_running;
+    private readonly FunctionDefinition fn_function_status_with_message_id;
     private readonly FunctionDefinition fn_cancel_functions;
     private readonly FunctionDefinition fn_add_host;
     private readonly FunctionDefinition fn_edit_host;
@@ -36,7 +36,7 @@ public class MonitorSimpleToolsBuilder : ToolsBuilderBase
         fn_get_host_data = MonitorTools.BuildGetHostDataFunction();
         fn_get_host_list = MonitorTools.BuildGetHostListFunction();
 
-        fn_are_functions_running = CommonTools.BuildAreFunctionsRunning();
+        fn_function_status_with_message_id = CommonTools.BuildAreFunctionsRunning();
         fn_cancel_functions = CommonTools.BuildCancelFunctions();
         fn_get_user_info = CommonTools.BuildGetUserInfoFunction();
         fn_get_agents = CommonTools.BuildGetAgentsFunction();
@@ -56,7 +56,7 @@ public class MonitorSimpleToolsBuilder : ToolsBuilderBase
         // Build the tools list based on user account type
         _tools = new List<ToolDefinition>()
         {
-            new ToolDefinition() { Function = fn_are_functions_running, Type = "function" },
+            new ToolDefinition() { Function = fn_function_status_with_message_id, Type = "function" },
             new ToolDefinition() { Function = fn_cancel_functions, Type = "function" },
             new ToolDefinition() { Function = fn_add_host, Type = "function" },
             new ToolDefinition() { Function = fn_edit_host, Type = "function" },

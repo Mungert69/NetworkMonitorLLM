@@ -55,7 +55,7 @@ namespace NetworkMonitor.LLM.Services
            if (userPrompt!=null) messages.Add(ChatMessage.FromUser(userPrompt));
 
             // 2) Create assistant message with a ToolCall
-            var toolCallId = "call_" + StringUtils.GetNanoid();
+            var toolCallId = StringUtils.NewToolCallId();
             var assistantMessage = ChatMessage.FromAssistant(assistantPrompt);
 
             assistantMessage.ToolCalls = new List<ToolCall>
@@ -390,16 +390,15 @@ namespace NetworkMonitor.Connection
                           $"All other functions can be called with or without an email address."+
                           $"If the user asks about logging in then they can browse to [Quantum Network Monitor]({AppConstants.FrontendUrl}/#assistant=open&openInNewTab) and then click the login button top right";
             }
-            string parameters = @"{""detail_response"" : false}";
-            string assistantStr = string.Format(config.FunctionBuilder, "get_user_info", parameters);
-
+            string arguments = @"{""detail_response"" : false}";
+          
             // Add messages using the helper method
             AddAssistantMessageWithToolCall(
                 messages,
                 // userPrompt
                 "What’s my user info?",
                 // assistantPrompt
-                assistantStr,
+                "",
                 // toolResponse (tool response in JSON format)
                 $@"{{
             ""message"": ""Got user info"",
@@ -411,7 +410,8 @@ namespace NetworkMonitor.Connection
             ""logged_in"": {serviceObj.IsUserLoggedIn.ToString().ToLower()}
         }}",
                 // functionName
-                "get_user_info"
+                "get_user_info",
+                arguments
             );
 
             messages.Add(ChatMessage.FromAssistant(
@@ -453,21 +453,21 @@ namespace NetworkMonitor.Connection
             }
 
             // Single N-shot example: Request user info
-            string assistantStr = string.Format(config.FunctionBuilder, "call_monitor_sys", @"{""message"": ""What's my user info?""}");
-
+            string arguments =  @"{{""message"": ""What's my user info?""}}";
+ 
             AddAssistantMessageWithToolCall(
                 messages,
                 null,
-                assistantStr,
+                "",
                 // assistantPrompt (function call response)
                 funcResponse,
                 // functionName
                 "call_monitor_sys"
+                ,arguments
             );
 
 
-
-            string assistantStr2 = string.Format(config.FunctionBuilder, "call_monitor_sys", @"{""message"": ""What can you do?""}");
+            string arguments2 = @"{{""message"": ""What can you do?""}}";
             string funcResponse2 = @$"I am a network monitoring and security assistant designed to help you manage and secure your network infrastructure. Here's what I can do:
 
 1. **Host Monitoring**  
@@ -518,11 +518,12 @@ If you need help with any of these tasks, just let me know! You can also visit {
             AddAssistantMessageWithToolCall(
                 messages,
                 null,
-                assistantStr2,
+                "",
                 // assistantPrompt (function call response)
                 funcResponse2,
                 // functionName
-                "call_monitor_sys"
+                "call_monitor_sys",
+                arguments2
             );
 
 
