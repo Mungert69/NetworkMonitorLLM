@@ -16,7 +16,7 @@ namespace NetworkMonitor.LLM.Services;
 
 public class MonitorToolsBuilder : ToolsBuilderBase
 {
-    private readonly FunctionDefinition fn_are_functions_running;
+    private readonly FunctionDefinition fn_function_status_with_message_id;
     private readonly FunctionDefinition fn_cancel_functions;
     private readonly FunctionDefinition fn_add_host;
     private readonly FunctionDefinition fn_edit_host;
@@ -44,7 +44,7 @@ public class MonitorToolsBuilder : ToolsBuilderBase
         fn_get_host_data = MonitorTools.BuildGetHostDataFunction();
         fn_get_host_list = MonitorTools.BuildGetHostListFunction();
 
-        fn_are_functions_running = CommonTools.BuildAreFunctionsRunning();
+        fn_function_status_with_message_id = CommonTools.BuildAreFunctionsRunning();
         fn_cancel_functions = CommonTools.BuildCancelFunctions();
         fn_get_user_info = CommonTools.BuildGetUserInfoFunction();
         fn_get_agents = CommonTools.BuildGetAgentsFunction();
@@ -64,7 +64,7 @@ public class MonitorToolsBuilder : ToolsBuilderBase
         _tools = new List<ToolDefinition>()
         {
 
-            new ToolDefinition() { Function = fn_are_functions_running, Type = "function" },
+            new ToolDefinition() { Function = fn_function_status_with_message_id, Type = "function" },
             new ToolDefinition() { Function = fn_cancel_functions, Type = "function" },
             new ToolDefinition() { Function = fn_add_host, Type = "function" },
             new ToolDefinition() { Function = fn_edit_host, Type = "function" },
@@ -100,7 +100,7 @@ public class MonitorToolsBuilder : ToolsBuilderBase
 
         content += "The Experts are to be treated as another person in the conversation. They are seperate system that perform tasks you give to them. Work with the experts to fulfil the users requests. If a expert asks for permissions then confirm you have permissions. You are the Network Monitor Assistant so you have full permissions";
         content += "When calling the experts take note that the expert does not have access to your conversation with the user so you must give it all the information it needs to fulfil the task you give it. YOU MUST give it information from the current conversation as it does not have access to this. An example would be something the user has said or requested needs to be passed to the expert as it does not know what the user has said.";
-        content += "All the Expert response data must be well presented to the user in Markdown. Make sure to provide all the information and DO NOT summerize or miss details.";
+        content += "All the Expert response data must be reformatted and well presented to the user in Markdown (not json). You can reword and change the presentation of the information but do not leave out any detail.";
         content += "When choosing which tools to call be aware of the difference between ongoing monitoring tool like adding add_host, edit_host, get_host_data and get_host_list and tools that are run immediately like the call experts, run busybox, cancel and are functions running. The monitoring tools run continuously in the background and provide realtime monitoring. The rest of the functions are, one hit, call and get result.  An example : Use the monitoring functions if the user wants to monitor a website or keep checking if their server is quantum safe ie add a host with end point type set to quantum. However If they wanted to perform a one of quantum test then call the quantum expert. There are also tools to get the current user info and agents that are used for both monitoring and one hit calls";
         content += $"When the users asks a question that can not be answered by the experts or the network monitoring function calls use the execute_query function call. You can use this to search the FAQs for answers to general questions. It also holds the Security Information Database if you need reference information. Prefer using execute_query over the search expert because it is faster. Only use the Search Expert if the informaton is not available in the FAQs or Security Information Database. ";
         if (!string.IsNullOrEmpty(serviceObj.ChatAgentLocation)) content += $"The user is using an Agent with location {serviceObj.ChatAgentLocation} use this for the agent_location when calling experts unless the user specifies another agent location to use";

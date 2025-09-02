@@ -59,7 +59,7 @@ public class ChatResponseBuilder
                 message.ToolCalls = functionCalls.Select(fc => new ToolCall
                 {
                     Type = "function",
-                    Id = "call_" + StringUtils.GetNanoid(),
+                    Id = StringUtils.NewToolCallId(),
                     FunctionCall = new FunctionCall
                     {
                         Name = fc.functionName,
@@ -101,7 +101,7 @@ public class ChatResponseBuilder
                 choice.Message.ToolCalls = functionCalls.Select(fc => new ToolCall
                 {
                     Type = "function",
-                    Id = "call_" + StringUtils.GetNanoid(),
+                    Id = StringUtils.NewToolCallId(),
                     FunctionCall = new FunctionCall
                     {
                         Name = fc.functionName,

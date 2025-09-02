@@ -336,8 +336,7 @@ namespace NetworkMonitor.LLM.Services
             else functionCalls = ParseInputForJson(line);
 
             bool makeAssistantMessage = false;
-            // if (functionCalls != null && functionCalls.Count > 0 && !functionCalls.Any(f => f.functionName == "are_functions_running")) makeAssistantMessage = true;
-
+          
             if (makeAssistantMessage) _assistantMessage = new StringBuilder($"I have called the following functions ");
             bool isDuplicateSet = false;
             bool isDuplicate = false;
