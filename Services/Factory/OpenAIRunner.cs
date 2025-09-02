@@ -593,8 +593,8 @@ public class OpenAIRunner : ILLMRunner
             messageIdJson = " , \"message_id\" : \"" + serviceObj.MessageID + "\"";
         }
         // usePlaceHolder should be false if ANY tool call is one of these control functions
-        if (messageCopy.ToolCalls is { Count: > 0 } &&
-            messageCopy.ToolCalls.Any(tc =>
+        if (choiceMessage.ToolCalls is { Count: > 0 } &&
+            choiceMessage.ToolCalls.Any(tc =>
             {
                 var name = tc.FunctionCall?.Name;
                 return name == "function_status_with_message_id"
