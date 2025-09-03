@@ -547,52 +547,14 @@ public class OpenAIRunner : ILLMRunner
 
     private async Task HandleFunctionProcessing(LLMServiceObj serviceObj, ChatMessage choiceMessage, List<ChatMessage> localHistory, LLMServiceObj responseServiceObj, ChatMessage assistantChatMessage, bool isFuncMessage)
     {
+        bool usePlaceHolder = true;
 
         if (choiceMessage == null) return;
         // Create a deep copy of the choiceMessage to avoid modifying the original
         // Map original tool_call_id -> copied tool_call_id
         var toolCallIdMap = new Dictionary<string, string>(StringComparer.Ordinal);
-        var copyToolCallIds = new List<string>(); // (kept if you still want the list)
-
-        // --- Build a deep copy with NEW ToolCall Ids ---
-        var choiceMessageCopy = new ChatMessage
-        {
-            Role = choiceMessage.Role,
-            Content = choiceMessage.Content,
-            ToolCalls = choiceMessage.ToolCalls?.Select(tc =>
-            {
-                var oldId = tc.Id ?? string.Empty;
-                var newId = StringUtils.NewToolCallId();     // ← NEW id for the copy
-                if (!string.IsNullOrEmpty(oldId))
-                    toolCallIdMap[oldId] = newId;
-                copyToolCallIds.Add(newId);
-
-                return new ToolCall
-                {
-                    Id = newId,
-                    Type = tc.Type,
-                    FunctionCall = tc.FunctionCall != null
-                        ? new FunctionCall
-                        {
-                            Name = "get_function_result",
-                            Arguments = @"{{""message_id"": """ + serviceObj.MessageID + @""", ""function_name"": """ + tc.FunctionCall.Name + @"""}}"
-                        }
-                        : null
-                };
-            }).ToList()
-        };
-        _toolCallIdMaps[serviceObj.MessageID] = toolCallIdMap;
-
-        bool usePlaceHolder = true;
-        string messageIdStr = "";
-        string messageIdJson = "";
-
-        if (serviceObj.IsPrimaryLlm)
-        {
-            messageIdStr = $"using message_id {serviceObj.MessageID}";
-            messageIdJson = " , \"message_id\" : \"" + serviceObj.MessageID + "\"";
-        }
         // usePlaceHolder should be false if ANY tool call is one of these control functions
+        var choiceMessageCopy = new ChatMessage(); ;
         if (choiceMessage.ToolCalls is { Count: > 0 } &&
             choiceMessage.ToolCalls.Any(tc =>
             {
@@ -604,19 +566,50 @@ public class OpenAIRunner : ILLMRunner
         {
             usePlaceHolder = false;
         }
+        else
+        {
+            choiceMessageCopy = new ChatMessage
+            {
+                Role = choiceMessage.Role,
+                Content = "",
+                ToolCalls = choiceMessage.ToolCalls?.Select(tc =>
+                {
+                    var oldId = tc.Id ?? string.Empty;
+                    var newId = StringUtils.NewToolCallId();     // ← NEW id for the copy
+                    if (!string.IsNullOrEmpty(oldId))
+                        toolCallIdMap[oldId] = newId;
+
+                    return new ToolCall
+                    {
+                        Id = newId,
+                        Type = tc.Type,
+                        FunctionCall = tc.FunctionCall != null
+                            ? new FunctionCall
+                            {
+                                Name = "get_function_result",
+                                Arguments = @"{{""message_id"": """ + serviceObj.MessageID + @""", ""function_name"": """ + tc.FunctionCall.Name + @"""}}"
+                            }
+                            : null
+                    };
+                }).ToList()
+            };
+            usePlaceHolder = true;
+        }
 
 
+        string messageIdStr = "";
+        string messageIdJson = "";
 
-        // Store the original message content
-        string origMessage = choiceMessageCopy.Content ?? "";
+        if (serviceObj.IsPrimaryLlm)
+        {
+            messageIdStr = $"using message_id {serviceObj.MessageID}";
+            messageIdJson = " , \"message_id\" : \"" + serviceObj.MessageID + "\"";
+        }
+
         string pluralCall = "call";
         string plural = "is";
         if (choiceMessage.ToolCalls != null && choiceMessage.ToolCalls.Count > 1) { plural = "are"; pluralCall = "calls"; }
 
-        // Update the copy's content for the pending function call
-        choiceMessageCopy.Content = $"";
-        //_pendingFunctionCalls.TryAdd(serviceObj.MessageID, choiceMessageCopy);
-        //TODO make a copy of the choiceMesage and use that instead 
         var toolResponces = new List<ChatMessage>();
         bool isDuplicateSet = false;
         bool isDuplicate = false;
@@ -656,7 +649,6 @@ public class OpenAIRunner : ILLMRunner
                 }
             }
         }
-        choiceMessage.Content = origMessage;
 
         if (usePlaceHolder)
         {
@@ -668,7 +660,11 @@ public class OpenAIRunner : ILLMRunner
             _toolCallIdMaps[serviceObj.MessageID] = toolCallIdMap;
 
         }
-        else _pendingFunctionCalls.TryAdd(serviceObj.MessageID, choiceMessage);
+        else
+        {
+            _pendingFunctionCalls.TryAdd(serviceObj.MessageID, choiceMessage);
+        }
+
         int numDequeue = MaxRecentFunctionCalls;
         if (isDuplicate && duplicateCount > 1)
         {

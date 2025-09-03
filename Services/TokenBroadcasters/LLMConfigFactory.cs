@@ -407,7 +407,7 @@ If no tool is suitable, state that explicitly. If the user's input lacks require
             {
                 UserReplace = "",
                 FunctionReplace = "",
-                AssistantHeader = "<|start|>assistant",
+                AssistantHeader = "",
                 UserInputTemplate = "{0}",
                 AssistantMessageTemplate = "{0}",
                 SystemMessageTemplate = "{0}",
