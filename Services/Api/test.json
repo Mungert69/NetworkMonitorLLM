@@ -13,7 +13,7 @@
                 "content": "",
                 "tool_calls": [
                     {
-                        "id": "call_PlQT7B9L3AzBq0gPpYwPJGCYrT",
+                        "id": "call_ONTmUHoGJ0U4cabHjmGt7zaLH0",
                         "type": "function",
                         "function": {
                             "name": "get_user_info",
@@ -24,12 +24,20 @@
             },
             {
                 "role": "tool",
-                "content": "{\n            \u0022message\u0022: \u0022Got user info\u0022,\n            \u0022success\u0022: true,\n            \u0022current_time\u0022: \u00222025-09-02T21:24:06\u0022,\n            \u0022email\u0022: \u0022contact@mahadeva.co.uk\u0022,\n            \u0022account_type\u0022: \u0022Enterprise\u0022,\n            \u0022available_tokens\u0022: 7225844,\n            \u0022logged_in\u0022: true\n        }",
-                "tool_call_id": "call_PlQT7B9L3AzBq0gPpYwPJGCYrT"
+                "content": "{\n            \u0022message\u0022: \u0022Got user info\u0022,\n            \u0022success\u0022: true,\n            \u0022current_time\u0022: \u00222025-09-03T02:12:19\u0022,\n            \u0022email\u0022: \u0022contact@mahadeva.co.uk\u0022,\n            \u0022account_type\u0022: \u0022Enterprise\u0022,\n            \u0022available_tokens\u0022: 6681348,\n            \u0022logged_in\u0022: true\n        }",
+                "tool_call_id": "call_ONTmUHoGJ0U4cabHjmGt7zaLH0"
             },
             {
                 "role": "assistant",
-                "content": "The user logged in at 2025-09-02T21:24:06 with email contact@mahadeva.co.uk. Users account type is Enterprise. They have 7225844 available tokens. Remind the user that upgrading accounts gives more tokens and access to more functions. See https://readyforquantum.com/subscription for details."
+                "content": "The user logged in at 2025-09-03T02:12:19 with email contact@mahadeva.co.uk. Users account type is Enterprise. They have 6681348 available tokens. Remind the user that upgrading accounts gives more tokens and access to more functions. See https://readyforquantum.com/subscription for details."
+            },
+            {
+                "role": "user",
+                "content": "test"
+            },
+            {
+                "role": "assistant",
+                "content": "\u003C|start|\u003Eassistant Sure! What would you like to test?  \n\n- Add a new host to be monitored (e.g., a website or server)  \n- Run a one\u2011off security/quantum check on a target  \n- Query the monitoring data you already have  \n- Anything else you have in mind  \n\nJust let me know the details and I\u2019ll get it set up for you."
             },
             {
                 "role": "user",
@@ -37,171 +45,109 @@
             },
             {
                 "role": "assistant",
+                "reasoning_content": "We need to retrieve list of monitored hosts. Use get_host_list with no filters. Probably include detail_response true to show config. Let\u0027s call.",
                 "content": "",
                 "tool_calls": [
                     {
-                        "id": "call_MkdLpDKwVfz1MHwx1NleyVSj",
+                        "id": "call_62c5a89bcc6f46e98dfcf54c",
                         "type": "function",
                         "function": {
                             "name": "get_host_list",
-                            "arguments": "{\u0022detail_response\u0022:true}"
+                            "arguments": "{\u0022detail_response\u0022: true}"
                         }
                     }
                 ]
             },
             {
                 "role": "tool",
-                "content": "{\u0022message\u0022 : \u0022The function call get_host_list is currently running. There is no need to call function_status_with_message_id because the system is actively monitoring the status and you will be informed as soon as the function completes..\u0022 , \u0022message_id\u0022 : \u0022USUl__FiKeyA\u0022}",
+                "content": "{\u0022message\u0022 : \u0022The function call get_host_list is currently running. There is no need to call function_status_with_message_id because the system is actively monitoring the status and you will be informed as soon as the function completes..\u0022 , \u0022message_id\u0022 : \u0022wKh2GnEaIr7f\u0022}",
                 "name": "get_host_list",
-                "tool_call_id": "call_MkdLpDKwVfz1MHwx1NleyVSj"
+                "tool_call_id": "call_62c5a89bcc6f46e98dfcf54c"
             },
             {
                 "role": "assistant",
-                "content": "Function call using message_id USUl__FiKeyA is running. I will inform you of the result when it completes"
+                "content": "Function call using message_id wKh2GnEaIr7f is running. I will inform you of the result when it completes"
             },
             {
                 "role": "assistant",
                 "content": "",
                 "tool_calls": [
                     {
-                        "id": "call_0Diewp7yqhlpxb8hMXnC3aGhET",
+                        "id": "call_Z963smNdHv0zFtlnUv4ASUGCKW",
                         "type": "function",
                         "function": {
                             "name": "get_function_result",
-                            "arguments": "{{\u0022message_id\u0022: \u0022USUl__FiKeyA\u0022, \u0022function_name\u0022: \u0022get_host_list\u0022}}"
+                            "arguments": "{{\u0022message_id\u0022: \u0022wKh2GnEaIr7f\u0022, \u0022function_name\u0022: \u0022get_host_list\u0022}}"
                         }
                     }
                 ]
             },
             {
                 "role": "tool",
-                "content": "{\u0022message\u0022 : \u0022Showing all host config data Filtered using [pageNumber=1, pageSize=4]. Results returned=2 of totalMatchedBeforePagination=2. HasMorePages=false.\u0022, \u0022success\u0022 : true,  \u0022data\u0022 : [{\u0022address\u0022 : \u00228.8.8.8\u0022, \u0022id\u0022 : 11, \u0022endpoint\u0022 : \u0022icmp\u0022, \u0022timeout\u0022 : 0, \u0022agent_location\u0022 : \u0022Scanner - EU\u0022}{\u0022address\u0022 : \u0022readyforquantum.com\u0022, \u0022id\u0022 : 12, \u0022endpoint\u0022 : \u0022http\u0022, \u0022timeout\u0022 : 0, \u0022agent_location\u0022 : \u0022Scanner - EU\u0022}] , \u0022message_id\u0022 : \u0022USUl__FiKeyA\u0022}\n",
+                "content": "{\u0022message\u0022 : \u0022Showing all host config data Filtered using [pageNumber=1, pageSize=4]. Results returned=2 of totalMatchedBeforePagination=2. HasMorePages=false.\u0022, \u0022success\u0022 : true,  \u0022data\u0022 : [{\u0022address\u0022 : \u00228.8.8.8\u0022, \u0022id\u0022 : 11, \u0022endpoint\u0022 : \u0022icmp\u0022, \u0022timeout\u0022 : 0, \u0022agent_location\u0022 : \u0022Scanner - EU\u0022}{\u0022address\u0022 : \u0022readyforquantum.com\u0022, \u0022id\u0022 : 12, \u0022endpoint\u0022 : \u0022http\u0022, \u0022timeout\u0022 : 0, \u0022agent_location\u0022 : \u0022Scanner - EU\u0022}] , \u0022message_id\u0022 : \u0022wKh2GnEaIr7f\u0022}\n",
                 "name": "get_host_list",
-                "tool_call_id": "call_0Diewp7yqhlpxb8hMXnC3aGhET"
+                "tool_call_id": "call_Z963smNdHv0zFtlnUv4ASUGCKW"
             },
             {
                 "role": "assistant",
-                "content": "Here are your monitored hosts (2 total):\n\n- Host 1\n  - ID: 11\n  - Address: 8.8.8.8\n  - Endpoint: icmp\n  - Timeout: 0 ms\n  - Agent location: Scanner - EU\n\n- Host 2\n  - ID: 12\n  - Address: readyforquantum.com\n  - Endpoint: http\n  - Timeout: 0 ms\n  - Agent location: Scanner - EU\n\nQuery details\n- Results returned: 2 (total matched: 2)\n- Pagination: page 1, page size 4 \u2014 HasMorePages: false\n- Message ID: USUl__FiKeyA\n- Success: true\n\nWhat would you like to do next?\n- View latest monitoring data for a host (tell me the ID or address)\n- Edit or delete a host (tell me ID and changes)\n- Add a new host to monitoring (tell me address and endpoint)"
+                "content": "\u003C|start|\u003Eassistant ## Your Monitored Hosts\n\n| ID | Address | Endpoint | Agent Location | Timeout (ms) |\n|----|---------|----------|----------------|--------------|\n| **11** | \u00608.8.8.8\u0060 | **icmp** (host ping) | \u0060Scanner - EU\u0060 | 0 |\n| **12** | \u0060readyforquantum.com\u0060 | **http** (website ping) | \u0060Scanner - EU\u0060 | 0 |\n\n*Both hosts are currently being monitored by the **Scanner \u2013 EU** agent.*  \n\nYou can:\n\n* **Add a new host** \u2013 e.g., \u0060add_host\u0060 with the desired endpoint (\u0060http\u0060, \u0060https\u0060, \u0060icmp\u0060, \u0060quantum\u0060, etc.).\n* **Edit an existing host** \u2013 change its endpoint, timeout, or disable it with \u0060edit_host\u0060.\n* **Remove a host** \u2013 set \u0060hidden: true\u0060 in \u0060edit_host\u0060.\n\nLet me know if you\u2019d like to modify any of these entries or add new ones!"
             },
             {
                 "role": "user",
-                "content": "can you do a security scan on the second host just port 443 quick scan"
+                "content": "get more data for first host"
             },
             {
                 "role": "assistant",
+                "reasoning_content": "User wants more data for first host, which is address 8.8.8.8, endpoint icmp. We need to retrieve host data via get_host_data with address filter and maybe dataset_id 0 for latest. Use detail_response true.",
                 "content": "",
                 "tool_calls": [
                     {
-                        "id": "call_Nt2DHNriWim8nOm9TNsekb1T",
+                        "id": "call_39a44d390ff241a9a9fcf673",
                         "type": "function",
                         "function": {
-                            "name": "get_agents",
-                            "arguments": "{\u0022detail_response\u0022:false}"
+                            "name": "get_host_data",
+                            "arguments": "{\u0022address\u0022: \u00228.8.8.8\u0022, \u0022dataset_id\u0022: 0, \u0022detail_response\u0022: true}"
                         }
                     }
                 ]
             },
             {
                 "role": "tool",
-                "content": "{\u0022message\u0022 : \u0022The function call get_agents is currently running. There is no need to call function_status_with_message_id because the system is actively monitoring the status and you will be informed as soon as the function completes..\u0022 , \u0022message_id\u0022 : \u0022HmOJrCHmfDPS\u0022}",
-                "name": "get_agents",
-                "tool_call_id": "call_Nt2DHNriWim8nOm9TNsekb1T"
+                "content": "{\u0022message\u0022 : \u0022The function call get_host_data is currently running. There is no need to call function_status_with_message_id because the system is actively monitoring the status and you will be informed as soon as the function completes..\u0022 , \u0022message_id\u0022 : \u0022vBf0Yg-PRIJm\u0022}",
+                "name": "get_host_data",
+                "tool_call_id": "call_39a44d390ff241a9a9fcf673"
             },
             {
                 "role": "assistant",
-                "content": "Function call using message_id HmOJrCHmfDPS is running. I will inform you of the result when it completes"
+                "content": "Function call using message_id vBf0Yg-PRIJm is running. I will inform you of the result when it completes"
             },
             {
                 "role": "assistant",
                 "content": "",
                 "tool_calls": [
                     {
-                        "id": "call_CvEoY247s9CwguArSVql7ZvE7f",
+                        "id": "call_mDTD6vZgQlYA5M2mxxk3zQzNwu",
                         "type": "function",
                         "function": {
                             "name": "get_function_result",
-                            "arguments": "{{\u0022message_id\u0022: \u0022HmOJrCHmfDPS\u0022, \u0022function_name\u0022: \u0022get_agents\u0022}}"
+                            "arguments": "{{\u0022message_id\u0022: \u0022vBf0Yg-PRIJm\u0022, \u0022function_name\u0022: \u0022get_host_data\u0022}}"
                         }
                     }
                 ]
             },
             {
                 "role": "tool",
-                "content": "{\u0022message\u0022 : \u0022\u0022, \u0022success\u0022 : true,  \u0022data\u0022 : [{\u0022agent_location\u0022 : \u0022Scanner - EU\u0022}] , \u0022message_id\u0022 : \u0022HmOJrCHmfDPS\u0022}\n",
-                "name": "get_agents",
-                "tool_call_id": "call_CvEoY247s9CwguArSVql7ZvE7f"
+                "content": "{\u0022message\u0022 : \u0022Showing all host monitoring data Filtered using [address=\u00228.8.8.8\u0022, dataSetId=0, pageNumber=1, pageSize=4]. Results returned=1 of totalMatchedBeforePagination=1. HasMorePages=false.\u0022, \u0022success\u0022 : true,  \u0022data_date_range\u0022 : {\u0022date_started\u0022 : \u00222025-09-01T19:00:10\u0022, \u0022date_ended\u0022 : \u00222025-09-03T03:12:35\u0022} , \u0022data\u0022 : [{\u0022status_message\u0022 : \u0022Data set ended with status up, with 18 down events. \u0022, \u0022id\u0022 : 11, \u0022address\u0022 : \u00228.8.8.8\u0022, \u0022endpoint\u0022 : \u0022icmp\u0022, \u0022agent_location\u0022 : \u0022Scanner - EU\u0022, \u0022dataset_id\u0022 : 0, \u0022status\u0022 : \u0022Success\u0022, \u0022packets_sent\u0022 : 1716, \u0022packets_received\u0022 : 1698, \u0022packets_lost\u0022 : 18, \u0022packets_lost_percentage\u0022 : 1.048951, \u0022alert_sent\u0022 : true, \u0022alert_flag\u0022 : true, \u0022round_trip_time_maximum\u0022 : 15, \u0022round_trip_time_average\u0022 : 1.303298}] , \u0022message_id\u0022 : \u0022vBf0Yg-PRIJm\u0022}\n",
+                "name": "get_host_data",
+                "tool_call_id": "call_mDTD6vZgQlYA5M2mxxk3zQzNwu"
             },
             {
                 "role": "assistant",
-                "content": "",
-                "tool_calls": [
-                    {
-                        "id": "call_VCOfKHDy8pMn4rH12ZfRikED",
-                        "type": "function",
-                        "function": {
-                            "name": "call_security_expert",
-                            "arguments": "{\u0022message\u0022:\u0022I am authorized to perform this security assessment on behalf of the user (contact@mahadeva.co.uk). Request: Perform a quick Nmap scan against readyforquantum.com targeting TCP port 443 only. Requirements:\\n- Use Nmap targeting port 443: -p 443\\n- Quick/intense timing: -T4\\n- Do not perform host discovery (treat host as up): -Pn\\n- Enable service/version detection: -sV\\n- Run only non-intrusive TLS-related NSE scripts: ssl-cert, ssl-enum-ciphers\\n- Do not run broad vulnerability or exploitation scripts; keep scan quick and low-impact\\n- Return: concise summary (open/closed, service/version, TLS certificate CN and validity, cipher suites supported with strengths), and include the raw Nmap output\\nAgent location to execute scan: Scanner - EU\\nPlease confirm you are authorized to run this and proceed, then run the scan and return results.\u0022,\u0022agent_location\u0022:\u0022Scanner - EU\u0022}"
-                        }
-                    }
-                ]
-            },
-            {
-                "role": "tool",
-                "content": "{\u0022message\u0022 : \u0022The function call call_security_expert is currently running. There is no need to call function_status_with_message_id because the system is actively monitoring the status and you will be informed as soon as the function completes..\u0022 , \u0022message_id\u0022 : \u0022HmOJrCHmfDPS\u0022}",
-                "name": "call_security_expert",
-                "tool_call_id": "call_VCOfKHDy8pMn4rH12ZfRikED"
-            },
-            {
-                "role": "assistant",
-                "content": "Function call using message_id HmOJrCHmfDPS is running. I will inform you of the result when it completes"
+                "content": "\u003C|channel|\u003Efinal\u003C|message|\u003E### Detailed Monitoring Data for **8.8.8.8** (ICMP)\n\n| Field | Value |\n|-------|-------|\n| **Address** | \u00608.8.8.8\u0060 |\n| **Endpoint** | \u0060icmp\u0060 (ping) |\n| **Agent Location** | \u0060Scanner - EU\u0060 |\n| **Dataset ID** | 0 (latest) |\n| **Status** | \u0060Success\u0060 |\n| **Status Message** | Data set ended with status **up**, with **18 down events** |\n| **Packets Sent** | 1\u202F716 |\n| **Packets Received** | 1\u202F698 |\n| **Packets Lost** | 18 |\n| **Packet Loss %** | 1.05\u202F% |\n| **Round\u2011Trip Time (RTT) \u2013 Avg** | 1.30\u202Fms |\n| **Round\u2011Trip Time (RTT) \u2013 Max** | 15\u202Fms |\n| **Alert Flag** | **true** (an alert was triggered) |\n| **Alert Sent** | **true** |\n| **Monitoring Period** | 2025\u201109\u201101\u202F19:00:10 \u2192 2025\u201109\u201103\u202F03:12:35 |\n\n**What this means**\n\n* The host is generally **up**, but there were **18 ping failures** (\u22481\u202F% loss) during the monitored window.\n* Alerts were generated and sent because of those failures.\n* Average latency is very low (\u22481.3\u202Fms), with a maximum of 15\u202Fms, indicating normal connectivity when the host is reachable.\n\n---\n\n**Next steps you might consider**\n\n1. **Adjust alert thresholds** \u2013 e.g., ignore brief packet loss if it\u2019s acceptable.\n2. **Add a secondary monitoring endpoint** (e.g., \u0060http\u0060 or \u0060https\u0060) to verify service\u2011level health.\n3. **Edit the host** to change timeout, enable/disable monitoring, or hide it.\n\nLet me know if you\u2019d like to modify this host, add new ones, or run any other checks!"
             },
             {
                 "role": "user",
-                "content": "how is that call going"
-            },
-            {
-                "role": "assistant",
-                "content": "",
-                "tool_calls": [
-                    {
-                        "id": "call_Hae7kzvTsVbhM3688SpUfod7",
-                        "type": "function",
-                        "function": {
-                            "name": "function_status_with_message_id",
-                            "arguments": "{\u0022message_id\u0022:\u0022HmOJrCHmfDPS\u0022,\u0022auto_check_interval_seconds\u0022:0}"
-                        }
-                    }
-                ]
-            },
-            {
-                "role": "tool",
-                "content": "{\u0022message\u0022 : \u0022The function call function_status_with_message_id is currently running. There is no need to call function_status_with_message_id because the system is actively monitoring the status and you will be informed as soon as the function completes..\u0022 , \u0022message_id\u0022 : \u0022ympG-3iE3TmW\u0022}",
-                "name": "function_status_with_message_id",
-                "tool_call_id": "call_Hae7kzvTsVbhM3688SpUfod7"
-            },
-            {
-                "role": "assistant",
-                "content": "Function call using message_id ympG-3iE3TmW is running. I will inform you of the result when it completes"
-            },
-            {
-                "role": "assistant",
-                "content": "",
-                "tool_calls": [
-                    {
-                        "id": "call_8PRpnjVpQ6Z59gitbAdgYdcrGs",
-                        "type": "function",
-                        "function": {
-                            "name": "get_function_result",
-                            "arguments": "{{\u0022message_id\u0022: \u0022ympG-3iE3TmW\u0022, \u0022function_name\u0022: \u0022function_status_with_message_id\u0022}}"
-                        }
-                    }
-                ]
-            },
-            {
-                "role": "tool",
-                "content": "{\u0022message\u0022 : \u0022Status of function calls with message_id HmOJrCHmfDPS .  Data returned from function calls that have completed successfully : {\u0022message\u0022 : \u0022\u0022, \u0022success\u0022 : true,  \u0022data\u0022 : [{\u0022agent_location\u0022 : \u0022Scanner - EU\u0022}] , \u0022message_id\u0022 : \u0022HmOJrCHmfDPS\u0022} : Make sure you give the user a summary of this data  Information about function calls that are still running : The status of Function call \u0027run_nmap\u0027 is still running. It has been running for 14.70 seconds.\u0022, \u0022success\u0022 : true}\n",
-                "name": "function_status_with_message_id",
-                "tool_call_id": "call_8PRpnjVpQ6Z59gitbAdgYdcrGs"
+                "content": "scan you security scan this host"
             }
         ],
         "max_completion_tokens": 5333,
@@ -671,5 +617,5 @@
                 }
             }
         ],
-        "model": "gpt-5-mini"
+        "model": "openai/gpt-oss-120b"
     }
