@@ -21,7 +21,7 @@ namespace NetworkMonitor.LLM.Services
             {
                 case "cmdprocessorxml":
                     return GetCmdProcessorXml(args);
-                case "user" :
+                case "user":
                     return GetUserSimulatorPrompt(args);
                 default:
                     return GetDefaultPrompt(args);
@@ -52,7 +52,7 @@ namespace NetworkMonitor.LLM.Services
             string toolCallType = "function")
         {
             // 1) Add user message
-           if (userPrompt!=null) messages.Add(ChatMessage.FromUser(userPrompt));
+            if (userPrompt != null) messages.Add(ChatMessage.FromUser(userPrompt));
 
             // 2) Create assistant message with a ToolCall
             var toolCallId = StringUtils.NewToolCallId();
@@ -84,13 +84,14 @@ namespace NetworkMonitor.LLM.Services
 
             // --------------------------------------------------
             // 1ST GROUP: user -> assistant (with function_call) -> tool
+            // Add a schema-based ListCmdProcessor example
             // --------------------------------------------------
             AddAssistantMessageWithToolCall(
                 messages,
                 // 1) userPrompt
-                "Please can you create a cmd processor to run the ls command on my agent",
-// 2) assistantPrompt (includes the <function_call>)
-@"<function_call name=""add_cmd_processor"">
+                "Please can you create a cmd processor to run an ls command on my agent using our standard schema-based arg parsing",
+                // 2) assistantPrompt (with <function_call> and CDATA source code)
+                @"<function_call name=""add_cmd_processor"">
     <parameters>
         <cmd_processor_type>List</cmd_processor_type>
         <source_code>
@@ -112,71 +113,116 @@ using System.Xml.Linq; // For XML handling
 using System.IO; // For file operations
 using System.Threading; // For CancellationToken
 using System.Net; // For Network operations
+// Add other using statements as needed
 
 namespace NetworkMonitor.Connection
 {
+    /// <summary>
+    /// Lists directory contents via 'ls', using schema-based CLI arg parsing.
+    /// Args:
+    ///   --path <string>            (default: '.')
+    ///   --long                     (flag)
+    ///   --all                      (flag)
+    ///   --human                    (flag)
+    ///   --recursive                (flag)
+    ///   --timeout <int ms>         (default: 10000)
+    /// </summary>
     public class ListCmdProcessor : CmdProcessor
     {
+        private const int DefaultTimeoutMs = 10_000;
+        private readonly List<ArgSpec> _schema;
+
         public ListCmdProcessor(ILogger logger, ILocalCmdProcessorStates cmdProcessorStates, IRabbitRepo rabbitRepo, NetConnectConfig netConfig)
-            : base(logger, cmdProcessorStates, rabbitRepo, netConfig) {}
+            : base(logger, cmdProcessorStates, rabbitRepo, netConfig)
+        {
+            _schema = new()
+            {
+                new() { Key = ""path"",         Required = false, IsFlag = false, TypeHint = ""value"", DefaultValue = ""."", Help = ""Directory to list"" },
+                new() { Key = ""long"",         Required = false, IsFlag = true,  DefaultValue = ""false"", Help = ""Long listing (-l)"" },
+                new() { Key = ""all"",          Required = false, IsFlag = true,  DefaultValue = ""false"", Help = ""Include dot-files (-a)"" },
+                new() { Key = ""human"",        Required = false, IsFlag = true,  DefaultValue = ""false"", Help = ""Human-readable sizes (-h)"" },
+                new() { Key = ""recursive"",    Required = false, IsFlag = true,  DefaultValue = ""false"", Help = ""Recursive (-R)"" },
+                new() { Key = ""timeout"",      Required = false, IsFlag = false, TypeHint = ""int"", DefaultValue = DefaultTimeoutMs.ToString(), Help = ""Process timeout (ms)"" },
+            };
+        }
 
         public override async Task<ResultObj> RunCommand(string arguments, CancellationToken cancellationToken, ProcessorScanDataObj? processorScanDataObj = null)
         {
-            var result = new ResultObj();
-            string output = """";
             try
             {
-                // Check if the command is available
                 if (!_cmdProcessorStates.IsCmdAvailable)
                 {
-                    var warningMessage = $""{_cmdProcessorStates.CmdDisplayName} is not available on this agent."";
-                    _logger.LogWarning(warningMessage);
-                    output = $""{_cmdProcessorStates.CmdDisplayName} is not available.\n"";
-                    result.Message = output;
-                    result.Success = false;
-                    return result;
+                    var m = $""{_cmdProcessorStates.CmdDisplayName} is not available on this agent."";
+                    _logger.LogWarning(m);
+                    return new ResultObj { Success = false, Message = m };
                 }
 
-                // Execute the 'ls' command
-                using (var process = new Process())
+                var parse = CliArgParser.Parse(arguments, _schema, allowUnknown: false, fillDefaults: true);
+                if (!parse.Success)
                 {
-                    process.StartInfo.FileName = ""ls"";
-                    process.StartInfo.Arguments = arguments;
-                    process.StartInfo.UseShellExecute = false;
-                    process.StartInfo.RedirectStandardOutput = true;
-                    process.StartInfo.RedirectStandardError = true;
-                    process.StartInfo.CreateNoWindow = true;
-                    process.StartInfo.WorkingDirectory = _netConfig.CommandPath;
-
-                    var outputBuilder = new StringBuilder();
-                    process.OutputDataReceived += (sender, e) => 
-                    { 
-                        if (e.Data != null) outputBuilder.AppendLine(e.Data); 
-                    };
-
-                    process.Start();
-                    process.BeginOutputReadLine();
-                    await process.WaitForExitAsync(cancellationToken);
-
-                    output = outputBuilder.ToString();
-                    result.Success = true;
-                    result.Message = output;
+                    var err = CliArgParser.BuildErrorMessage(_cmdProcessorStates.CmdDisplayName, parse, _schema);
+                    _logger.LogWarning(""Arguments not valid {args}. {msg}"", arguments, parse.Message);
+                    return new ResultObj { Success = false, Message = err };
                 }
+
+                var path     = parse.GetString(""path"", ""."");
+                var timeout  = parse.GetInt(""timeout"", DefaultTimeoutMs);
+                var opts     = new StringBuilder();
+
+                if (parse.GetBool(""long"", false))      opts.Append("" -l"");
+                if (parse.GetBool(""all"", false))       opts.Append("" -a"");
+                if (parse.GetBool(""human"", false))     opts.Append("" -h"");
+                if (parse.GetBool(""recursive"", false)) opts.Append("" -R"");
+
+                using var process = new Process
+                {
+                    StartInfo = new ProcessStartInfo
+                    {
+                        FileName = ""ls"",
+                        Arguments = $""{opts} -- {path}"",
+                        UseShellExecute = false,
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        CreateNoWindow = true,
+                        WorkingDirectory = _netConfig.CommandPath
+                    }
+                };
+
+                var sb = new StringBuilder();
+                process.OutputDataReceived += (_, e) => { if (!string.IsNullOrEmpty(e.Data)) sb.AppendLine(e.Data); };
+                process.ErrorDataReceived  += (_, e) => { if (!string.IsNullOrEmpty(e.Data)) sb.AppendLine(e.Data); };
+
+                process.Start();
+                process.BeginOutputReadLine();
+                using (cancellationToken.Register(() => { try { if (!process.HasExited) process.Kill(entireProcessTree: true); } catch {} }))
+                {
+                    var exited = await Task.Run(() => process.WaitForExit(timeout), cancellationToken);
+                    if (!exited) return new ResultObj { Success = false, Message = $""ls timed out after {timeout}ms"" };
+                }
+
+                return new ResultObj { Success = process.ExitCode == 0, Message = sb.ToString() };
             }
-            catch (Exception e)
+            catch (OperationCanceledException)
             {
-                var errorMessage = $""Error in RunCommand: {e.Message}"";
-                _logger.LogError(errorMessage);
-                result.Success = false;
-                result.Message = errorMessage;
+                return new ResultObj { Success = false, Message = ""ls canceled or timed out.\n"" };
             }
-            return result;
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ""ListCmdProcessor error"");
+                return new ResultObj { Success = false, Message = $""List error: {ex.Message}"" };
+            }
         }
 
-        public override string GetCommandHelp()
-        {
-            return @""This command runs the Unix 'ls' command to list directory contents..."";
-        }
+        public override string GetCommandHelp() => @""ListCmdProcessor
+Lists directory contents using schema-based arguments.
+
+Usage:
+  --path <dir> [--long] [--all] [--human] [--recursive] [--timeout <ms>]
+
+Examples:
+  --path . --long --all
+  --path /var/log --long --human
+"";
     }
 }
         ]]>
@@ -184,96 +230,205 @@ namespace NetworkMonitor.Connection
         <agent_location>Scanner - EU</agent_location>
     </parameters>
 </function_call>",
-// 3) toolResponse
-@"{""message"" : ""Success: added List cmd processor"", ""success"" : true, ""agent_location"" : ""London - UK"" }",
+                // 3) toolResponse
+                @"{""message"" : ""Success: added List cmd processor"", ""success"" : true, ""agent_location"" : ""London - UK"" }",
                 // functionName
                 "add_cmd_processor"
             );
 
-            // 4) Final Assistant message after the triple
+            // Final assistant message after the triple
             messages.Add(ChatMessage.FromAssistant(
-                "I have added a cmd processor List. It is ready for use on agent London - UK"
+                "I have added a schema-based List cmd processor. It is ready for use on agent London - UK"
             ));
-
 
             // --------------------------------------------------
             // 2ND GROUP: user -> assistant (with function_call) -> tool
+            // Run with schema-style flags
             // --------------------------------------------------
             AddAssistantMessageWithToolCall(
                 messages,
-                "Can you run ls on agent London - UK",
-@"<function_call name=""run_cmd_processor"">
+                "Can you run List on agent London - UK to show /tmp with long + all?",
+                @"<function_call name=""run_cmd_processor"">
     <parameters>
         <cmd_processor_type>List</cmd_processor_type>
-        <arguments>-l</arguments>
+        <arguments>--path /tmp --long --all</arguments>
         <agent_location>London - UK</agent_location>
     </parameters>
 </function_call>",
-@"{""message"" : "" ls command output nmap meta openssl busybox"", ""success"" : true, ""agent_location"" : ""London - UK"" }",
+                @"{""message"" : ""drwxr-xr-x  tmp stuff ..."", ""success"" : true, ""agent_location"" : ""London - UK"" }",
                 "run_cmd_processor"
             );
 
             messages.Add(ChatMessage.FromAssistant(
-                "The list command that was run on agent London - UK shows four files: nmap, meta, openssl, and busybox."
+                "The listing for /tmp was retrieved successfully on agent London - UK."
             ));
-
 
             // --------------------------------------------------
             // 3RD GROUP: user -> assistant (with function_call) -> tool
+            // Schema-based TcpPortCheck example (replacement for FTP example)
             // --------------------------------------------------
             AddAssistantMessageWithToolCall(
                 messages,
-                "Can you create a commmand to test ftp sites. I would like it to run on Scanner - US",
-@"<function_call name=""add_cmd_processor"">
+                "Can you create a command to test TCP ports using our schema parsing on Scanner - US?",
+                @"<function_call name=""add_cmd_processor"">
     <parameters>
-        <cmd_processor_type>FTPConnectionTester</cmd_processor_type>
+        <cmd_processor_type>TcpPortCheck</cmd_processor_type>
         <source_code>
         <![CDATA[
-using System; 
-using System.Text;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Net.Sockets;
+using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
-using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
-using System.Linq;
 using NetworkMonitor.Objects;
 using NetworkMonitor.Objects.Repository;
 using NetworkMonitor.Objects.ServiceMessage;
-using NetworkMonitor.Connection;
 using NetworkMonitor.Utils;
-using System.Xml.Linq;
-using System.IO;
-using System.Threading;
-using System.Net;
 
 namespace NetworkMonitor.Connection
 {
-    public class FTPConnectionTesterCmdProcessor : CmdProcessor
+    /// <summary>
+    /// Checks TCP connectivity to a host:port with schema-based argument parsing.
+    /// Args:
+    ///   --host <string>            (required)
+    ///   --port <int>               (required)
+    ///   --timeout_ms <int>         (default: 5000)
+    ///   --attempts <int>           (default: 1)
+    ///   --delay_ms <int>           (default: 0)
+    /// </summary>
+    public class TcpPortCheckCmdProcessor : CmdProcessor
     {
-        public FTPConnectionTesterCmdProcessor(ILogger logger, ILocalCmdProcessorStates cmdProcessorStates, IRabbitRepo rabbitRepo, NetConnectConfig netConfig)
+        private static readonly List<ArgSpec> _schema = new()
+        {
+            new() { Key = ""host"",       Required = true,  IsFlag = false, TypeHint = ""value"", Help = ""Target host or IP"" },
+            new() { Key = ""port"",       Required = true,  IsFlag = false, TypeHint = ""int"",   Help = ""Target TCP port"" },
+            new() { Key = ""timeout_ms"", Required = false, IsFlag = false, TypeHint = ""int"",   DefaultValue = ""5000"", Help = ""Per-attempt timeout (ms)"" },
+            new() { Key = ""attempts"",   Required = false, IsFlag = false, TypeHint = ""int"",   DefaultValue = ""1"",    Help = ""Number of attempts"" },
+            new() { Key = ""delay_ms"",   Required = false, IsFlag = false, TypeHint = ""int"",   DefaultValue = ""0"",    Help = ""Delay between attempts (ms)"" },
+        };
+
+        public TcpPortCheckCmdProcessor(
+            ILogger logger,
+            ILocalCmdProcessorStates cmdProcessorStates,
+            IRabbitRepo rabbitRepo,
+            NetConnectConfig netConfig)
             : base(logger, cmdProcessorStates, rabbitRepo, netConfig) { }
 
-        public override async Task<ResultObj> RunCommand(string arguments, CancellationToken cancellationToken, ProcessorScanDataObj? processorScanDataObj = null)
+        public override async Task<ResultObj> RunCommand(
+            string arguments,
+            CancellationToken cancellationToken,
+            ProcessorScanDataObj? processorScanDataObj = null)
         {
-            var result = new ResultObj();
             try
             {
-                // Implementation for checking FTP connections...
-                result.Success = true;
-                result.Message = ""FTP connection successful."";
+                if (!_cmdProcessorStates.IsCmdAvailable)
+                {
+                    var m = $""{_cmdProcessorStates.CmdDisplayName} is not available on this agent."";
+                    _logger.LogWarning(m);
+                    return new ResultObj { Success = false, Message = m };
+                }
+
+                var parse = CliArgParser.Parse(arguments, _schema, allowUnknown: false, fillDefaults: true);
+                if (!parse.Success)
+                {
+                    var err = CliArgParser.BuildErrorMessage(_cmdProcessorStates.CmdDisplayName, parse, _schema);
+                    _logger.LogWarning(""Arguments invalid: {msg}"", parse.Message);
+                    return new ResultObj { Success = false, Message = err };
+                }
+
+                var host      = parse.GetString(""host"");
+                var port      = parse.GetInt(""port"");
+                var timeoutMs = parse.GetInt(""timeout_ms"", 5000);
+                var attempts  = Math.Max(1, parse.GetInt(""attempts"", 1));
+                var delayMs   = Math.Max(0, parse.GetInt(""delay_ms"", 0));
+
+                var sb = new StringBuilder();
+                bool anySuccess = false;
+
+                for (int i = 1; i <= attempts; i++)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    var sw = Stopwatch.StartNew();
+                    var ok = await TryConnect(host, port, timeoutMs, cancellationToken);
+                    sw.Stop();
+
+                    if (ok)
+                    {
+                        anySuccess = true;
+                        sb.AppendLine($""Attempt {i}/{attempts}: CONNECTED in {sw.ElapsedMilliseconds} ms to {host}:{port}"");
+                    }
+                    else
+                    {
+                        var approx = Math.Min(sw.ElapsedMilliseconds, timeoutMs);
+                        sb.AppendLine($""Attempt {i}/{attempts}: FAILED after ~{approx} ms to {host}:{port}"");
+                    }
+
+                    if (i < attempts && delayMs > 0)
+                    {
+                        await Task.Delay(delayMs, cancellationToken);
+                    }
+                }
+
+                return new ResultObj
+                {
+                    Success = anySuccess,
+                    Message = sb.ToString()
+                };
+            }
+            catch (OperationCanceledException)
+            {
+                return new ResultObj { Success = false, Message = ""TCP check canceled or timed out.\n"" };
             }
             catch (Exception ex)
             {
-                result.Success = false;
-                result.Message = $""Error testing FTP connection: {ex.Message}"";
+                _logger.LogError(ex, ""TcpPortCheck error"");
+                return new ResultObj { Success = false, Message = $""TCP check error: {ex.Message}"" };
             }
-            return result;
         }
 
         public override string GetCommandHelp()
         {
-            return @""This command tests an FTP connection by attempting to list the directory contents..."";
+            var header = ""Checks TCP connectivity to a host:port with schema-based parsing.\n"";
+            var usage  = CliArgParser.BuildUsage(_cmdProcessorStates.CmdDisplayName, _schema);
+            var examples = @"" 
+Examples:
+  --host example.com --port 443
+  --host 8.8.8.8 --port 53 --attempts 3 --timeout_ms 2000 --delay_ms 250
+"";
+            return $""{header}\n{usage}\n{examples}"";
+        }
+
+        private static async Task<bool> TryConnect(string host, int port, int timeoutMs, CancellationToken ct)
+        {
+            using var client = new TcpClient();
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            cts.CancelAfter(timeoutMs);
+
+            try
+            {
+#if NET8_0_OR_GREATER
+                await client.ConnectAsync(host, port, cts.Token);
+#else
+                var connectTask = client.ConnectAsync(host, port);
+                var completed = await Task.WhenAny(connectTask, Task.Delay(timeoutMs, cts.Token));
+                if (completed != connectTask)
+                {
+                    try { client.Close(); } catch { }
+                    cts.Cancel();
+                    return false;
+                }
+                await connectTask;
+#endif
+                return client.Connected;
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }
@@ -282,27 +437,29 @@ namespace NetworkMonitor.Connection
         <agent_location>Scanner - US</agent_location>
     </parameters>
 </function_call>",
-@"{""message"" : ""Success: added FtpConnectionTester cmd processor"", ""success"" : true, ""agent_location"" : ""Scanner - US"" }", "add_cmd_processor");
+                @"{""message"" : ""Success: added TcpPortCheck cmd processor"", ""success"" : true, ""agent_location"" : ""Scanner - US"" }",
+                "add_cmd_processor"
+            );
 
             messages.Add(ChatMessage.FromAssistant(
-                "I have created a FTPConnectionTester cmd processor and it is ready for use on agent Scanner - US"
+                "I have created a schema-based TcpPortCheck cmd processor and it is ready for use on agent Scanner - US"
             ));
-
 
             // --------------------------------------------------
             // 4TH GROUP: user -> assistant (with function_call) -> tool
+            // Run FTP tester with schema flags
             // --------------------------------------------------
             AddAssistantMessageWithToolCall(
                 messages,
                 "Can you check if ftp ftpsite.com is working I use username test password test123",
-@"<function_call name=""run_cmd_processor"">
+                @"<function_call name=""run_cmd_processor"">
     <parameters>
         <cmd_processor_type>FTPConnectionTester</cmd_processor_type>
-        <arguments>--username test --password test123 --host ftpsite.com</arguments>
+        <arguments>--host ftpsite.com --username test --password test123</arguments>
         <agent_location>Scanner - US</agent_location>
     </parameters>
 </function_call>",
-@"{""message"": ""Success: ftpsite.com connection success"", ""success"": true, ""agent_location"": ""Scanner - US""}",
+                @"{""message"": ""Success: ftpsite.com connection success"", ""success"": true, ""agent_location"": ""Scanner - US""}",
                 "run_cmd_processor"
             );
 
@@ -312,46 +469,45 @@ namespace NetworkMonitor.Connection
 
             // --------------------------------------------------
             // 5TH GROUP: user -> assistant (with function_call) -> tool
-            // (Delete the List CmdProcessor)
+            // Delete List
             // --------------------------------------------------
             AddAssistantMessageWithToolCall(
                 messages,
-                // userPrompt
                 "Please delete the List cmd processor.",
-                // assistantPrompt
-                @"<function_call name=""delete_cmd_processor"">\n    <parameters>\n        <cmd_processor_type>List</cmd_processor_type>\n        <agent_location>London - UK</agent_location>\n    </parameters>\n</function_call>",
-                // toolResponse
+                @"<function_call name=""delete_cmd_processor"">
+    <parameters>
+        <cmd_processor_type>List</cmd_processor_type>
+        <agent_location>London - UK</agent_location>
+    </parameters>
+</function_call>",
                 @"{""message"" : ""Success: deleted List cmd processor"", ""success"" : true, ""agent_location"" : ""London - UK"" }",
-                // functionName
                 "delete_cmd_processor"
             );
 
-            // final assistant message after the triple
             messages.Add(ChatMessage.FromAssistant(
                 "The List cmd processor has been removed from the agent."
             ));
 
             // --------------------------------------------------
             // 6TH GROUP: user -> assistant (with function_call) -> tool
-            // (Delete the FTPConnectionTester CmdProcessor)
+            // Delete FTPConnectionTester
             // --------------------------------------------------
             AddAssistantMessageWithToolCall(
                 messages,
-                // userPrompt
                 "Also, please delete the FTPConnectionTester cmd processor.",
-                // assistantPrompt
-                @"<function_call name=""delete_cmd_processor"">\n    <parameters>\n        <cmd_processor_type>FTPConnectionTester</cmd_processor_type>\n        <agent_location>Scanner - US</agent_location>\n    </parameters>\n</function_call>",
-                // toolResponse
+                @"<function_call name=""delete_cmd_processor"">
+    <parameters>
+        <cmd_processor_type>FTPConnectionTester</cmd_processor_type>
+        <agent_location>Scanner - US</agent_location>
+    </parameters>
+</function_call>",
                 @"{""message"" : ""Success: deleted FTPConnectionTester cmd processor"", ""success"" : true, ""agent_location"" : ""Scanner - US"" }",
-                // functionName
                 "delete_cmd_processor"
             );
 
-            // final assistant message after the triple
             messages.Add(ChatMessage.FromAssistant(
                 "The FTPConnectionTester cmd processor has been removed as well."
             ));
-
 
             return messages;
         }
@@ -378,20 +534,20 @@ namespace NetworkMonitor.Connection
             // Determine if the user is logged in and generate content accordingly
             if (serviceObj.IsUserLoggedIn)
             {
-                               content = $"The user logged in at {currentTime} with email {serviceObj.UserInfo.Email}. " +
-                          $"Users account type is {serviceObj.UserInfo.AccountType}. They have {serviceObj.UserInfo.TokensUsed} available tokens. " +
-                          $"Remind the user that upgrading accounts gives more tokens and access to more functions. " +
-                          $"See {AppConstants.FrontendUrl}/subscription for details.";
+                content = $"The user logged in at {currentTime} with email {serviceObj.UserInfo.Email}. " +
+           $"Users account type is {serviceObj.UserInfo.AccountType}. They have {serviceObj.UserInfo.TokensUsed} available tokens. " +
+           $"Remind the user that upgrading accounts gives more tokens and access to more functions. " +
+           $"See {AppConstants.FrontendUrl}/subscription for details.";
             }
             else
             {
                 content = $"The user is not logged in, the time is {currentTime}. " +
                           $"They don't need to be logged in, but to add hosts they will need to supply an email address. " +
-                          $"All other functions can be called with or without an email address."+
+                          $"All other functions can be called with or without an email address." +
                           $"If the user asks about logging in then they can browse to [Quantum Network Monitor]({AppConstants.FrontendUrl}/#assistant=open&openInNewTab) and then click the login button top right";
             }
             string arguments = @"{""detail_response"" : false}";
-          
+
             // Add messages using the helper method
             AddAssistantMessageWithToolCall(
                 messages,
@@ -440,10 +596,10 @@ namespace NetworkMonitor.Connection
             // Determine if the user is logged in and generate content accordingly
             if (serviceObj.IsUserLoggedIn)
             {
-                             funcResponse = $"The user logged in at {currentTime} with email {serviceObj.UserInfo.Email}. " +
-                          $"Users account type is {serviceObj.UserInfo.AccountType}. They have {serviceObj.UserInfo.TokensUsed} available tokens. " +
-                          $"Remind the user that upgrading accounts gives more tokens and access to more functions. " +
-                          $"See {AppConstants.FrontendUrl}/subscription for details.";
+                funcResponse = $"The user logged in at {currentTime} with email {serviceObj.UserInfo.Email}. " +
+             $"Users account type is {serviceObj.UserInfo.AccountType}. They have {serviceObj.UserInfo.TokensUsed} available tokens. " +
+             $"Remind the user that upgrading accounts gives more tokens and access to more functions. " +
+             $"See {AppConstants.FrontendUrl}/subscription for details.";
             }
             else
             {
@@ -453,8 +609,8 @@ namespace NetworkMonitor.Connection
             }
 
             // Single N-shot example: Request user info
-            string arguments =  @"{{""message"": ""What's my user info?""}}";
- 
+            string arguments = @"{{""message"": ""What's my user info?""}}";
+
             AddAssistantMessageWithToolCall(
                 messages,
                 null,
@@ -463,7 +619,7 @@ namespace NetworkMonitor.Connection
                 funcResponse,
                 // functionName
                 "call_monitor_sys"
-                ,arguments
+                , arguments
             );
 
 
