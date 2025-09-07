@@ -3,71 +3,166 @@ using System.Text; // For StringBuilder
 using System.Collections.Generic; // For collections
 using System.Diagnostics; // For debugging (if needed)
 using System.Threading.Tasks; // For async/await
-using System.Text.RegularExpressions; // For regex operations
+using System.Text.RegularExpressions; // For regex operations (not used now, but keep if shared)
 using Microsoft.Extensions.Logging; // For logging
 using System.Linq; // For LINQ operations
 using NetworkMonitor.Objects; // For application-specific objects
 using NetworkMonitor.Objects.Repository; // For repository handling
 using NetworkMonitor.Objects.ServiceMessage; // For service messaging
 using NetworkMonitor.Connection; // For connection handling
-using NetworkMonitor.Utils; // For utility methods
+using NetworkMonitor.Utils; // For CliArgParser
 using System.Xml.Linq; // For XML handling
 using System.IO; // For file operations
 using System.Threading; // For CancellationToken
-using System.Net; // For FTPWebRequest
+using System.Net; // For FtpWebRequest
 
 namespace NetworkMonitor.Connection
 {
     public class FTPConnectionTesterCmdProcessor : CmdProcessor
     {
-        public FTPConnectionTesterCmdProcessor(ILogger logger, ILocalCmdProcessorStates cmdProcessorStates, IRabbitRepo rabbitRepo, NetConnectConfig netConfig)
+        // Parser schema
+        private static readonly List<ArgSpec> _schema = new()
+        {
+            new ArgSpec
+            {
+                Key = "username",
+                Required = true,
+                IsFlag = false,
+                TypeHint = "value",
+                Help = "FTP username."
+            },
+            new ArgSpec
+            {
+                Key = "password",
+                Required = true,
+                IsFlag = false,
+                TypeHint = "value",
+                Help = "FTP password."
+            },
+            new ArgSpec
+            {
+                Key = "host",
+                Required = true,
+                IsFlag = "value" == "bool" ? true : false, // noop, just to show we thought about it
+                TypeHint = "value",
+                Help = "FTP host (e.g., 'ftp.example.com' or '192.168.1.10')."
+            },
+            new ArgSpec
+            {
+                Key = "path",
+                Required = false,
+                IsFlag = false,
+                TypeHint = "value",
+                DefaultValue = "",
+                Help = "Remote path to test (default: root)."
+            },
+            new ArgSpec
+            {
+                Key = "ssl",
+                Required = false,
+                IsFlag = true,
+                DefaultValue = "false",
+                Help = "Use FTPS (EnableSsl)."
+            },
+            new ArgSpec
+            {
+                Key = "passive",
+                Required = false,
+                IsFlag = true,
+                DefaultValue = "true",
+                Help = "Use passive mode."
+            },
+            new ArgSpec
+            {
+                Key = "port",
+                Required = false,
+                IsFlag = false,
+                TypeHint = "int",
+                DefaultValue = "21",
+                Help = "FTP port (21 for FTP, 990 often used for implicit FTPS)."
+            },
+            new ArgSpec
+            {
+                Key = "timeout_ms",
+                Required = false,
+                IsFlag = false,
+                TypeHint = "int",
+                DefaultValue = "30000",
+                Help = "Request timeout in milliseconds."
+            },
+        };
+
+        public FTPConnectionTesterCmdProcessor(
+            ILogger logger,
+            ILocalCmdProcessorStates cmdProcessorStates,
+            IRabbitRepo rabbitRepo,
+            NetConnectConfig netConfig)
             : base(logger, cmdProcessorStates, rabbitRepo, netConfig) { }
 
-        public override async Task<ResultObj> RunCommand(string arguments, CancellationToken cancellationToken, ProcessorScanDataObj? processorScanDataObj = null)
+        public override async Task<ResultObj> RunCommand(
+            string arguments,
+            CancellationToken cancellationToken,
+            ProcessorScanDataObj? processorScanDataObj = null)
         {
             var result = new ResultObj();
+
             try
             {
-                // Check if cancellation has already been requested
                 cancellationToken.ThrowIfCancellationRequested();
 
-                // Parse command-line style arguments
-                var args = ParseArguments(arguments);
-                if (!args.ContainsKey("username") || !args.ContainsKey("password") || !args.ContainsKey("host"))
+                // Parse & validate args via schema
+                var parse = CliArgParser.Parse(arguments, _schema, allowUnknown: false, fillDefaults: true);
+                if (!parse.Success)
                 {
                     result.Success = false;
-                    result.Message = "Invalid arguments. Please provide --username, --password, and --host.";
+                    result.Message = CliArgParser.BuildErrorMessage(_cmdProcessorStates.CmdDisplayName, parse, _schema);
                     return result;
                 }
 
-                string username = args["username"];
-                string password = args["password"];
-                string host = args["host"];
+                var username   = parse.GetString("username");
+                var password   = parse.GetString("password");
+                var host       = parse.GetString("host");
+                var path       = parse.GetString("path", "");
+                var useSsl     = parse.GetBool("ssl", false);
+                var passive    = parse.GetBool("passive", true);
+                var port       = parse.GetInt("port", 21);
+                var timeoutMs  = parse.GetInt("timeout_ms", 30000);
 
-                _logger.LogInformation($"Testing FTP connection to {host} with username: {username}");
+                // Build URI: ftp://host[:port][/path]
+                var baseUri = new UriBuilder
+                {
+                    Scheme = "ftp",
+                    Host   = host,
+                    Port   = port <= 0 ? -1 : port, // -1 means default port for the scheme
+                    Path   = (path ?? "").TrimStart('/')
+                }.Uri;
 
-                // Test FTP connection
-                var request = (FtpWebRequest)WebRequest.Create($"ftp://{host}");
+                _logger.LogInformation("Testing FTP connection to {host} (ssl={ssl}, passive={passive}, port={port}, path='{path}') with username: {user}",
+                    host, useSsl, passive, port, path, username);
+
+#pragma warning disable SYSLIB0014 // FtpWebRequest is obsolete in newer frameworks but still functional
+                var request = (FtpWebRequest)WebRequest.Create(baseUri);
+#pragma warning restore SYSLIB0014
+
                 request.Credentials = new NetworkCredential(username, password);
                 request.Method = WebRequestMethods.Ftp.ListDirectory;
+                request.EnableSsl = useSsl;
+                request.UsePassive = passive;
+                request.ReadWriteTimeout = timeoutMs;
+                request.Timeout = timeoutMs;
 
-                // Register a callback so that if the token is cancelled, we abort the request.
                 using (cancellationToken.Register(() => request.Abort()))
                 {
                     try
                     {
-                        // The cancellationToken can be checked before awaiting any I/O
                         cancellationToken.ThrowIfCancellationRequested();
 
-                        using (var response = (FtpWebResponse)await request.GetResponseAsync())
-                        {
-                            result.Success = true;
-                            result.Message = $"FTP connection successful. Response status: {response.StatusDescription}";
-                        }
+                        using var response = (FtpWebResponse)await request.GetResponseAsync();
+                        result.Success = true;
+                        result.Message = $"FTP connection successful. Status: {response.StatusDescription}";
                     }
                     catch (WebException ex) when (ex.Status == WebExceptionStatus.RequestCanceled)
                     {
-                        // This occurs if request.Abort() was called due to cancellation.
                         _logger.LogInformation("FTP request was canceled.");
                         result.Success = false;
                         result.Message = "Operation canceled by user.";
@@ -76,13 +171,13 @@ namespace NetworkMonitor.Connection
                     {
                         if (ex.Response is FtpWebResponse ftpResponse)
                         {
-                            _logger.LogError($"FTP error: {ftpResponse.StatusDescription}");
+                            _logger.LogError("FTP error: {status}", ftpResponse.StatusDescription);
                             result.Success = false;
                             result.Message = $"FTP connection failed. Status: {ftpResponse.StatusDescription}";
                         }
                         else
                         {
-                            _logger.LogError($"FTP error: {ex.Message}");
+                            _logger.LogError("FTP error: {msg}", ex.Message);
                             result.Success = false;
                             result.Message = $"FTP connection failed. Error: {ex.Message}";
                         }
@@ -92,14 +187,13 @@ namespace NetworkMonitor.Connection
             }
             catch (OperationCanceledException)
             {
-                // If the token was canceled before or during the operation
                 _logger.LogInformation("FTP connection operation was canceled by the user.");
                 result.Success = false;
                 result.Message = "Operation canceled by user.";
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error testing FTP connection: {ex.Message}");
+                _logger.LogError(ex, "Error testing FTP connection");
                 result.Success = false;
                 result.Message = $"Error testing FTP connection: {ex.Message}";
                 LogErrorToFile(result.Message);
@@ -108,44 +202,24 @@ namespace NetworkMonitor.Connection
             return result;
         }
 
-        public override string GetCommandHelp()
-        {
-            return @"
-This command tests an FTP connection by attempting to list the directory contents using provided credentials. 
-It validates the FTP server’s response and provides feedback on connectivity.
+      public override string GetCommandHelp()
+{
+    var header = "Tests an FTP/FTPS connection by attempting to list a remote directory.\n";
+    var usage  = CliArgParser.BuildUsage(_cmdProcessorStates.CmdDisplayName, _schema);
 
-Usage:
-    arguments: A command-line style string containing:
-        --username: FTP username.
-        --password: FTP password.
-        --host: FTP host (e.g., 'ftp.example.com').
-
+    var examples = @"
 Examples:
-    - '--username admin --password admin123 --host ftp.example.com':
-        Tests FTP connection to 'ftp.example.com' with the specified credentials.
+  --username admin --password admin123 --host ftp.example.com
+  --username u --password p --host 10.0.0.5 --ssl --port 990 --path /incoming
 ";
-        }
 
+    return $"{header}\n{usage}\n{examples}";
+}
 
-        // Helper method to parse command-line style arguments
-        private Dictionary<string, string> ParseArguments(string arguments)
-        {
-            var args = new Dictionary<string, string>();
-            var regex = new Regex(@"--(?<key>\w+)\s+(?<value>[^\s]+)");
-            var matches = regex.Matches(arguments);
-
-            foreach (Match match in matches)
-            {
-                args[match.Groups["key"].Value.ToLower()] = match.Groups["value"].Value;
-            }
-
-            return args;
-        }
         private void LogErrorToFile(string errorMessage)
         {
             try
             {
-                // Ensure the _rootFolder directory exists
                 if (string.IsNullOrEmpty(_rootFolder))
                 {
                     _logger.LogError("Error: _rootFolder is not set.");
@@ -153,16 +227,16 @@ Examples:
                 }
 
                 var logDirectory = Path.Combine(_rootFolder, "logs");
-                Directory.CreateDirectory(logDirectory); // Create directory if it doesn't exist
+                Directory.CreateDirectory(logDirectory);
 
                 var logFilePath = Path.Combine(logDirectory, $"{GetType().Name}.log");
-                var logMessage = $"{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} - {errorMessage}\n";
+                var logMessage = $"{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} - {errorMessage}{Environment.NewLine}";
 
-                File.AppendAllText(logFilePath, logMessage); // Append the error message to the log file
+                File.AppendAllText(logFilePath, logMessage);
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Failed to write to error log file: {ex.Message}");
+                _logger.LogError("Failed to write to error log file: {msg}", ex.Message);
             }
         }
     }
