@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 # Usage: ./publish-instance <region> <ServiceNamePascalCase>
 # Example: ./publish-instance eu CmdProcessor
@@ -17,13 +18,28 @@ TARGET_BASE="$ROOTDIR/code/services"
 TARGET_DIR="$TARGET_BASE/llm-$REGION-$SERVICE_NAME_LOWER"
 ENV_SOURCE="$ROOTDIR/code/securefiles/domain-env"
 
-# Check if service exists
+# --- Ensure nmuser/nmgroup exist ---
+if ! getent group 1654 >/dev/null; then
+    echo "Creating group nmgroup (gid=1654)"
+    sudo groupadd --gid 1654 nmgroup
+else
+    echo "Group nmgroup already exists"
+fi
+
+if ! id -u 1654 >/dev/null 2>&1; then
+    echo "Creating user nmuser (uid=1654)"
+    sudo useradd --uid 1654 --gid 1654 --shell /usr/sbin/nologin --no-create-home nmuser
+else
+    echo "User nmuser already exists"
+fi
+
+# --- Check if service is registered ---
 if ! systemctl list-unit-files | grep -q "^$SERVICE"; then
   echo "Error: Service $SERVICE does not exist"
   exit 1
 fi
 
-# Ensure base and target directories exist
+# --- Prepare directories ---
 mkdir -p "$TARGET_DIR"
 
 echo "Stopping service: $SERVICE"
@@ -32,14 +48,24 @@ if ! systemctl stop "$SERVICE"; then
   exit 1
 fi
 
+# --- Publish ---
 cp "../appsettings-$REGION-$SERVICE_NAME_LOWER.json" ../appsettings.json
 
 dotnet publish ../NetworkMonitorLLM.csproj \
   --os linux --arch x64 \
   --output "$TARGET_DIR" \
   -c Release --self-contained true
-rm "$TARGET_DIR/.env"
+
+# --- Ensure correct ownership & permissions ---
+sudo chown -R nmuser:nmgroup "$TARGET_DIR"
+sudo find "$TARGET_DIR" -type d -exec chmod 750 {} \;
+sudo find "$TARGET_DIR" -type f -exec chmod 640 {} \;
+sudo chmod +x "$TARGET_DIR/NetworkMonitorLLM" || true
+
+# --- Env symlink ---
+rm -f "$TARGET_DIR/.env"
 ln -sf "$ENV_SOURCE" "$TARGET_DIR/.env"
 
 echo "Starting service: $SERVICE"
 systemctl start "$SERVICE"
+
