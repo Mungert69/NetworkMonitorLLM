@@ -1,2 +1,21 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Ensure group exists (ignore if it already does)
+if ! getent group 1654 >/dev/null; then
+    echo "Creating group nmgroup (gid=1654)"
+    sudo groupadd --gid 1654 nmgroup
+else
+    echo "Group nmgroup already exists"
+fi
+
+# Ensure user exists (ignore if it already does)
+if ! id -u 1654 >/dev/null 2>&1; then
+    echo "Creating user nmuser (uid=1654)"
+    sudo useradd --uid 1654 --gid 1654 --shell /usr/sbin/nologin --no-create-home nmuser
+else
+    echo "User nmuser already exists"
+fi
+
 cd publish-scripts
 sudo ./publish
