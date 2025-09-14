@@ -88,6 +88,11 @@ sudo find "$TARGET_DIR" -type d -exec chmod 750 {} \;
 sudo find "$TARGET_DIR" -type f -exec chmod 640 {} \;
 sudo chmod +x "$TARGET_DIR/NetworkMonitorLLM" || true
 
+# --- Ensure world-traverse on parent dirs ---
+echo "Ensuring world traverse on parent directories ..."
+sudo chmod o+x /home/mahadeva
+sudo chmod o+x /home/mahadeva/code
+
 # --- Env symlink ---
 echo "Setting up env symlink ..."
 rm -f "$TARGET_DIR/.env"
