@@ -2,9 +2,8 @@
 set -euo pipefail
 
 # Usage: ./publish-instance <region> <ServiceNamePascalCase>
-# Example: ./publish-instance eu CmdProcessor
 
-if [ -z "$1" ] || [ -z "$2" ]; then
+if [ -z "${1:-}" ] || [ -z "${2:-}" ]; then
   echo "Usage: $0 <region> <ServiceNamePascalCase>"
   exit 1
 fi
@@ -12,15 +11,17 @@ fi
 REGION="$1"
 SERVICE_NAME_PASCAL="$2"
 SERVICE_NAME_LOWER=$(echo "$SERVICE_NAME_PASCAL" | tr '[:upper:]' '[:lower:]')
+
 ROOTDIR="/home/mahadeva"
 SERVICE="NM-LLM-${REGION^^}-$SERVICE_NAME_PASCAL.service"
 TARGET_BASE="$ROOTDIR/code/services"
 TARGET_DIR="$TARGET_BASE/llm-$REGION-$SERVICE_NAME_LOWER"
 ENV_SOURCE="$ROOTDIR/code/securefiles/domain-env"
 
-# Where the service files live (adjust if needed!)
 SERVICE_SOURCE_DIR="$(dirname "$0")/../services"
 SERVICE_FILE="$SERVICE_SOURCE_DIR/$SERVICE"
+
+umask 022
 
 echo "------------------------------------------------------------"
 echo "Region:            $REGION"
@@ -33,72 +34,62 @@ echo "------------------------------------------------------------"
 
 # --- Ensure nmuser/nmgroup exist ---
 if ! getent group 1654 >/dev/null; then
-    echo "Creating group nmgroup (gid=1654)"
-    sudo groupadd --gid 1654 nmgroup
+  echo "Creating group nmgroup (gid=1654)"
+  sudo groupadd --gid 1654 nmgroup
 else
-    echo "Group nmgroup already exists"
+  echo "Group nmgroup already exists"
 fi
 
 if ! id -u 1654 >/dev/null 2>&1; then
-    echo "Creating user nmuser (uid=1654)"
-    sudo useradd --uid 1654 --gid 1654 --shell /usr/sbin/nologin --no-create-home nmuser
+  echo "Creating user nmuser (uid=1654)"
+  sudo useradd --uid 1654 --gid 1654 --shell /usr/sbin/nologin --no-create-home nmuser
 else
-    echo "User nmuser already exists"
+  echo "User nmuser already exists"
 fi
 
-# --- Check if service is registered ---
-if ! systemctl list-unit-files | grep -q "^$SERVICE"; then
-  echo "Registering missing service: $SERVICE"
-
-  if [ ! -f "$SERVICE_FILE" ]; then
-    echo "ERROR: Service unit file not found at: $SERVICE_FILE"
-    exit 1
-  fi
-
-  echo "Installing service unit: $SERVICE_FILE -> /etc/systemd/system/$SERVICE"
-  sudo cp "$SERVICE_FILE" /etc/systemd/system/
-  sudo systemctl daemon-reload
-  sudo systemctl enable "$SERVICE"
-else
-  echo "Service $SERVICE already registered with systemd"
+# --- Always install/update the service unit file ---
+if [ ! -f "$SERVICE_FILE" ]; then
+  echo "ERROR: Service unit file not found at: $SERVICE_FILE"
+  exit 1
 fi
+
+echo "Installing/Updating service unit: $SERVICE_FILE -> /etc/systemd/system/$SERVICE"
+sudo cp "$SERVICE_FILE" "/etc/systemd/system/$SERVICE"
+sudo systemctl daemon-reload
+sudo systemctl enable "$SERVICE"
 
 # --- Prepare directories ---
 echo "Ensuring target directory exists: $TARGET_DIR"
-mkdir -p "$TARGET_DIR"
+sudo mkdir -p "$TARGET_DIR"
 
 echo "Stopping service: $SERVICE"
-if ! systemctl stop "$SERVICE"; then
+if ! sudo systemctl stop "$SERVICE"; then
   echo "Warning: Failed to stop service $SERVICE (maybe not running yet)"
 fi
 
-# --- Publish ---
+# --- Publish as root ---
 echo "Publishing project to $TARGET_DIR ..."
 cp "../appsettings-$REGION-$SERVICE_NAME_LOWER.json" ../appsettings.json
 
 dotnet publish ../NetworkMonitorLLM.csproj \
   --os linux --arch x64 \
   --output "$TARGET_DIR" \
-  -c Release --self-contained true
+  -c Release --self-contained true \
+  /nodeReuse:false
 
-# --- Ensure correct ownership & permissions ---
-echo "Fixing ownership and permissions ..."
+# --- Fix ownership & permissions afterwards ---
+echo "Fixing ownership and permissions for nmuser:nmgroup ..."
 sudo chown -R nmuser:nmgroup "$TARGET_DIR"
 sudo find "$TARGET_DIR" -type d -exec chmod 750 {} \;
 sudo find "$TARGET_DIR" -type f -exec chmod 640 {} \;
 sudo chmod +x "$TARGET_DIR/NetworkMonitorLLM" || true
-
-# --- Ensure world-traverse on parent dirs ---
-echo "Ensuring world traverse on parent directories ..."
-sudo chmod o+x /home/mahadeva
-sudo chmod o+x /home/mahadeva/code
 
 # --- Env symlink ---
 echo "Setting up env symlink ..."
 rm -f "$TARGET_DIR/.env"
 ln -sf "$ENV_SOURCE" "$TARGET_DIR/.env"
 
-# --- Restart service ---
+# --- Start service ---
 echo "Starting service: $SERVICE"
 sudo systemctl start "$SERVICE"
 
