@@ -42,7 +42,7 @@ namespace NetworkMonitor.LLM
                     }
                     else
                     { 
-                       webBuilder.UseUrls($"http://0.0.0.0:{NetworkUtils.WordToPort(serviceID,5000,7000)}");  
+                       webBuilder.UseUrls($"http://0.0.0.0:{NetworkUtils.WordToPort(serviceID,5000,10000)}");  
 
                     }
 
