@@ -5,13 +5,15 @@
 #sudo ./publish-instance us Monitor
 
 # EU instances
-sudo ./publish-instance eu Nmap
-sudo ./publish-instance eu Meta
-sudo ./publish-instance eu Search
-sudo ./publish-instance eu CmdProcessor
-sudo ./publish-instance eu ReportData
-sudo ./publish-instance eu BlogMonitor
-sudo ./publish-instance eu Quantum
-sudo ./publish-instance eu Monitor
-sudo ./publish-instance eu json_dynamic
+ ./publish-instance eu Nmap
+ ./publish-instance eu Meta
+ ./publish-instance eu Search
+ ./publish-instance eu CmdProcessor
+ ./publish-instance eu ReportData
+ ./publish-instance eu BlogMonitor
+ ./publish-instance eu Quantum
+ ./publish-instance eu Monitor
+ ./publish-instance eu json_dynamic
+
+sudo pkill -u root -f 'dotnet.*(MSBuild|VBCSCompiler)\.dll' || true
 

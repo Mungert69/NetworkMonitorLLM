@@ -17,5 +17,10 @@ else
     echo "User nmuser already exists"
 fi
 
+# --- Ensure world-traverse on parent dirs ---
+echo "Ensuring world traverse on parent directories ..."
+sudo chmod o+x /home/mahadeva
+sudo chmod o+x /home/mahadeva/code
+sudo chown -R mahadeva:nmgroup /home/mahadeva/code/services
 cd publish-scripts
 sudo ./publish
