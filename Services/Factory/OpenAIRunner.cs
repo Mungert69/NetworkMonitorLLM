@@ -844,10 +844,9 @@ public class OpenAIRunner : ILLMRunner
                 if (_createAudio)
                 {
                     bool isFirstChunk = true;
-                    var chunks = _audioGenerator.GetChunksFromText(responseChoiceStr, 500);
-                    foreach (var chunk in chunks)
+
+                    await foreach (var audioUrl in _audioGenerator.StreamAudioInOrder(responseChoiceStr))
                     {
-                        string audioFileUrl = await _audioGenerator.AudioForResponse(chunk);
                         if (isFirstChunk)
                         {
                             responseServiceObj.LlmMessage = "<Assistant:>" + responseChoiceStr + "\n";
@@ -855,12 +854,12 @@ public class OpenAIRunner : ILLMRunner
                             isFirstChunk = false;
                         }
 
-                        responseServiceObj.LlmMessage = $"</audio>{audioFileUrl}";
+                        responseServiceObj.LlmMessage = $"</audio>{audioUrl}";
                         _logger.LogInformation(responseServiceObj.LlmMessage);
                         await _responseProcessor.ProcessLLMOutput(responseServiceObj);
-
                     }
                 }
+
                 else
                 {
                     responseServiceObj.LlmMessage = "<Assistant:>" + responseChoiceStr + "\n";
