@@ -78,10 +78,10 @@ public class LLMResponseProcessor : ILLMResponseProcessor
 
     public async Task ProcessLLMOutputInChunks(LLMServiceObj serviceObj)
     {
-        const int batchSize = 20; // Number of chunks to send at once
-        const int maxBatchChars = 1000; // Maximum characters per batch
+        const int batchSize = 10; // Number of chunks to send at once
+        const int maxBatchChars = 500; // Maximum characters per batch
         const int baseDelay = 100; // Base delay in ms
-        const int delayPerChar = 1; // Additional delay per character
+        const int delayPerChar = 2; // Additional delay per character
 
         char[] delimiters = { ' ', ',', '!', '?', '{', '}', '.', ':', '\n' };
         var splitResult = StringUtils.SplitAndPreserveDelimiters(serviceObj.LlmMessage, delimiters);
