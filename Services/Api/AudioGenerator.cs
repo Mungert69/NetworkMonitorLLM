@@ -32,23 +32,30 @@ namespace NetworkMonitor.LLM.Services
         {
             _logger = logger;
 
-            // NEW: multiple worker URLs
-            // Expecting: systemParams.AudioServiceUrls : List<string>?
-            //            systemParams.AudioServiceUrl  : string? (legacy fallback)
-
-            var candidates =
+            // Build _workers from either the list or the legacy single URL
+            IEnumerable<string> candidates =
                 (systemParams.AudioServiceUrls != null && systemParams.AudioServiceUrls.Count > 0)
-                    ? systemParams.AudioServiceUrls
-                    : (string.IsNullOrWhiteSpace(systemParams.AudioServiceUrl)
-                        ? Array.Empty<string>()
-                        : new[] { systemParams.AudioServiceUrl });
+                    ? systemParams.AudioServiceUrls                               // IEnumerable<string>
+                    : (!string.IsNullOrWhiteSpace(systemParams.AudioServiceUrl)
+                        ? new[] { systemParams.AudioServiceUrl }                  // IEnumerable<string>
+                        : Enumerable.Empty<string>());
 
-            _workers = candidates
-                .Where(s => !string.IsNullOrWhiteSpace(s))
-                .Select(s => s.Trim())
-                .Select(s => new Uri(s, UriKind.Absolute))
-                .Where(u => u.Scheme == Uri.UriSchemeHttp || u.Scheme == Uri.UriSchemeHttps)
-                .Distinct() // avoid duplicates if both list & single contain same URL
+            var workerList = new List<Uri>();
+            foreach (var s in candidates)
+            {
+                if (string.IsNullOrWhiteSpace(s)) continue;
+                var trimmed = s.Trim();
+
+                // Avoid the Uri(string, bool) overload by using TryCreate
+                if (Uri.TryCreate(trimmed, UriKind.Absolute, out var u) &&
+                    (u.Scheme == Uri.UriSchemeHttp || u.Scheme == Uri.UriSchemeHttps))
+                {
+                    workerList.Add(u);
+                }
+            }
+
+            _workers = workerList
+                .Distinct() // de-dupe if both list & single had same URL
                 .ToArray();
 
             if (_workers.Length == 0)
