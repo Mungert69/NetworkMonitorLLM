@@ -1,224 +1,386 @@
 using System;
 using System.Net.Http;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Linq;
 using System.IO;
-
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 using Microsoft.Extensions.Logging;
-using NetworkMonitor.Utils.Helpers;
+using System.Security.Cryptography;
 using NetworkMonitor.Objects;
+using System.Runtime.CompilerServices;
 
 namespace NetworkMonitor.LLM.Services
 {
     public class AudioGenerator : IAudioGenerator
     {
-        private string _apiEndpoint = "";
-        private string _baseUrl = "";
-        private string _outputDirectory = ""; // Centralized property
-        private string _frontendUrl = "";
-        private ILogger _logger;
+        private readonly ILogger _logger;
+        private readonly Uri[] _workers;                          // e.g. https://space-a.hf.space, ...
+        private readonly ConcurrentDictionary<Uri, Circuit> _circuits = new();
+        private static readonly HttpClient _http = new HttpClient()
+        {
+            Timeout = TimeSpan.FromSeconds(60)
+        };
+
+        private const int MaxFailuresBeforeOpen = 3;
+        private static readonly TimeSpan CircuitOpenFor = TimeSpan.FromSeconds(30);
+
         public AudioGenerator(ILogger<OpenAIRunner> logger, SystemParams systemParams)
         {
-            _apiEndpoint = systemParams.AudioServiceUrl + "/generate_audio";
-            _baseUrl = systemParams.AudioServiceUrl + "/files/";
-            _outputDirectory = systemParams.AudioServiceOutputDir;
-            _frontendUrl = systemParams.FrontEndUrl;
             _logger = logger;
+
+            // NEW: multiple worker URLs
+            // Expecting: systemParams.AudioServiceUrls : List<string>?
+            //            systemParams.AudioServiceUrl  : string? (legacy fallback)
+
+            var candidates =
+                (systemParams.AudioServiceUrls != null && systemParams.AudioServiceUrls.Count > 0)
+                    ? systemParams.AudioServiceUrls
+                    : (string.IsNullOrWhiteSpace(systemParams.AudioServiceUrl)
+                        ? Array.Empty<string>()
+                        : new[] { systemParams.AudioServiceUrl });
+
+            _workers = candidates
+                .Where(s => !string.IsNullOrWhiteSpace(s))
+                .Select(s => s.Trim())
+                .Select(s => new Uri(s, UriKind.Absolute))
+                .Where(u => u.Scheme == Uri.UriSchemeHttp || u.Scheme == Uri.UriSchemeHttps)
+                .Distinct() // avoid duplicates if both list & single contain same URL
+                .ToArray();
+
+            if (_workers.Length == 0)
+                throw new InvalidOperationException("No AudioServiceUrls configured.");
         }
 
+        // ----- Public API -----
 
         public async Task<string> AudioForResponse(string text)
         {
             try
             {
-
-                var payload = new
+                var (worker, filename) = await GenerateOnBestWorker(text);
+                if (!string.IsNullOrEmpty(filename))
                 {
-                    text,
-                    output_dir = _outputDirectory
-                };
-
-                var outputPath = await PostToAudioApiAsync(payload);
-
-                if (!string.IsNullOrEmpty(outputPath))
-                {
-                    string fileName = outputPath.Replace(_outputDirectory, "").TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-
-                    string returnUrl = _baseUrl + fileName;
-                    _logger.LogInformation($"Audio generated successfully: {returnUrl}");
-                    return returnUrl;
+                    var url = BuildFileUrl(worker, filename);
+                    _logger.LogInformation($"Audio generated: {url}");
+                    return url;
                 }
-
                 _logger.LogError("Audio generation failed for single response.");
                 return string.Empty;
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error generating audio: {ex.Message}");
+                _logger.LogError(ex, "Error generating audio.");
                 return string.Empty;
             }
         }
 
         public List<string> GetChunksFromText(string text, int maxLength = 500)
         {
-            // Split text into paragraphs or logical chunks
             var chunks = text.Split(new[] { "\n\n", "\n" }, StringSplitOptions.RemoveEmptyEntries)
-                             .Select(chunk => chunk.Trim())
-                             .Where(chunk => !string.IsNullOrWhiteSpace(chunk))
+                             .Select(c => c.Trim())
+                             .Where(c => !string.IsNullOrWhiteSpace(c))
+                             .SelectMany(c => SplitByWordLimit(c, maxLength))
                              .ToList();
-
-            var resultChunks = new List<string>();
-
-            foreach (var chunk in chunks)
-            {
-                if (chunk.Length > maxLength)
-                {
-                    // Further split large chunks if necessary
-                    resultChunks.AddRange(SplitByWordLimit(chunk, maxLength));
-                }
-                else
-                {
-                    resultChunks.Add(chunk);
-                }
-            }
-
-            return resultChunks;
+            return chunks;
         }
 
         public async Task<List<string>> AudioForResponseChunks(string text)
         {
-            var audioUrls = new List<string>();
+            var chunks = GetChunksFromText(text, 500);
+            if (chunks.Count == 0) return new List<string>();
 
+            int par = ParallelismFor(chunks.Count);
+            using var gate = new SemaphoreSlim(par);
+
+            var tasks = chunks.Select(async (chunk, i) =>
+            {
+                await gate.WaitAsync();
+                try
+                {
+                    var (worker, filename) = await GenerateOnBestWorker(chunk);
+                    var url = string.IsNullOrEmpty(filename) ? "" : BuildFileUrl(worker, filename);
+                    return (index: i, url);
+                }
+                finally
+                {
+                    gate.Release();
+                }
+            }).ToArray();
+
+            var results = await Task.WhenAll(tasks);
+            return results
+                .OrderBy(r => r.index)
+                .Select(r => r.url)
+                .Where(u => !string.IsNullOrEmpty(u))
+                .ToList();
+        }
+
+        public async Task<List<string>> AudioForResponseChunksOrderedFastFirst(string text)
+        {
+            var chunks = GetChunksFromText(text, 500);
+            if (chunks.Count == 0) return new List<string>();
+
+            var urls = new string[chunks.Count];
+
+            // 1) First chunk sync (fast first byte)
+            var (w0, f0) = await GenerateOnBestWorker(chunks[0]);
+            urls[0] = string.IsNullOrEmpty(f0) ? "" : BuildFileUrl(w0, f0);
+
+            // 2) Prefetch the rest, bounded to number of workers
+            int par = ParallelismFor(chunks.Count - 1);
+            using var gate = new SemaphoreSlim(par);
+            var tasks = new Task[chunks.Count - 1];
+
+            for (int i = 1; i < chunks.Count; i++)
+            {
+                await gate.WaitAsync();
+                int idx = i;
+                tasks[i - 1] = Task.Run(async () =>
+                {
+                    try
+                    {
+                        var (w, f) = await GenerateOnBestWorker(chunks[idx]);
+                        urls[idx] = string.IsNullOrEmpty(f) ? "" : BuildFileUrl(w, f);
+                    }
+                    finally
+                    {
+                        gate.Release();
+                    }
+                });
+            }
+
+            // 3) Await in order (preserve sequence)
+            for (int i = 1; i < chunks.Count; i++)
+                await tasks[i - 1];
+
+            return urls.Where(u => !string.IsNullOrEmpty(u)).ToList();
+        }
+        private int ParallelismFor(int workItems)
+                => Math.Max(1, Math.Min(_workers.Length, workItems));
+
+        public async IAsyncEnumerable<string> StreamAudioInOrder(
+      string text,
+      [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct = default)
+        {
+            var chunks = GetChunksFromText(text, 500);
+            if (chunks.Count == 0) yield break;
+
+            // 1) First chunk sync for instant playback
+            var (w0, f0) = await GenerateOnBestWorker(chunks[0]);
+            var url0 = string.IsNullOrEmpty(f0) ? "" : BuildFileUrl(w0, f0);
+            if (!string.IsNullOrEmpty(url0))
+                yield return url0;
+
+            // 2) Schedule the rest concurrently (bounded to workers), but emit in order
+            var tasks = new Task<string>[chunks.Count];
+            tasks[0] = Task.FromResult(url0);
+
+            int par = ParallelismFor(chunks.Count - 1);
+            using var gate = new SemaphoreSlim(par);
+
+            for (int i = 1; i < chunks.Count; i++)
+            {
+                await gate.WaitAsync(ct);
+                int idx = i;
+                tasks[idx] = Task.Run(async () =>
+                {
+                    try
+                    {
+                        var (w, f) = await GenerateOnBestWorker(chunks[idx]);
+                        return string.IsNullOrEmpty(f) ? "" : BuildFileUrl(w, f);
+                    }
+                    catch
+                    {
+                        return "";
+                    }
+                    finally
+                    {
+                        gate.Release();
+                    }
+                }, ct);
+            }
+
+            // 3) Yield strictly in index order
+            for (int i = 1; i < chunks.Count; i++)
+            {
+                var url = await tasks[i];
+                if (!string.IsNullOrEmpty(url))
+                    yield return url;
+            }
+        }
+
+
+        // ----- Core routing & calls -----
+
+        private async Task<(Uri worker, string filename)> GenerateOnBestWorker(string text)
+        {
+            if (_workers.Length == 1)
+            {
+                var w = _workers[0];
+                var f = await PostGenerate(w, text);
+                return (w, f);
+            }
+
+            // Consistent hash to stick sentences to a worker (helps cache locality)
+            var preferred = PickWorkerConsistent(text);
+
+            // Try preferred first; on failure, walk others (health-aware)
+            var ordered = OrderByHealth(preferred);
+
+            foreach (var w in ordered)
+            {
+                if (IsCircuitOpen(w)) continue;
+
+                var filename = await PostGenerate(w, text);
+                if (!string.IsNullOrEmpty(filename))
+                {
+                    RecordSuccess(w);
+                    return (w, filename);
+                }
+
+                RecordFailure(w);
+            }
+
+            // Last resort: try everyone even if circuit-open
+            foreach (var w in _workers)
+            {
+                var filename = await PostGenerate(w, text);
+                if (!string.IsNullOrEmpty(filename))
+                {
+                    RecordSuccess(w);
+                    return (w, filename);
+                }
+                RecordFailure(w);
+            }
+
+            return (preferred, "");
+        }
+
+        private async Task<string> PostGenerate(Uri worker, string text)
+        {
             try
             {
-                // Split text into paragraphs or logical chunks
-                var chunks = text.Split(new[] { "\n\n", "\n" }, StringSplitOptions.RemoveEmptyEntries)
-                                 .Select(chunk => chunk.Trim())
-                                 .Where(chunk => !string.IsNullOrWhiteSpace(chunk))
-                                 .ToList();
+                var endpoint = new Uri(worker, "/generate_audio");
+                var payload = JsonSerializer.Serialize(new { text }); // NO output_dir
+                using var content = new StringContent(payload, Encoding.UTF8, "application/json");
 
-                foreach (var chunk in chunks)
+                using var res = await _http.PostAsync(endpoint, content);
+                var body = await res.Content.ReadAsStringAsync();
+
+                if (!res.IsSuccessStatusCode)
                 {
-                    // Further split large chunks if necessary
-                    if (chunk.Length > 500)
-                    {
-                        var subChunks = SplitByWordLimit(chunk, 500);
-                        foreach (var subChunk in subChunks)
-                        {
-                            var responseUrl = await GenerateAudioForChunkAsync(subChunk);
-                            if (!string.IsNullOrEmpty(responseUrl))
-                            {
-                                audioUrls.Add(responseUrl);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        var responseUrl = await GenerateAudioForChunkAsync(chunk);
-                        if (!string.IsNullOrEmpty(responseUrl))
-                        {
-                            audioUrls.Add(responseUrl);
-                        }
-                    }
+                    _logger.LogWarning("TTS {Worker} failed: {Status} {Body}", worker, (int)res.StatusCode, body);
+                    return "";
                 }
+
+                var doc = JsonDocument.Parse(body);
+                if (doc.RootElement.TryGetProperty("filename", out var fnEl))
+                {
+                    return fnEl.GetString() ?? "";
+                }
+
+                _logger.LogWarning("TTS {Worker} returned success without filename payload: {Body}", worker, body);
+                return "";
+            }
+            catch (TaskCanceledException tce)
+            {
+                _logger.LogWarning(tce, "TTS timeout for {Worker}", worker);
+                return "";
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error generating audio for chunks: {ex.Message}");
+                _logger.LogWarning(ex, "TTS error for {Worker}", worker);
+                return "";
             }
-
-            return audioUrls;
         }
 
-        private async Task<string> GenerateAudioForChunkAsync(string chunk)
+        private string BuildFileUrl(Uri worker, string filename)
+            => new Uri(worker, "/files/" + filename).ToString();
+
+        // ----- Consistent hashing & health -----
+
+        private Uri PickWorkerConsistent(string key)
         {
-
-            var payload = new
-            {
-                text = chunk,
-                output_dir = _outputDirectory
-            };
-
-            var outputPath = await PostToAudioApiAsync(payload);
-
-            if (!string.IsNullOrEmpty(outputPath))
-            {
-                string fileName = outputPath.Replace(_outputDirectory, "");
-                fileName= fileName.TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-
-                string returnUrl = _baseUrl + fileName;
-                _logger.LogInformation($"Audio generated successfully: {returnUrl}");
-                return returnUrl;
-            }
-            return string.Empty;
+            // SHA256(key) -> uint64 -> index
+            Span<byte> hash = stackalloc byte[32];
+            SHA256.HashData(Encoding.UTF8.GetBytes(key), hash);
+            ulong v = BitConverter.ToUInt64(hash.Slice(0, 8));
+            var idx = (int)(v % (ulong)_workers.Length);
+            return _workers[idx];
         }
 
-        private async Task<string?> PostToAudioApiAsync(object payload)
+        private IEnumerable<Uri> OrderByHealth(Uri first)
         {
-            try
-            {
-                using var client = new HttpClient
+            // Preferred first, then others by least failures and not circuit-open
+            return new[] { first }
+                .Concat(_workers.Where(w => w != first))
+                .OrderBy(w =>
                 {
-                    Timeout = TimeSpan.FromSeconds(60) 
-                };
-                var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
-
-                var response = await client.PostAsync(_apiEndpoint, content);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var result = await response.Content.ReadAsStringAsync();
-                    var responseData = JsonSerializer.Deserialize<Dictionary<string, string>>(result);
-
-                    if (responseData != null && responseData.TryGetValue("output_path", out string? outputPath))
-                    {
-                        return outputPath; // Return actual output path
-                    }
-                }
-                else
-                {
-                    var error = await response.Content.ReadAsStringAsync();
-                    _logger.LogError($"Audio API request failed: {error}");
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"Error sending request to audio API: {ex.Message}");
-            }
-
-            return string.Empty;
+                    var c = _circuits.GetOrAdd(w, _ => new Circuit());
+                    return (IsCircuitOpen(w) ? 1 : 0, c.Failures);
+                });
         }
-        private List<string> SplitByWordLimit(string text, int maxLength)
+
+        private bool IsCircuitOpen(Uri w)
         {
-            var words = text.Split(' ');
-            var result = new List<string>();
-            var currentChunk = new List<string>();
-
-            foreach (var word in words)
-            {
-                if (currentChunk.Sum(w => w.Length) + word.Length + currentChunk.Count <= maxLength)
-                {
-                    currentChunk.Add(word);
-                }
-                else
-                {
-                    result.Add(string.Join(" ", currentChunk));
-                    currentChunk.Clear();
-                    currentChunk.Add(word);
-                }
-            }
-
-            if (currentChunk.Count > 0)
-            {
-                result.Add(string.Join(" ", currentChunk));
-            }
-
-            return result;
+            var c = _circuits.GetOrAdd(w, _ => new Circuit());
+            return c.OpenUntil.HasValue && c.OpenUntil.Value > DateTimeOffset.UtcNow;
         }
 
+        private void RecordFailure(Uri w)
+        {
+            var c = _circuits.AddOrUpdate(
+                w,
+                _ => new Circuit { Failures = 1 },
+                (_, old) =>
+                {
+                    var f = old.Failures + 1;
+                    if (f >= MaxFailuresBeforeOpen)
+                        return new Circuit { Failures = f, OpenUntil = DateTimeOffset.UtcNow + CircuitOpenFor };
+                    return new Circuit { Failures = f, OpenUntil = old.OpenUntil };
+                });
+            _logger.LogDebug("Circuit {Worker}: failures={Failures}, openUntil={OpenUntil}", w, c.Failures, c.OpenUntil);
+        }
+
+        private void RecordSuccess(Uri w)
+        {
+            _circuits[w] = new Circuit(); // reset
+        }
+
+        private sealed class Circuit
+        {
+            public int Failures { get; init; }
+            public DateTimeOffset? OpenUntil { get; init; }
+        }
+
+        // ----- Utilities -----
+
+        private static IEnumerable<string> SplitByWordLimit(string text, int maxLength)
+        {
+            var words = text.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            var buf = new List<string>();
+            var len = 0;
+            foreach (var w in words)
+            {
+                var next = (buf.Count == 0 ? 0 : 1) + w.Length;
+                if (len + next > maxLength)
+                {
+                    if (buf.Count > 0) { yield return string.Join(" ", buf); buf.Clear(); len = 0; }
+                }
+                if (w.Length > maxLength)
+                {
+                    // in case of a crazy-long token, hard cut
+                    yield return w;
+                    continue;
+                }
+                buf.Add(w);
+                len += next;
+            }
+            if (buf.Count > 0) yield return string.Join(" ", buf);
+        }
     }
 }
