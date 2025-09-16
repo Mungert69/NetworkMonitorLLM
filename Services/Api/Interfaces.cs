@@ -1,7 +1,17 @@
 using System;
-using System.Collections.Generic;
+using System.Net.Http;
+using System.Text;
+using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
+using System.Linq;
+using System.IO;
+using System.Collections.Generic;
+using System.Collections.Concurrent;
 using Microsoft.Extensions.Logging;
+using System.Security.Cryptography;
+using NetworkMonitor.Objects;
+using System.Runtime.CompilerServices;
 
 namespace NetworkMonitor.LLM.Services
 {
@@ -13,7 +23,11 @@ namespace NetworkMonitor.LLM.Services
         /// <param name="text">The text to generate audio for.</param>
         /// <returns>A task representing the asynchronous operation, containing the URL of the generated audio file.</returns>
         Task<string> AudioForResponse(string text);
-
+        Task<List<string>> AudioForResponseChunksOrderedFastFirst(string text);
+        IAsyncEnumerable<string> StreamAudioInOrder(
+      string text,
+      [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct = default);
+       
         /// <summary>
         /// Splits the given text into chunks based on a maximum length.
         /// </summary>
