@@ -8,6 +8,24 @@ using System.Collections.Generic;
 
 namespace NetworkMonitor.LLM.Services
 {
+
+    public sealed class WorkerMetricsRecord
+    {
+        public bool HasData { get; set; }
+        public double OverheadMs { get; set; }
+        public double MsPerChar { get; set; }
+    }
+
+    public interface IWorkerMetricsStore
+    {
+        // Load all persisted metrics (keyed by absolute worker URI string).
+        IReadOnlyDictionary<string, WorkerMetricsRecord> LoadAll();
+
+        // Insert or update one worker’s metrics. Implementations must be thread-safe.
+        void Upsert(Uri worker, WorkerMetrics metrics);
+    }
+
+
     public sealed class FileWorkerMetricsStore : IWorkerMetricsStore
     {
         private readonly string _path;
