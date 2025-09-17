@@ -31,10 +31,11 @@ namespace NetworkMonitor.LLM.Services
         private volatile bool _warmed;
         private readonly object _warmLock = new();
 
-        // ---- Latency-aware hedging support ----
+        // ---- Latency-aware hedging support (uses your WorkerMetrics/HedgePolicy/FileWorkerMetricsStore) ----
         private readonly ConcurrentDictionary<Uri, WorkerMetrics> _metrics = new();
+        private readonly ConcurrentDictionary<Uri, int> _obsCount = new();
         private readonly IWorkerMetricsStore _metricsStore;
-        private readonly HedgePolicy _hedgePolicy = HedgePolicy.Default;
+        private readonly HedgePolicy _hedgePolicy;
 
         public AudioGenerator(ILogger<OpenAIRunner> logger, SystemParams systemParams, IWorkerMetricsStore? metricsStore = null)
         {
@@ -78,8 +79,25 @@ namespace NetworkMonitor.LLM.Services
                 if (Uri.TryCreate(kvp.Key, UriKind.Absolute, out var u) && _workers.Contains(u))
                 {
                     _metrics[u] = WorkerMetrics.FromRecord(kvp.Value);
+                    // if persisted data existed, treat as at least a few observations
+                    _obsCount[u] = Math.Max(_obsCount.GetOrAdd(u, 0), 3);
                 }
             }
+
+            // Less aggressive defaults to cut hedges
+            _hedgePolicy = new HedgePolicy
+            {
+                MinHedgeDelayMs = 3000,
+                MaxHedgeDelayMs = 9000,
+                DelayFactor = 1.0,
+                AggressiveFirstN = 0,
+                AggressiveFactor = 0.9,
+                NoHedgeUnderExpectedMs = 4000,
+                FirstChunkSloMs = 5000,
+                LaterChunkSloMs = 6500,
+                ColdOverheadGuessMs = 1200,
+                ColdPerCharGuessMs = 45
+            };
         }
 
         // ----- Public API -----
@@ -196,6 +214,10 @@ namespace NetworkMonitor.LLM.Services
 
             int W = Math.Max(1, Math.Min(_workers.Length, N));
 
+            // Per-response hedge budget (max 1 per 6 chunks, at least 1)
+            int hedgeBudget = Math.Max(1, N / 6);
+            int hedgesUsed = 0;
+
             int nextToEmit = 0;
             var buf = new Dictionary<int, string>(capacity: W * 2);
             var lastLaunched = new int[W];
@@ -222,11 +244,33 @@ namespace NetworkMonitor.LLM.Services
 
                 var preferred = _workers[idx % W];
 
-                bool hasHealthyAlt = _workers.Length > 1 &&
-                    _workers.Any(w => w != preferred && !IsCircuitOpen(w));
+                // Choose an alternate by lowest expected time among healthy others
+                var healthyAlts = _workers.Where(w => w != preferred && !IsCircuitOpen(w)).ToArray();
+                bool hasHealthyAlt = healthyAlts.Length > 0;
 
-                var metrics = _metrics.TryGetValue(preferred, out var m) ? m : null;
-                int hedgeDelayMs = _hedgePolicy.ComputeDelayMs(idx, chunkLen, metrics, hasHealthyAlt);
+                double expPrimary = ExpectedMs(preferred, chunkLen);
+                double expAltBest = hasHealthyAlt
+                    ? healthyAlts.Min(a => ExpectedMs(a, chunkLen))
+                    : double.PositiveInfinity;
+
+                // Hedge gating: make hedges rare and useful
+                const int MinChunkToHedge = 60;      // do not hedge tiny chunks
+                const double MinRelGain = 0.80;      // require >=20% faster alt
+                bool enoughObs = _obsCount.TryGetValue(preferred, out var seen) && seen >= 3;
+
+                bool allowHedge =
+                    hasHealthyAlt &&
+                    chunkLen >= MinChunkToHedge &&
+                    expPrimary >= _hedgePolicy.NoHedgeUnderExpectedMs &&
+                    expAltBest < expPrimary * MinRelGain &&
+                    enoughObs &&
+                    hedgesUsed < hedgeBudget;
+
+                int hedgeDelayMs = allowHedge
+                    ? _hedgePolicy.ComputeDelayMs(idx, chunkLen,
+                        _metrics.TryGetValue(preferred, out var m) ? m : null,
+                        hasHealthyAlt)
+                    : int.MaxValue;
 
                 using var t1Cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
                 using var t2Cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
@@ -234,12 +278,12 @@ namespace NetworkMonitor.LLM.Services
                 var sw = Stopwatch.StartNew();
 
                 _logger.LogDebug(
-                    "TTS LAUNCH idx={Idx} len={Len} hash={Hash} pref={Pref} hedgeDelayMs={HedgeDelay} text='{Text}'",
-                    idx, chunkLen, hash, preferred, (hedgeDelayMs == int.MaxValue ? -1 : hedgeDelayMs), preview);
+                    "TTS LAUNCH idx={Idx} len={Len} hash={Hash} pref={Pref} expPrimaryMs={ExpP:0} expAltBestMs={ExpA:0} allowHedge={Allow} hedgeDelayMs={HedgeDelay} text='{Text}'",
+                    idx, chunkLen, hash, preferred, expPrimary, expAltBest, allowHedge, (hedgeDelayMs == int.MaxValue ? -1 : hedgeDelayMs), preview);
 
                 var t1 = GenerateOnPreferredThenOthers(textFrag, preferred, t1Cts.Token);
 
-                if (hedgeDelayMs == int.MaxValue || !hasHealthyAlt)
+                if (hedgeDelayMs == int.MaxValue)
                 {
                     var (w, f) = await t1;
 
@@ -251,7 +295,6 @@ namespace NetworkMonitor.LLM.Services
                 }
 
                 var delay = Task.Delay(hedgeDelayMs, ct);
-
                 if (await Task.WhenAny(t1, delay) == t1)
                 {
                     var (w, f) = await t1;
@@ -263,9 +306,10 @@ namespace NetworkMonitor.LLM.Services
                     return (idx, string.IsNullOrEmpty(f) ? "" : BuildFileUrl(w, f));
                 }
 
-                // Hedge fired
+                // Start hedge
                 int start = Array.IndexOf(_workers, preferred);
                 var alt = _workers[(start + 1) % _workers.Length];
+                hedgesUsed++;
 
                 _logger.LogDebug(
                     "TTS HEDGE START idx={Idx} afterMs={After} hash={Hash} primary={Primary} alt={Alt} text='{Text}'",
@@ -354,6 +398,7 @@ namespace NetworkMonitor.LLM.Services
                         var m = _metrics.GetOrAdd(w, _ => new WorkerMetrics());
                         m.ObserveSuccess(text.Length, ms);
                         _metricsStore.Upsert(w, m);
+                        _obsCount.AddOrUpdate(w, 1, (_, old) => old + 1);
 
                         RecordSuccess(w);
                         return (w, f);
@@ -385,6 +430,7 @@ namespace NetworkMonitor.LLM.Services
                         var m = _metrics.GetOrAdd(w, _ => new WorkerMetrics());
                         m.ObserveSuccess(text.Length, ms);
                         _metricsStore.Upsert(w, m);
+                        _obsCount.AddOrUpdate(w, 1, (_, old) => old + 1);
 
                         RecordSuccess(w);
                         return (w, f);
@@ -556,6 +602,16 @@ namespace NetworkMonitor.LLM.Services
                 len += next;
             }
             if (buf.Count > 0) yield return string.Join(" ", buf);
+        }
+
+        private double ExpectedMs(Uri worker, int textLen)
+        {
+            if (textLen <= 0) textLen = 1;
+            if (_metrics.TryGetValue(worker, out var m) && m.HasData)
+                return m.ExpectedMs(textLen);
+
+            // cold guess aligned with HedgePolicy
+            return _hedgePolicy.ColdOverheadGuessMs + _hedgePolicy.ColdPerCharGuessMs * Math.Max(1, textLen);
         }
     }
 }
