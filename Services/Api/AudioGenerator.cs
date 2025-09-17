@@ -334,6 +334,9 @@ namespace NetworkMonitor.LLM.Services
 
             return (preferred, "");
         }
+        // Back-compat overload for call sites that don't pass a CancellationToken
+        private Task<string> PostGenerate(Uri worker, string text)
+            => PostGenerate(worker, text, CancellationToken.None);
 
         private async Task<string> PostGenerate(Uri worker, string text, CancellationToken ct)
         {
