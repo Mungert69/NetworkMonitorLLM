@@ -142,23 +142,20 @@ namespace NetworkMonitor.LLM.Services
             using var gate = new SemaphoreSlim(par);
             var tasks = new Task[chunks.Count - 1];
 
-            for (int i = 1; i < chunks.Count; i++)
+            var tasks = chunks.Select((chunk, i) => Task.Run(async () =>
             {
                 await gate.WaitAsync();
-                int idx = i;
-                tasks[i - 1] = Task.Run(async () =>
+                try
                 {
-                    try
-                    {
-                        var (w, f) = await GenerateOnBestWorker(chunks[idx]);
-                        urls[idx] = string.IsNullOrEmpty(f) ? "" : BuildFileUrl(w, f);
-                    }
-                    finally
-                    {
-                        gate.Release();
-                    }
-                });
-            }
+                    var (worker, filename) = await GenerateOnBestWorker(chunk);
+                    var url = string.IsNullOrEmpty(filename) ? "" : BuildFileUrl(worker, filename);
+                    return (index: i, url);
+                }
+                finally
+                {
+                    gate.Release();
+                }
+            })).ToArray();
 
             // 3) Await in order (preserve sequence)
             for (int i = 1; i < chunks.Count; i++)
@@ -191,23 +188,17 @@ namespace NetworkMonitor.LLM.Services
 
             for (int i = 1; i < chunks.Count; i++)
             {
-                await gate.WaitAsync(ct);
                 int idx = i;
                 tasks[idx] = Task.Run(async () =>
                 {
+                    await gate.WaitAsync(ct);   // ← move wait INSIDE the task
                     try
                     {
                         var (w, f) = await GenerateOnBestWorker(chunks[idx]);
                         return string.IsNullOrEmpty(f) ? "" : BuildFileUrl(w, f);
                     }
-                    catch
-                    {
-                        return "";
-                    }
-                    finally
-                    {
-                        gate.Release();
-                    }
+                    catch { return ""; }
+                    finally { gate.Release(); }
                 }, ct);
             }
 
