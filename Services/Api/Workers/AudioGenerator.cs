@@ -12,6 +12,7 @@ using Microsoft.Extensions.Logging;
 using System.Security.Cryptography;
 using NetworkMonitor.Objects;
 using System.Runtime.CompilerServices;
+using System.Diagnostics;
 
 namespace NetworkMonitor.LLM.Services
 {
@@ -30,18 +31,21 @@ namespace NetworkMonitor.LLM.Services
         private volatile bool _warmed;
         private readonly object _warmLock = new();
 
+        // ---- Latency-aware hedging support ----
+        private readonly ConcurrentDictionary<Uri, WorkerMetrics> _metrics = new();
+        private readonly IWorkerMetricsStore _metricsStore;
+        private readonly HedgePolicy _hedgePolicy = HedgePolicy.Default;
 
-
-        public AudioGenerator(ILogger<OpenAIRunner> logger, SystemParams systemParams)
+        public AudioGenerator(ILogger<OpenAIRunner> logger, SystemParams systemParams, IWorkerMetricsStore? metricsStore = null)
         {
             _logger = logger;
 
             // Build _workers from either the list or the legacy single URL
             IEnumerable<string> candidates =
                 (systemParams.AudioServiceUrls != null && systemParams.AudioServiceUrls.Count > 0)
-                    ? systemParams.AudioServiceUrls                               // IEnumerable<string>
+                    ? systemParams.AudioServiceUrls
                     : (!string.IsNullOrWhiteSpace(systemParams.AudioServiceUrl)
-                        ? new[] { systemParams.AudioServiceUrl }                  // IEnumerable<string>
+                        ? new[] { systemParams.AudioServiceUrl }
                         : Enumerable.Empty<string>());
 
             var workerList = new List<Uri>();
@@ -50,7 +54,6 @@ namespace NetworkMonitor.LLM.Services
                 if (string.IsNullOrWhiteSpace(s)) continue;
                 var trimmed = s.Trim();
 
-                // Avoid the Uri(string, bool) overload by using TryCreate
                 if (Uri.TryCreate(trimmed, UriKind.Absolute, out var u) &&
                     (u.Scheme == Uri.UriSchemeHttp || u.Scheme == Uri.UriSchemeHttps))
                 {
@@ -59,13 +62,24 @@ namespace NetworkMonitor.LLM.Services
             }
 
             _workers = workerList
-                .Distinct() // de-dupe if both list & single had same URL
+                .Distinct()
                 .ToArray();
 
             if (_workers.Length == 0)
                 throw new InvalidOperationException("No AudioServiceUrls configured.");
+
             _logger.LogInformation("TTS workers: {Workers}", string.Join(", ", _workers.Select(u => u.ToString())));
 
+            // Load persisted worker latency metrics
+            _metricsStore = metricsStore ?? new FileWorkerMetricsStore(FileWorkerMetricsStore.DefaultPath());
+            var loaded = _metricsStore.LoadAll();
+            foreach (var kvp in loaded)
+            {
+                if (Uri.TryCreate(kvp.Key, UriKind.Absolute, out var u) && _workers.Contains(u))
+                {
+                    _metrics[u] = WorkerMetrics.FromRecord(kvp.Value);
+                }
+            }
         }
 
         // ----- Public API -----
@@ -139,14 +153,14 @@ namespace NetworkMonitor.LLM.Services
 
             var urls = new string[chunks.Count];
 
-            // 1) First chunk sync (fast first byte)
+            // 1) First chunk sync
             var (w0, f0) = await GenerateOnBestWorker(chunks[0]);
             urls[0] = string.IsNullOrEmpty(f0) ? "" : BuildFileUrl(w0, f0);
 
-            // 2) Prefetch the rest, bounded to number of workers
+            // 2) Prefetch the rest, bounded
             int par = ParallelismFor(chunks.Count - 1);
             using var gate = new SemaphoreSlim(par);
-            var tasks = new Task[chunks.Count - 1];   // <-- keep this one
+            var tasks = new Task[chunks.Count - 1];
 
             for (int i = 1; i < chunks.Count; i++)
             {
@@ -166,7 +180,6 @@ namespace NetworkMonitor.LLM.Services
                 });
             }
 
-            // 3) Await in order (preserve sequence)
             for (int i = 0; i < tasks.Length; i++)
                 await tasks[i];
 
@@ -174,10 +187,9 @@ namespace NetworkMonitor.LLM.Services
         }
 
         public async IAsyncEnumerable<string> StreamAudioInOrder(
-         string text,
-         [EnumeratorCancellation] CancellationToken ct = default)
+            string text,
+            [EnumeratorCancellation] CancellationToken ct = default)
         {
-            await WarmAsync(ct);
             var chunks = GetChunksFromText(text, 500);
             int N = chunks.Count;
             if (N == 0) yield break;
@@ -186,54 +198,104 @@ namespace NetworkMonitor.LLM.Services
 
             int nextToEmit = 0;
             var buf = new Dictionary<int, string>(capacity: W * 2);
-
-            // per-lane bookkeeping: last index we've launched on this lane
             var lastLaunched = new int[W];
 
             async Task<(int idx, string url)> Launch(int idx)
             {
                 if (idx >= N) return (idx, "");
 
+                string textFrag = chunks[idx];
+                int chunkLen = textFrag.Length;
+
+                const int PREVIEW_MAX = 160;
+                string preview = textFrag.Length <= PREVIEW_MAX
+                    ? textFrag
+                    : textFrag.Substring(0, PREVIEW_MAX) + "…";
+                preview = preview.Replace("\r", " ").Replace("\n", " ");
+
+                string hash;
+                {
+                    Span<byte> h = stackalloc byte[32];
+                    SHA256.HashData(Encoding.UTF8.GetBytes(textFrag), h);
+                    hash = Convert.ToHexString(h.Slice(0, 6));
+                }
+
                 var preferred = _workers[idx % W];
-                var hedgeDelayMs = 4000;
+
+                bool hasHealthyAlt = _workers.Length > 1 &&
+                    _workers.Any(w => w != preferred && !IsCircuitOpen(w));
+
+                var metrics = _metrics.TryGetValue(preferred, out var m) ? m : null;
+                int hedgeDelayMs = _hedgePolicy.ComputeDelayMs(idx, chunkLen, metrics, hasHealthyAlt);
 
                 using var t1Cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
                 using var t2Cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
 
-                var t1 = GenerateOnPreferredThenOthers(chunks[idx], preferred, t1Cts.Token);
+                var sw = Stopwatch.StartNew();
+
+                _logger.LogDebug(
+                    "TTS LAUNCH idx={Idx} len={Len} hash={Hash} pref={Pref} hedgeDelayMs={HedgeDelay} text='{Text}'",
+                    idx, chunkLen, hash, preferred, (hedgeDelayMs == int.MaxValue ? -1 : hedgeDelayMs), preview);
+
+                var t1 = GenerateOnPreferredThenOthers(textFrag, preferred, t1Cts.Token);
+
+                if (hedgeDelayMs == int.MaxValue || !hasHealthyAlt)
+                {
+                    var (w, f) = await t1;
+
+                    _logger.LogInformation(
+                        "TTS DONE idx={Idx} len={Len} hash={Hash} worker={Worker} hedged={Hedged} winner=primary durMs={Dur} text='{Text}'",
+                        idx, chunkLen, hash, w, false, sw.ElapsedMilliseconds, preview);
+
+                    return (idx, string.IsNullOrEmpty(f) ? "" : BuildFileUrl(w, f));
+                }
+
                 var delay = Task.Delay(hedgeDelayMs, ct);
 
                 if (await Task.WhenAny(t1, delay) == t1)
                 {
                     var (w, f) = await t1;
+
+                    _logger.LogInformation(
+                        "TTS DONE idx={Idx} len={Len} hash={Hash} worker={Worker} hedged={Hedged} winner=primary durMs={Dur} text='{Text}'",
+                        idx, chunkLen, hash, w, false, sw.ElapsedMilliseconds, preview);
+
                     return (idx, string.IsNullOrEmpty(f) ? "" : BuildFileUrl(w, f));
                 }
 
-                var start = Array.IndexOf(_workers, preferred);
+                // Hedge fired
+                int start = Array.IndexOf(_workers, preferred);
                 var alt = _workers[(start + 1) % _workers.Length];
-                var t2 = GenerateOnPreferredThenOthers(chunks[idx], alt, t2Cts.Token);
 
+                _logger.LogDebug(
+                    "TTS HEDGE START idx={Idx} afterMs={After} hash={Hash} primary={Primary} alt={Alt} text='{Text}'",
+                    idx, sw.ElapsedMilliseconds, hash, preferred, alt, preview);
+
+                var t2 = GenerateOnPreferredThenOthers(textFrag, alt, t2Cts.Token);
                 var winner = await Task.WhenAny(t1, t2);
+
                 if (winner == t1) t2Cts.Cancel(); else t1Cts.Cancel();
 
                 var (ww, ff) = await winner;
+
+                _logger.LogInformation(
+                    "TTS DONE idx={Idx} len={Len} hash={Hash} worker={Worker} hedged={Hedged} winner={Winner} durMs={Dur} text='{Text}'",
+                    idx, chunkLen, hash, ww, true, (winner == t1) ? "primary" : "alt", sw.ElapsedMilliseconds, preview);
+
                 return (idx, string.IsNullOrEmpty(ff) ? "" : BuildFileUrl(ww, ff));
             }
 
             var running = new List<Task<(int idx, string url)>>(W);
-
-            // kick off 0..W-1
             for (int lane = 0; lane < W; lane++)
             {
                 running.Add(Launch(lane));
                 lastLaunched[lane] = lane;
             }
 
-            // local helper to schedule next for lane if needed
             void ScheduleNextForLane(int idx)
             {
                 int lane = idx % W;
-                if (lastLaunched[lane] == idx) // we’ve launched exactly up to this idx
+                if (lastLaunched[lane] == idx)
                 {
                     int next = idx + W;
                     if (next < N)
@@ -252,15 +314,11 @@ namespace NetworkMonitor.LLM.Services
                 var (idx, url) = await done;
                 buf[idx] = url ?? "";
 
-                // schedule successor for the lane of the completed task immediately
                 ScheduleNextForLane(idx);
 
-                // now drain in order; for each emitted idx, also schedule its lane successor
                 while (buf.TryGetValue(nextToEmit, out var readyUrl))
                 {
                     buf.Remove(nextToEmit);
-
-                    // schedule before yielding to avoid underutilization during suspension
                     ScheduleNextForLane(nextToEmit);
 
                     if (!string.IsNullOrEmpty(readyUrl))
@@ -272,7 +330,7 @@ namespace NetworkMonitor.LLM.Services
         }
 
         private async Task<(Uri worker, string filename)> GenerateOnPreferredThenOthers(
-          string text, Uri preferred, CancellationToken ct)
+            string text, Uri preferred, CancellationToken ct)
         {
             int start = Array.IndexOf(_workers, preferred);
             if (start < 0) start = 0;
@@ -280,21 +338,64 @@ namespace NetworkMonitor.LLM.Services
             // Try healthy first, circular order
             for (int step = 0; step < _workers.Length; step++)
             {
+                ct.ThrowIfCancellationRequested();
+
                 var w = _workers[(start + step) % _workers.Length];
                 if (IsCircuitOpen(w)) continue;
 
-                var f = await PostGenerate(w, text, ct);
-                if (!string.IsNullOrEmpty(f)) { RecordSuccess(w); return (w, f); }
-                RecordFailure(w);
+                var sw = Stopwatch.StartNew();
+                try
+                {
+                    var f = await PostGenerate(w, text, ct);
+                    var ms = sw.ElapsedMilliseconds;
+
+                    if (!string.IsNullOrEmpty(f))
+                    {
+                        var m = _metrics.GetOrAdd(w, _ => new WorkerMetrics());
+                        m.ObserveSuccess(text.Length, ms);
+                        _metricsStore.Upsert(w, m);
+
+                        RecordSuccess(w);
+                        return (w, f);
+                    }
+
+                    RecordFailure(w);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
             }
 
             // Last resort: ignore circuit, circular order
             for (int step = 0; step < _workers.Length; step++)
             {
+                ct.ThrowIfCancellationRequested();
+
                 var w = _workers[(start + step) % _workers.Length];
-                var f = await PostGenerate(w, text, ct);
-                if (!string.IsNullOrEmpty(f)) { RecordSuccess(w); return (w, f); }
-                RecordFailure(w);
+
+                var sw = Stopwatch.StartNew();
+                try
+                {
+                    var f = await PostGenerate(w, text, ct);
+                    var ms = sw.ElapsedMilliseconds;
+
+                    if (!string.IsNullOrEmpty(f))
+                    {
+                        var m = _metrics.GetOrAdd(w, _ => new WorkerMetrics());
+                        m.ObserveSuccess(text.Length, ms);
+                        _metricsStore.Upsert(w, m);
+
+                        RecordSuccess(w);
+                        return (w, f);
+                    }
+
+                    RecordFailure(w);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
             }
 
             return (preferred, "");
@@ -303,22 +404,6 @@ namespace NetworkMonitor.LLM.Services
         private int ParallelismFor(int workItems)
                 => Math.Max(1, Math.Min(_workers.Length, workItems));
 
-        private async Task WarmAsync(CancellationToken ct)
-        {
-            if (_warmed) return;
-            lock (_warmLock)
-            {
-                if (_warmed) return;
-                _warmed = true;
-            }
-            try
-            {
-                var tiny = "ok";
-                var tasks = _workers.Select(w => PostGenerate(w, tiny, ct)).ToArray();
-                await Task.WhenAll(tasks);
-            }
-            catch { /* best-effort */ }
-        }
         // ----- Core routing & calls -----
 
         private async Task<(Uri worker, string filename)> GenerateOnBestWorker(string text)
@@ -330,10 +415,8 @@ namespace NetworkMonitor.LLM.Services
                 return (w, f);
             }
 
-            // Consistent hash to stick sentences to a worker (helps cache locality)
             var preferred = PickWorkerConsistent(text);
 
-            // Try preferred first; on failure, walk others (health-aware)
             var ordered = OrderByHealth(preferred);
 
             foreach (var w in ordered)
@@ -350,7 +433,6 @@ namespace NetworkMonitor.LLM.Services
                 RecordFailure(w);
             }
 
-            // Last resort: try everyone even if circuit-open
             foreach (var w in _workers)
             {
                 var filename = await PostGenerate(w, text);
@@ -364,7 +446,7 @@ namespace NetworkMonitor.LLM.Services
 
             return (preferred, "");
         }
-        // Back-compat overload for call sites that don't pass a CancellationToken
+
         private Task<string> PostGenerate(Uri worker, string text)
             => PostGenerate(worker, text, CancellationToken.None);
 
@@ -372,18 +454,12 @@ namespace NetworkMonitor.LLM.Services
         {
             try
             {
-                var endpoint = new Uri(worker, "/generate_audio");
+                var endpoint = new Uri(worker, "generate_audio");
                 var payload = JsonSerializer.Serialize(new { text });
                 using var content = new StringContent(payload, Encoding.UTF8, "application/json");
                 using var req = new HttpRequestMessage(HttpMethod.Post, endpoint) { Content = content };
 
-                // ResponseHeadersRead makes cancellation snappier
-                using var res = await _http.SendAsync(
-                    req,
-                    HttpCompletionOption.ResponseHeadersRead,
-                    ct
-                );
-
+                using var res = await _http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct);
                 var body = await res.Content.ReadAsStringAsync(ct);
 
                 if (!res.IsSuccessStatusCode)
@@ -393,36 +469,20 @@ namespace NetworkMonitor.LLM.Services
                 }
 
                 using var doc = JsonDocument.Parse(body);
-                if (doc.RootElement.TryGetProperty("filename", out var fnEl))
-                {
-                    var fn = fnEl.GetString() ?? "";
-                    _logger.LogInformation("TTS success on {Worker}: {Filename}", worker, fn);
-                    return fn;
-                }
-
-                _logger.LogWarning("TTS {Worker} returned success without filename: {Body}", worker, body);
-                return "";
+                return doc.RootElement.TryGetProperty("filename", out var fnEl) ? (fnEl.GetString() ?? "") : "";
             }
-            catch (TaskCanceledException)
-            {
-                // fine: this is how we cancel the loser of a hedge
-                return "";
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "TTS error for {Worker}", worker);
-                return "";
-            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
+            catch (OperationCanceledException oce) { _logger.LogWarning(oce, "TTS timeout for {Worker}", worker); return ""; }
+            catch (Exception ex) { _logger.LogWarning(ex, "TTS error for {Worker}", worker); return ""; }
         }
 
         private string BuildFileUrl(Uri worker, string filename)
-            => new Uri(worker, "/files/" + filename).ToString();
+            => new Uri(worker, $"files/{Uri.EscapeDataString(filename)}").ToString();
 
         // ----- Consistent hashing & health -----
 
         private Uri PickWorkerConsistent(string key)
         {
-            // SHA256(key) -> uint64 -> index
             Span<byte> hash = stackalloc byte[32];
             SHA256.HashData(Encoding.UTF8.GetBytes(key), hash);
             ulong v = BitConverter.ToUInt64(hash.Slice(0, 8));
@@ -432,7 +492,6 @@ namespace NetworkMonitor.LLM.Services
 
         private IEnumerable<Uri> OrderByHealth(Uri first)
         {
-            // Preferred first, then others by least failures and not circuit-open
             return new[] { first }
                 .Concat(_workers.Where(w => w != first))
                 .OrderBy(w =>
@@ -465,7 +524,7 @@ namespace NetworkMonitor.LLM.Services
 
         private void RecordSuccess(Uri w)
         {
-            _circuits[w] = new Circuit(); // reset
+            _circuits[w] = new Circuit();
         }
 
         private sealed class Circuit
@@ -490,7 +549,6 @@ namespace NetworkMonitor.LLM.Services
                 }
                 if (w.Length > maxLength)
                 {
-                    // in case of a crazy-long token, hard cut
                     yield return w;
                     continue;
                 }
