@@ -1,32 +1,13 @@
+using System;
+using System.IO;
 using System.Text.Json;
 using System.Text.Encodings.Web;
 using System.Text.Unicode;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.IO;
-using System;
 
 namespace NetworkMonitor.LLM.Services
 {
-
-
-    public sealed class WorkerMetricsRecord
-    {
-        public bool HasData { get; set; }
-        public double OverheadMs { get; set; }
-        public double MsPerChar { get; set; }
-    }
-
-    public interface IWorkerMetricsStore
-    {
-        // Load all persisted metrics (keyed by absolute worker URI string).
-        IReadOnlyDictionary<string, WorkerMetricsRecord> LoadAll();
-
-        // Insert or update one worker’s metrics. Implementations must be thread-safe.
-        void Upsert(Uri worker, WorkerMetrics metrics);
-    }
-
-
     public sealed class FileWorkerMetricsStore : IWorkerMetricsStore
     {
         private readonly string _path;
@@ -37,18 +18,22 @@ namespace NetworkMonitor.LLM.Services
             Encoder = JavaScriptEncoder.Create(UnicodeRanges.All),
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         };
+
         private ConcurrentDictionary<string, WorkerMetricsRecord> _cache;
 
         public FileWorkerMetricsStore(string path)
         {
             _path = path ?? throw new ArgumentNullException(nameof(path));
-            Directory.CreateDirectory(Path.GetDirectoryName(_path)!);
+
+            var dir = Path.GetDirectoryName(_path);
+            if (!string.IsNullOrEmpty(dir))
+                Directory.CreateDirectory(dir);
+
             _cache = new ConcurrentDictionary<string, WorkerMetricsRecord>(
                 LoadFromDiskInternal(), StringComparer.OrdinalIgnoreCase);
         }
 
-        public IReadOnlyDictionary<string, WorkerMetricsRecord> LoadAll()
-            => _cache; // already loaded at construction
+        public IReadOnlyDictionary<string, WorkerMetricsRecord> LoadAll() => _cache;
 
         public void Upsert(Uri worker, WorkerMetrics metrics)
         {
@@ -56,9 +41,7 @@ namespace NetworkMonitor.LLM.Services
             if (metrics is null) throw new ArgumentNullException(nameof(metrics));
 
             var key = worker.AbsoluteUri;
-            var rec = metrics.ToRecord();
-
-            _cache[key] = rec;
+            _cache[key] = metrics.ToRecord();
             Persist();
         }
 
@@ -73,7 +56,6 @@ namespace NetworkMonitor.LLM.Services
             }
             catch
             {
-                // Corrupt or unreadable file; start fresh.
                 return new();
             }
         }
@@ -89,11 +71,35 @@ namespace NetworkMonitor.LLM.Services
                     fs.Flush(true);
                 }
 
-                if (File.Exists(_path))
-                    File.Replace(tmp, _path, destinationBackupFileName: null); // fix here
-                else
-                    File.Move(tmp, _path);
+                try
+                {
+                    if (File.Exists(_path))
+                        File.Replace(tmp, _path, null); // atomic where supported
+                    else
+                        File.Move(tmp, _path);
+                }
+                catch (PlatformNotSupportedException)
+                {
+                    // Fallback for filesystems without Replace
+                    SafeMoveOverwriting(tmp, _path);
+                }
+                catch (IOException)
+                {
+                    // Fallback on IO contention: overwrite by move
+                    SafeMoveOverwriting(tmp, _path);
+                }
             }
+        }
+
+        private static void SafeMoveOverwriting(string source, string dest)
+        {
+            try
+            {
+                if (File.Exists(dest)) File.Delete(dest);
+            }
+            catch { /* best effort */ }
+
+            File.Move(source, dest);
         }
 
         public static string DefaultPath()
