@@ -170,48 +170,89 @@ namespace NetworkMonitor.LLM.Services
                     => Math.Max(1, Math.Min(_workers.Length, workItems));
 
         public async IAsyncEnumerable<string> StreamAudioInOrder(
-     string text,
-     [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct = default)
+         string text,
+         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct = default)
         {
             var chunks = GetChunksFromText(text, 500);
-            if (chunks.Count == 0) yield break;
+            int N = chunks.Count;
+            if (N == 0) yield break;
 
-            // 1) First chunk sync for instant playback
-            var (w0, f0) = await GenerateOnBestWorker(chunks[0]);
-            var url0 = string.IsNullOrEmpty(f0) ? "" : BuildFileUrl(w0, f0);
-            if (!string.IsNullOrEmpty(url0))
-                yield return url0;
+            int W = Math.Max(1, Math.Min(_workers.Length, N)); // number of lanes (<= workers)
 
-            // 2) Schedule the rest concurrently (bounded), emit in order
-            var tasks = new Task<string>[chunks.Count];
-            tasks[0] = Task.FromResult(url0);
+            // next index we are allowed to emit
+            int nextToEmit = 0;
 
-            int par = ParallelismFor(chunks.Count - 1);
-            using var gate = new SemaphoreSlim(par);
+            // buffer of completed results waiting to be emitted in order
+            var buf = new Dictionary<int, string>(capacity: W * 2);
 
-            for (int i = 1; i < chunks.Count; i++)
+            // Launch a job for a specific chunk index (assign preferred by RR)
+            async Task<(int idx, string url)> Launch(int idx)
             {
-                int idx = i;
-                tasks[idx] = Task.Run(async () =>
+                if (idx >= N) return (idx, ""); // sentinel
+                var preferred = _workers[idx % W]; // strict round-robin assignment
+                var (w, f) = await GenerateOnPreferredThenOthers(chunks[idx], preferred);
+                var url = string.IsNullOrEmpty(f) ? "" : BuildFileUrl(w, f);
+                return (idx, url);
+            }
+
+            // kick off one job per lane: indices 0..W-1
+            var running = new List<Task<(int idx, string url)>>(W);
+            for (int s = 0; s < W; s++)
+                running.Add(Launch(s));
+
+            // process completions; always keep at most one request per lane in flight
+            while (nextToEmit < N)
+            {
+                var done = await Task.WhenAny(running);
+                running.Remove(done);
+
+                var (idx, url) = await done;
+
+                // store completion (even if empty) and try to drain in order
+                buf[idx] = url ?? "";
+
+                // emit any contiguous ready results starting at nextToEmit
+                while (buf.TryGetValue(nextToEmit, out var readyUrl))
                 {
-                    await gate.WaitAsync(ct);   // wait INSIDE the task
-                    try
-                    {
-                        var (w, f) = await GenerateOnBestWorker(chunks[idx]);
-                        return string.IsNullOrEmpty(f) ? "" : BuildFileUrl(w, f);
-                    }
-                    catch { return ""; }
-                    finally { gate.Release(); }
-                }, ct);
+                    buf.Remove(nextToEmit);
+                    if (!string.IsNullOrEmpty(readyUrl))
+                        yield return readyUrl; // keep order strictly
+                    nextToEmit++;
+                }
+
+                // schedule the next index for this lane: idx + W
+                int nextIdxForThisLane = idx + W;
+                if (nextIdxForThisLane < N)
+                    running.Add(Launch(nextIdxForThisLane));
+                // else: this lane is finished; remaining lanes will drain
+            }
+        }
+        private async Task<(Uri worker, string filename)> GenerateOnPreferredThenOthers(string text, Uri preferred)
+        {
+            if (!IsCircuitOpen(preferred))
+            {
+                var f = await PostGenerate(preferred, text);
+                if (!string.IsNullOrEmpty(f)) { RecordSuccess(preferred); return (preferred, f); }
+                RecordFailure(preferred);
             }
 
-            // 3) Yield strictly in index order
-            for (int i = 1; i < chunks.Count; i++)
+            foreach (var w in _workers)
             {
-                var url = await tasks[i];
-                if (!string.IsNullOrEmpty(url))
-                    yield return url;
+                if (w == preferred || IsCircuitOpen(w)) continue;
+                var f = await PostGenerate(w, text);
+                if (!string.IsNullOrEmpty(f)) { RecordSuccess(w); return (w, f); }
+                RecordFailure(w);
             }
+
+            foreach (var w in _workers)
+            {
+                if (w == preferred) continue; // even if circuit-open, last resort
+                var f = await PostGenerate(w, text);
+                if (!string.IsNullOrEmpty(f)) { RecordSuccess(w); return (w, f); }
+                RecordFailure(w);
+            }
+
+            return (preferred, "");
         }
 
         // ----- Core routing & calls -----
