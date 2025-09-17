@@ -1,29 +1,30 @@
 using System;
+
 namespace NetworkMonitor.LLM.Services
 {
     internal sealed class HedgePolicy
     {
-        // Bounds to avoid hyper-aggressive or useless hedges
-        public int MinHedgeDelayMs { get; init; } = 1200;
-        public int MaxHedgeDelayMs { get; init; } = 5000;
+        // Less aggressive defaults to reduce unnecessary hedging
+        public int MinHedgeDelayMs { get; init; } = 3000;
+        public int MaxHedgeDelayMs { get; init; } = 9000;
 
-        // Multiply expected latency by this factor to schedule hedge
-        public double DelayFactor { get; init; } = 0.9;
+        // Use full expected latency for scheduling
+        public double DelayFactor { get; init; } = 1.0;
 
-        // Slightly more aggressive only for first N chunks
-        public int AggressiveFirstN { get; init; } = 1;
-        public double AggressiveFactor { get; init; } = 0.7;
+        // No extra aggressiveness for the first chunks
+        public int AggressiveFirstN { get; init; } = 0;
+        public double AggressiveFactor { get; init; } = 0.9;
 
-        // Skip hedging if we predict fast anyway
-        public int NoHedgeUnderExpectedMs { get; init; } = 900;
+        // Skip hedging if we predict the primary will be fast anyway
+        public int NoHedgeUnderExpectedMs { get; init; } = 4000;
 
-        // Soft SLOs: if expected ≤ SLO, skip hedge
-        public int FirstChunkSloMs { get; init; } = 2000;
-        public int LaterChunkSloMs { get; init; } = 3500;
+        // Softer SLOs
+        public int FirstChunkSloMs { get; init; } = 5000;
+        public int LaterChunkSloMs { get; init; } = 6500;
 
-        // Cold-start guess when we have no data for a worker yet
-        public int ColdOverheadGuessMs { get; init; } = 2200;
-        public int ColdPerCharGuessMs { get; init; } = 12;
+        // Cold-start guesses aligned with observed behavior
+        public int ColdOverheadGuessMs { get; init; } = 1200;
+        public int ColdPerCharGuessMs { get; init; } = 45;
 
         public int ComputeDelayMs(
             int chunkIndex,
@@ -33,13 +34,12 @@ namespace NetworkMonitor.LLM.Services
         {
             if (!hasHealthyAlternate) return int.MaxValue; // no hedge possible
 
-            double expected = metricsOrNull is { HasData: true }
+            double expected = (metricsOrNull is { HasData: true })
                 ? metricsOrNull.ExpectedMs(textLen)
                 : ColdOverheadGuessMs + ColdPerCharGuessMs * Math.Max(1, textLen);
 
             if (expected < NoHedgeUnderExpectedMs) return int.MaxValue;
 
-            // If primary is likely to meet SLO, skip hedging
             int slo = chunkIndex == 0 ? FirstChunkSloMs : LaterChunkSloMs;
             if (expected <= slo) return int.MaxValue;
 
