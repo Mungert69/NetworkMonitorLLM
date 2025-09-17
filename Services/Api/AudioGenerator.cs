@@ -192,7 +192,7 @@ namespace NetworkMonitor.LLM.Services
                 if (idx >= N) return (idx, "");
 
                 var preferred = _workers[idx % W];
-                var hedgeDelayMs = 2500; // tune 2–4s
+                var hedgeDelayMs = 4000; // tune 2–4s
 
                 using var t1Cts = new CancellationTokenSource();
                 using var t2Cts = new CancellationTokenSource();
