@@ -187,14 +187,44 @@ namespace NetworkMonitor.LLM.Services
             // buffer of completed results waiting to be emitted in order
             var buf = new Dictionary<int, string>(capacity: W * 2);
 
-            // Launch a job for a specific chunk index (assign preferred by RR)
             async Task<(int idx, string url)> Launch(int idx)
             {
-                if (idx >= N) return (idx, ""); // sentinel
-                var preferred = _workers[idx % W]; // strict round-robin assignment
-                var (w, f) = await GenerateOnPreferredThenOthers(chunks[idx], preferred);
-                var url = string.IsNullOrEmpty(f) ? "" : BuildFileUrl(w, f);
-                return (idx, url);
+                if (idx >= N) return (idx, "");
+
+                var preferred = _workers[idx % W];
+                var hedgeDelayMs = 2500; // tune 2–4s
+
+                using var t1Cts = new CancellationTokenSource();
+                using var t2Cts = new CancellationTokenSource();
+
+                var t1 = GenerateOnPreferredThenOthers(chunks[idx], preferred, t1Cts.Token);
+                var delay = Task.Delay(hedgeDelayMs, ct);
+
+                if (await Task.WhenAny(t1, delay) == t1)
+                {
+                    var (w, f) = await t1;
+                    var url = string.IsNullOrEmpty(f) ? "" : BuildFileUrl(w, f);
+                    _logger.LogInformation("TTS idx={Idx} worker={Worker} hedged=false ok={Ok}",
+                        idx, w, !string.IsNullOrEmpty(f));
+                    return (idx, url);
+                }
+
+                // Hedge on the next worker in the ring
+                var start = Array.IndexOf(_workers, preferred);
+                var alt = _workers[(start + 1) % _workers.Length];
+
+                var t2 = GenerateOnPreferredThenOthers(chunks[idx], alt, t2Cts.Token);
+
+                var winner = await Task.WhenAny(t1, t2);
+                if (winner == t1) t2Cts.Cancel(); else t1Cts.Cancel();  // cancel the loser
+
+                var (ww, ff) = await winner; // observe completion
+                var url2 = string.IsNullOrEmpty(ff) ? "" : BuildFileUrl(ww, ff);
+
+                _logger.LogInformation("TTS idx={Idx} worker={Worker} hedged=true ok={Ok}",
+                    idx, ww, !string.IsNullOrEmpty(ff));
+
+                return (idx, url2);
             }
 
             // kick off one job per lane: indices 0..W-1
@@ -230,29 +260,28 @@ namespace NetworkMonitor.LLM.Services
             }
         }
 
-        private async Task<(Uri worker, string filename)> GenerateOnPreferredThenOthers(string text, Uri preferred)
+        private async Task<(Uri worker, string filename)> GenerateOnPreferredThenOthers(
+          string text, Uri preferred, CancellationToken ct)
         {
-            // Build circular order: preferred, then others starting after preferred
             int start = Array.IndexOf(_workers, preferred);
-            if (start < 0) start = 0; // safety
+            if (start < 0) start = 0;
 
-            // Pass 1: try non-open circuits in circular order
+            // Try healthy first, circular order
             for (int step = 0; step < _workers.Length; step++)
             {
                 var w = _workers[(start + step) % _workers.Length];
                 if (IsCircuitOpen(w)) continue;
 
-                var f = await PostGenerate(w, text);
+                var f = await PostGenerate(w, text, ct);
                 if (!string.IsNullOrEmpty(f)) { RecordSuccess(w); return (w, f); }
                 RecordFailure(w);
             }
 
-            // Pass 2 (last resort): try everyone regardless of open status, circular order
+            // Last resort: ignore circuit, circular order
             for (int step = 0; step < _workers.Length; step++)
             {
                 var w = _workers[(start + step) % _workers.Length];
-
-                var f = await PostGenerate(w, text);
+                var f = await PostGenerate(w, text, ct);
                 if (!string.IsNullOrEmpty(f)) { RecordSuccess(w); return (w, f); }
                 RecordFailure(w);
             }
@@ -306,16 +335,23 @@ namespace NetworkMonitor.LLM.Services
             return (preferred, "");
         }
 
-        private async Task<string> PostGenerate(Uri worker, string text)
+        private async Task<string> PostGenerate(Uri worker, string text, CancellationToken ct)
         {
             try
             {
                 var endpoint = new Uri(worker, "/generate_audio");
                 var payload = JsonSerializer.Serialize(new { text });
                 using var content = new StringContent(payload, Encoding.UTF8, "application/json");
+                using var req = new HttpRequestMessage(HttpMethod.Post, endpoint) { Content = content };
 
-                using var res = await _http.PostAsync(endpoint, content);
-                var body = await res.Content.ReadAsStringAsync();
+                // ResponseHeadersRead makes cancellation snappier
+                using var res = await _http.SendAsync(
+                    req,
+                    HttpCompletionOption.ResponseHeadersRead,
+                    ct
+                );
+
+                var body = await res.Content.ReadAsStringAsync(ct);
 
                 if (!res.IsSuccessStatusCode)
                 {
@@ -327,16 +363,16 @@ namespace NetworkMonitor.LLM.Services
                 if (doc.RootElement.TryGetProperty("filename", out var fnEl))
                 {
                     var fn = fnEl.GetString() ?? "";
-                    _logger.LogInformation("TTS success on {Worker}: {Filename}", worker, fn); // <-- success log
+                    _logger.LogInformation("TTS success on {Worker}: {Filename}", worker, fn);
                     return fn;
                 }
 
                 _logger.LogWarning("TTS {Worker} returned success without filename: {Body}", worker, body);
                 return "";
             }
-            catch (TaskCanceledException tce)
+            catch (TaskCanceledException)
             {
-                _logger.LogWarning(tce, "TTS timeout for {Worker}", worker);
+                // fine: this is how we cancel the loser of a hedge
                 return "";
             }
             catch (Exception ex)
