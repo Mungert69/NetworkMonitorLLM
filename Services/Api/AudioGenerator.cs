@@ -177,6 +177,7 @@ namespace NetworkMonitor.LLM.Services
          string text,
          [EnumeratorCancellation] CancellationToken ct = default)
         {
+            await WarmAsync(ct);
             var chunks = GetChunksFromText(text, 500);
             int N = chunks.Count;
             if (N == 0) yield break;
