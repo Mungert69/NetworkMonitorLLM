@@ -21,7 +21,7 @@ internal sealed class OpenAILoggingHandler : DelegatingHandler
         if (_logBodies && request.Content != null)
             reqBody = await request.Content.ReadAsStringAsync(ct);
 
-        _logger.LogInformation(
+        _logger.LogDebug(
             "HTTP -> {Method} {Uri}\nHeaders:\n{Headers}\nBody:\n{Body}",
             request.Method, request.RequestUri, request.Headers, _logBodies ? reqBody : "<omitted>");
 
@@ -31,7 +31,7 @@ internal sealed class OpenAILoggingHandler : DelegatingHandler
         if (_logBodies && resp.Content != null)
             respBody = await resp.Content.ReadAsStringAsync(ct);
 
-        _logger.LogInformation(
+        _logger.LogDebug(
             "HTTP <- {StatusCode} for {Uri}\nBody:\n{Body}",
             (int)resp.StatusCode, request.RequestUri, _logBodies ? respBody : "<omitted>");
 
