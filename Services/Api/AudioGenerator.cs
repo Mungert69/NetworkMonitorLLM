@@ -213,7 +213,7 @@ namespace NetworkMonitor.LLM.Services
                     yield return url;
             }
         }
-.
+
         // ----- Core routing & calls -----
 
         private async Task<(Uri worker, string filename)> GenerateOnBestWorker(string text)
