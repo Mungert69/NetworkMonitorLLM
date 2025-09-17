@@ -140,35 +140,38 @@ namespace NetworkMonitor.LLM.Services
             // 2) Prefetch the rest, bounded to number of workers
             int par = ParallelismFor(chunks.Count - 1);
             using var gate = new SemaphoreSlim(par);
-            var tasks = new Task[chunks.Count - 1];
+            var tasks = new Task[chunks.Count - 1];   // <-- keep this one
 
-            var tasks = chunks.Select((chunk, i) => Task.Run(async () =>
+            for (int i = 1; i < chunks.Count; i++)
             {
-                await gate.WaitAsync();
-                try
+                int idx = i;
+                tasks[i - 1] = Task.Run(async () =>
                 {
-                    var (worker, filename) = await GenerateOnBestWorker(chunk);
-                    var url = string.IsNullOrEmpty(filename) ? "" : BuildFileUrl(worker, filename);
-                    return (index: i, url);
-                }
-                finally
-                {
-                    gate.Release();
-                }
-            })).ToArray();
+                    await gate.WaitAsync();
+                    try
+                    {
+                        var (w, f) = await GenerateOnBestWorker(chunks[idx]);
+                        urls[idx] = string.IsNullOrEmpty(f) ? "" : BuildFileUrl(w, f);
+                    }
+                    finally
+                    {
+                        gate.Release();
+                    }
+                });
+            }
 
             // 3) Await in order (preserve sequence)
-            for (int i = 1; i < chunks.Count; i++)
-                await tasks[i - 1];
+            for (int i = 0; i < tasks.Length; i++)
+                await tasks[i];
 
             return urls.Where(u => !string.IsNullOrEmpty(u)).ToList();
         }
         private int ParallelismFor(int workItems)
-                => Math.Max(1, Math.Min(_workers.Length, workItems));
+                    => Math.Max(1, Math.Min(_workers.Length, workItems));
 
         public async IAsyncEnumerable<string> StreamAudioInOrder(
-      string text,
-      [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct = default)
+     string text,
+     [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct = default)
         {
             var chunks = GetChunksFromText(text, 500);
             if (chunks.Count == 0) yield break;
@@ -179,7 +182,7 @@ namespace NetworkMonitor.LLM.Services
             if (!string.IsNullOrEmpty(url0))
                 yield return url0;
 
-            // 2) Schedule the rest concurrently (bounded to workers), but emit in order
+            // 2) Schedule the rest concurrently (bounded), emit in order
             var tasks = new Task<string>[chunks.Count];
             tasks[0] = Task.FromResult(url0);
 
@@ -191,7 +194,7 @@ namespace NetworkMonitor.LLM.Services
                 int idx = i;
                 tasks[idx] = Task.Run(async () =>
                 {
-                    await gate.WaitAsync(ct);   // ← move wait INSIDE the task
+                    await gate.WaitAsync(ct);   // wait INSIDE the task
                     try
                     {
                         var (w, f) = await GenerateOnBestWorker(chunks[idx]);
@@ -210,8 +213,7 @@ namespace NetworkMonitor.LLM.Services
                     yield return url;
             }
         }
-
-
+.
         // ----- Core routing & calls -----
 
         private async Task<(Uri worker, string filename)> GenerateOnBestWorker(string text)
