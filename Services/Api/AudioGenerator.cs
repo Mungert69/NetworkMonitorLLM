@@ -27,6 +27,10 @@ namespace NetworkMonitor.LLM.Services
 
         private const int MaxFailuresBeforeOpen = 3;
         private static readonly TimeSpan CircuitOpenFor = TimeSpan.FromSeconds(30);
+        private volatile bool _warmed;
+        private readonly object _warmLock = new();
+
+
 
         public AudioGenerator(ILogger<OpenAIRunner> logger, SystemParams systemParams)
         {
@@ -168,105 +172,103 @@ namespace NetworkMonitor.LLM.Services
 
             return urls.Where(u => !string.IsNullOrEmpty(u)).ToList();
         }
-        private int ParallelismFor(int workItems)
-                    => Math.Max(1, Math.Min(_workers.Length, workItems));
 
-   public async IAsyncEnumerable<string> StreamAudioInOrder(
-    string text,
-    [EnumeratorCancellation] CancellationToken ct = default)
-{
-    var chunks = GetChunksFromText(text, 500);
-    int N = chunks.Count;
-    if (N == 0) yield break;
-
-    int W = Math.Max(1, Math.Min(_workers.Length, N));
-
-    int nextToEmit = 0;
-    var buf = new Dictionary<int, string>(capacity: W * 2);
-
-    // per-lane bookkeeping: last index we've launched on this lane
-    var lastLaunched = new int[W];
-
-    async Task<(int idx, string url)> Launch(int idx)
-    {
-        if (idx >= N) return (idx, "");
-
-        var preferred = _workers[idx % W];
-        var hedgeDelayMs = 4000;
-
-        using var t1Cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-        using var t2Cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-
-        var t1 = GenerateOnPreferredThenOthers(chunks[idx], preferred, t1Cts.Token);
-        var delay = Task.Delay(hedgeDelayMs, ct);
-
-        if (await Task.WhenAny(t1, delay) == t1)
+        public async IAsyncEnumerable<string> StreamAudioInOrder(
+         string text,
+         [EnumeratorCancellation] CancellationToken ct = default)
         {
-            var (w, f) = await t1;
-            return (idx, string.IsNullOrEmpty(f) ? "" : BuildFileUrl(w, f));
-        }
+            var chunks = GetChunksFromText(text, 500);
+            int N = chunks.Count;
+            if (N == 0) yield break;
 
-        var start = Array.IndexOf(_workers, preferred);
-        var alt = _workers[(start + 1) % _workers.Length];
-        var t2 = GenerateOnPreferredThenOthers(chunks[idx], alt, t2Cts.Token);
+            int W = Math.Max(1, Math.Min(_workers.Length, N));
 
-        var winner = await Task.WhenAny(t1, t2);
-        if (winner == t1) t2Cts.Cancel(); else t1Cts.Cancel();
+            int nextToEmit = 0;
+            var buf = new Dictionary<int, string>(capacity: W * 2);
 
-        var (ww, ff) = await winner;
-        return (idx, string.IsNullOrEmpty(ff) ? "" : BuildFileUrl(ww, ff));
-    }
+            // per-lane bookkeeping: last index we've launched on this lane
+            var lastLaunched = new int[W];
 
-    var running = new List<Task<(int idx, string url)>>(W);
-
-    // kick off 0..W-1
-    for (int lane = 0; lane < W; lane++)
-    {
-        running.Add(Launch(lane));
-        lastLaunched[lane] = lane;
-    }
-
-    // local helper to schedule next for lane if needed
-    void ScheduleNextForLane(int idx)
-    {
-        int lane = idx % W;
-        if (lastLaunched[lane] == idx) // we’ve launched exactly up to this idx
-        {
-            int next = idx + W;
-            if (next < N)
+            async Task<(int idx, string url)> Launch(int idx)
             {
-                running.Add(Launch(next));
-                lastLaunched[lane] = next;
+                if (idx >= N) return (idx, "");
+
+                var preferred = _workers[idx % W];
+                var hedgeDelayMs = 4000;
+
+                using var t1Cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                using var t2Cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+
+                var t1 = GenerateOnPreferredThenOthers(chunks[idx], preferred, t1Cts.Token);
+                var delay = Task.Delay(hedgeDelayMs, ct);
+
+                if (await Task.WhenAny(t1, delay) == t1)
+                {
+                    var (w, f) = await t1;
+                    return (idx, string.IsNullOrEmpty(f) ? "" : BuildFileUrl(w, f));
+                }
+
+                var start = Array.IndexOf(_workers, preferred);
+                var alt = _workers[(start + 1) % _workers.Length];
+                var t2 = GenerateOnPreferredThenOthers(chunks[idx], alt, t2Cts.Token);
+
+                var winner = await Task.WhenAny(t1, t2);
+                if (winner == t1) t2Cts.Cancel(); else t1Cts.Cancel();
+
+                var (ww, ff) = await winner;
+                return (idx, string.IsNullOrEmpty(ff) ? "" : BuildFileUrl(ww, ff));
+            }
+
+            var running = new List<Task<(int idx, string url)>>(W);
+
+            // kick off 0..W-1
+            for (int lane = 0; lane < W; lane++)
+            {
+                running.Add(Launch(lane));
+                lastLaunched[lane] = lane;
+            }
+
+            // local helper to schedule next for lane if needed
+            void ScheduleNextForLane(int idx)
+            {
+                int lane = idx % W;
+                if (lastLaunched[lane] == idx) // we’ve launched exactly up to this idx
+                {
+                    int next = idx + W;
+                    if (next < N)
+                    {
+                        running.Add(Launch(next));
+                        lastLaunched[lane] = next;
+                    }
+                }
+            }
+
+            while (nextToEmit < N)
+            {
+                var done = await Task.WhenAny(running);
+                running.Remove(done);
+
+                var (idx, url) = await done;
+                buf[idx] = url ?? "";
+
+                // schedule successor for the lane of the completed task immediately
+                ScheduleNextForLane(idx);
+
+                // now drain in order; for each emitted idx, also schedule its lane successor
+                while (buf.TryGetValue(nextToEmit, out var readyUrl))
+                {
+                    buf.Remove(nextToEmit);
+
+                    // schedule before yielding to avoid underutilization during suspension
+                    ScheduleNextForLane(nextToEmit);
+
+                    if (!string.IsNullOrEmpty(readyUrl))
+                        yield return readyUrl;
+
+                    nextToEmit++;
+                }
             }
         }
-    }
-
-    while (nextToEmit < N)
-    {
-        var done = await Task.WhenAny(running);
-        running.Remove(done);
-
-        var (idx, url) = await done;
-        buf[idx] = url ?? "";
-
-        // schedule successor for the lane of the completed task immediately
-        ScheduleNextForLane(idx);
-
-        // now drain in order; for each emitted idx, also schedule its lane successor
-        while (buf.TryGetValue(nextToEmit, out var readyUrl))
-        {
-            buf.Remove(nextToEmit);
-
-            // schedule before yielding to avoid underutilization during suspension
-            ScheduleNextForLane(nextToEmit);
-
-            if (!string.IsNullOrEmpty(readyUrl))
-                yield return readyUrl;
-
-            nextToEmit++;
-        }
-    }
-}
 
         private async Task<(Uri worker, string filename)> GenerateOnPreferredThenOthers(
           string text, Uri preferred, CancellationToken ct)
@@ -297,6 +299,25 @@ namespace NetworkMonitor.LLM.Services
             return (preferred, "");
         }
 
+        private int ParallelismFor(int workItems)
+                => Math.Max(1, Math.Min(_workers.Length, workItems));
+
+        private async Task WarmAsync(CancellationToken ct)
+        {
+            if (_warmed) return;
+            lock (_warmLock)
+            {
+                if (_warmed) return;
+                _warmed = true;
+            }
+            try
+            {
+                var tiny = "ok";
+                var tasks = _workers.Select(w => PostGenerate(w, tiny, ct)).ToArray();
+                await Task.WhenAll(tasks);
+            }
+            catch { /* best-effort */ }
+        }
         // ----- Core routing & calls -----
 
         private async Task<(Uri worker, string filename)> GenerateOnBestWorker(string text)
