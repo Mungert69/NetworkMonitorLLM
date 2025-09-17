@@ -110,7 +110,7 @@ public class OpenAIApi : ILLMApi
         try
         {
             //_logger.LogInformation(JsonConvert.SerializeObject(_toolsBuilder.Tools, Formatting.Indented));
-            _logger.LogInformation($"TOOLS_SHA256={HashHelper.ComputeSha256Hash(JsonConvert.SerializeObject(_stableTools))}");
+           // _logger.LogInformation($"TOOLS_SHA256={HashHelper.ComputeSha256Hash(JsonConvert.SerializeObject(_stableTools))}");
 
             //  string payloadJson = JsonConvert.SerializeObject(messages, Formatting.Indented);
             //_logger.LogInformation($"{payloadJson}");
