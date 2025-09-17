@@ -311,7 +311,7 @@ namespace NetworkMonitor.LLM.Services
             try
             {
                 var endpoint = new Uri(worker, "/generate_audio");
-                var payload = JsonSerializer.Serialize(new { text }); // NO output_dir
+                var payload = JsonSerializer.Serialize(new { text });
                 using var content = new StringContent(payload, Encoding.UTF8, "application/json");
 
                 using var res = await _http.PostAsync(endpoint, content);
@@ -323,13 +323,15 @@ namespace NetworkMonitor.LLM.Services
                     return "";
                 }
 
-                var doc = JsonDocument.Parse(body);
+                using var doc = JsonDocument.Parse(body);
                 if (doc.RootElement.TryGetProperty("filename", out var fnEl))
                 {
-                    return fnEl.GetString() ?? "";
+                    var fn = fnEl.GetString() ?? "";
+                    _logger.LogInformation("TTS success on {Worker}: {Filename}", worker, fn); // <-- success log
+                    return fn;
                 }
 
-                _logger.LogWarning("TTS {Worker} returned success without filename payload: {Body}", worker, body);
+                _logger.LogWarning("TTS {Worker} returned success without filename: {Body}", worker, body);
                 return "";
             }
             catch (TaskCanceledException tce)
