@@ -60,6 +60,8 @@ namespace NetworkMonitor.LLM.Services
 
             if (_workers.Length == 0)
                 throw new InvalidOperationException("No AudioServiceUrls configured.");
+            _logger.LogInformation("TTS workers: {Workers}", string.Join(", ", _workers.Select(u => u.ToString())));
+
         }
 
         // ----- Public API -----
@@ -227,26 +229,29 @@ namespace NetworkMonitor.LLM.Services
                 // else: this lane is finished; remaining lanes will drain
             }
         }
+
         private async Task<(Uri worker, string filename)> GenerateOnPreferredThenOthers(string text, Uri preferred)
         {
-            if (!IsCircuitOpen(preferred))
-            {
-                var f = await PostGenerate(preferred, text);
-                if (!string.IsNullOrEmpty(f)) { RecordSuccess(preferred); return (preferred, f); }
-                RecordFailure(preferred);
-            }
+            // Build circular order: preferred, then others starting after preferred
+            int start = Array.IndexOf(_workers, preferred);
+            if (start < 0) start = 0; // safety
 
-            foreach (var w in _workers)
+            // Pass 1: try non-open circuits in circular order
+            for (int step = 0; step < _workers.Length; step++)
             {
-                if (w == preferred || IsCircuitOpen(w)) continue;
+                var w = _workers[(start + step) % _workers.Length];
+                if (IsCircuitOpen(w)) continue;
+
                 var f = await PostGenerate(w, text);
                 if (!string.IsNullOrEmpty(f)) { RecordSuccess(w); return (w, f); }
                 RecordFailure(w);
             }
 
-            foreach (var w in _workers)
+            // Pass 2 (last resort): try everyone regardless of open status, circular order
+            for (int step = 0; step < _workers.Length; step++)
             {
-                if (w == preferred) continue; // even if circuit-open, last resort
+                var w = _workers[(start + step) % _workers.Length];
+
                 var f = await PostGenerate(w, text);
                 if (!string.IsNullOrEmpty(f)) { RecordSuccess(w); return (w, f); }
                 RecordFailure(w);
