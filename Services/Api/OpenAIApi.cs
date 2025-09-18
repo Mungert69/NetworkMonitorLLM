@@ -87,7 +87,7 @@ public class OpenAIApi : ILLMApi
         _systemPromptCount = systemMessages.Count;
         systemMessages[0].Content = systemMessages[0].Content + footer;
 
-        systemMessages.AddRange(NShotPromptFactory.GetPrompt(_serviceID, _mlParams.XmlFunctionParsing, currentTime, serviceObj, Config));
+        if (!_mlParams.NoNShot) systemMessages.AddRange(NShotPromptFactory.GetPrompt(_serviceID, _mlParams.XmlFunctionParsing, currentTime, serviceObj, Config));
         _systemPromptCount = systemMessages.Count;
         return systemMessages;
 

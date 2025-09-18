@@ -464,6 +464,25 @@ Calls to these tools must go to the commentary channel: 'functions'.",
                 CreateBroadcaster = (rp, log, xmlParsing) =>
                     new TokenBroadcasterGptOss(rp, log, xmlParsing, IgnoreParameters)
             },
+             "blank" => new LLMConfig
+            {
+                UserReplace = "",
+                FunctionReplace = "",
+                AssistantHeader = "",
+                UserInputTemplate = "{0}",
+                AssistantMessageTemplate = "{0}",
+                SystemMessageTemplate = "{0}",
+                EOTToken = "",
+                FunctionResponseTemplate = "{1}",
+
+                FunctionBuilder = "{1}",
+                FunctionResponse = "{1}",
+                FunctionDefsWrap = "{0}",
+                PromptFooter = "",
+                CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
+                       new TokenBroadcasterStandard(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
+
+            },
 
             // Configuration for standard
             _ => new LLMConfig

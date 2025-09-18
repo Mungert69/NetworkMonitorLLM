@@ -41,6 +41,7 @@ public sealed class ToolsBuilderFactory : IToolsBuilderFactory
 
         _static = new(StringComparer.OrdinalIgnoreCase)
         {
+            { "monitor",       () => new BlankToolsBuilder() },
             { "blogmonitor", () => new BlogMonitorToolsBuilder() },
             { "reportdata",  () => new ReportDataToolsBuilder() },
             { "monitorsys",  () => new MonitorToolsBuilder() },
@@ -49,7 +50,8 @@ public sealed class ToolsBuilderFactory : IToolsBuilderFactory
             { "nmap",        () => new SecurityExpertToolsBuilder() },
             { "meta",        () => new PenetrationExpertToolsBuilder() },
             { "search",      () => new SearchExpertToolsBuilder() },
-            { "quantum",     () => new QuantumExpertToolsBuilder() }
+            { "quantum",     () => new QuantumExpertToolsBuilder() },
+
         };
     }
 
