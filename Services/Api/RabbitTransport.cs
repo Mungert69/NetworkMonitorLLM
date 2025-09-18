@@ -21,7 +21,7 @@ namespace NetworkMonitor.LLM.Services
     /// Uses IRabbitRepo to publish CloudEvent-wrapped requests to the Python server,
     /// and a short-lived consumer bound to a unique reply_key on oa.*.reply to stream back JSON.
     /// </summary>
-    public sealed class OpenAIRabbitTransport : IDisposable
+    public sealed class RabbitTransport : IDisposable
     {
         // Server-side exchanges (must match the Python server):
         private const string ChatCreateEx = "oa.chat.create";
@@ -34,7 +34,7 @@ namespace NetworkMonitor.LLM.Services
         private readonly string _routingKey;         // shard/tenant routing you already use
         private readonly ILogger _log;
 
-        public OpenAIRabbitTransport(ILLMResponseProcessor responseProcessor, SystemUrl sys, string routingKey, ILogger log)
+        public RabbitTransport(ILLMResponseProcessor responseProcessor, SystemUrl sys, string routingKey, ILogger log)
         {
             _responseProcessor = responseProcessor ?? throw new ArgumentNullException(nameof(responseProcessor));
             _sys = sys ?? throw new ArgumentNullException(nameof(sys));
