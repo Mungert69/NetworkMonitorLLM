@@ -24,6 +24,7 @@ using NetworkMonitor.Utils.Helpers;
 using NetworkMonitor.Objects.Factory;
 using NetworkMonitor.Utils;
 using NetworkMonitor.LLM.Services;
+using NetworkMonitor.Objects.Repository;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
