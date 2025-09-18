@@ -18,6 +18,7 @@ using NetworkMonitor.Objects.ServiceMessage;
 using NetworkMonitor.Objects;
 using NetworkMonitor.Utils.Helpers;
 using NetworkMonitor.Objects.Factory;
+using NetworkMonitor.Objects.Repository;
 using NetworkMonitor.Utils;
 using Newtonsoft.Json;
 

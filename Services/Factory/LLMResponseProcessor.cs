@@ -35,13 +35,14 @@ public interface ILLMResponseProcessor
     bool IsManagedMultiFunc { get; set; }
     bool SendOutput { get; set; }
     Task PublishAsync(string requestExchange, object obj, string routingKey);
+    IRabbitRepo RabbitRepo { get; }
 
 }
 
 public class LLMResponseProcessor : ILLMResponseProcessor
 {
 
-    private IRabbitRepo _rabbitRepo;
+    private readonly IRabbitRepo _rabbitRepo;
     private bool _sendOutput = true;
 
     private bool _isManagedMultiFunc = false;
@@ -51,6 +52,8 @@ public class LLMResponseProcessor : ILLMResponseProcessor
 
     public bool SendOutput { get => _sendOutput; set => _sendOutput = value; }
     public bool IsManagedMultiFunc { get => _isManagedMultiFunc; set => _isManagedMultiFunc = value; }
+
+    public IRabbitRepo RabbitRepo => _rabbitRepo;
 
     public LLMResponseProcessor(IRabbitRepo rabbitRepo)
     {
@@ -63,7 +66,7 @@ public class LLMResponseProcessor : ILLMResponseProcessor
         //Console.WriteLine(serviceObj.LlmMessage);
         serviceObj.ResultMessage = "Sending Success Output";
         serviceObj.ResultSuccess = true;
-        if (_sendOutput && !string.IsNullOrEmpty(serviceObj.LlmMessage)) await _rabbitRepo.PublishAsync<LLMServiceObj>("llmServiceMessage", serviceObj);
+        if (_sendOutput && !string.IsNullOrEmpty(serviceObj.LlmMessage)) await RabbitRepo.PublishAsync<LLMServiceObj>("llmServiceMessage", serviceObj);
         //return Task.CompletedTask;
     }
 
@@ -72,7 +75,7 @@ public class LLMResponseProcessor : ILLMResponseProcessor
         //Console.WriteLine(serviceObj.LlmMessage);
         serviceObj.ResultMessage = "Sending Fail Output";
         serviceObj.ResultSuccess = false;
-        if (_sendOutput && !string.IsNullOrEmpty(serviceObj.LlmMessage)) await _rabbitRepo.PublishAsync<LLMServiceObj>("llmServiceMessage", serviceObj);
+        if (_sendOutput && !string.IsNullOrEmpty(serviceObj.LlmMessage)) await RabbitRepo.PublishAsync<LLMServiceObj>("llmServiceMessage", serviceObj);
         //return Task.CompletedTask;
     }
 
@@ -123,7 +126,7 @@ public class LLMResponseProcessor : ILLMResponseProcessor
         serviceObj.LlmMessage = MessageHelper.ErrorMessage(serviceObj.LlmMessage);
         serviceObj.ResultMessage = MessageHelper.ErrorMessage(serviceObj.LlmMessage);
         serviceObj.ResultSuccess = true;
-        await _rabbitRepo.PublishAsync<LLMServiceObj>("llmServiceTimeout", serviceObj);
+        await RabbitRepo.PublishAsync<LLMServiceObj>("llmServiceTimeout", serviceObj);
 
         // Cleanup function calls related to this MessageID to avoid memory leaks
         _functionCallTracker.TryRemove(serviceObj.MessageID, out _);
@@ -133,7 +136,7 @@ public class LLMResponseProcessor : ILLMResponseProcessor
     {
         serviceObj.ResultMessage = "Sending Tokens Used";
         serviceObj.ResultSuccess = true;
-        await _rabbitRepo.PublishAsync<LLMServiceObj>("llmUpdateTokensUsed", serviceObj);
+        await RabbitRepo.PublishAsync<LLMServiceObj>("llmUpdateTokensUsed", serviceObj);
         //return Task.CompletedTask;
     }
 
@@ -158,7 +161,7 @@ public class LLMResponseProcessor : ILLMResponseProcessor
         serviceObj.ResultMessage = "Sending Function call response";
         serviceObj.ResultSuccess = true;
         if (_sendOutput)
-            await _rabbitRepo.PublishAsync<LLMServiceObj>("llmServiceFunction", serviceObj);
+            await RabbitRepo.PublishAsync<LLMServiceObj>("llmServiceFunction", serviceObj);
     }
 
     public static string GenerateFunctionCallId()
@@ -244,12 +247,12 @@ public class LLMResponseProcessor : ILLMResponseProcessor
 
     public Task PublishAsync(string requestExchange, object obj, string routingKey)
     { 
-        if (_rabbitRepo == null)
+        if (RabbitRepo == null)
         {
             throw new InvalidOperationException("Rabbit repository is not initialized.");
         }
 
-        return _rabbitRepo.PublishAsync(requestExchange, obj, routingKey: routingKey);
+        return RabbitRepo.PublishAsync(requestExchange, obj, routingKey: routingKey);
 
     }
 
