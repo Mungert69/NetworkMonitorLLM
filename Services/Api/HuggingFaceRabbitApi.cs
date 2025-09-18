@@ -103,7 +103,7 @@ namespace NetworkMonitor.LLM.Services
 
             systemMessages[0].Content = toolsJson + (systemMessages[0].Content ?? "") + footer + noThinkToken;
 
-            systemMessages.AddRange(NShotPromptFactory.GetPrompt(_serviceID, _isXml, currentTime, serviceObj, _config));
+            if (!_mlParams.NoNShot) systemMessages.AddRange(NShotPromptFactory.GetPrompt(_serviceID, _isXml, currentTime, serviceObj, _config));
             _systemPromptCount = systemMessages.Count;
             return systemMessages;
         }

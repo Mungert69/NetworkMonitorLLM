@@ -116,7 +116,7 @@ public class HuggingFaceApi : ILLMApi
         if (noThink) noThinkToken = " " + _config.NoThinkToken + " ";
         systemMessages[0].Content = toolsJson + systemMessages[0].Content + footer + noThinkToken;
         //_logger.LogInformation($" Using SYSTEM prompt\n\n{systemMessages[0].Content}");
-        systemMessages.AddRange(NShotPromptFactory.GetPrompt(_serviceID, _isXml, currentTime, serviceObj, _config));
+        if (!_mlParams.NoNShot) systemMessages.AddRange(NShotPromptFactory.GetPrompt(_serviceID, _isXml, currentTime, serviceObj, _config));
         _systemPromptCount = systemMessages.Count;
         return systemMessages;
     }

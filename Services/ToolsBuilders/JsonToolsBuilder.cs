@@ -11,14 +11,16 @@ public static class JsonToolsBuilder
 {
     public static string BuildToolsJson(List<ToolDefinition> tools)
     {
-        var toolJsonList = tools.Select(tool => new
+        if (tools != null && tools.Count > 0)
         {
-            name = tool?.Function?.Name ?? "func_name",
-            description = tool?.Function?.Description ?? "No description",
-            parameters = new
+            var toolJsonList = tools.Select(tool => new
             {
-                type = "object",
-                properties = tool?.Function?.Parameters?.Properties?
+                name = tool?.Function?.Name ?? "func_name",
+                description = tool?.Function?.Description ?? "No description",
+                parameters = new
+                {
+                    type = "object",
+                    properties = tool?.Function?.Parameters?.Properties?
                     .Where(p => p.Value != null) // Exclude null properties
                     .ToDictionary(
                         param => param.Key,
@@ -28,15 +30,17 @@ public static class JsonToolsBuilder
                             description = param.Value.Description
                         }
                     )
-            }
+                }
 
-        });
+            });
 
-        // Serialize to JSON and ignore null values
-        return JsonConvert.SerializeObject(toolJsonList, Formatting.Indented, new JsonSerializerSettings
-        {
-            NullValueHandling = NullValueHandling.Ignore
-        });
+            // Serialize to JSON and ignore null values
+            return JsonConvert.SerializeObject(toolJsonList, Formatting.Indented, new JsonSerializerSettings
+            {
+                NullValueHandling = NullValueHandling.Ignore
+            });
+        }
+        else return "";
     }
 
 
