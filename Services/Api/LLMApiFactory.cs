@@ -68,8 +68,14 @@ string provider,
         if (string.Equals(provider, "OpenAIRabbit", StringComparison.OrdinalIgnoreCase))
         {
 
-            var rabbit = new OpenAIRabbitTransport(responseProcessor, systemParams.ThisSystemUrl, systemParams.RabbitRoutingKey, logger);
+            var rabbit = new RabbitTransport(responseProcessor, systemParams.ThisSystemUrl, systemParams.RabbitRoutingKey, logger);
             return new OpenAIRabbitApi(logger, mlParams, toolsBuilder, serviceID, responseProcessor, rabbit);
+        }
+         if (string.Equals(provider, "HuggingFaceRabbit", StringComparison.OrdinalIgnoreCase))
+        {
+
+            var rabbit = new RabbitTransport(responseProcessor, systemParams.ThisSystemUrl, systemParams.RabbitRoutingKey, logger);
+            return new HuggingFaceRabbitApi(logger, mlParams, toolsBuilder, serviceID, responseProcessor, rabbit);
         }
 
         throw new ArgumentException($"Unknown LLM provider: {provider}");
