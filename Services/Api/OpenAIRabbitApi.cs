@@ -29,7 +29,7 @@ namespace NetworkMonitor.LLM.Services
     /// </summary>
     public sealed class OpenAIRabbitApi : ILLMApi, IDisposable
     {
-        private readonly OpenAIRabbitTransport _mq;               // Rabbit transport
+        private readonly RabbitTransport _mq;               // Rabbit transport
         private readonly IToolsBuilder _toolsBuilder;
         private readonly ILogger _logger;
         private readonly bool _isXml;
@@ -51,7 +51,7 @@ namespace NetworkMonitor.LLM.Services
             IToolsBuilder toolsBuilder,
             string serviceID,
             ILLMResponseProcessor responseProcessor,
-            OpenAIRabbitTransport rabbitTransport
+            RabbitTransport rabbitTransport
         )
         {
             _logger = logger;
