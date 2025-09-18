@@ -125,7 +125,7 @@ namespace NetworkMonitor.LLM.Services
                 }
                 catch (Exception ex)
                 {
-                    _log.LogError(ex, "OpenAIRabbitTransport consumer error");
+                    _log.LogError(ex, "RabbitTransport consumer error");
                     await ch.BasicNackAsync(ea.DeliveryTag, false, requeue: false);
                 }
             };

@@ -1,14 +1,32 @@
 using Betalgo.Ranul.OpenAI.Managers;
 using Betalgo.Ranul.OpenAI.ObjectModels.RequestModels;
+using Betalgo.Ranul.OpenAI.Tokenizer.GPT3;
 using Betalgo.Ranul.OpenAI.ObjectModels.SharedModels;
 using Betalgo.Ranul.OpenAI.ObjectModels.ResponseModels;
+
+using System;
+using System.IO;
+using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using System.Threading;
+using System.Diagnostics;
+using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Collections.Generic;
+using System.Collections.Concurrent;
 using Microsoft.Extensions.Logging;
 using NetworkMonitor.Objects.ServiceMessage;
 using NetworkMonitor.Objects;
+using NetworkMonitor.Utils.Helpers;
 using NetworkMonitor.Objects.Factory;
 using NetworkMonitor.Utils;
+using NetworkMonitor.LLM.Services;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
+
 
 namespace NetworkMonitor.LLM.Services
 {
@@ -18,7 +36,7 @@ namespace NetworkMonitor.LLM.Services
     /// </summary>
     public sealed class HuggingFaceRabbitApi : ILLMApi, IDisposable
     {
-        private readonly OpenAIRabbitTransport _mq;
+        private readonly RabbitTransport _mq;
         private readonly IToolsBuilder _toolsBuilder;
         private readonly ILogger _logger;
         private readonly ILLMResponseProcessor _responseProcessor;
@@ -40,7 +58,7 @@ namespace NetworkMonitor.LLM.Services
             IToolsBuilder toolsBuilder,
             string serviceID,
             ILLMResponseProcessor responseProcessor,
-            OpenAIRabbitTransport rabbitTransport
+            RabbitTransport rabbitTransport
         )
         {
             _logger = logger;
