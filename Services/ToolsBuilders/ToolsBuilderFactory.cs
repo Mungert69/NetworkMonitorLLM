@@ -41,7 +41,7 @@ public sealed class ToolsBuilderFactory : IToolsBuilderFactory
 
         _static = new(StringComparer.OrdinalIgnoreCase)
         {
-            { "monitor",       () => new BlankToolsBuilder() },
+            { "timesfm",       () => new BlankToolsBuilder() },
             { "blogmonitor", () => new BlogMonitorToolsBuilder() },
             { "reportdata",  () => new ReportDataToolsBuilder() },
             { "monitorsys",  () => new MonitorToolsBuilder() },
