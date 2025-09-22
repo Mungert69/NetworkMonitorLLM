@@ -52,14 +52,15 @@ namespace NetworkMonitor.LLM
         {
             _services = services;
             services.AddLogging(builder =>
-                          {
-                              builder.AddSimpleConsole(options =>
-                        {
-                            options.TimestampFormat = "yyyy-MM-dd HH:mm:ss ";
-                            options.IncludeScopes = true;
-                        });
-
-                          });
+            {
+                // Use logging configuration from appsettings-*.json
+                builder.AddConfiguration(Configuration.GetSection("Logging"));
+                builder.AddSimpleConsole(options =>
+                {
+                    options.TimestampFormat = "yyyy-MM-dd HH:mm:ss ";
+                    options.IncludeScopes = true;
+                });
+            });
 
 
 
