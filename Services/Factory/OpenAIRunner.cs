@@ -571,7 +571,7 @@ public class OpenAIRunner : ILLMRunner
             choiceMessageCopy = new ChatMessage
             {
                 Role = choiceMessage.Role,
-                Content = "",
+                Content = choiceMessage.Content,
                 ToolCalls = choiceMessage.ToolCalls?.Select(tc =>
                 {
                     var oldId = tc.Id ?? string.Empty;
