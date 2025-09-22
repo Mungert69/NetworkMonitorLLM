@@ -33,12 +33,27 @@ public class ChatResponseBuilder
     private ITokenBroadcaster _tokenBroadcaster;
     private ILogger _logger;
     private bool _isXml;
+    private LLMConfig _config;
     public ChatResponseBuilder(ILLMResponseProcessor responseProcessor, LLMConfig config, bool isXml, ILogger logger)
     {
         _logger = logger;
         _isXml = isXml;
+        _config = config;
         _tokenBroadcaster = config!.CreateBroadcaster(responseProcessor, _logger, false);
         _tokenBroadcaster.Init(config);
+    }
+
+     private string CleanThinking(string response)
+    {
+        // Just return response if no thinking tokens are defined
+        if (string.IsNullOrEmpty(_config.ThinkBeginToken) || string.IsNullOrEmpty(_config.ThinkEndToken))
+        {
+            return response;
+        }
+        // use ThinkBeginToken and ThinkEndToken from config to remove thinking parts
+        string pattern = $"{Regex.Escape(_config.ThinkBeginToken)}(.*?){Regex.Escape(_config.ThinkEndToken)}";
+        string cleanedResponse = Regex.Replace(response, pattern, "", RegexOptions.Singleline).Trim();
+        return cleanedResponse;
     }
 
     // Add this method to the ChatResponseBuilder class
@@ -46,9 +61,9 @@ public class ChatResponseBuilder
     {
         foreach (var choice in openAIResponse.Choices)
         {
-            if (choice.Message==null) continue;
-            var message = choice.Message ;
-            if (message == null || message.Content==null) continue;
+            if (choice.Message == null) continue;
+            var message = choice.Message;
+            if (message == null || message.Content == null) continue;
 
             // Parse the content for XML function calls
             var functionCalls = _tokenBroadcaster.ParseInputForXml(message.Content);
@@ -128,7 +143,7 @@ public class ChatResponseBuilder
                 Message = new ChatMessage
                 {
                     Role = choice.Message.Role,
-                    Content = choice.Message.Content,
+                    Content =  CleanThinking(choice.Message.Content),
                     ToolCalls = choice.Message.ToolCalls.Select(toolCall => new ToolCall
                     {
                         Type = toolCall.Type,

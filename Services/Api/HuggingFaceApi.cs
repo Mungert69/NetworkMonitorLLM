@@ -92,7 +92,7 @@ public class HuggingFaceApi : ILLMApi
         return string.Format(_config.FunctionDefsWrap, toolsStr);
     }
 
-
+   
 
     private string PromptFooter()
     {
