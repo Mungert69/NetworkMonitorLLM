@@ -80,7 +80,7 @@ public class ChatResponseBuilder
         var choices = responseObject.Choices;
         foreach (var choice in choices)
         {
-            // _logger.LogInformation($"Parsing function calls for message content: {choice.Message.Content}");
+            _logger.LogInformation($"Parsing function calls for message content: {choice.Message.Content}");
 
             // Parse the input using the broadcaster
             List<(string json, string functionName)> functionCalls;
@@ -94,7 +94,7 @@ public class ChatResponseBuilder
                 //_logger.LogInformation($"Parsed {functionCalls.Count} function calls.");
                 foreach (var fc in functionCalls)
                 {
-                    //_logger.LogInformation($"Function call detected - Name: {fc.functionName}, JSON: {fc.json}");
+                    _logger.LogDebug($"Function call detected - Name: {fc.functionName}, JSON: {fc.json}");
                 }
 
                 // Map the parsed function calls to ToolCalls
@@ -112,7 +112,7 @@ public class ChatResponseBuilder
                 // Log the ToolCalls that were created
                 foreach (var toolCall in choice.Message.ToolCalls)
                 {
-                    //_logger.LogInformation($"ToolCall created - Type: {toolCall.Type}, Id: {toolCall.Id}, " + $"FunctionName: {toolCall.FunctionCall.Name}, Arguments: {toolCall.FunctionCall.Arguments}");
+                    _logger.LogDebug($"ToolCall created - Type: {toolCall.Type}, Id: {toolCall.Id}, " + $"FunctionName: {toolCall.FunctionCall.Name}, Arguments: {toolCall.FunctionCall.Arguments}");
                 }
             }
             else
