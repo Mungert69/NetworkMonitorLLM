@@ -155,7 +155,7 @@ public class HuggingFaceApi : ILLMApi
                 NullValueHandling = NullValueHandling.Ignore
             });
 
-            //_logger.LogInformation($"{payloadJson}");
+            _logger.LogDebug($"{payloadJson}");
 
             if (!_isStream)
             {
