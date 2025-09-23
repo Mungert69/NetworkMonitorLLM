@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.Net.Mime;
 
 namespace NetworkMonitor.LLM.Services;
+
 public class MonitorTools
 {
     public static FunctionDefinition BuildAddHostFunction()
@@ -39,9 +40,27 @@ public class MonitorTools
                     ["endpoint"] = new PropertyDefinition
                     {
                         Type = "string",
-                        Enum = new List<string> { "quantum", "http", "https", "httphtml", "icmp", "dns", "smtp", "rawconnect" },
-                        Description = "The endpoint type for monitoring. Optional field. Endpoint types include: 'quantum' (a quantum-safe encryption test), 'http' (website ping), 'https' (SSL certificate check), 'httphtml' (loads only the HTML of a website), 'icmp' (host ping), 'dns' (DNS lookup), 'smtp' (email server HELO message confirmation), 'rawconnect' (low-level raw socket connection)."
+                        Enum = new List<string>
+                        {
+        "quantum",
+        "http",
+        "https",
+        "httphtml",
+        "httpfull",
+        "sitehash",
+        "icmp",
+        "dns",
+        "smtp",
+        "rawconnect",
+        "nmap",
+        "nmapvuln",
+        "crawlsite",
+        "dailycrawl",
+        "dailyhugkeepalive"
+    },
+                        Description = "The endpoint type for monitoring. Optional field. Endpoint types include: 'quantum' (a quantum-safe encryption test), 'http' (website ping), 'https' (SSL certificate check), 'httphtml' (loads only the HTML of a website), 'httpfull' (loads full website content including JavaScript), 'sitehash' (loads and hashes rendered website content to detect changes), 'icmp' (host ping), 'dns' (DNS lookup), 'smtp' (email server HELO message confirmation), 'rawconnect' (low-level raw socket connection), 'nmap' (service scan using Nmap), 'nmapvuln' (vulnerability scan using Nmap scripts), 'crawlsite' (traffic generator that crawls a site), 'dailycrawl' (once-daily low-traffic site crawl), 'dailyhugkeepalive' (once-daily wake-up ping for a Hugging Face space)."
                     },
+
                     ["port"] = new PropertyDefinition
                     {
                         Type = "number",
@@ -107,9 +126,27 @@ public class MonitorTools
                     ["endpoint"] = new PropertyDefinition
                     {
                         Type = "string",
-                        Enum = new List<string> { "quantum", "http", "https", "httphtml", "icmp", "dns", "smtp", "rawconnect" },
-                        Description = "The endpoint type for monitoring. Optional field. Endpoint types include: 'quantum', 'http', 'https', 'httphtml', 'icmp', 'dns', 'smtp', 'rawconnect'."
+                        Enum = new List<string>
+                {
+        "quantum",
+        "http",
+        "https",
+        "httphtml",
+        "httpfull",
+        "sitehash",
+        "icmp",
+        "dns",
+        "smtp",
+        "rawconnect",
+        "nmap",
+        "nmapvuln",
+        "crawlsite",
+        "dailycrawl",
+        "dailyhugkeepalive"
+    },
+                        Description = "The endpoint type for monitoring. Optional field. Endpoint types include: 'quantum' (a quantum-safe encryption test), 'http' (website ping), 'https' (SSL certificate check), 'httphtml' (loads only the HTML of a website), 'httpfull' (loads full website content including JavaScript), 'sitehash' (loads and hashes rendered website content to detect changes), 'icmp' (host ping), 'dns' (DNS lookup), 'smtp' (email server HELO message confirmation), 'rawconnect' (low-level raw socket connection), 'nmap' (service scan using Nmap), 'nmapvuln' (vulnerability scan using Nmap scripts), 'crawlsite' (traffic generator that crawls a site), 'dailycrawl' (once-daily low-traffic site crawl), 'dailyhugkeepalive' (once-daily wake-up ping for a Hugging Face space)."
                     },
+
                     ["port"] = new PropertyDefinition
                     {
                         Type = "number",
