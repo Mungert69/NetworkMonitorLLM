@@ -565,6 +565,7 @@ public class OpenAIRunner : ILLMRunner
             }))
         {
             usePlaceHolder = false;
+            _logger.LogDebug("Function call is a control function; not using placeholder.");
         }
         else
         {
