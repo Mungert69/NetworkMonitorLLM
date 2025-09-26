@@ -43,7 +43,7 @@ public class QuantumTools
                         Items = new PropertyDefinition
                         {
                             Type = "string",
-                            Description = "The list of quantum-safe algorithms to test, optional. Examples include 'Kyber512', 'Dilithium2', 'Falcon512'. If not provided, all enabled algorithms will be tested."
+                            Description = "The list of quantum-safe algorithms to test, optional. If not provided, all enabled algorithms will be tested."
                         }
                     },
                     ["timeout"] = new PropertyDefinition
@@ -94,7 +94,7 @@ public class QuantumTools
                         Items = new PropertyDefinition
                         {
                             Type = "string",
-                            Description = "The list of quantum-safe algorithms to test, optional. Examples include 'Kyber512', 'Dilithium2', 'Falcon512'. If not provided, all enabled algorithms will be tested."
+                            Description = "The list of quantum-safe algorithms to test, optional. If not provided, all enabled algorithms will be tested."
                         }
                     },
                     ["timeout"] = new PropertyDefinition
