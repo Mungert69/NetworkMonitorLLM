@@ -127,7 +127,7 @@ public class ChatResponseBuilder
                 // Log the ToolCalls that were created
                 foreach (var toolCall in choice.Message.ToolCalls)
                 {
-                    _logger.LogDebug($"ToolCall created - Type: {toolCall.Type}, Id: {toolCall.Id}, " + $"FunctionName: {toolCall.FunctionCall.Name}, Arguments: {toolCall.FunctionCall.Arguments}");
+                    _logger.LogDebug($"ToolCall created - Type: {toolCall.Type}, Id: {toolCall.Id}, " + $"FunctionName: {toolCall.FunctionCall?.Name}, Arguments: {toolCall.FunctionCall?.Arguments}");
                 }
             }
             else

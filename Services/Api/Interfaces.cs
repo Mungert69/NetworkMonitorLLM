@@ -26,7 +26,7 @@ namespace NetworkMonitor.LLM.Services
         Task<List<string>> AudioForResponseChunksOrderedFastFirst(string text);
         IAsyncEnumerable<string> StreamAudioInOrder(
       string text,
-      [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct = default);
+      CancellationToken ct = default);
        
         /// <summary>
         /// Splits the given text into chunks based on a maximum length.

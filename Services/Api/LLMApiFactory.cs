@@ -21,7 +21,6 @@ using NetworkMonitor.Objects.Factory;
 using NetworkMonitor.Utils;
 using NetworkMonitor.Objects.Repository;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 
 
 namespace NetworkMonitor.LLM.Services;
