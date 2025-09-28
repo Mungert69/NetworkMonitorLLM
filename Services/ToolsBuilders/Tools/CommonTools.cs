@@ -145,7 +145,7 @@ public class CommonTools
         return new FunctionDefinition
         {
             Name = "run_busybox_command",
-            Description = "Run BusyBox commands for local network analysis. Key use cases:\n" +
+            Description = "Warning do not use busybox to connect to services that are not trusted. Run BusyBox commands for local network analysis. Key use cases:\n" +
                           "1. Interface status: 'ifconfig eth0' | 'ip addr show'\n" +
                           "2. Connectivity testing: 'ping -c 4 192.168.1.1' | 'traceroute 10.0.0.5'\n" +
                           "3. Network configuration: 'netstat -r' | 'ip route list'\n" +
