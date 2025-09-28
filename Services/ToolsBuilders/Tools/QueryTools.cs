@@ -60,7 +60,7 @@ Use this function whenever you need information from the local knowledge base.
                     {
                         Type = "string",
                         Description = "The name of the index to search. This determines which knowledge base or document set is queried. " +
-                                      "Examples: Use 'documents' to search general FAQs and user help, 'mitre' to search the MITRE ATT&CK document set, or 'securitybooks' for security related information."
+                                      "Examples: Use 'documents' to search general FAQs and user help, 'securitybooks' for security related information, 'quantumbooks' for quantum ready and safety related information or 'mitre' to search the MITRE ATT&CK document set."
                     },
                     ["vector_search_mode"] = new PropertyDefinition
                     {
