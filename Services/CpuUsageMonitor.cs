@@ -260,7 +260,7 @@ public class CpuUsageMonitor : ICpuUsageMonitor, IHostedService, IDisposable
             long avail = ParseMemValue(lines, "MemAvailable");
             long swap = ParseMemValue(lines, "SwapFree");
             long total = avail + swap;
-            long need = memoryInMB * 1024L; // memoryInMB in kB
+            long need = memoryInMB * 1024L; 
 
             _logger.LogInformation($"Memory needed: {need} kB, available: {total} kB");
             return total > need;
