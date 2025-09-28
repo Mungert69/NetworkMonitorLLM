@@ -50,9 +50,10 @@ namespace NetworkMonitor.LLM.Services
             };
 
 
-            config.CertificateValidation += (sender, cert, chain, errors) => true;
+            // Remove the handler that ignores SSL certificate errors
+            // config.CertificateValidation += (sender, cert, chain, errors) => true;
 
-
+            // Optionally, you can add stricter validation or leave it to default (which validates certs)
             return config;
         }
 
