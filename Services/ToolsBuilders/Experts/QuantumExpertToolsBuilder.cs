@@ -16,7 +16,7 @@ namespace NetworkMonitor.LLM.Services
         private readonly FunctionDefinition fn_test_quantum_safety;
         private readonly FunctionDefinition fn_scan_quantum_ports;
         private readonly FunctionDefinition fn_get_quantum_algorithm_info;
-        private readonly FunctionDefinition fn_validate_quantum_config;
+        //private readonly FunctionDefinition fn_validate_quantum_config;
 
         public QuantumExpertToolsBuilder()
         {
