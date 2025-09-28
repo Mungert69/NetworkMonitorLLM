@@ -144,16 +144,18 @@ public class ChatResponseBuilder
                 {
                     Role = choice.Message.Role,
                     Content =  CleanThinking(choice.Message.Content),
-                    ToolCalls = choice.Message.ToolCalls.Select(toolCall => new ToolCall
-                    {
-                        Type = toolCall.Type,
-                        Id = toolCall.Id,
-                        FunctionCall = new FunctionCall
+                    ToolCalls = choice.Message.ToolCalls == null
+                        ? null
+                        : choice.Message.ToolCalls.Select(toolCall => new ToolCall
                         {
-                            Name = toolCall?.FunctionCall?.Name ?? "",
-                            Arguments = toolCall?.FunctionCall?.Arguments ?? ""
-                        }
-                    }).ToList() // Explicitly map each ToolCall and its FunctionCall
+                            Type = toolCall.Type,
+                            Id = toolCall.Id,
+                            FunctionCall = new FunctionCall
+                            {
+                                Name = toolCall?.FunctionCall?.Name ?? "",
+                                Arguments = toolCall?.FunctionCall?.Arguments ?? ""
+                            }
+                        }).ToList() // Explicitly map each ToolCall and its FunctionCall
                 },
                 Index = choice.Index,
                 FinishReason = choice.FinishReason
