@@ -18,7 +18,7 @@ TARGET_BASE="$ROOTDIR/code/services"
 TARGET_DIR="$TARGET_BASE/llm-$REGION-$SERVICE_NAME_LOWER"
 ENV_SOURCE="$ROOTDIR/code/securefiles/domain-env"
 
-SERVICE_SOURCE_DIR="$(dirname "$0")/../servicefiles"
+SERVICE_SOURCE_DIR="$(dirname "$0")/../service-files"
 SERVICE_FILE="$SERVICE_SOURCE_DIR/$SERVICE"
 
 umask 022
