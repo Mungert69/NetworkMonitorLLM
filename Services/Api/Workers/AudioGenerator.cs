@@ -101,7 +101,14 @@ namespace NetworkMonitor.LLM.Services
         }
 
         // ----- Public API -----
-
+        public void WarmUp()
+        {
+            if (!_warmed)
+            {
+                // ... do warmup work ...
+                _warmed = true;
+            }
+        }
         public async Task<string> AudioForResponse(string text)
         {
             try

@@ -60,6 +60,8 @@ public class MonitorToolsBuilder : ToolsBuilderBase
         fn_call_cmd_processor_builder_flow = CmdProcessorBuilderAgent.BuildCmdProcessorBuilderAgent();
 
         fn_execute_query = QueryTools.BuildQueryFunction();
+
+        fn_run_busybox = CommonTools.BuildRunBusyboxFunction();
         // Static tools list assignment
         _tools = new List<ToolDefinition>()
         {
@@ -74,7 +76,8 @@ public class MonitorToolsBuilder : ToolsBuilderBase
             new ToolDefinition() { Function = fn_get_agents, Type = "function" },
             new ToolDefinition() { Function = fn_call_search_expert, Type = "function" },
             new ToolDefinition() { Function = fn_call_cmd_processor_expert, Type = "function" },
-            new ToolDefinition() { Function = fn_execute_query, Type = "function" }
+            new ToolDefinition() { Function = fn_execute_query, Type = "function" },
+            new ToolDefinition() { Function = fn_run_busybox, Type = "function" }
         };
         if (enableAgentFlow)
         {
