@@ -142,7 +142,7 @@ public class OpenAIRunner : ILLMRunner
             llmProvider,
             openAiService
         );
-        string accountType = "Free";
+        string accountType = "Default";
         if (!string.IsNullOrEmpty(serviceObj.UserInfo.AccountType)) accountType = serviceObj.UserInfo.AccountType;
         _maxTokens = AccountTypeFactory.GetAccountTypeByName(accountType).ContextSize;
         if (_maxTokens > _mlParams.LlmOpenAICtxSize) _maxTokens = _mlParams.LlmOpenAICtxSize;
