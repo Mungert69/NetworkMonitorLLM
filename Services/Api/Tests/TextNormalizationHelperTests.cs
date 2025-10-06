@@ -15,7 +15,7 @@ public class TextNormalizationHelperTests
         var normalized = TextNormalizationHelper.NormalizeTextForTTS(input, logger.Object);
 
         Assert.Equal(
-            "Heading This is a link to https:example.com from January 13, 2025, at 5:41 pm!",
+            "Heading This is a link to https:example.com from January 13, 2025, at 5:41 PM!",
             normalized);
         logger.Verify(l => l.Log(
             LogLevel.Information,
