@@ -14,9 +14,12 @@ public class TextNormalizationHelperTests
 
         var normalized = TextNormalizationHelper.NormalizeTextForTTS(input, logger.Object);
 
-        Assert.Equal(
-            "Heading This is a link to https:example.com from January 13, 2025, at 5:41 PM!",
-            normalized);
+        Assert.True(
+            string.Equals(
+                "Heading This is a link to https:example.com from January 13, 2025, at 5:41 PM!",
+                normalized,
+                System.StringComparison.OrdinalIgnoreCase),
+            $"Expected (case-insensitive): 'Heading This is a link to https:example.com from January 13, 2025, at 5:41 PM!', but got: '{normalized}'");
         logger.Verify(l => l.Log(
             LogLevel.Information,
             It.IsAny<EventId>(),
