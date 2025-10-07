@@ -30,7 +30,7 @@ namespace NetworkMonitor.LLM.Services
             _db = _redis.GetDatabase();
         }
 
-        private ConfigurationOptions BuildConfiguration(string redisUrl, string redisSecret)
+        internal static ConfigurationOptions BuildConfiguration(string redisUrl, string redisSecret)
         {
             var config = new ConfigurationOptions
             {
@@ -65,10 +65,20 @@ namespace NetworkMonitor.LLM.Services
             var keys = await GetKeysAsync(server, $"{_keyPrefix}*"); // full scan *once*
             if (keys.Count == 0) return;
 
-            await _db.SetAddAsync(
-     IndexKey,
-     keys.Select(k => (RedisValue)(string)k)   // RedisKey ➜ string ➜ RedisValue
-         .ToArray());
+            var indexValues = new List<RedisValue>(keys.Count);
+            foreach (var key in keys)
+            {
+                var keyString = key.ToString();
+                if (!string.IsNullOrEmpty(keyString))
+                {
+                    indexValues.Add((RedisValue)keyString);
+                }
+            }
+
+            if (indexValues.Count > 0)
+            {
+                await _db.SetAddAsync(IndexKey, indexValues.ToArray());
+            }
         }
 
         public async Task<ConcurrentDictionary<string, Session>> LoadAllSessionsAsync()
@@ -83,22 +93,30 @@ namespace NetworkMonitor.LLM.Services
                 return sessions;
 
             // 2) Convert RedisValue[] to RedisKey[] so we can MGET
-            var redisKeys = rawKeys
-               .Select(rv => (RedisKey)(string)rv)   // step through string first
-               .ToArray();
+            var redisKeysList = new List<RedisKey>(rawKeys.Length);
+            foreach (var rawKey in rawKeys)
+            {
+                if (!rawKey.HasValue) continue;
+                var keyString = rawKey.ToString();
+                if (string.IsNullOrEmpty(keyString)) continue;
+                redisKeysList.Add((RedisKey)keyString);
+            }
+
+            if (redisKeysList.Count == 0)
+                return sessions;
 
             // 3) MGET all values in one round‐trip
-            var rawValues = await _db.StringGetAsync(redisKeys);
+            var rawValues = await _db.StringGetAsync(redisKeysList.ToArray());
 
             // 4) Deserialize and build your session map
-            for (int i = 0; i < redisKeys.Length; i++)
+            for (int i = 0; i < redisKeysList.Count; i++)
             {
                 var json = rawValues[i];
                 if (!json.HasValue) continue;
 
                 var history = JsonConvert
-                    .DeserializeObject<HistoryDisplayName>(json!);
-                if (history == null) continue;
+                    .DeserializeObject<HistoryDisplayName>(json.ToString());
+                if (history?.SessionId is null or { Length: 0 }) continue;
 
                 sessions.TryAdd(
                     history.SessionId,
@@ -195,7 +213,11 @@ namespace NetworkMonitor.LLM.Services
             foreach (var k in keys)
             {
                 _ = tran.KeyDeleteAsync(k);
-                _ = tran.SetRemoveAsync(IndexKey, (RedisValue)(string)k);
+                var keyString = k.ToString();
+                if (!string.IsNullOrEmpty(keyString))
+                {
+                    _ = tran.SetRemoveAsync(IndexKey, (RedisValue)keyString);
+                }
             }
             await tran.ExecuteAsync().ConfigureAwait(false);
         }
@@ -205,7 +227,7 @@ namespace NetworkMonitor.LLM.Services
         {
             var json = await _db.StringGetAsync(key);
             return json.HasValue
-                ? JsonConvert.DeserializeObject<HistoryDisplayName>(json)
+                ? JsonConvert.DeserializeObject<HistoryDisplayName>(json.ToString())
                 : null;
         }
 

@@ -11,6 +11,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Encodings.Web;
 using System.Reflection;
+using System.Diagnostics.CodeAnalysis;
 using NetworkMonitor.Objects.Repository;
 using NetworkMonitor.Objects;
 using NetworkMonitor.Objects.ServiceMessage;
@@ -32,7 +33,7 @@ public interface IFunctionDefinitionRegistry
     /// <param name="id">The function name/key to look up.</param>
     /// <param name="fd">When this method returns, contains the resolved FunctionDefinition if found; otherwise null.</param>
     /// <returns>True if the function was found; otherwise false.</returns>
-    bool TryResolve(string id, out FunctionDefinition fd);
+    bool TryResolve(string id, [NotNullWhen(true)] out FunctionDefinition? fd);
 }
 
 /// <summary>Scans every *Tools* class, calls each BuildXxxFunction method,
@@ -83,9 +84,8 @@ public class FunctionDefinitionRegistry : IFunctionDefinitionRegistry
             {
                 id = fd.Name,
                 description = fd.Description,
-                parameters = fd.Parameters?.Properties != null
-                    ? string.Join(",", fd.Parameters.Properties.Select(kvp => kvp.Key))
-                    : string.Empty
+                parameters = string.Join(",",
+                    fd.Parameters?.Properties?.Select(kvp => kvp.Key) ?? Enumerable.Empty<string>())
             })
         };
 
@@ -120,14 +120,12 @@ public class FunctionDefinitionRegistry : IFunctionDefinitionRegistry
             {
                 id = fd.Name,
                 description = fd.Description,
-                parameters = fd.Parameters?.Properties != null
-                    ? fd.Parameters.Properties.Select(kvp => new
-                        {
-                            name = kvp.Key,
-                            type = kvp.Value.Type.ToString().ToLower(),         // string | integer | boolean | object | array
-                            description = kvp.Value.Description
-                        })
-                    : Enumerable.Empty<object>()
+                parameters = fd.Parameters?.Properties?.Select(kvp => new
+                {
+                    name = kvp.Key,
+                    type = kvp.Value?.Type?.ToString()?.ToLowerInvariant() ?? string.Empty,         // string | integer | boolean | object | array
+                    description = kvp.Value?.Description
+                }) ?? Enumerable.Empty<object>()
             })
         };
 
@@ -167,7 +165,8 @@ public class FunctionDefinitionRegistry : IFunctionDefinitionRegistry
             {
                 id = fd.Name,
                 description = fd.Description,
-                parameters = string.Join(",", fd.Parameters.Properties.Select(kvp => kvp.Key))
+                parameters = string.Join(",",
+                    fd.Parameters?.Properties?.Select(kvp => kvp.Key) ?? Enumerable.Empty<string>())
             });
 
         var payload = new
@@ -198,6 +197,6 @@ public class FunctionDefinitionRegistry : IFunctionDefinitionRegistry
     }
 
 
-    public bool TryResolve(string id, out FunctionDefinition fd)
+    public bool TryResolve(string id, [NotNullWhen(true)] out FunctionDefinition? fd)
         => _map.TryGetValue(id, out fd);
 }

@@ -1,6 +1,6 @@
 using System.Linq;
 using System.Reflection;
-using System.Runtime.Serialization;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
@@ -13,12 +13,11 @@ public class RedisHistoryStorageTests
     [Fact]
     public void BuildConfiguration_SetsExpectedOptions()
     {
-        var instance = (RedisHistoryStorage)FormatterServices.GetUninitializedObject(typeof(RedisHistoryStorage));
-        var method = typeof(RedisHistoryStorage).GetMethod("BuildConfiguration", BindingFlags.NonPublic | BindingFlags.Instance)!;
+        var options = RedisHistoryStorage.BuildConfiguration("localhost:1234", "secret");
 
-        var options = (ConfigurationOptions)method.Invoke(instance, new object[] { "localhost:1234", "secret" })!;
-
-        Assert.Contains(options.EndPoints, e => e.ToString().Contains("localhost:1234"));
+        var endpoints = options.EndPoints;
+        Assert.NotNull(endpoints);
+        Assert.Contains(endpoints, e => e?.ToString()?.Contains("localhost:1234") == true);
         Assert.Equal("secret", options.Password);
         Assert.True(options.Ssl);
         Assert.Equal("admin", options.User);
@@ -40,7 +39,7 @@ public class RedisHistoryStorageTests
 
     private static RedisHistoryStorage CreateInstance()
     {
-        var instance = (RedisHistoryStorage)FormatterServices.GetUninitializedObject(typeof(RedisHistoryStorage));
+        var instance = (RedisHistoryStorage)RuntimeHelpers.GetUninitializedObject(typeof(RedisHistoryStorage));
         var loggerField = typeof(RedisHistoryStorage).GetField("_logger", BindingFlags.NonPublic | BindingFlags.Instance)!;
         loggerField.SetValue(instance, Microsoft.Extensions.Logging.Abstractions.NullLogger<RedisHistoryStorage>.Instance);
         return instance;

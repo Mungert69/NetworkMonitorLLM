@@ -157,8 +157,10 @@ namespace NetworkMonitor.LLM.Services
             response.EnsureSuccessStatusCode();
             
             var content = await response.Content.ReadAsStringAsync();
-            return JsonConvert.DeserializeObject<List<HfFileInfo>>(content)
+            var files = JsonConvert.DeserializeObject<List<HfFileInfo>>(content) ?? new List<HfFileInfo>();
+            return files
                 .Select(f => f.Path)
+                .Where(path => !string.IsNullOrWhiteSpace(path))
                 .ToList();
         }
 
@@ -188,8 +190,8 @@ namespace NetworkMonitor.LLM.Services
 
         private class HfFileInfo
         {
-            public string Path { get; set; }
-            public string Type { get; set; }
+            public string Path { get; set; } = string.Empty;
+            public string Type { get; set; } = string.Empty;
         }
     }
 }
