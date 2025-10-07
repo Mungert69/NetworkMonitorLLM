@@ -194,10 +194,29 @@ public class LLMServiceTests
         public bool IsStateFailed => StateFailed;
         public bool IsEnabled => Enabled;
 
-        public event Action<int, string>? LoadChanged;
-        public event Func<string, LLMServiceObj, Task>? OnUserMessage;
-        public event Func<LLMServiceObj, Task>? SendHistory;
-        public event Func<string, LLMServiceObj, Task>? RemoveSavedSession;
+        public event Action<int, string>? LoadChanged
+        {
+            add { }
+            remove { }
+        }
+
+        public event Func<string, LLMServiceObj, Task>? OnUserMessage
+        {
+            add { }
+            remove { }
+        }
+
+        public event Func<LLMServiceObj, Task>? SendHistory
+        {
+            add { }
+            remove { }
+        }
+
+        public event Func<string, LLMServiceObj, Task>? RemoveSavedSession
+        {
+            add { }
+            remove { }
+        }
 
         public Task StartProcess(LLMServiceObj serviceObj)
         {

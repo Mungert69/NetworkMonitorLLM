@@ -29,7 +29,7 @@ namespace NetworkMonitor.LLM.Services
         public int ComputeDelayMs(
             int chunkIndex,
             int textLen,
-            WorkerMetrics metricsOrNull,
+            WorkerMetrics? metricsOrNull,
             bool hasHealthyAlternate)
         {
             if (!hasHealthyAlternate) return int.MaxValue; // no hedge possible
