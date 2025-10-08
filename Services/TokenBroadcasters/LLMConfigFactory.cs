@@ -362,7 +362,33 @@ If no tool is suitable, state that explicitly. If the user's input lacks require
                 CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
                                     new TokenBroadcasterXlam2(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
             },
+ "lfm_2" => new LLMConfig
+            {
+                // User message formatting
+                UserReplace = "<|im_start|>user\\\n",
+                UserInputTemplate = "<|im_start|>user\\\n{0}",
+                FunctionReplace = "<|im_start|>tool\\\n",
+                // System prompt formatting
+                SystemMessageTemplate = "<|im_start|>system\\\n{0}<|im_end|>",
 
+                // Assistant message formatting
+                AssistantHeader = "<|im_start|>assistant\n",
+                AssistantMessageTemplate = "<|im_start|>assistant\\\n{0}<|im_end|>",
+
+                // Tool response formatting
+                FunctionResponseTemplate = "<|im_start|>tool\\\n<|tool_response_start|>{1}<|tool_response_end|>",   // {0} is the JSON or string content
+
+                // End of turn token
+                EOTToken = "<|im_end|>",
+
+                FunctionBuilder = "<|tool_call_start|>[{\"name\":\"{0}\", \"parameters\":{1}}]<|tool_call_end|>",
+                FunctionResponse = "<|tool_response_start|>[{1}]<|tool_response_end|>",
+                FunctionDefsWrap = @"<|tool_list_start|>{0}<|tool_list_end|>",
+                PromptFooter = "",
+                XmlPromptFooter = _xmlPromptFooter,
+                CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
+                                    new TokenBroadcasterLFM_2(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
+            },
             // Configuration for gemma_3
             "gemma_3" => new LLMConfig
             {
