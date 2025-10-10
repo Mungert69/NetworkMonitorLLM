@@ -10,6 +10,7 @@ using Betalgo.Ranul.OpenAI.ObjectModels.RequestModels;
 using Betalgo.Ranul.OpenAI.ObjectModels.SharedModels;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Mime;
 
 namespace NetworkMonitor.LLM.Services;
@@ -37,29 +38,7 @@ public class MonitorTools
                         Type = "string",
                         Description = "[REQUIRED] The host address to be monitored. This is a required field."
                     },
-                    ["endpoint"] = new PropertyDefinition
-                    {
-                        Type = "string",
-                        Enum = new List<string>
-                        {
-        "quantum",
-        "http",
-        "https",
-        "httphtml",
-        "httpfull",
-        "sitehash",
-        "icmp",
-        "dns",
-        "smtp",
-        "rawconnect",
-        "nmap",
-        "nmapvuln",
-        "crawlsite",
-        "dailycrawl",
-        "dailyhugkeepalive"
-    },
-                        Description = "The endpoint type for monitoring. Optional field. Endpoint types include: 'quantum' (a quantum-safe encryption test), 'http' (website ping), 'https' (SSL certificate check), 'httphtml' (loads only the HTML of a website), 'httpfull' (loads full website content including JavaScript), 'sitehash' (loads and hashes rendered website content to detect changes), 'icmp' (host ping), 'dns' (DNS lookup), 'smtp' (email server HELO message confirmation), 'rawconnect' (low-level raw socket connection), 'nmap' (service scan using Nmap), 'nmapvuln' (vulnerability scan using Nmap scripts), 'crawlsite' (traffic generator that crawls a site), 'dailycrawl' (once-daily low-traffic site crawl), 'dailyhugkeepalive' (once-daily trafic generator for a Hugging Face space to keep it alive), 'hugwake' (wake up a Hugging Face space by clicking the restart button if the space is sleeping)."
-                    },
+                    ["endpoint"] = BuildEndpointPropertyDefinition(),
 
                     ["port"] = new PropertyDefinition
                     {
@@ -123,29 +102,7 @@ public class MonitorTools
                         Type = "string",
                         Description = "The host address. Optional field."
                     },
-                    ["endpoint"] = new PropertyDefinition
-                    {
-                        Type = "string",
-                        Enum = new List<string>
-                {
-        "quantum",
-        "http",
-        "https",
-        "httphtml",
-        "httpfull",
-        "sitehash",
-        "icmp",
-        "dns",
-        "smtp",
-        "rawconnect",
-        "nmap",
-        "nmapvuln",
-        "crawlsite",
-        "dailycrawl",
-        "dailyhugkeepalive"
-    },
-                        Description = "The endpoint type for monitoring. Optional field. Endpoint types include: 'quantum' (a quantum-safe encryption test), 'http' (website ping), 'https' (SSL certificate check), 'httphtml' (loads only the HTML of a website), 'httpfull' (loads full website content including JavaScript), 'sitehash' (loads and hashes rendered website content to detect changes), 'icmp' (host ping), 'dns' (DNS lookup), 'smtp' (email server HELO message confirmation), 'rawconnect' (low-level raw socket connection), 'nmap' (service scan using Nmap), 'nmapvuln' (vulnerability scan using Nmap scripts), 'crawlsite' (traffic generator that crawls a site), 'dailycrawl' (once-daily low-traffic site crawl), 'dailyhugkeepalive' (once-daily trafic generator for a Hugging Face space to keep it alive), 'hugwake' (wake up a Hugging Face space by clicking the restart button if the space is sleeping)."
-                    },
+                    ["endpoint"] = BuildEndpointPropertyDefinition(),
 
                     ["port"] = new PropertyDefinition
                     {
@@ -238,6 +195,25 @@ public class MonitorTools
                     ["agent_location"] = new PropertyDefinition { Type = "string", Description = "Filter by agent location" }
                 }
             }
+        };
+    }
+
+    private static PropertyDefinition BuildEndpointPropertyDefinition()
+    {
+        var endpointTypes = EndPointTypeFactory.GetInternalTypes();
+        var endpointDescriptionDetails = string.Join(", ",
+            endpointTypes.Select(type =>
+            {
+                var endpoint = EndPointTypeFactory.GetEndpointType(type);
+                return $"'{endpoint.InternalType}' ({endpoint.FunctionDescription})";
+            })
+        );
+
+        return new PropertyDefinition
+        {
+            Type = "string",
+            Enum = endpointTypes,
+            Description = $"The endpoint type for monitoring. Optional field. Endpoint types include: {endpointDescriptionDetails}."
         };
     }
 }
