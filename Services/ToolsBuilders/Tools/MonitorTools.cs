@@ -198,6 +198,69 @@ public class MonitorTools
         };
     }
 
+    public static FunctionDefinition BuildResetAlertsFunction()
+    {
+        return new FunctionDefinition
+        {
+            Name = "reset_alerts",
+            Description = "Reset alert flags for one or more monitored hosts. By default this resets monitor alerts. Set alert_type to 'predict' to reset predictive alerts instead. Provide either filters that identify the host(s) (such as id, address, endpoint, agent_location) or set reset_all_hosts to true to clear alerts for every host owned by the authenticated user. When the user is not logged in you must supply the auth_key that was issued when the host was added.",
+            Parameters = new PropertyDefinition
+            {
+                Type = "object",
+                Properties = new Dictionary<string, PropertyDefinition>
+                {
+                    ["alert_type"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Enum = new List<string> { "monitor", "predict" },
+                        Description = "Choose which alerts to reset. Defaults to 'monitor'. Set to 'predict' to reset predictive alerts."
+                    },
+                    ["reset_all_hosts"] = new PropertyDefinition
+                    {
+                        Type = "boolean",
+                        Description = "Set to true to reset alerts for every host that belongs to the authenticated user. Ignored for unauthenticated users."
+                    },
+                    ["id"] = new PropertyDefinition
+                    {
+                        Type = "number",
+                        Description = "Host ID to reset. Use this when you know the exact host identifier."
+                    },
+                    ["address"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Filter by host address. Supports partial matches and wildcards."
+                    },
+                    ["auth_key"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Auth key returned when the host was added. Required when the user is not logged in."
+                    },
+                    ["email"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Filter by the email associated with the host (primarily for unauthenticated users)."
+                    },
+                    ["endpoint"] = BuildEndpointPropertyDefinition(),
+                    ["agent_location"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Filter by agent location. Useful when multiple hosts share the same address."
+                    },
+                    ["enabled"] = new PropertyDefinition
+                    {
+                        Type = "boolean",
+                        Description = "Filter by the host enabled state."
+                    },
+                    ["port"] = new PropertyDefinition
+                    {
+                        Type = "number",
+                        Description = "Filter by the host port."
+                    }
+                }
+            }
+        };
+    }
+
     private static PropertyDefinition BuildEndpointPropertyDefinition()
     {
         var endpointTypes = EndPointTypeFactory.GetInternalTypes();
