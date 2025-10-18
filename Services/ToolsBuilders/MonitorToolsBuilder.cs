@@ -23,6 +23,7 @@ public class MonitorToolsBuilder : ToolsBuilderBase
     private readonly FunctionDefinition fn_get_host_data;
     private readonly FunctionDefinition fn_get_host_list;
     private readonly FunctionDefinition fn_get_user_info;
+    private readonly FunctionDefinition fn_reset_alerts;
     private readonly FunctionDefinition fn_call_security_expert;
     private readonly FunctionDefinition fn_run_busybox;
     private readonly FunctionDefinition fn_call_penetration_expert;
@@ -43,6 +44,7 @@ public class MonitorToolsBuilder : ToolsBuilderBase
         fn_edit_host = MonitorTools.BuildEditHostFunction();
         fn_get_host_data = MonitorTools.BuildGetHostDataFunction();
         fn_get_host_list = MonitorTools.BuildGetHostListFunction();
+        fn_reset_alerts = MonitorTools.BuildResetAlertsFunction();
 
         fn_function_status_with_message_id = CommonTools.BuildAreFunctionsRunning();
         fn_cancel_functions = CommonTools.BuildCancelFunctions();
@@ -72,6 +74,7 @@ public class MonitorToolsBuilder : ToolsBuilderBase
             new ToolDefinition() { Function = fn_edit_host, Type = "function" },
             new ToolDefinition() { Function = fn_get_host_data, Type = "function" },
             new ToolDefinition() { Function = fn_get_host_list, Type = "function" },
+            new ToolDefinition() { Function = fn_reset_alerts, Type = "function" },
             new ToolDefinition() { Function = fn_get_user_info, Type = "function" },
             new ToolDefinition() { Function = fn_get_agents, Type = "function" },
             new ToolDefinition() { Function = fn_call_search_expert, Type = "function" },
