@@ -172,6 +172,7 @@ VERY IMPORTANT : Only call functions using this format :  {""name"": ""function_
                 CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
                       new TokenBroadcasterLlama_3_2(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
             },
+            // Only working for OpenAIRunner at the moment. When trying to fix is the | suposed to be a special character with ' | ' the ascii for that?
             "deepseek_3.2_exp" => new LLMConfig
             {
                 UserReplace = "<|User|>",
@@ -179,12 +180,14 @@ VERY IMPORTANT : Only call functions using this format :  {""name"": ""function_
                 AssistantHeader = "<|Assistant|></think>",
                 UserInputTemplate = "<|User|>{0}",
                 AssistantMessageTemplate = "<|Assistant|></think>{0}<|end_of_sentence|>",
-                SystemMessageTemplate = "{0}",
+                SystemMessageTemplate = "{0}<|end_of_sentence|>",
                 EOTToken = "<|end_of_sentence|>",
                 ThinkBeginToken = "<think>",
                 ThinkEndToken = "</think>",
+                // What should we use here ??
                 FunctionResponseTemplate = "{1}",
-                FunctionBuilder = "<|tool_calls_begin|><|tool_call_begin|>{0}<|tool_sep|>{1}<|tool_call_end|><|tool_calls_end|><|end_of_sentence|>",
+                // Note this is not going to work as the arg {1} will be json it will be to be converted to the deepseek xml format example<function_calls>\n<invoke name=\"get_host_list\">\n<parameter name=\"detail_response\">true</parameter>\n</invoke>\n</function_calls>
+                FunctionBuilder = "<function_calls>\n<invoke name={0}>\n{1}>\n</invoke>\n</function_calls>",
                 FunctionResponse = "{1}",
                 FunctionDefsWrap = @"Available tools:
 {0}",
@@ -490,7 +493,7 @@ If no tool is suitable, state that explicitly. If the user's input lacks require
 Calls to these tools must go to the commentary channel: 'functions'.",
 
                 CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
-                       new TokenBroadcasterGptOss(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
+                       new TokenBroadcasterLlama_3_2(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
 
             },
 

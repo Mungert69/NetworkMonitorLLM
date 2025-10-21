@@ -9,6 +9,27 @@ using Betalgo.Ranul.OpenAI.ObjectModels.SharedModels;
 using Betalgo.Ranul.OpenAI.ObjectModels.ResponseModels;
 public static class JsonToolsBuilder
 {
+    public static object? BuildOpenAIToolsPayload(List<ToolDefinition> tools)
+    {
+        if (tools == null || tools.Count == 0) return null;
+
+        var openAiTools = tools
+            .Where(tool => tool?.Function != null)
+            .Select(tool => new
+            {
+                type = "function",
+                function = new
+                {
+                    name = tool!.Function!.Name,
+                    description = tool.Function.Description,
+                    parameters = tool.Function.Parameters
+                }
+            })
+            .ToList();
+
+        return openAiTools.Count == 0 ? null : openAiTools;
+    }
+
     public static string BuildToolsJson(List<ToolDefinition> tools)
     {
         if (tools != null && tools.Count > 0)

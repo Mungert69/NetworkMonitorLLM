@@ -44,13 +44,6 @@ namespace NetworkMonitor.LLM.Services
         {
             var found = new List<(string json, string functionName)>();
 
-            // Fast-path: legacy passthrough that your base expects in some cases
-            if (input.Contains("FUNCTION RESPONSE:"))
-            {
-                found.Add((input, ""));
-                return found;
-            }
-
             // Extract all tool-call envelopes present in the buffered output
             foreach (Match m in ToolCallRegex.Matches(input))
             {

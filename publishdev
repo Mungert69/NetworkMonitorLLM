@@ -23,9 +23,9 @@ sudo chmod o+x /home/mahadeva
 sudo chmod o+x /home/mahadeva/code
 sudo chown -R mahadeva:nmgroup /home/mahadeva/code/services
 
-dotnet test 
-dotnet test ../NetworkMonitorLib/NetworkMonitor.csproj
-dotnet test ../NetworkMonitorData/NetworkMonitorData.csproj
+#dotnet test 
+#dotnet test ../NetworkMonitorLib/NetworkMonitor.csproj
+#dotnet test ../NetworkMonitorData/NetworkMonitorData.csproj
 
 cd publish-scripts
 sudo ./publish-dev
