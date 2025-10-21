@@ -39,7 +39,7 @@ public class HuggingFaceApi : ILLMApi
     private readonly string _modelID;
     private readonly string _serviceID;
     private readonly bool _isXml;
-    private readonly float _temperture;
+    private readonly float _temperature;
     private readonly MLParams _mlParams;
     private readonly LLMConfig _config;
 
@@ -67,7 +67,7 @@ public class HuggingFaceApi : ILLMApi
             _logger.LogWarning($"Invalid temperature value '{_mlParams.LlmTemp}', using default 0.1");
             temperature = 0.1f; // Default value
         }
-        _temperture = temperature;
+        _temperature = temperature;
         _modelVersion = mlParams.LlmHFModelVersion;
         _modelID = mlParams.LlmHFModelID;
         _authToken = mlParams.LlmHFKey;
@@ -144,7 +144,8 @@ public class HuggingFaceApi : ILLMApi
                 }).ToList(),
                 max_tokens = maxTokens,
                 stream = _isStream,
-                temperture = _temperture
+                temperature = _temperature,
+                response_format = new { type = "text" }
             };
 
             string? responseContent = null;
@@ -307,5 +308,3 @@ public class HuggingFaceApi : ILLMApi
 
 
 }
-
-
