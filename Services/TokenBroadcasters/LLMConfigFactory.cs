@@ -172,6 +172,32 @@ VERY IMPORTANT : Only call functions using this format :  {""name"": ""function_
                 CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
                       new TokenBroadcasterLlama_3_2(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
             },
+            "deepseek_3.2_exp" => new LLMConfig
+            {
+                UserReplace = "<|User|>",
+                FunctionReplace = "<function_calls>",
+                AssistantHeader = "<|Assistant|></think>",
+                UserInputTemplate = "<|User|>{0}",
+                AssistantMessageTemplate = "<|Assistant|></think>{0}<|end_of_sentence|>",
+                SystemMessageTemplate = "{0}",
+                EOTToken = "<|end_of_sentence|>",
+                ThinkBeginToken = "<think>",
+                ThinkEndToken = "</think>",
+                FunctionResponseTemplate = "{1}",
+                FunctionBuilder = "<|tool_calls_begin|><|tool_call_begin|>{0}<|tool_sep|>{1}<|tool_call_end|><|tool_calls_end|><|end_of_sentence|>",
+                FunctionResponse = "{1}",
+                FunctionDefsWrap = @"Available tools:
+{0}",
+                XmlPromptFooter = _xmlPromptFooter,
+                PromptFooter = @"When you must call a function, respond with XML in this form:
+<function_calls>
+  <invoke name=""function_name"">
+    <parameter name=""argument_name"">argument_value</parameter>
+  </invoke>
+</function_calls>",
+                CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
+                      new TokenBroadcasterDeepseek_3_2_Exp(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
+            },
 
 
             // Configuration for phi_4
@@ -362,7 +388,7 @@ If no tool is suitable, state that explicitly. If the user's input lacks require
                 CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
                                     new TokenBroadcasterXlam2(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
             },
- "lfm_2" => new LLMConfig
+            "lfm_2" => new LLMConfig
             {
                 // User message formatting
                 UserReplace = "<|im_start|>user\\\n",
@@ -429,33 +455,11 @@ If no tool is suitable, state that explicitly. If the user's input lacks require
 
             },
 
-             "gpt_oss_min" => new LLMConfig
-            {
-                UserReplace = "",
-                FunctionReplace = "",
-                AssistantHeader = "",
-                UserInputTemplate = "{0}",
-                AssistantMessageTemplate = "{0}",
-                SystemMessageTemplate = "{0}",
-                EOTToken = "",
-                FunctionResponseTemplate = "{1}",
-
-                FunctionBuilder = "{1}",
-                FunctionResponse = "{1}",
-                FunctionDefsWrap = "{0}",
-                PromptFooter = "",
-                CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
-                       new TokenBroadcasterStandard(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
-
-            },
-
-
-            // in LLMConfigFactory.GetConfig(...)
-            "gptoss" => new LLMConfig
+            "gpt_oss" => new LLMConfig
             {
                 // Core per-turn wrappers
                 UserReplace = "<|start|>user<|message|>",
-                FunctionReplace = "<|start|>tool<|message|>", // only used by your UI header replacement, not by the model
+                FunctionReplace = "<|start|>functions",
                 AssistantHeader = "<|start|>assistant<|channel|>final\n\n",
 
                 // Full message templates (produce complete framed segments)
@@ -465,32 +469,33 @@ If no tool is suitable, state that explicitly. If the user's input lacks require
 
                 // Segment terminators
                 EOTToken = "<|end|>",
-                // no EOM for this format
 
                 // Tool *result* you send back to the model
                 // {0} must be "functions.NAME", {1} is raw JSON (string)
                 FunctionResponseTemplate =
                     "<|start|>{0} to=assistant<|channel|>commentary<|message|>{1}<|end|>",
 
-                // Tool *call* the model emits (for reference; your broadcaster detects it with regex)
+                // Tool *call* envelopes the model emits
                 // {0} must be "functions.NAME"
                 // {1} is JSON arguments
                 FunctionBuilder =
                     "<|start|>assistant to={0}<|channel|>commentary json<|message|>{1}<|call|>",
 
-                // Not used by parsing, but kept for consistency
                 FunctionResponse = "{1}",
                 FunctionDefsWrap = "{0}",
 
                 // Optional footer (helps the model keep channels straight)
                 PromptFooter =
-            @"# Valid channels: analysis, commentary, final. Channel must be included for every message.
+@"# Valid channels: analysis, commentary, final. Channel must be included for every message.
 Calls to these tools must go to the commentary channel: 'functions'.",
 
-                CreateBroadcaster = (rp, log, xmlParsing) =>
-                    new TokenBroadcasterGptOss(rp, log, xmlParsing, IgnoreParameters)
+                CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
+                       new TokenBroadcasterGptOss(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
+
             },
-             "blank" => new LLMConfig
+
+
+            "blank" => new LLMConfig
             {
                 UserReplace = "",
                 FunctionReplace = "",
