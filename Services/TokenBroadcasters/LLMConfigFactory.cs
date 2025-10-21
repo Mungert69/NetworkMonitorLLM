@@ -476,24 +476,22 @@ If no tool is suitable, state that explicitly. If the user's input lacks require
                 // Tool *result* you send back to the model
                 // {0} must be "functions.NAME", {1} is raw JSON (string)
                 FunctionResponseTemplate =
-                    "<|start|>{0} to=assistant<|channel|>commentary<|message|>{1}<|end|>",
+                    "{0} to=assistant<|channel|>commentary<|message|>{1}<|end|>",
 
                 // Tool *call* envelopes the model emits
                 // {0} must be "functions.NAME"
                 // {1} is JSON arguments
                 FunctionBuilder =
-                    "<|start|>assistant to={0}<|channel|>commentary json<|message|>{1}<|call|>",
+                    "function.commentary to={0} <|constrain|>json<|message|>{1}",
 
                 FunctionResponse = "{1}",
                 FunctionDefsWrap = "{0}",
 
                 // Optional footer (helps the model keep channels straight)
-                PromptFooter =
-@"# Valid channels: analysis, commentary, final. Channel must be included for every message.
-Calls to these tools must go to the commentary channel: 'functions'.",
+                PromptFooter =@"",
 
                 CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
-                       new TokenBroadcasterLlama_3_2(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
+                       new TokenBroadcasterGptOss(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
 
             },
 

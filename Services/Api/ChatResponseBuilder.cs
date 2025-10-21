@@ -99,7 +99,8 @@ public class ChatResponseBuilder
 
             // Parse the input using the broadcaster
             List<(string json, string functionName)> functionCalls;
-            if (_isXml) functionCalls = _tokenBroadcaster.ParseInputForXml(choice.Message.Content);
+            if (string.IsNullOrEmpty(choice.Message.Content)) choice.Message.Content = choice.Message.ReasoningContent;
+                if (_isXml) functionCalls = _tokenBroadcaster.ParseInputForXml(choice.Message.Content);
             else functionCalls = _tokenBroadcaster.ParseInputForJson(choice.Message.Content);
 
             // Log the parsed results
