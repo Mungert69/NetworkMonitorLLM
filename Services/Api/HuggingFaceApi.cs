@@ -272,7 +272,7 @@ public class HuggingFaceApi : ILLMApi
                     }
 
                     string responseContent = await response.Content.ReadAsStringAsync();
-                    _logger.LogInformation($"Attempt {attempt}: Successfully received response from Hugging Face API.");
+                    _logger.LogDebug($"Attempt {attempt}: Successfully received response from Hugging Face API. {responseContent}");
                     return responseContent;
                 }
             }

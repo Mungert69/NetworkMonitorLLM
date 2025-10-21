@@ -51,16 +51,8 @@ public class OpenAIApi : ILLMApi
         _logger = logger;
         _openAiService = openAiService;
         _toolsBuilder = toolsBuilder;
-        _modelVersion = mlParams.LlmHFModelVersion;
+        _modelVersion = mlParams.GptModelVersion;
         _isXml = _mlParams.XmlFunctionParsing;
-        if (_gptModel.Contains("gpt") && !_gptModel.Contains("gpt-oss") )
-        {
-            _modelVersion = "gpt";
-        }
-        else if (_gptModel.Contains("gpt-oss") )
-        {
-            _modelVersion = "gpt_oss_min";
-        }
         _config = LLMConfigFactory.GetConfig(_modelVersion);
         _stableTools = toolsBuilder.Tools.OrderBy(t => t.Function?.Name).ToList();
 

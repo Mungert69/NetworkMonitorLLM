@@ -1,5 +1,4 @@
 
-using System.Text.RegularExpressions;
 using System;
 using System.IO;
 using System.Text;
@@ -8,29 +7,25 @@ using System.Threading;
 using System.Diagnostics;
 using System.Text.Json;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
 using NetworkMonitor.Objects.ServiceMessage;
 using NetworkMonitor.Objects;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace NetworkMonitor.LLM.Services
 {
     /// <summary>
-    /// Parses GPT-OSS structured tool calls:
-    /// <|start|>assistant to=functions.NAME<|channel|>commentary [json] <|message|>{...}<|call|>
+    /// Parses GPT-OSS structured tool calls.
+    /// Handles both of the known envelopes, for example:
+    ///     <|start|>assistant to=functions.NAME<|channel|>commentary json<|message|>{...}<|call|>
+    ///     function.commentary to=functions.NAME <|constrain|>json<|message|>{...}
     /// Also lets normal assistant text flow through to the base processor.
     /// </summary>
     public sealed class TokenBroadcasterGptOss : TokenBroadcasterBase
     {
-        // Match assistant → tool call envelope.
-        // Examples:
-        // <|start|>assistant to=functions.search<|channel|>commentary json<|message|>{"q":"x"}<|call|>
-        // <|start|>assistant to=functions.foo.bar<|channel|>commentary<|message|>{...}<|call|>
-        private static readonly Regex ToolCallRegex = new(
-            @"<\|start\|\>assistant\s+to=(?<dest>functions\.[A-Za-z0-9_.-]+)\s*"
-          + @"<\|channel\|\>commentary(?:\s+json)?\s*"
-          + @"<\|message\|\>(?<args>.*?)<\|call\|>",
-            RegexOptions.Singleline | RegexOptions.Compiled);
-
         public TokenBroadcasterGptOss(
             ILLMResponseProcessor responseProcessor,
             ILogger logger,
@@ -42,26 +37,45 @@ namespace NetworkMonitor.LLM.Services
 
         public override List<(string json, string functionName)> ParseInputForJson(string input)
         {
-            var found = new List<(string json, string functionName)>();
+            var results = new List<(string json, string functionName)>();
 
-            // Extract all tool-call envelopes present in the buffered output
-            foreach (Match m in ToolCallRegex.Matches(input))
+            if (string.IsNullOrWhiteSpace(input) || !input.Contains("<|message|>", StringComparison.Ordinal))
             {
-                var fn = m.Groups["dest"].Value;   // e.g., functions.lookup
-                var args = m.Groups["args"].Value; // raw args JSON inside <|message|>…<|call|>
-
-                // Your sanitizer prunes ignored params (e.g., "source_code") & fixes minor JSON issues
-                var repaired = JsonSanitizer.RepairJson(args, _ignoreParameters);
-
-                if (!string.IsNullOrWhiteSpace(repaired))
-                    found.Add((repaired, fn));
+                return results;
             }
 
-            // If no envelopes matched, fall back to the base "first JSON object" sweep
-            if (found.Count == 0)
-                return base.ParseInputForJson(input);
+            var segments = ExtractSegments(input);
+            foreach (var segment in segments)
+            {
+                var functionName = ExtractFunctionName(segment);
+                var payload = ExtractPayload(segment);
 
-            return found;
+                if (string.IsNullOrWhiteSpace(payload))
+                    continue;
+
+                // Try to parse structured { "name": "...", "arguments": {...} } shape first.
+                if (TryParseStructuredPayload(payload, out var structuredName, out var argumentsJson))
+                {
+                    var resolvedName = string.IsNullOrWhiteSpace(structuredName) ? functionName : structuredName;
+                    if (string.IsNullOrWhiteSpace(resolvedName))
+                        continue;
+
+                    results.Add((argumentsJson ?? "{}", resolvedName));
+                    continue;
+                }
+
+                // Fallback: use message payload as arguments and the extracted name as function.
+                if (string.IsNullOrWhiteSpace(functionName))
+                    continue;
+
+                var repaired = JsonSanitizer.RepairJson(payload, _ignoreParameters);
+                if (string.IsNullOrWhiteSpace(repaired))
+                    continue;
+
+                results.Add((repaired, functionName));
+            }
+
+            return results;
         }
 
         /// <summary>
@@ -69,5 +83,109 @@ namespace NetworkMonitor.LLM.Services
         /// keep hook available for future adjustments.
         /// </summary>
         protected override string StripExtraFuncHeader(string input) => input;
+
+        private static string NormalizeFunctionName(string? raw)
+        {
+            if (string.IsNullOrWhiteSpace(raw)) return string.Empty;
+            return raw.StartsWith("functions.", StringComparison.OrdinalIgnoreCase)
+                ? raw["functions.".Length..]
+                : raw;
+        }
+
+        private static IEnumerable<(string prefix, string message)> ExtractSegments(string input)
+        {
+            var pattern = new Regex(@"(?<prefix>.*?)(<\|message\|\>(?<message>[\s\S]*?))(?:$|(?=<\|message\|\>))", RegexOptions.Singleline | RegexOptions.IgnoreCase);
+            foreach (Match match in pattern.Matches(input))
+            {
+                var messageGroup = match.Groups["message"];
+                if (!messageGroup.Success) continue;
+                yield return (match.Groups["prefix"].Value, messageGroup.Value);
+            }
+        }
+
+        private static string ExtractFunctionName((string prefix, string message) segment)
+        {
+            // Look for narrative "Use get_host_list function."
+            var narrativeMatch = Regex.Match(segment.prefix, @"Use\s+(?<name>[A-Za-z0-9_.-]+)\s+function", RegexOptions.IgnoreCase);
+            if (narrativeMatch.Success)
+            {
+                return NormalizeFunctionName("functions." + narrativeMatch.Groups["name"].Value);
+            }
+
+            // Look for explicit to=functions.xxx or function.xxx to=...
+            var toMatch = Regex.Match(segment.prefix, @"(?:to=|function\.)\s*(?<dest>functions\.[A-Za-z0-9_.-]+)", RegexOptions.IgnoreCase);
+            if (toMatch.Success)
+            {
+                return NormalizeFunctionName(toMatch.Groups["dest"].Value);
+            }
+
+            return string.Empty;
+        }
+
+        private static string ExtractPayload((string prefix, string message) segment)
+        {
+            var payload = segment.message;
+            payload = payload.Trim();
+            return payload;
+        }
+
+        private bool TryParseStructuredPayload(string payload, out string functionName, out string? argumentsJson)
+        {
+            functionName = string.Empty;
+            argumentsJson = null;
+            try
+            {
+                var token = JToken.Parse(payload);
+                if (token.Type != JTokenType.Object) return false;
+
+                var obj = (JObject)token;
+                var nameToken = obj.Properties().FirstOrDefault(p => string.Equals(p.Name, "name", StringComparison.OrdinalIgnoreCase))?.Value;
+                var argumentsToken = obj.Properties().FirstOrDefault(p =>
+                    string.Equals(p.Name, "arguments", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(p.Name, "parameters", StringComparison.OrdinalIgnoreCase))?.Value;
+
+                if (nameToken is JValue nameValue && nameValue.Type == JTokenType.String)
+                {
+                    functionName = NormalizeFunctionName(nameValue.Value<string>());
+                }
+
+                if (argumentsToken != null)
+                {
+                    if (argumentsToken.Type == JTokenType.String)
+                    {
+                        var argumentString = argumentsToken.Value<string>() ?? string.Empty;
+                        argumentString = argumentString.Trim();
+                        if (argumentString.Length == 0)
+                        {
+                            argumentsJson = "{}";
+                        }
+                        else if ((argumentString.StartsWith("{") && argumentString.EndsWith("}")) ||
+                                 (argumentString.StartsWith("[") && argumentString.EndsWith("]")))
+                        {
+                            argumentsJson = JToken.Parse(argumentString).ToString(Formatting.None);
+                        }
+                        else
+                        {
+                            argumentsJson = JsonConvert.SerializeObject(argumentString);
+                        }
+                    }
+                    else
+                    {
+                        argumentsJson = argumentsToken.ToString(Formatting.None);
+                    }
+                }
+                else
+                {
+                    argumentsJson = "{}";
+                }
+
+                return !string.IsNullOrWhiteSpace(functionName);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to parse structured GPT-OSS payload: {Payload}", payload);
+                return false;
+            }
+        }
     }
 }

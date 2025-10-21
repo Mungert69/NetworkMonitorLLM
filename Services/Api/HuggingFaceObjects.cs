@@ -53,6 +53,10 @@ public class HuggingFaceMessage
     [JsonProperty("content")]
     public string Content { get; set; } = string.Empty; // Maps to "content"
 
+    [JsonProperty("reasoning_content")]
+    public string ReasoningContent { get; set; } = string.Empty; // Maps to "content"
+
+
     [JsonIgnore] // Not serialized/deserialized unless you add it explicitly in JSON
     public List<ToolCall> ToolCalls { get; set; } = new List<ToolCall>();
 }
