@@ -95,45 +95,57 @@ public class ChatResponseBuilder
         var choices = responseObject.Choices;
         foreach (var choice in choices)
         {
-            _logger.LogInformation($"Parsing function calls for message content: {choice.Message.Content}");
-
-            // Parse the input using the broadcaster
-            List<(string json, string functionName)> functionCalls;
-            if (string.IsNullOrEmpty(choice.Message.Content)) choice.Message.Content = choice.Message.ReasoningContent;
-                if (_isXml) functionCalls = _tokenBroadcaster.ParseInputForXml(choice.Message.Content);
-            else functionCalls = _tokenBroadcaster.ParseInputForJson(choice.Message.Content);
-
-            // Log the parsed results
-            if (functionCalls.Any())
+            bool hasStructuredToolCalls = choice.Message.ToolCalls != null && choice.Message.ToolCalls.Any();
+            List<(string json, string functionName)> functionCalls = new();
+            if (!hasStructuredToolCalls)
             {
-                choice.FinishReason = "tool_calls";
-                //_logger.LogInformation($"Parsed {functionCalls.Count} function calls.");
-                foreach (var fc in functionCalls)
-                {
-                    _logger.LogDebug($"Function call detected - Name: {fc.functionName}, JSON: {fc.json}");
-                }
+                _logger.LogInformation($"Parsing function calls for message content: {choice.Message.Content}");
 
-                // Map the parsed function calls to ToolCalls
-                choice.Message.ToolCalls = functionCalls.Select(fc => new ToolCall
+                if (string.IsNullOrEmpty(choice.Message.Content)) choice.Message.Content = choice.Message.ReasoningContent;
+                if (_isXml) functionCalls = _tokenBroadcaster.ParseInputForXml(choice.Message.Content);
+                else functionCalls = _tokenBroadcaster.ParseInputForJson(choice.Message.Content);
+
+                if (functionCalls.Any())
                 {
-                    Type = "function",
-                    Id = StringUtils.NewToolCallId(),
-                    FunctionCall = new FunctionCall
+                    choice.FinishReason = "tool_calls";
+                    foreach (var fc in functionCalls)
                     {
-                        Name = fc.functionName,
-                        Arguments = fc.json
+                        _logger.LogDebug($"Function call detected - Name: {fc.functionName}, JSON: {fc.json}");
                     }
-                }).ToList();
 
-                // Log the ToolCalls that were created
-                foreach (var toolCall in choice.Message.ToolCalls)
+                    choice.Message.ToolCalls = functionCalls.Select(fc => new ToolCall
+                    {
+                        Type = "function",
+                        Id = StringUtils.NewToolCallId(),
+                        FunctionCall = new FunctionCall
+                        {
+                            Name = fc.functionName,
+                            Arguments = fc.json
+                        }
+                    }).ToList();
+
+                    foreach (var toolCall in choice.Message.ToolCalls)
+                    {
+                        _logger.LogDebug($"ToolCall created - Type: {toolCall.Type}, Id: {toolCall.Id}, " + $"FunctionName: {toolCall.FunctionCall?.Name}, Arguments: {toolCall.FunctionCall?.Arguments}");
+                    }
+                }
+                else
                 {
-                    _logger.LogDebug($"ToolCall created - Type: {toolCall.Type}, Id: {toolCall.Id}, " + $"FunctionName: {toolCall.FunctionCall?.Name}, Arguments: {toolCall.FunctionCall?.Arguments}");
+                    choice.FinishReason = "stop";
                 }
             }
             else
             {
-                choice.FinishReason = "stop";
+                if (string.IsNullOrEmpty(choice.FinishReason))
+                {
+                    choice.FinishReason = "tool_calls";
+                }
+
+                if (choice.Message.ToolCalls != null)
+                    foreach (var toolCall in choice.Message.ToolCalls)
+                    {
+                        _logger.LogDebug($"ToolCall from response - Type: {toolCall.Type}, Id: {toolCall.Id}, " + $"FunctionName: {toolCall.FunctionCall?.Name}, Arguments: {toolCall.FunctionCall?.Arguments}");
+                    }
             }
         }
 

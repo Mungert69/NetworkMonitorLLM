@@ -478,6 +478,51 @@ namespace NetworkMonitor.LLM.Services
             }
         }
 
+        protected static string NormalizeFunctionName(string? raw)
+        {
+            if (string.IsNullOrWhiteSpace(raw)) return string.Empty;
+            var withoutPrefix = raw.StartsWith("functions.", StringComparison.OrdinalIgnoreCase)
+                ? raw["functions.".Length..]
+                : raw;
+
+            return ToSnakeCase(withoutPrefix);
+        }
+
+        protected static string ToSnakeCase(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value)) return string.Empty;
+
+            var builder = new StringBuilder(value.Length + 8);
+            char previous = '\0';
+
+            foreach (var c in value)
+            {
+                if (char.IsUpper(c))
+                {
+                    if (builder.Length > 0 && previous != '_' && !char.IsUpper(previous))
+                    {
+                        builder.Append('_');
+                    }
+                    builder.Append(char.ToLowerInvariant(c));
+                }
+                else if (c == '-' || c == ' ')
+                {
+                    if (builder.Length > 0 && builder[^1] != '_')
+                    {
+                        builder.Append('_');
+                    }
+                }
+                else
+                {
+                    builder.Append(c);
+                }
+
+                previous = c;
+            }
+
+            return builder.ToString();
+        }
+
         protected virtual void Dispose(bool disposing)
         {
             if (_disposed) return;

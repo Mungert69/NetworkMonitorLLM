@@ -42,6 +42,7 @@ public class HuggingFaceApi : ILLMApi
     private readonly float _temperature;
     private readonly MLParams _mlParams;
     private readonly LLMConfig _config;
+    private readonly bool _supportsStructuredTools;
 
     public LLMConfig Config => _config;
     private bool _isStream;
@@ -79,6 +80,7 @@ public class HuggingFaceApi : ILLMApi
             _apiUrl = $"{mlParams.LlmHFUrl.TrimEnd('/')}/models/{_modelID}/v1/chat/completions";
 
         _config = LLMConfigFactory.GetConfig(_modelVersion);
+        _supportsStructuredTools = mlParams.LlmHfSupportsFunctionCalling;
         _logger.LogInformation($"Initialized Hugging Face API with URL: {_apiUrl} using model id {_modelID}");
     }
 
@@ -107,8 +109,8 @@ public class HuggingFaceApi : ILLMApi
 
     public List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, bool noThink)
     {
-
-        string toolsJson = ToolsWrapper(JsonToolsBuilder.BuildToolsJson(_toolsBuilder.Tools));
+        string toolsJson = "";
+        if (!_supportsStructuredTools) toolsJson = ToolsWrapper(JsonToolsBuilder.BuildToolsJson(_toolsBuilder.Tools));
         // List<ChatMessage> systemPrompt=_toolsBuilder.GetSystemPrompt(currentTime, serviceObj);
         string footer = PromptFooter();
         var systemMessages = _toolsBuilder.GetSystemPrompt(currentTime, serviceObj, "HugLLM") ?? new List<ChatMessage>() { ChatMessage.FromSystem("") };
@@ -131,23 +133,17 @@ public class HuggingFaceApi : ILLMApi
     }
     public async Task<ChatCompletionCreateResponseSuccess> CreateCompletionAsync(List<ChatMessage> messages, int maxTokens, LLMServiceObj serviceObj)
     {
-        var toolsJson = JsonToolsBuilder.BuildToolsJson(_toolsBuilder.Tools);
-        var tools = JsonConvert.DeserializeObject<List<object>>(toolsJson);
+        var toolsPayload = _supportsStructuredTools
+            ? JsonToolsBuilder.BuildOpenAIToolsPayload(_toolsBuilder.Tools)
+            : null;
+
+        var structuredMessages = _supportsStructuredTools
+            ? ConvertMessagesForOpenAIToolMode(messages)
+            : null;
+
         try
         {
-            var payload = new
-            {
-                model = _modelID,
-                messages = messages.Select(m => new
-                {
-                    role = m.Role,
-                    content = m.Content
-                }).ToList(),
-                max_tokens = maxTokens,
-                stream = _isStream,
-                temperature = _temperature,
-                response_format = new { type = "text" }
-            };
+            object payload = BuildPayload(messages, maxTokens, toolsPayload, structuredMessages);
 
             string? responseContent = null;
             HuggingFaceChatResponse? responseObject = null;
@@ -216,6 +212,98 @@ public class HuggingFaceApi : ILLMApi
         }
 
 
+    }
+
+    private object BuildPayload(List<ChatMessage> messages, int maxTokens, object? toolsPayload, List<Dictionary<string, object?>>? structuredMessages)
+    {
+        if (_supportsStructuredTools && structuredMessages != null)
+        {
+            var payloadDict = new Dictionary<string, object?>
+            {
+                ["model"] = _modelID,
+                ["messages"] = structuredMessages,
+                ["max_tokens"] = maxTokens,
+                ["stream"] = _isStream,
+                ["temperature"] = _temperature,
+                ["response_format"] = new { type = "text" }
+            };
+
+            if (toolsPayload is System.Collections.IEnumerable enumerable && enumerable.Cast<object?>().Any())
+            {
+                payloadDict["tools"] = toolsPayload;
+                payloadDict["tool_choice"] = "auto";
+            }
+            else
+            {
+                payloadDict["tool_choice"] = "none";
+            }
+
+            return payloadDict;
+        }
+
+        return new
+        {
+            model = _modelID,
+            messages = messages.Select(m => new
+            {
+                role = m.Role,
+                content = m.Content
+            }).ToList(),
+            max_tokens = maxTokens,
+            stream = _isStream,
+            temperature = _temperature,
+            response_format = new { type = "text" }
+        };
+    }
+
+    private List<Dictionary<string, object?>> ConvertMessagesForOpenAIToolMode(IEnumerable<ChatMessage> messages)
+    {
+        var formatted = new List<Dictionary<string, object?>>();
+
+        foreach (var message in messages)
+        {
+            var entry = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["role"] = message.Role
+            };
+
+            if (!string.IsNullOrEmpty(message.Name) && string.Equals(message.Role, "tool", StringComparison.OrdinalIgnoreCase))
+            {
+                entry["name"] = message.Name;
+            }
+
+            if (!string.IsNullOrEmpty(message.ToolCallId))
+            {
+                entry["tool_call_id"] = message.ToolCallId;
+            }
+
+            var toolCalls = message.ToolCalls ?? new List<ToolCall>();
+            if (toolCalls.Any())
+            {
+                entry["content"] = message.Content ?? string.Empty;
+                entry["tool_calls"] = toolCalls.Select(tc =>
+                    new Dictionary<string, object?>
+                    {
+                        ["id"] = tc.Id,
+                        ["type"] = string.IsNullOrWhiteSpace(tc.Type) ? "function" : tc.Type,
+                        ["function"] = tc.FunctionCall == null
+                            ? null
+                            : new Dictionary<string, object?>
+                            {
+                                ["name"] = tc.FunctionCall.Name,
+                                ["arguments"] = tc.FunctionCall.Arguments
+                            }
+                    }).ToList();
+            }
+            else
+            {
+                entry["content"] = message.Content ?? string.Empty;
+            }
+
+            formatted.Add(entry);
+        }
+
+        return formatted;
     }
 
     private ChatCompletionCreateResponse GetErrorResponse(string message) =>

@@ -56,7 +56,8 @@ public class HuggingFaceObjectsTests
         Assert.Single(roundTrip.Choices);
         Assert.Equal("assistant", roundTrip.Choices[0].Message.Role);
         Assert.Equal("hello", roundTrip.Choices[0].Message.Content);
-        Assert.Empty(roundTrip.Choices[0].Message.ToolCalls);
+        Assert.Single(roundTrip.Choices[0].Message.ToolCalls);
+        Assert.Equal("func", roundTrip.Choices[0].Message.ToolCalls[0].FunctionCall?.Name);
     }
 
     [Fact]
