@@ -23,7 +23,6 @@ using NetworkMonitor.Utils.Helpers;
 using NetworkMonitor.Objects.Factory;
 using NetworkMonitor.Utils;
 using NetworkMonitor.LLM.Services;
-using Newtonsoft.Json;
 
 namespace NetworkMonitor.LLM.Services;
 
@@ -95,15 +94,20 @@ public class ChatResponseBuilder
         var choices = responseObject.Choices;
         foreach (var choice in choices)
         {
-            bool hasStructuredToolCalls = choice.Message.ToolCalls != null && choice.Message.ToolCalls.Any();
+            var message = choice.Message;
+            if (message == null) continue;
+
+            message.PopulateToolCallsFromRaw();
+
+            bool hasStructuredToolCalls = message.ToolCalls != null && message.ToolCalls.Any();
             List<(string json, string functionName)> functionCalls = new();
             if (!hasStructuredToolCalls)
             {
-                _logger.LogInformation($"Parsing function calls for message content: {choice.Message.Content}");
+                _logger.LogInformation($"Parsing function calls for message content: {message.Content}");
 
-                if (string.IsNullOrEmpty(choice.Message.Content)) choice.Message.Content = choice.Message.ReasoningContent;
-                if (_isXml) functionCalls = _tokenBroadcaster.ParseInputForXml(choice.Message.Content);
-                else functionCalls = _tokenBroadcaster.ParseInputForJson(choice.Message.Content);
+                if (string.IsNullOrEmpty(message.Content)) message.Content = message.ReasoningContent;
+                if (_isXml) functionCalls = _tokenBroadcaster.ParseInputForXml(message.Content);
+                else functionCalls = _tokenBroadcaster.ParseInputForJson(message.Content);
 
                 if (functionCalls.Any())
                 {
@@ -141,8 +145,8 @@ public class ChatResponseBuilder
                     choice.FinishReason = "tool_calls";
                 }
 
-                if (choice.Message.ToolCalls != null)
-                    foreach (var toolCall in choice.Message.ToolCalls)
+                if (message.ToolCalls != null)
+                    foreach (var toolCall in message.ToolCalls)
                     {
                         _logger.LogDebug($"ToolCall from response - Type: {toolCall.Type}, Id: {toolCall.Id}, " + $"FunctionName: {toolCall.FunctionCall?.Name}, Arguments: {toolCall.FunctionCall?.Arguments}");
                     }
@@ -168,7 +172,7 @@ public class ChatResponseBuilder
                                 Name = toolCall?.FunctionCall?.Name ?? "",
                                 Arguments = toolCall?.FunctionCall?.Arguments ?? ""
                             }
-                        }).ToList() // Explicitly map each ToolCall and its FunctionCall
+                        }).ToList()
                 },
                 Index = choice.Index,
                 FinishReason = choice.FinishReason
@@ -186,5 +190,4 @@ public class ChatResponseBuilder
         //_logger.LogInformation($"{payloadJson}");
         return chatResponse;
     }
-
 }

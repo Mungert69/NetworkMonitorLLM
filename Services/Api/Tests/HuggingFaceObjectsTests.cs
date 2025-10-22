@@ -38,17 +38,23 @@ public class HuggingFaceObjectsTests
                 TotalTokens = 3
             }
         };
-        response.Choices[0].Message.ToolCalls.Add(new ToolCall
+        response.Choices[0].Message.RawToolCalls = new List<HuggingFaceToolCallDto>
         {
-            FunctionCall = new FunctionCall
+            new()
             {
-                Name = "func",
-                Arguments = "{}"
+                Id = "call",
+                Type = "function",
+                Function = new HuggingFaceFunctionCallDto
+                {
+                    Name = "func",
+                    Arguments = "{}"
+                }
             }
-        });
+        };
 
         var json = JsonConvert.SerializeObject(response);
         var roundTrip = JsonConvert.DeserializeObject<HuggingFaceChatResponse>(json)!;
+        roundTrip.Choices[0].Message.PopulateToolCallsFromRaw();
 
         Assert.Equal("chat.completion", roundTrip.Object);
         Assert.Equal("hf-id", roundTrip.Id);
@@ -95,7 +101,8 @@ public class HuggingFaceObjectsTests
         Assert.Single(chunk.Choices);
         var delta = chunk.Choices[0].Delta;
         Assert.Equal("piece", delta.Content);
-        Assert.Single(delta.ToolCalls);
-        Assert.Equal("tool", delta.ToolCalls[0].Function.Name);
+        Assert.NotNull(delta.ToolCalls);
+        Assert.Single(delta.ToolCalls!);
+        Assert.Equal("tool", delta.ToolCalls![0].Function.Name);
     }
 }
