@@ -23,8 +23,7 @@ namespace NetworkMonitor.LLM.Services
         public override List<(string json, string functionName)> ParseInputForJson(string input)
         {
             var functionCalls = new List<(string json, string functionName)>();
-            if (string.IsNullOrWhiteSpace(input)) return functionCalls;
-
+          
             try
             {
                 var invokeMatches = Regex.Matches(input, @"<invoke\s+name=""(?<name>[^""]+)""[^>]*>(?<parameters>.*?)</invoke>", RegexOptions.Singleline);

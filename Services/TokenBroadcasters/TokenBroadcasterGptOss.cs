@@ -39,10 +39,7 @@ namespace NetworkMonitor.LLM.Services
         {
             var results = new List<(string json, string functionName)>();
 
-            if (string.IsNullOrWhiteSpace(input) || !input.Contains("<|message|>", StringComparison.Ordinal))
-            {
-                return results;
-            }
+          
 
             var segments = ExtractSegments(input);
             foreach (var segment in segments)
