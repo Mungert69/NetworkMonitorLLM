@@ -65,4 +65,5 @@ public class TokenBroadcasterGptOssTests
         Assert.Equal("cancel_functions", result[0].functionName);
         Assert.Equal("{\"message_id\":\"abc123\"}", result[0].json);
     }
+
 }

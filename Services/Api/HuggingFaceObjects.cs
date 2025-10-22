@@ -1,119 +1,173 @@
 using Betalgo.Ranul.OpenAI.ObjectModels.RequestModels;
 using Betalgo.Ranul.OpenAI.ObjectModels.SharedModels;
 using Betalgo.Ranul.OpenAI.ObjectModels.ResponseModels;
-using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
+
 namespace NetworkMonitor.LLM.Services;
 
 public class HuggingFaceChatResponse
 {
     [JsonProperty("object")]
-    public string Object { get; set; } = string.Empty; // Maps to "object"
+    public string Object { get; set; } = string.Empty;
 
     [JsonProperty("id")]
-    public string Id { get; set; } = string.Empty; // Maps to "id"
+    public string Id { get; set; } = string.Empty;
 
     [JsonProperty("created")]
-    public long Created { get; set; } = 0; // Maps to "created"
+    public long Created { get; set; }
 
     [JsonProperty("model")]
-    public string Model { get; set; } = string.Empty; // Maps to "model"
+    public string Model { get; set; } = string.Empty;
 
     [JsonProperty("system_fingerprint")]
-    public string SystemFingerprint { get; set; } = string.Empty; // Maps to "system_fingerprint"
+    public string SystemFingerprint { get; set; } = string.Empty;
 
     [JsonProperty("choices")]
-    public List<HuggingFaceChoice> Choices { get; set; } = new List<HuggingFaceChoice>(); // Maps to "choices"
+    public List<HuggingFaceChoice> Choices { get; set; } = new();
 
     [JsonProperty("usage")]
-    public HuggingFaceUsage Usage { get; set; } = new HuggingFaceUsage(); // Maps to "usage"
+    public HuggingFaceUsage Usage { get; set; } = new();
 }
 
 public class HuggingFaceChoice
 {
     [JsonProperty("index")]
-    public int Index { get; set; } = 0; // Maps to "index"
+    public int Index { get; set; }
 
     [JsonProperty("message")]
-    public HuggingFaceMessage Message { get; set; } = new HuggingFaceMessage(); // Maps to "message"
+    public HuggingFaceMessage Message { get; set; } = new();
 
     [JsonProperty("logprobs")]
-    public object? Logprobs { get; set; } = null; // Maps to "logprobs"
+    public object? Logprobs { get; set; }
 
     [JsonProperty("finish_reason")]
-    public string FinishReason { get; set; } = string.Empty; // Maps to "finish_reason"
+    public string FinishReason { get; set; } = string.Empty;
 }
 
 public class HuggingFaceMessage
 {
     [JsonProperty("role")]
-    public string Role { get; set; } = string.Empty; // Maps to "role"
+    public string Role { get; set; } = string.Empty;
 
     [JsonProperty("content")]
-    public string Content { get; set; } = string.Empty; // Maps to "content"
+    public string Content { get; set; } = string.Empty;
 
     [JsonProperty("reasoning_content")]
-    public string ReasoningContent { get; set; } = string.Empty; // Maps to "content"
-
+    public string ReasoningContent { get; set; } = string.Empty;
 
     [JsonProperty("tool_calls")]
-    public List<ToolCall> ToolCalls { get; set; } = new List<ToolCall>();
+    public List<HuggingFaceToolCallDto>? RawToolCalls { get; set; }
+
+    [JsonIgnore]
+    public List<ToolCall> ToolCalls { get; set; } = new();
+
+    public void PopulateToolCallsFromRaw()
+    {
+        if (RawToolCalls == null || RawToolCalls.Count == 0)
+        {
+            ToolCalls = new List<ToolCall>();
+            return;
+        }
+
+        var mapped = new List<ToolCall>(RawToolCalls.Count);
+        foreach (var dto in RawToolCalls)
+        {
+            if (dto == null) continue;
+
+            var functionName = dto.Function?.Name ?? string.Empty;
+            var arguments = dto.Function?.Arguments ?? "{}";
+
+            mapped.Add(new ToolCall
+            {
+                Id = dto.Id,
+                Type = string.IsNullOrWhiteSpace(dto.Type) ? "function" : dto.Type,
+                FunctionCall = new FunctionCall
+                {
+                    Name = functionName,
+                    Arguments = arguments
+                }
+            });
+        }
+
+        ToolCalls = mapped;
+    }
 }
 
 public class HuggingFaceUsage
 {
     [JsonProperty("prompt_tokens")]
-    public int PromptTokens { get; set; } = 0; // Maps to "prompt_tokens"
+    public int PromptTokens { get; set; }
 
     [JsonProperty("completion_tokens")]
-    public int CompletionTokens { get; set; } = 0; // Maps to "completion_tokens"
+    public int CompletionTokens { get; set; }
 
     [JsonProperty("total_tokens")]
-    public int TotalTokens { get; set; } = 0; // Maps to "total_tokens"
+    public int TotalTokens { get; set; }
 }
 
 public class StreamingChatCompletionChunk
 {
     [JsonProperty("id")]
-    public string Id { get; set; }
-    
+    public string Id { get; set; } = string.Empty;
+
     [JsonProperty("choices")]
-    public List<StreamingChatChoice> Choices { get; set; }
+    public List<StreamingChatChoice> Choices { get; set; } = new();
 }
 
 public class StreamingChatChoice
 {
     [JsonProperty("delta")]
-    public StreamingChatDelta Delta { get; set; }
+    public StreamingChatDelta Delta { get; set; } = new();
 }
 
 public class StreamingChatDelta
 {
     [JsonProperty("content")]
-    public string Content { get; set; }
-    
+    public string Content { get; set; } = string.Empty;
+
     [JsonProperty("tool_calls")]
-    public List<ToolCallChunk> ToolCalls { get; set; }
+    public List<ToolCallChunk>? ToolCalls { get; set; }
 }
 
 public class ToolCallChunk
 {
     [JsonProperty("index")]
     public int Index { get; set; }
-    
+
     [JsonProperty("id")]
-    public string Id { get; set; }
-    
+    public string Id { get; set; } = string.Empty;
+
     [JsonProperty("function")]
-    public FunctionCallChunk Function { get; set; }
+    public FunctionCallChunk Function { get; set; } = new();
 }
 
 public class FunctionCallChunk
 {
     [JsonProperty("name")]
-    public string Name { get; set; }
-    
+    public string Name { get; set; } = string.Empty;
+
     [JsonProperty("arguments")]
-    public string Arguments { get; set; }
+    public string Arguments { get; set; } = string.Empty;
+}
+
+public class HuggingFaceToolCallDto
+{
+    [JsonProperty("id")]
+    public string? Id { get; set; }
+
+    [JsonProperty("type")]
+    public string? Type { get; set; }
+
+    [JsonProperty("function")]
+    public HuggingFaceFunctionCallDto? Function { get; set; }
+}
+
+public class HuggingFaceFunctionCallDto
+{
+    [JsonProperty("name")]
+    public string? Name { get; set; }
+
+    [JsonProperty("arguments")]
+    public string? Arguments { get; set; }
 }
