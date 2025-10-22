@@ -57,7 +57,7 @@ public class HuggingFaceMessage
     public string ReasoningContent { get; set; } = string.Empty; // Maps to "content"
 
 
-    [JsonIgnore] // Not serialized/deserialized unless you add it explicitly in JSON
+    [JsonProperty("tool_calls")]
     public List<ToolCall> ToolCalls { get; set; } = new List<ToolCall>();
 }
 
@@ -117,4 +117,3 @@ public class FunctionCallChunk
     [JsonProperty("arguments")]
     public string Arguments { get; set; }
 }
-

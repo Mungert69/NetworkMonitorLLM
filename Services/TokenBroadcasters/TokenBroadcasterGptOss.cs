@@ -84,14 +84,6 @@ namespace NetworkMonitor.LLM.Services
         /// </summary>
         protected override string StripExtraFuncHeader(string input) => input;
 
-        private static string NormalizeFunctionName(string? raw)
-        {
-            if (string.IsNullOrWhiteSpace(raw)) return string.Empty;
-            return raw.StartsWith("functions.", StringComparison.OrdinalIgnoreCase)
-                ? raw["functions.".Length..]
-                : raw;
-        }
-
         private static IEnumerable<(string prefix, string message)> ExtractSegments(string input)
         {
             var pattern = new Regex(@"(?<prefix>.*?)(<\|message\|\>(?<message>[\s\S]*?))(?:$|(?=<\|message\|\>))", RegexOptions.Singleline | RegexOptions.IgnoreCase);
