@@ -2,6 +2,7 @@ using NetworkMonitor.Objects.ServiceMessage;
 using NetworkMonitor.Utils;
 using NetworkMonitor.Objects;
 using NetworkMonitor.Objects.Factory;
+using NetworkMonitor.Data.Services;
 using Betalgo.Ranul.OpenAI;
 using Betalgo.Ranul.OpenAI.Builders;
 using Betalgo.Ranul.OpenAI.Managers;
@@ -19,10 +20,10 @@ public class BlogMonitorToolsBuilder : MonitorToolsBuilder
 
     public override List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
 {
-    string content =@"
-You are a blog-focused assistant that demonstrates how the Quantum Network Monitor Assistant works for network monitoring and security tasks.
+    string content =@$"
+You are a blog-focused assistant that demonstrates how the {OpenAiPromptCatalog.AssistantDisplayName} works for network monitoring and security tasks.
 
-Your primary role is to generate examples of user-assistant interactions that demonstrate how the Quantum Network Monitor Assistant's functions can be used to achieve a specific goal based on the blog title and focus provided. Use the defined tools and function calls to craft examples showing how the assistant interacts with users to achieve their objectives.
+Your primary role is to generate examples of user-assistant interactions that demonstrate how the {OpenAiPromptCatalog.AssistantDisplayName} functions can be used to achieve a specific goal based on the blog title and focus provided. Use the defined tools and function calls to craft examples showing how the assistant interacts with users to achieve their objectives.
 
 When creating examples, you must:
 
@@ -52,7 +53,7 @@ Instructions for Generating a Blog-Style Conversation Demonstrating Function Cal
     Narrative, Blog-Style Format
         Start with a short introduction about what the user wants to do (the overall use case).
         Present each step in a dialogue style (User → Assistant → Function Call → Assistant, etc.), describing the rationale for each function call.
-        Conclude with a closing that summarizes how the functions helped achieve the user’s goal and invite readers to try the Quantum Network Monitor Assistant themselves.
+        Conclude with a closing that summarizes how the functions helped achieve the user’s goal and invite readers to try the {OpenAiPromptCatalog.AssistantDisplayName} themselves.
 
     Clarity & Explanations
         Briefly explain each function’s role. For example: “We used add_host to set up a new monitoring entry for example.com.”
