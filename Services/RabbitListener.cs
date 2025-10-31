@@ -427,7 +427,7 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
             result.Data = ragData; // Store the RAG data in the ResultObj
 
             // Signal the completion of the query
-            _queryCoordinator.CompleteQuery(queryIndexRequest.MessageID, ragData);
+            _queryCoordinator.CompleteQuery(queryIndexRequest.MessageID, ragData, queryIndexRequest);
         }
         catch (Exception e)
         {
@@ -435,7 +435,7 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
             result.Success = false;
 
             // Signal the completion of the query even if it fails
-            _queryCoordinator.CompleteQuery(queryIndexRequest.MessageID, "");
+            _queryCoordinator.CompleteQuery(queryIndexRequest.MessageID, string.Empty, queryIndexRequest);
         }
 
         if (!result.Success) _logger.LogError(result.Message);
