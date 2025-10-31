@@ -294,7 +294,8 @@ public class OpenAIRunner : ILLMRunner
                     AppID = _serviceID,
                     AuthKey = _serviceAuthKey,
                     RoutingKey = "",
-                    LLMRunnerType = serviceObj.LLMRunnerType
+                    LLMRunnerType = serviceObj.LLMRunnerType,
+                    ResponseExchange = $"{_serviceID.ToLowerInvariant()}QueryIndexResult"
                 };
                 if (_mlParams.AddSystemRag) _ = _queryCoordinator.ExecuteQueryAsync(queryIndexRequest);
 
