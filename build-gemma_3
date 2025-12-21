@@ -1,1 +1,1 @@
-~/code/models/llama.cpp/llama-cli -c 12000  -m ~/code/models/google_gemma-3-4b-it-q8.gguf   --prompt-cache context-gemma-3.gguf  -f system_prompt_gemma_3   -r "<|end_of_turn|>"   -sp  -i --temp 0 --simple-io -no-cnv 
+~/code/models/llama.cpp/llama-completion -c 12000  -m ~/code/models/google_gemma-3-4b-it-q8.gguf   --prompt-cache context-gemma-3.gguf  -f system_prompt_gemma_3   -r "<|end_of_turn|>"   -sp  -i --temp 0 --simple-io -no-cnv 
