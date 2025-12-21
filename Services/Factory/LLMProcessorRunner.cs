@@ -120,7 +120,7 @@ public class LLMProcessRunner : ILLMRunner
         }
         string reversePrompt = $"-r \"{_config.EOTToken}\" ";
         if (!string.IsNullOrEmpty(_config.EOMToken)) reversePrompt += $"-r \"{_config.EOMToken}\" ";
-        startInfo.FileName = $"{mlParams.LlmModelPath}llama.cpp/llama-cli";
+        startInfo.FileName = $"{mlParams.LlmModelPath}llama.cpp/llama-completion";
         startInfo.Arguments = $" -c {mlParams.LlmCtxSize} -n {mlParams.LlmPromptTokens} -m {mlParams.LlmModelPath + mlParams.LlmModelFileName}  --prompt-cache {mlParams.LlmModelPath + contextFileName} --prompt-cache-ro  -f {mlParams.LlmModelPath + promptName} {mlParams.LlmPromptMode} {reversePrompt} {promptSuffix} --keep -1 --temp {mlParams.LlmTemp} -t {recommendedCpuCount} -tb {recommendedCpuCount} {promptPrefix}";
         _logger.LogInformation($"Running command : {startInfo.FileName}{startInfo.Arguments}");
         startInfo.UseShellExecute = false;

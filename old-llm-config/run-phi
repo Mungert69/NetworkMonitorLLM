@@ -1,2 +1,2 @@
-./llama.cpp/llama-cli -c 2048 -m Phi-3.1-mini-128k-instruct-Q6_K_L.gguf --grammar-file json_grammar --prompt-cache context-phi.gguf --prompt-cache-ro --keep 1 --temp 0 -f system_prompt_phi -i -sp
+./llama.cpp/llama-completion -c 2048 -m Phi-3.1-mini-128k-instruct-Q6_K_L.gguf --grammar-file json_grammar --prompt-cache context-phi.gguf --prompt-cache-ro --keep 1 --temp 0 -f system_prompt_phi -i -sp
 
