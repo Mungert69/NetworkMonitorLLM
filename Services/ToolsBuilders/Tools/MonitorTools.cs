@@ -45,6 +45,21 @@ public class MonitorTools
                         Type = "number",
                         Description = "The port of the service being monitored. Optional field. If not specified, it defaults to the standard port for the endpoint type. For example, the standard port for HTTPS is 443."
                     },
+                    ["username"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Optional credentials or identifier for the endpoint. Commonly used for authentication, but some endpoints use it for other purposes."
+                    },
+                    ["password"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Optional credential or secret for the endpoint. Often used for authentication, but some endpoints use it for other purposes (e.g., keys or tokens)."
+                    },
+                    ["args"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Optional extra arguments for command-style endpoint monitors. Use this to pass additional command-line style flags."
+                    },
                     ["timeout"] = new PropertyDefinition
                     {
                         Type = "number",
@@ -108,6 +123,21 @@ public class MonitorTools
                     {
                         Type = "number",
                         Description = "The port of the service being monitored. Optional field."
+                    },
+                    ["username"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Optional credentials or identifier for the endpoint. Commonly used for authentication, but some endpoints use it for other purposes."
+                    },
+                    ["password"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Optional credential or secret for the endpoint. Often used for authentication, but some endpoints use it for other purposes (e.g., keys or tokens)."
+                    },
+                    ["args"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Optional extra arguments for command-style endpoint monitors. Use this to pass additional command-line style flags."
                     },
                     ["timeout"] = new PropertyDefinition
                     {
