@@ -118,7 +118,7 @@ public class LLMFactory : ILLMFactory
 
     public async Task<List<HistoryDisplayName>> GetHistoryDisplayNamesForUserAsync(string userId)
     {
-        return await _historyStorage.GetHistoryDisplayNamesAsync(userId);
+        return await _historyStorage.GetHistoryDisplayNamesAsync(userId, _userFacingServiceId);
     }
 
 
@@ -128,7 +128,30 @@ public class LLMFactory : ILLMFactory
         if (!serviceObj.IsPrimaryLlm) return;
         try
         {
+            var historyServiceId = string.IsNullOrWhiteSpace(serviceObj.HistoryServiceId)
+                ? _userFacingServiceId
+                : serviceObj.HistoryServiceId;
             var historyDisplayNames = GetHistoriesForUser(serviceObj.SessionId);
+            if (!string.Equals(historyServiceId, _serviceId, StringComparison.OrdinalIgnoreCase))
+            {
+                var userId = ExtractUserIdFromSessionId(serviceObj.SessionId);
+                if (!string.IsNullOrWhiteSpace(userId))
+                {
+                    var storedHistories = await _historyStorage.GetHistoryDisplayNamesAsync(userId, historyServiceId);
+                    historyDisplayNames = storedHistories.Select(hdn => new HistoryDisplayName
+                    {
+                        SessionId = hdn.SessionId.Split('_')[0],
+                        Name = hdn.Name,
+                        StartUnixTime = hdn.StartUnixTime,
+                        LlmType = hdn.LlmType,
+                        UserId = hdn.UserId
+                    }).ToList();
+                }
+                else
+                {
+                    historyDisplayNames = new List<HistoryDisplayName>();
+                }
+            }
             if (historyDisplayNames != null && historyDisplayNames.Count > 0)
             {
                 var payload = JsonConvert.SerializeObject(historyDisplayNames, new JsonSerializerSettings
@@ -147,6 +170,13 @@ public class LLMFactory : ILLMFactory
         }
 
 
+    }
+
+    private static string ExtractUserIdFromSessionId(string sessionId)
+    {
+        if (string.IsNullOrWhiteSpace(sessionId)) return "";
+        var parts = sessionId.Split('_');
+        return parts.Length >= 3 ? parts[1] : "";
     }
 
     private async Task SaveAndSendForSessionAsync(LLMServiceObj serviceObj, bool send)

@@ -412,11 +412,17 @@ public class LLMProcessRunner : ILLMRunner
             _logger.LogInformation($" Replay history  not yet implemented for sessionId {serviceObj.SessionId}");
             return;
         }
-        if (serviceObj.UserInput == "<|REPLAY_HISTORY|>")
+        if (serviceObj.UserInput.StartsWith("<|GET_HISTORY_DISPLAY|>", StringComparison.Ordinal))
         {
-            // TODO implement a caching mech for getting previoud contexts
-            //await ReplayHistory(serviceObj.SessionId);
-            _logger.LogInformation($" Replayed history for sessionId {serviceObj.SessionId}");
+            var requestedServiceId = serviceObj.UserInput
+                .Substring("<|GET_HISTORY_DISPLAY|>".Length)
+                .Trim();
+            if (!string.IsNullOrWhiteSpace(requestedServiceId))
+            {
+                serviceObj.HistoryServiceId = requestedServiceId;
+            }
+            if (SendHistory != null) await SendHistory.Invoke(serviceObj);
+            _logger.LogInformation($" Sent history display names for serviceId {serviceObj.HistoryServiceId ?? "default"}");
             return;
         }
         if (serviceObj.UserInput.Contains("<|START_AUDIO|>") || serviceObj.UserInput.Contains("<|STOP_AUDIO|>"))

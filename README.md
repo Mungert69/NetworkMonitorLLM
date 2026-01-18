@@ -121,6 +121,26 @@ flowchart TD
 
 ---
 
+# History Display Names
+
+By default, history display payloads (`<history-display-name>...`) are only emitted by the user-facing service (defaults to `monitor`). You can override this in config:
+
+```json
+{
+  "UserFacingServiceId": "monitor"
+}
+```
+
+To request history display names for another service without changing the frontend, send a control message:
+
+```
+<|GET_HISTORY_DISPLAY|>cmdprocessor
+```
+
+If no service ID is provided, the server uses `UserFacingServiceId`.
+
+---
+
 # Summary
 
 This codebase is a **robust**, **extensible** LLM orchestration platform for **network/security automation**, featuring:
@@ -151,7 +171,6 @@ Explore real-world examples of the system in action:
 - 🌐 **Official Project Site**  
   The Full Quantum Network Monitor Service in action.  
   [https://readyforquantum.com/?utm_source=github&utm_medium=referral&utm_campaign=readme](https://readyforquantum.com/?utm_source=github&utm_medium=referral&utm_campaign=networkmonitorllm_readme)
-
 
 
 

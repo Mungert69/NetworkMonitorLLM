@@ -17,7 +17,7 @@ public interface IHistoryStorage
     Task SaveHistoryAsync(HistoryDisplayName historyDisplayName);
     Task<HistoryDisplayName?> LoadHistoryAsync(string sessionId);
     Task DeleteHistoryAsync(string sessionId);
-    Task<List<HistoryDisplayName>> GetHistoryDisplayNamesAsync(string userId);
+    Task<List<HistoryDisplayName>> GetHistoryDisplayNamesAsync(string userId, string? serviceId = null);
 }
 
 public class FileSystemHistoryStorage : IHistoryStorage
@@ -72,10 +72,15 @@ public class FileSystemHistoryStorage : IHistoryStorage
 
         return sessions;
     }
-    public async Task<List<HistoryDisplayName>> GetHistoryDisplayNamesAsync(string userId)
+    public async Task<List<HistoryDisplayName>> GetHistoryDisplayNamesAsync(string userId, string? serviceId = null)
     {
         var historyDisplayNames = new List<HistoryDisplayName>();
-        var files = Directory.GetFiles(_storagePath, $"*_{userId}_*.json");
+        var storagePath = serviceId == null ? _storagePath : BuildStoragePath(serviceId);
+        if (!Directory.Exists(storagePath))
+        {
+            return historyDisplayNames;
+        }
+        var files = Directory.GetFiles(storagePath, $"*_{userId}_*.json");
 
         foreach (var file in files)
         {
