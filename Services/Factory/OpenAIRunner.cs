@@ -96,6 +96,7 @@ public class OpenAIRunner : ILLMRunner
     private readonly Queue<(string? FunctionName, string? ArgumentsJson)> _recentFunctionCalls = new Queue<(string?, string?)>();
     private const int MaxRecentFunctionCalls = 5;
     private int _funcsInARow = 0;
+    private string? _lastChatAgentLocation;
 
     private readonly IQueryCoordinator _queryCoordinator;
     private readonly IToolsBuilderFactory _toolsBuilderFactory;
@@ -158,6 +159,7 @@ public class OpenAIRunner : ILLMRunner
         _isStateStarting = true;
         _isStateReady = false;
         _responseProcessor.IsManagedMultiFunc = true;
+        _lastChatAgentLocation = NormalizeAgentLocation(serviceObj.ChatAgentLocation);
 
 
         var systemPrompt = _llmApi.GetSystemPrompt(serviceObj.GetClientStartTime().ToString("yyyy-MM-ddTHH:mm:ss"), serviceObj, _noThink);
@@ -313,6 +315,7 @@ public class OpenAIRunner : ILLMRunner
                 if (_mlParams.AddSystemRag) _ = _queryCoordinator.ExecuteQueryAsync(queryIndexRequest);
 
 
+                AddAgentLocationChangeMessage(localHistory, serviceObj);
                 chatMessage = ChatMessage.FromUser(serviceObj.UserInput);
 
                 responseServiceObj.LlmMessage = "<User:> " + serviceObj.UserInput + "\n\n";
@@ -461,6 +464,35 @@ public class OpenAIRunner : ILLMRunner
             localHistory.Add(systemMessage);
         }*/
         return localHistory;
+    }
+
+    private void AddAgentLocationChangeMessage(List<ChatMessage> localHistory, LLMServiceObj serviceObj)
+    {
+        if (!serviceObj.IsPrimaryLlm) return;
+        var currentLocation = NormalizeAgentLocation(serviceObj.ChatAgentLocation);
+        if (string.IsNullOrEmpty(currentLocation)) return;
+
+        if (string.IsNullOrEmpty(_lastChatAgentLocation))
+        {
+            _lastChatAgentLocation = currentLocation;
+            return;
+        }
+
+        if (string.Equals(currentLocation, _lastChatAgentLocation, StringComparison.OrdinalIgnoreCase)) return;
+
+        var previousLocation = _lastChatAgentLocation;
+        _lastChatAgentLocation = currentLocation;
+
+        var message =
+            $"User changed agent location from {previousLocation} to {currentLocation}. " +
+            $"Use {currentLocation} for agent_location when calling experts unless the user specifies another agent location.";
+        localHistory.Insert(0, ChatMessage.FromSystem(message));
+    }
+
+    private static string? NormalizeAgentLocation(string? location)
+    {
+        if (string.IsNullOrWhiteSpace(location)) return null;
+        return location.Trim();
     }
 
 
