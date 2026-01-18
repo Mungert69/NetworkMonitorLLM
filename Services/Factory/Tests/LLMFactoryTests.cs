@@ -8,6 +8,7 @@ using Betalgo.Ranul.OpenAI.ObjectModels.RequestModels;
 using Microsoft.Extensions.Logging;
 using Moq;
 using NetworkMonitor.Coordinator;
+using NetworkMonitor.Objects;
 using NetworkMonitor.Objects.ServiceMessage;
 using Xunit;
 
@@ -25,7 +26,12 @@ public class LLMFactoryTests
     {
         var logger = Mock.Of<ILogger<LLMFactory>>();
         var services = new Mock<IServiceProvider>();
-        _factory = new LLMFactory(logger, services.Object, _historyStorage.Object, _responseProcessor.Object, _cpuUsage.Object, _queryCoordinator.Object);
+        var systemParams = new SystemParams
+        {
+            ServiceID = "monitor",
+            UserFacingServiceId = "monitor"
+        };
+        _factory = new LLMFactory(logger, services.Object, _historyStorage.Object, _responseProcessor.Object, _cpuUsage.Object, _queryCoordinator.Object, systemParams);
     }
 
     [Fact]

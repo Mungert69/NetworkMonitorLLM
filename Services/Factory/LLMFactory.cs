@@ -48,11 +48,13 @@ public class LLMFactory : ILLMFactory
     public ConcurrentDictionary<string, Session> Sessions { set => _sessions = value; }
     private readonly ICpuUsageMonitor _cpuUsageMonitor;
     private readonly IQueryCoordinator _queryCoordinator;
+    private readonly string _serviceId;
+    private readonly string _userFacingServiceId;
 
 
     private readonly ConcurrentDictionary<string, List<ChatMessage>> _sessionHistories = new();
 
-    public LLMFactory(ILogger<LLMFactory> logger, IServiceProvider serviceProvider, IHistoryStorage historyStorage, ILLMResponseProcessor responseProcessor, ICpuUsageMonitor cpuUsageMonitor, IQueryCoordinator queryCoordinator)
+    public LLMFactory(ILogger<LLMFactory> logger, IServiceProvider serviceProvider, IHistoryStorage historyStorage, ILLMResponseProcessor responseProcessor, ICpuUsageMonitor cpuUsageMonitor, IQueryCoordinator queryCoordinator, SystemParams systemParams)
     {
         _logger = logger;
         _serviceProvider = serviceProvider;
@@ -63,6 +65,10 @@ public class LLMFactory : ILLMFactory
         _hfRunnerFactory = new HFRunnerFactory();
         _responseProcessor = responseProcessor;
         _queryCoordinator = queryCoordinator;
+        _serviceId = systemParams.ServiceID ?? "Service";
+        _userFacingServiceId = string.IsNullOrWhiteSpace(systemParams.UserFacingServiceId)
+            ? "monitor"
+            : systemParams.UserFacingServiceId;
 
     }
 
@@ -118,6 +124,7 @@ public class LLMFactory : ILLMFactory
 
     public async Task SendHistoryDisplayNames(LLMServiceObj serviceObj)
     {
+        if (!string.Equals(_serviceId, _userFacingServiceId, StringComparison.OrdinalIgnoreCase)) return;
         if (!serviceObj.IsPrimaryLlm) return;
         try
         {
