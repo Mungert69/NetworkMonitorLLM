@@ -141,6 +141,17 @@ If no service ID is provided, the server uses `UserFacingServiceId`.
 
 ---
 
+# Agent Location in Prompts
+
+Agent location is injected into prompts for the primary LLM:
+
+- **OpenAI/HF runners**: when the user switches agent location, a one-time system message is added before the next user message, e.g. “User changed agent location from A to B…”.
+- **Local/Test runner**: a one-time system message is queued at session start with the initial agent location.
+
+Only the primary LLM is auto-informed; experts receive the location only if the primary includes `agent_location` when calling them.
+
+---
+
 # Summary
 
 This codebase is a **robust**, **extensible** LLM orchestration platform for **network/security automation**, featuring:
@@ -171,7 +182,6 @@ Explore real-world examples of the system in action:
 - 🌐 **Official Project Site**  
   The Full Quantum Network Monitor Service in action.  
   [https://readyforquantum.com/?utm_source=github&utm_medium=referral&utm_campaign=readme](https://readyforquantum.com/?utm_source=github&utm_medium=referral&utm_campaign=networkmonitorllm_readme)
-
 
 
 

@@ -549,7 +549,7 @@ public class LLMProcessRunner : ILLMRunner
                 }
                 else
                 {
-                       preSystemMessage = string.Join("", _systemMessages.Select(entry =>
+                    preSystemMessage = string.Join("", _systemMessages.Select(entry =>
              {
                  var systemMessage = entry.Value?.ToString() ?? string.Empty;
                  return string.Format(_config.SystemMessageTemplate, systemMessage);

@@ -97,6 +97,9 @@ public class OpenAIRunner : ILLMRunner
     private const int MaxRecentFunctionCalls = 5;
     private int _funcsInARow = 0;
     private string? _lastChatAgentLocation;
+    private static readonly Regex AgentLocationRegex =
+        new Regex(@"Agent with location\s+(?<location>.+?)\s+use this for the agent_location",
+            RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
     private readonly IQueryCoordinator _queryCoordinator;
     private readonly IToolsBuilderFactory _toolsBuilderFactory;
@@ -159,7 +162,14 @@ public class OpenAIRunner : ILLMRunner
         _isStateStarting = true;
         _isStateReady = false;
         _responseProcessor.IsManagedMultiFunc = true;
-        _lastChatAgentLocation = NormalizeAgentLocation(serviceObj.ChatAgentLocation);
+        if (_history.Count == 0)
+        {
+            _lastChatAgentLocation = NormalizeAgentLocation(serviceObj.ChatAgentLocation);
+        }
+        else
+        {
+            _lastChatAgentLocation = GetLastAgentLocationFromHistory(_history);
+        }
 
 
         var systemPrompt = _llmApi.GetSystemPrompt(serviceObj.GetClientStartTime().ToString("yyyy-MM-ddTHH:mm:ss"), serviceObj, _noThink);
@@ -493,6 +503,23 @@ public class OpenAIRunner : ILLMRunner
     {
         if (string.IsNullOrWhiteSpace(location)) return null;
         return location.Trim();
+    }
+
+    private static string? GetLastAgentLocationFromHistory(IEnumerable<ChatMessage> history)
+    {
+        foreach (var message in history.Reverse())
+        {
+            if (!string.Equals(message.Role, "system", StringComparison.OrdinalIgnoreCase)) continue;
+            if (string.IsNullOrWhiteSpace(message.Content)) continue;
+
+            var match = AgentLocationRegex.Match(message.Content);
+            if (!match.Success) continue;
+
+            var location = match.Groups["location"].Value.Trim();
+            if (!string.IsNullOrEmpty(location)) return location;
+        }
+
+        return null;
     }
 
 
