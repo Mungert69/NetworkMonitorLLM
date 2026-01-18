@@ -231,6 +231,19 @@ public class OpenAIRunner : ILLMRunner
             _logger.LogInformation($" Replayed history for sessionId {serviceObj.SessionId}");
             return;
         }
+        if (serviceObj.UserInput.StartsWith("<|GET_HISTORY_DISPLAY|>", StringComparison.Ordinal))
+        {
+            var requestedServiceId = serviceObj.UserInput
+                .Substring("<|GET_HISTORY_DISPLAY|>".Length)
+                .Trim();
+            if (!string.IsNullOrWhiteSpace(requestedServiceId))
+            {
+                serviceObj.HistoryServiceId = requestedServiceId;
+            }
+            if (SendHistory != null) await SendHistory.Invoke(serviceObj);
+            _logger.LogInformation($" Sent history display names for serviceId {serviceObj.HistoryServiceId ?? "default"}");
+            return;
+        }
         if (serviceObj.UserInput == "<|STOP_AUDIO|>")
         {
             _createAudio = false;

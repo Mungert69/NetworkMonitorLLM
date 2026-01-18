@@ -131,11 +131,12 @@ namespace NetworkMonitor.LLM.Services
             return sessions;
         }
 
-        public async Task<List<HistoryDisplayName>> GetHistoryDisplayNamesAsync(string userId)
+        public async Task<List<HistoryDisplayName>> GetHistoryDisplayNamesAsync(string userId, string? serviceId = null)
         {
             var historyDisplayNames = new List<HistoryDisplayName>();
             var server = GetServer();
-            var keys = await GetKeysAsync(server, $"{_keyPrefix}*_{userId}_*");
+            var keyPrefix = GetKeyPrefix(serviceId);
+            var keys = await GetKeysAsync(server, $"{keyPrefix}*_{userId}_*");
 
             foreach (var key in keys)
             {
@@ -233,6 +234,20 @@ namespace NetworkMonitor.LLM.Services
             return json.HasValue
                 ? JsonConvert.DeserializeObject<HistoryDisplayName>(json.ToString())
                 : null;
+        }
+
+        private string GetKeyPrefix(string? serviceId)
+        {
+            if (string.IsNullOrWhiteSpace(serviceId)) return _keyPrefix;
+            var cleaned = SanitizeServiceId(serviceId);
+            return $"history:{cleaned}:";
+        }
+
+        private string GetIndexKey(string? serviceId)
+        {
+            if (string.IsNullOrWhiteSpace(serviceId)) return _indexKey;
+            var cleaned = SanitizeServiceId(serviceId);
+            return $"idx:history:{cleaned}:all";
         }
 
         private IServer GetServer()

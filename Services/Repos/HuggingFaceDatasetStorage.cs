@@ -72,15 +72,16 @@ namespace NetworkMonitor.LLM.Services
             return sessions;
         }
 
-        public async Task<List<HistoryDisplayName>> GetHistoryDisplayNamesAsync(string userId)
+        public async Task<List<HistoryDisplayName>> GetHistoryDisplayNamesAsync(string userId, string? serviceId = null)
         {
             var historyDisplayNames = new List<HistoryDisplayName>();
+            var effectiveServiceId = string.IsNullOrWhiteSpace(serviceId) ? _serviceId : SanitizeServiceId(serviceId);
             
             try
             {
                 var files = await ListFilesInRepo();
                 var userFiles = files.Where(f =>
-                    f.Contains($"{_serviceId}_", StringComparison.OrdinalIgnoreCase) &&
+                    f.Contains($"{effectiveServiceId}_", StringComparison.OrdinalIgnoreCase) &&
                     f.Contains($"_{userId}_") &&
                     f.EndsWith(".json", StringComparison.OrdinalIgnoreCase));
 
