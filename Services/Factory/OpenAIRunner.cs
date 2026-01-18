@@ -165,14 +165,14 @@ public class OpenAIRunner : ILLMRunner
         if (_history.Count == 0)
         {
             _lastChatAgentLocation = NormalizeAgentLocation(serviceObj.ChatAgentLocation);
-            _logger.LogInformation(
+            _logger.LogDebug(
                 "Agent location init (no history): {Location}",
                 _lastChatAgentLocation ?? "<empty>");
         }
         else
         {
             _lastChatAgentLocation = GetLastAgentLocationFromHistory(_history);
-            _logger.LogInformation(
+            _logger.LogDebug(
                 "Agent location init (from history): {Location}",
                 _lastChatAgentLocation ?? "<empty>");
         }
@@ -488,14 +488,14 @@ public class OpenAIRunner : ILLMRunner
         var currentLocation = NormalizeAgentLocation(serviceObj.ChatAgentLocation);
         if (string.IsNullOrEmpty(currentLocation))
         {
-            _logger.LogInformation("Agent location change skipped: empty current location.");
+            _logger.LogDebug("Agent location change skipped: empty current location.");
             return;
         }
 
         if (string.IsNullOrEmpty(_lastChatAgentLocation))
         {
             _lastChatAgentLocation = currentLocation;
-            _logger.LogInformation(
+            _logger.LogDebug(
                 "Agent location init (first seen): {Location}",
                 _lastChatAgentLocation);
             return;
@@ -503,7 +503,7 @@ public class OpenAIRunner : ILLMRunner
 
         if (string.Equals(currentLocation, _lastChatAgentLocation, StringComparison.OrdinalIgnoreCase))
         {
-            _logger.LogInformation(
+            _logger.LogDebug(
                 "Agent location unchanged: {Location}",
                 _lastChatAgentLocation);
             return;
@@ -511,7 +511,7 @@ public class OpenAIRunner : ILLMRunner
 
         var previousLocation = _lastChatAgentLocation;
         _lastChatAgentLocation = currentLocation;
-        _logger.LogInformation(
+        _logger.LogDebug(
             "Agent location changed: {Previous} -> {Current}",
             previousLocation,
             currentLocation);

@@ -221,7 +221,7 @@ public class LLMProcessRunner : ILLMRunner
             "use this for the agent_location when calling experts unless the user specifies another agent location to use.";
         var key = $"agent_location_init_{serviceObj.SessionId}_{Guid.NewGuid():N}";
         _systemMessages.TryAdd(key, new StringBuilder(message));
-        _logger.LogInformation(
+        _logger.LogDebug(
             "Agent location init (LLMProcessRunner): {Location}",
             serviceObj.ChatAgentLocation.Trim());
     }
