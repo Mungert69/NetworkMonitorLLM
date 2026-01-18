@@ -28,6 +28,7 @@ public class MonitorSimpleToolsBuilder : ToolsBuilderBase
     private readonly FunctionDefinition fn_run_openssl;
     private readonly FunctionDefinition fn_test_quantum_safety;
     private readonly FunctionDefinition fn_scan_quantum_ports;
+    private readonly FunctionDefinition fn_test_quantum_certificate;
 
     public MonitorSimpleToolsBuilder(UserInfo userInfo)
     {
@@ -52,6 +53,7 @@ public class MonitorSimpleToolsBuilder : ToolsBuilderBase
         fn_test_quantum_safety = QuantumTools.BuildTestQuantumSafetyFunction();
         // Define the scan_quantum_ports function
         fn_scan_quantum_ports = QuantumTools.BuildScanQuantumPortsFunction();
+        fn_test_quantum_certificate = QuantumTools.BuildTestQuantumCertificateFunction();
 
         // Build the tools list based on user account type
         _tools = new List<ToolDefinition>()
@@ -68,6 +70,7 @@ public class MonitorSimpleToolsBuilder : ToolsBuilderBase
             new ToolDefinition() { Function = fn_run_openssl, Type = "function" },
             new ToolDefinition() { Function = fn_test_quantum_safety, Type = "function" },
             new ToolDefinition() { Function = fn_scan_quantum_ports, Type = "function" },
+            new ToolDefinition() { Function = fn_test_quantum_certificate, Type = "function" },
             new ToolDefinition() { Function = fn_run_busybox, Type = "function" }
         };
     }

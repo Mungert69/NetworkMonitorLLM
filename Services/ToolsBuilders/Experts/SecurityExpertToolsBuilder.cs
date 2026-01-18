@@ -19,6 +19,7 @@ namespace NetworkMonitor.LLM.Services
     private readonly FunctionDefinition fn_run_openssl;
 
     private readonly FunctionDefinition fn_test_quantum_safety;
+    private readonly FunctionDefinition fn_test_quantum_certificate;
     private readonly FunctionDefinition fn_execute_query_security;
 
 
@@ -31,6 +32,7 @@ namespace NetworkMonitor.LLM.Services
       fn_execute_query_security = SecurityTools.BuildSecurityBooksQueryFunction();
 
       fn_test_quantum_safety = QuantumTools.BuildTestQuantumSafetyFunction();
+      fn_test_quantum_certificate = QuantumTools.BuildTestQuantumCertificateFunction();
 
 
       _tools = new List<ToolDefinition>()
@@ -38,6 +40,7 @@ namespace NetworkMonitor.LLM.Services
                 new ToolDefinition() { Function = fn_run_nmap, Type = "function" },
                 new ToolDefinition() { Function = fn_run_openssl, Type = "function" },
                 new ToolDefinition() { Function = fn_test_quantum_safety, Type = "function" },
+                new ToolDefinition() { Function = fn_test_quantum_certificate, Type = "function" },
                 new ToolDefinition() { Function = fn_execute_query_security, Type = "function" },
             };
     }
