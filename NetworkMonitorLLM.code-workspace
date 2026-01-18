@@ -8,6 +8,9 @@
 		},
 		{
 			"path": "../NetworkMonitorData"
+		},
+		{
+			"path": "../NetworkMonitorService"
 		}
 	],
 	"settings": {

@@ -16,6 +16,7 @@ namespace NetworkMonitor.LLM.Services
         private readonly FunctionDefinition fn_test_quantum_safety;
         private readonly FunctionDefinition fn_scan_quantum_ports;
         private readonly FunctionDefinition fn_get_quantum_algorithm_info;
+        private readonly FunctionDefinition fn_test_quantum_certificate;
         //private readonly FunctionDefinition fn_validate_quantum_config;
 
         public QuantumExpertToolsBuilder()
@@ -23,6 +24,7 @@ namespace NetworkMonitor.LLM.Services
             fn_test_quantum_safety = QuantumTools.BuildTestQuantumSafetyFunction();
             fn_scan_quantum_ports = QuantumTools.BuildScanQuantumPortsFunction();
             fn_get_quantum_algorithm_info = QuantumTools.BuildQuantumAlgoInfoFunction();
+            fn_test_quantum_certificate = QuantumTools.BuildTestQuantumCertificateFunction();
 
             // Define the tools list
             _tools = new List<ToolDefinition>()
@@ -30,6 +32,7 @@ namespace NetworkMonitor.LLM.Services
                 new ToolDefinition() { Function = fn_test_quantum_safety, Type = "function" },
                 new ToolDefinition() { Function = fn_scan_quantum_ports, Type = "function" },
                 new ToolDefinition() { Function = fn_get_quantum_algorithm_info, Type = "function" },
+                new ToolDefinition() { Function = fn_test_quantum_certificate, Type = "function" },
                // new ToolDefinition() { Function = fn_validate_quantum_config, Type = "function" },
             };
         }

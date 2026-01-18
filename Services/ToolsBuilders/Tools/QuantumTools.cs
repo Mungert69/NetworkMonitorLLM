@@ -146,4 +146,42 @@ public class QuantumTools
             }
         };
     }
+
+    public static FunctionDefinition BuildTestQuantumCertificateFunction()
+    {
+        return new FunctionDefinition
+        {
+            Name = "test_quantum_certificate",
+            Description = "Checks a target endpoint for quantum-safe certificate usage during the TLS handshake. Use this to assess whether the certificate uses post-quantum or hybrid signature/public-key algorithms.",
+            Parameters = new PropertyDefinition
+            {
+                Type = "object",
+                Properties = new Dictionary<string, PropertyDefinition>
+                {
+                    ["target"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "The target server IP or hostname, required. Example: 'example.com' or '192.168.1.1'."
+                    },
+                    ["port"] = new PropertyDefinition
+                    {
+                        Type = "integer",
+                        Description = "The TLS port to test, optional. Default is 443."
+                    },
+                    ["timeout"] = new PropertyDefinition
+                    {
+                        Type = "integer",
+                        Description = "The maximum time (in milliseconds) to wait for the check to complete, optional. Default is 59000ms."
+                    },
+                    ["agent_location"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Optional. Preferred agent location if testing from different network perspectives. " +
+                                      "Important for testing internal vs external services or geographic-specific configurations."
+                    }
+                },
+                Required = new List<string> { "target" }
+            }
+        };
+    }
 }
