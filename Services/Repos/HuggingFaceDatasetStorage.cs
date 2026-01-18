@@ -19,14 +19,16 @@ namespace NetworkMonitor.LLM.Services
         private readonly string _dataRepoId;
         private readonly string _token;
         private readonly HttpClient _httpClient;
+        private readonly string _serviceId;
         private const string ApiBaseUrl = "https://huggingface.co/api/datasets/";
 
-        public HuggingFaceDatasetStorage(MLParams mlParams)
+        public HuggingFaceDatasetStorage(MLParams mlParams, SystemParams systemParams)
         {
             _dataRepoId=mlParams.DataRepoId;
             _token=mlParams.HFToken;
             _httpClient = new HttpClient();
             _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {_token}");
+            _serviceId = SanitizeServiceId(systemParams.ServiceID);
         }
 
         public async Task<ConcurrentDictionary<string, Session>> LoadAllSessionsAsync()
@@ -36,7 +38,9 @@ namespace NetworkMonitor.LLM.Services
             try
             {
                 var files = await ListFilesInRepo();
-                var jsonFiles = files.Where(f => f.EndsWith(".json"));
+                var jsonFiles = files.Where(f =>
+                    f.StartsWith($"{_serviceId}_", StringComparison.OrdinalIgnoreCase) &&
+                    f.EndsWith(".json", StringComparison.OrdinalIgnoreCase));
 
                 foreach (var file in jsonFiles)
                 {
@@ -75,7 +79,10 @@ namespace NetworkMonitor.LLM.Services
             try
             {
                 var files = await ListFilesInRepo();
-                var userFiles = files.Where(f => f.Contains($"_{userId}_") && f.EndsWith(".json"));
+                var userFiles = files.Where(f =>
+                    f.Contains($"{_serviceId}_", StringComparison.OrdinalIgnoreCase) &&
+                    f.Contains($"_{userId}_") &&
+                    f.EndsWith(".json", StringComparison.OrdinalIgnoreCase));
 
                 foreach (var file in userFiles)
                 {
@@ -104,7 +111,7 @@ namespace NetworkMonitor.LLM.Services
 
         public async Task SaveHistoryAsync(HistoryDisplayName historyDisplayName)
         {
-            var fileName = $"{historyDisplayName.StartUnixTime}_{historyDisplayName.SessionId}.json";
+            var fileName = $"{_serviceId}_{historyDisplayName.StartUnixTime}_{historyDisplayName.SessionId}.json";
             var json = JsonConvert.SerializeObject(historyDisplayName, new JsonSerializerSettings
             {
                 ContractResolver = new CamelCasePropertyNamesContractResolver(),
@@ -119,7 +126,11 @@ namespace NetworkMonitor.LLM.Services
             try
             {
                 var files = await ListFilesInRepo();
-                var matchingFiles = files.Where(f => f.EndsWith($"_{sessionId}.json")).ToList();
+                var matchingFiles = files
+                    .Where(f =>
+                        f.StartsWith($"{_serviceId}_", StringComparison.OrdinalIgnoreCase) &&
+                        f.EndsWith($"_{sessionId}.json", StringComparison.OrdinalIgnoreCase))
+                    .ToList();
 
                 if (matchingFiles.Count == 0) return null;
 
@@ -138,7 +149,9 @@ namespace NetworkMonitor.LLM.Services
             try
             {
                 var files = await ListFilesInRepo();
-                var matchingFiles = files.Where(f => f.EndsWith($"_{sessionId}.json"));
+                var matchingFiles = files.Where(f =>
+                    f.StartsWith($"{_serviceId}_", StringComparison.OrdinalIgnoreCase) &&
+                    f.EndsWith($"_{sessionId}.json", StringComparison.OrdinalIgnoreCase));
 
                 foreach (var file in matchingFiles)
                 {
@@ -192,6 +205,14 @@ namespace NetworkMonitor.LLM.Services
         {
             public string Path { get; set; } = string.Empty;
             public string Type { get; set; } = string.Empty;
+        }
+
+        private static string SanitizeServiceId(string? serviceId)
+        {
+            if (string.IsNullOrWhiteSpace(serviceId)) return "default";
+            var invalidChars = System.IO.Path.GetInvalidFileNameChars();
+            var cleaned = new string(serviceId.Select(ch => invalidChars.Contains(ch) ? '_' : ch).ToArray());
+            return string.IsNullOrWhiteSpace(cleaned) ? "default" : cleaned;
         }
     }
 }

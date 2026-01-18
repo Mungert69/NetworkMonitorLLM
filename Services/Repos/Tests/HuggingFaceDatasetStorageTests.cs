@@ -22,9 +22,9 @@ public class HuggingFaceDatasetStorageTests
         handler.EnqueueResponse(HttpMethod.Get, "https://huggingface.co/api/datasets/repo/tree/main",
             new HttpResponseMessage(HttpStatusCode.OK)
             {
-                Content = new StringContent("[{\"path\":\"1_sess.json\"},{\"path\":\"notes.txt\"}]")
+                Content = new StringContent("[{\"path\":\"monitor_1_sess.json\"},{\"path\":\"notes.txt\"}]")
             });
-        handler.EnqueueResponse(HttpMethod.Get, "https://huggingface.co/api/datasets/repo/resolve/main/1_sess.json",
+        handler.EnqueueResponse(HttpMethod.Get, "https://huggingface.co/api/datasets/repo/resolve/main/monitor_1_sess.json",
             new HttpResponseMessage(HttpStatusCode.OK)
             {
                 Content = new StringContent(JsonConvert.SerializeObject(new HistoryDisplayName
@@ -45,7 +45,7 @@ public class HuggingFaceDatasetStorageTests
     public async Task SaveHistoryAsync_UploadsSerializedContent()
     {
         var handler = new StubHandler();
-        handler.EnqueueResponse(HttpMethod.Put, "https://huggingface.co/api/datasets/repo/write/main/5_id.json",
+        handler.EnqueueResponse(HttpMethod.Put, "https://huggingface.co/api/datasets/repo/write/main/monitor_5_id.json",
             new HttpResponseMessage(HttpStatusCode.OK));
 
         var storage = CreateStorage(handler);
@@ -68,9 +68,9 @@ public class HuggingFaceDatasetStorageTests
         handler.EnqueueResponse(HttpMethod.Get, "https://huggingface.co/api/datasets/repo/tree/main",
             new HttpResponseMessage(HttpStatusCode.OK)
             {
-                Content = new StringContent("[{\"path\":\"10_target.json\"}]")
+                Content = new StringContent("[{\"path\":\"monitor_10_target.json\"}]")
             });
-        handler.EnqueueResponse(HttpMethod.Delete, "https://huggingface.co/api/datasets/repo/delete/main/10_target.json",
+        handler.EnqueueResponse(HttpMethod.Delete, "https://huggingface.co/api/datasets/repo/delete/main/monitor_10_target.json",
             new HttpResponseMessage(HttpStatusCode.NoContent));
 
         var storage = CreateStorage(handler);
@@ -86,7 +86,11 @@ public class HuggingFaceDatasetStorageTests
             DataRepoId = "repo",
             HFToken = "token"
         };
-        var storage = new HuggingFaceDatasetStorage(mlParams);
+        var systemParams = new SystemParams
+        {
+            ServiceID = "monitor"
+        };
+        var storage = new HuggingFaceDatasetStorage(mlParams, systemParams);
 
         var client = new HttpClient(handler)
         {
