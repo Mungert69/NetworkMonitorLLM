@@ -2,9 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.IO;
+using System.Linq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using System.Threading.Tasks;
+using NetworkMonitor.Objects;
 using Betalgo.Ranul.OpenAI.ObjectModels.RequestModels;
 
 namespace NetworkMonitor.LLM.Services;
@@ -20,10 +22,17 @@ public interface IHistoryStorage
 
 public class FileSystemHistoryStorage : IHistoryStorage
 {
-    private readonly string _storagePath = "data";
+    private readonly string _storagePath;
 
     public FileSystemHistoryStorage()
     {
+        _storagePath = BuildStoragePath(null);
+        Directory.CreateDirectory(_storagePath); // Ensure the directory exists
+    }
+
+    public FileSystemHistoryStorage(SystemParams systemParams)
+    {
+        _storagePath = BuildStoragePath(systemParams.ServiceID);
         Directory.CreateDirectory(_storagePath); // Ensure the directory exists
     }
     public async Task<ConcurrentDictionary<string, Session>> LoadAllSessionsAsync()
@@ -124,5 +133,20 @@ public class FileSystemHistoryStorage : IHistoryStorage
         }
     }
 }
+
+    private static string BuildStoragePath(string? serviceId)
+    {
+        if (string.IsNullOrWhiteSpace(serviceId))
+        {
+            return "data";
+        }
+        var invalidChars = Path.GetInvalidFileNameChars();
+        var cleaned = new string(serviceId.Select(ch => invalidChars.Contains(ch) ? '_' : ch).ToArray());
+        if (string.IsNullOrWhiteSpace(cleaned))
+        {
+            return "data";
+        }
+        return Path.Combine("data", cleaned);
+    }
 
 }

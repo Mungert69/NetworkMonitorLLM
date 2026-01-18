@@ -17,10 +17,11 @@ namespace NetworkMonitor.LLM.Services
     {
         private readonly ConnectionMultiplexer _redis;
         private readonly IDatabase _db;
-        private readonly string _keyPrefix = "history:";
-        private const  string IndexKey   = "idx:history:all"; 
+        private readonly string _keyPrefix;
+        private readonly string _indexKey;
         private bool _disposed = false;
         private readonly ILogger _logger;
+        private readonly string _serviceId;
 
         public RedisHistoryStorage(ILogger<RedisHistoryStorage> logger, SystemParams systemParams)
         {
@@ -28,6 +29,9 @@ namespace NetworkMonitor.LLM.Services
             _logger = logger;
             _redis = ConnectionMultiplexer.Connect(configuration);
             _db = _redis.GetDatabase();
+            _serviceId = SanitizeServiceId(systemParams.ServiceID);
+            _keyPrefix = $"history:{_serviceId}:";
+            _indexKey = $"idx:history:{_serviceId}:all";
         }
 
         internal static ConfigurationOptions BuildConfiguration(string redisUrl, string redisSecret)
@@ -59,7 +63,7 @@ namespace NetworkMonitor.LLM.Services
 
         private async Task EnsureIndexSetAsync()
         {
-            if (await _db.SetLengthAsync(IndexKey) > 0) return;
+            if (await _db.SetLengthAsync(_indexKey) > 0) return;
 
             var server = GetServer();
             var keys = await GetKeysAsync(server, $"{_keyPrefix}*"); // full scan *once*
@@ -77,7 +81,7 @@ namespace NetworkMonitor.LLM.Services
 
             if (indexValues.Count > 0)
             {
-                await _db.SetAddAsync(IndexKey, indexValues.ToArray());
+                await _db.SetAddAsync(_indexKey, indexValues.ToArray());
             }
         }
 
@@ -88,7 +92,7 @@ namespace NetworkMonitor.LLM.Services
             //await EnsureIndexSetAsync(); /// remove this after first run 
 
             // 1) Grab your pre‐maintained index of history‐keys:
-            var rawKeys = await _db.SetMembersAsync(IndexKey);
+            var rawKeys = await _db.SetMembersAsync(_indexKey);
             if (rawKeys.Length == 0)
                 return sessions;
 
@@ -193,7 +197,7 @@ namespace NetworkMonitor.LLM.Services
             // **atomic**: store the blob and add the key to the index-set
             var tran = _db.CreateTransaction();
             _ = tran.StringSetAsync(key, json);
-            _ = tran.SetAddAsync(IndexKey, key);
+            _ = tran.SetAddAsync(_indexKey, key);
 
             await tran.ExecuteAsync().ConfigureAwait(false);
         }
@@ -216,7 +220,7 @@ namespace NetworkMonitor.LLM.Services
                 var keyString = k.ToString();
                 if (!string.IsNullOrEmpty(keyString))
                 {
-                    _ = tran.SetRemoveAsync(IndexKey, (RedisValue)keyString);
+                    _ = tran.SetRemoveAsync(_indexKey, (RedisValue)keyString);
                 }
             }
             await tran.ExecuteAsync().ConfigureAwait(false);
@@ -279,6 +283,14 @@ namespace NetworkMonitor.LLM.Services
                 }
                 _disposed = true;
             }
+        }
+
+        private static string SanitizeServiceId(string? serviceId)
+        {
+            if (string.IsNullOrWhiteSpace(serviceId)) return "default";
+            var invalidChars = System.IO.Path.GetInvalidFileNameChars();
+            var cleaned = new string(serviceId.Select(ch => invalidChars.Contains(ch) ? '_' : ch).ToArray());
+            return string.IsNullOrWhiteSpace(cleaned) ? "default" : cleaned;
         }
 
         ~RedisHistoryStorage()
