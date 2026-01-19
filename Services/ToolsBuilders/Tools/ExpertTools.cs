@@ -124,6 +124,33 @@ public class ExpertTools
         };
     }
 
+    public static FunctionDefinition BuildConnectExpertFunction()
+    {
+        return new FunctionDefinition
+        {
+            Name = "call_connect_expert",
+            Description = "Communicate a connect management request to a Connect Expert LLM. This expert can create, list, show source code, and delete custom .NET connect types that run periodically as part of monitoring. Use this when the user wants to add or manage connect types (not cmd processors). The expert does not have access to this conversation, so include all relevant details and any source code. Always include confirmation that you are authorized to perform this action.",
+            Parameters = new PropertyDefinition
+            {
+                Type = "object",
+                Properties = new Dictionary<string, PropertyDefinition>
+                {
+                    ["message"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "A detailed message describing what you want the connect expert to do. Include connect_type, desired behavior, and any relevant constraints. The expert will respond or ask for missing details. Always include confirmation that you are authorized to perform this action."
+                    },
+                    ["agent_location"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "The agent location on which the connect types should be managed. If not provided, the expert may ask the user to select an available agent."
+                    }
+                },
+                Required = new List<string> { "message" }
+            }
+        };
+    }
+
     public static FunctionDefinition BuildQuantumExpertFunction()
     {
         return new FunctionDefinition

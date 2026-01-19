@@ -47,6 +47,7 @@ public sealed class ToolsBuilderFactory : IToolsBuilderFactory
             { "monitorsys",  () => new MonitorToolsBuilder() },
             { "user",        () => new UserToolsBuilder() },
             { "cmdprocessor",() => new CmdProcessorExpertToolsBuilder() },
+            { "connect",     () => new ConnectExpertToolsBuilder() },
             { "nmap",        () => new SecurityExpertToolsBuilder() },
             { "meta",        () => new PenetrationExpertToolsBuilder() },
             { "search",      () => new SearchExpertToolsBuilder() },

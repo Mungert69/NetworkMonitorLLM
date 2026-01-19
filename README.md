@@ -41,6 +41,7 @@ This codebase implements a **modular**, **multi-backend** Large Language Model (
 
 * **`ToolsBuilderBase` & Derived Builders**:
   Define tools/functions for expert domains like Security, Penetration, Quantum, Search, CmdProcessor, etc., including their parameters and system prompts.
+  A dedicated Connect expert manages periodic connect types (not one-off commands) using `add_connect`, `delete_connect`, `get_connect_list`, and `get_connect_source_code`.
 
 * **`TokenBroadcasterBase` & Derived**:
   Parses LLM output for function calls (JSON or XML), sanitizes/repairs output, and broadcasts tokens/chunks to the response processor.
@@ -119,6 +120,9 @@ flowchart TD
 * **Add a new tool/expert**: Create a new `ToolsBuilder` and plug it into the relevant runner.
 * **Add new message types**: Extend `RabbitListener` and `LLMService`.
 
+## Connect expert N-shot
+The connect expert uses a separate N-shot flow to reflect periodic connect behavior and the `{ConnectType}Connect` class pattern.
+
 ---
 
 # History Display Names
@@ -182,5 +186,4 @@ Explore real-world examples of the system in action:
 - 🌐 **Official Project Site**  
   The Full Quantum Network Monitor Service in action.  
   [https://readyforquantum.com/?utm_source=github&utm_medium=referral&utm_campaign=readme](https://readyforquantum.com/?utm_source=github&utm_medium=referral&utm_campaign=networkmonitorllm_readme)
-
 

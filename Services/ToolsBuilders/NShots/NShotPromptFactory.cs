@@ -21,6 +21,10 @@ namespace NetworkMonitor.LLM.Services
             {
                 case "cmdprocessorxml":
                     return GetCmdProcessorXml(args);
+                case "connectxml":
+                    return GetConnectXml(args);
+                case "connect":
+                    return GetConnectPrompt(args);
                 case "user":
                     return GetUserSimulatorPrompt(args);
                 default:
@@ -510,6 +514,115 @@ Examples:
             ));
 
             return messages;
+        }
+
+        private static List<ChatMessage> GetConnectXml(params object[] args)
+        {
+            var messages = new List<ChatMessage>();
+
+            AddAssistantMessageWithToolCall(
+                messages,
+                "Please add a simple TCP connect check that runs periodically for my monitoring setup on agent London - UK",
+                @"<function_call name=""add_connect"">
+    <parameters>
+        <connect_type>Tcp</connect_type>
+        <source_code>
+        <![CDATA[
+using System;
+using System.Net.Sockets;
+using System.Threading.Tasks;
+using NetworkMonitor.Objects;
+
+namespace NetworkMonitor.Connection
+{
+    public class TcpConnect : NetConnect
+    {
+        public override async Task Connect()
+        {
+            Timer.Reset();
+            try
+            {
+                PreConnect();
+                var host = MpiStatic.Address;
+                var port = MpiStatic.Port == 0 ? 443 : MpiStatic.Port;
+
+                using var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                Timer.Start();
+
+                var connectTask = socket.ConnectAsync(host, port);
+                if (await Task.WhenAny(connectTask, Task.Delay(MpiStatic.Timeout)) != connectTask)
+                {
+                    ProcessException(""Connection timed out."", ""TimedOut"");
+                    return;
+                }
+
+                await connectTask;
+                Timer.Stop();
+                ProcessStatus(""Connected"", (ushort)Timer.ElapsedMilliseconds);
+            }
+            catch (Exception ex)
+            {
+                ProcessException(ex.Message, ""Exception"");
+            }
+            finally
+            {
+                PostConnect();
+            }
+        }
+    }
+}
+        ]]>
+        </source_code>
+        <agent_location>London - UK</agent_location>
+    </parameters>
+</function_call>",
+                @"{""message"" : ""Success: added Tcp connect"", ""success"" : true, ""agent_location"" : ""London - UK"" }",
+                "add_connect"
+            );
+
+            messages.Add(ChatMessage.FromAssistant(
+                "I have added a Tcp connect type. You can now use endpoint type 'tcp' when configuring hosts."
+            ));
+
+            AddAssistantMessageWithToolCall(
+                messages,
+                "What connect types are available on agent London - UK?",
+                @"<function_call name=""get_connect_list"">
+    <parameters>
+        <agent_location>London - UK</agent_location>
+    </parameters>
+</function_call>",
+                @"{""message"" : ""Success: got the list of connect types for the agent. connect_types : ['icmp','http','https','tcp']"", ""success"" : true, ""agent_location"" : ""London - UK"" }",
+                "get_connect_list"
+            );
+
+            messages.Add(ChatMessage.FromAssistant(
+                "Here is the current connect type list for London - UK."
+            ));
+
+            AddAssistantMessageWithToolCall(
+                messages,
+                "Please delete the Tcp connect type.",
+                @"<function_call name=""delete_connect"">
+    <parameters>
+        <connect_type>Tcp</connect_type>
+        <agent_location>London - UK</agent_location>
+    </parameters>
+</function_call>",
+                @"{""message"" : ""Success: deleted Tcp connect type"", ""success"" : true, ""agent_location"" : ""London - UK"" }",
+                "delete_connect"
+            );
+
+            messages.Add(ChatMessage.FromAssistant(
+                "The Tcp connect type has been removed from the agent."
+            ));
+
+            return messages;
+        }
+
+        private static List<ChatMessage> GetConnectPrompt(params object[] args)
+        {
+            return GetConnectXml(args);
         }
 
         // Example placeholder for additional prompts
