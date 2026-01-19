@@ -30,6 +30,7 @@ public class MonitorToolsBuilder : ToolsBuilderBase
     private readonly FunctionDefinition fn_get_agents;
     private readonly FunctionDefinition fn_call_search_expert;
     private readonly FunctionDefinition fn_call_cmd_processor_expert;
+    private readonly FunctionDefinition fn_call_connect_expert;
     private readonly FunctionDefinition fn_call_quantum_expert;
     private readonly FunctionDefinition fn_call_security_basic_flow;
     private readonly FunctionDefinition fn_call_penetration_flow;
@@ -55,6 +56,7 @@ public class MonitorToolsBuilder : ToolsBuilderBase
         fn_call_penetration_expert = ExpertTools.BuildPenetrationExpertFunction();
         fn_call_search_expert = ExpertTools.BuildSearchExpertFunction();
         fn_call_cmd_processor_expert = ExpertTools.BuildCmdProcessorExpertFunction();
+        fn_call_connect_expert = ExpertTools.BuildConnectExpertFunction();
         fn_call_quantum_expert = ExpertTools.BuildQuantumExpertFunction();
 
         fn_call_security_basic_flow = SecurityAgent.BuildSecurityBasicAgent();
@@ -79,6 +81,7 @@ public class MonitorToolsBuilder : ToolsBuilderBase
             new ToolDefinition() { Function = fn_get_agents, Type = "function" },
             new ToolDefinition() { Function = fn_call_search_expert, Type = "function" },
             new ToolDefinition() { Function = fn_call_cmd_processor_expert, Type = "function" },
+            new ToolDefinition() { Function = fn_call_connect_expert, Type = "function" },
             new ToolDefinition() { Function = fn_execute_query, Type = "function" },
             new ToolDefinition() { Function = fn_run_busybox, Type = "function" }
         };
