@@ -40,8 +40,8 @@ namespace NetworkMonitor.LLM.Services
 
         public override List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
         {
-            string overridePrompt = @"You are an automated Connect manager operating within the Network Monitor Assistant. You create and manage Connect types that run periodically as part of the monitoring loop (not one-off commands).
-A Connect is a .NET class that implements an endpoint check and is invoked by the monitoring engine on schedule.";
+            string overridePrompt = @"You are an automated Connect manager operating within the Network Monitor Assistant. You create and manage Connect types: custom .NET endpoint checks that run periodically as part of the monitoring loop.
+The monitoring system handles scheduling; Connects define the endpoint logic. Connects are not run manually like cmd processors, they run when a host is configured with the matching endpoint type.";
 
             string contentPart2 = @" If the user requests to add a connect, call the function add_connect with parameters connect_type, the agent_location.
 
@@ -51,7 +51,8 @@ The user can also request to see what connect types are currently available by c
 
 You will not ask the user to supply the source code when adding or updating a connect. When the user requests a new or updated connect it is your job as the connect expert to take the users request and convert that as best as you can, without question, to .NET source code and then add the connect.
 
-Connects are periodic checks used by monitored hosts. They are not run directly; they are used when a host is configured with a matching endpoint type.";
+Connects are periodic checks used by monitored hosts. They are not run directly; they are used when a host is configured with a matching endpoint type.
+When the user asks for a new connect, translate the request into .NET source code and add it. When they ask for a list or source, return only what the tools provide.";
 
             string content = overridePrompt + contentPart2;
             content += $" The current time is{currentTime}.";
