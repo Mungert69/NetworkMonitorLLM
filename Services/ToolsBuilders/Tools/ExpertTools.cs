@@ -129,7 +129,7 @@ public class ExpertTools
         return new FunctionDefinition
         {
             Name = "call_connect_expert",
-            Description = "Communicate a connect management request to a Connect Expert LLM. This expert can create, list, show source code, and delete custom .NET connect types that run periodically as part of monitoring. Use this when the user wants to add or manage connect types (not cmd processors). The expert does not have access to this conversation, so include all relevant details and any source code. Always include confirmation that you are authorized to perform this action.",
+            Description = "Communicate a connect management request to a Connect Expert LLM. This expert creates and manages custom .NET endpoint types (Connects) that run periodically as part of monitoring. The monitoring system handles scheduling; Connects define the endpoint logic and cannot be run manually like cmd processors. Use this when the user wants to add, list, delete, or view Connect source.",
             Parameters = new PropertyDefinition
             {
                 Type = "object",
@@ -138,7 +138,7 @@ public class ExpertTools
                     ["message"] = new PropertyDefinition
                     {
                         Type = "string",
-                        Description = "A detailed message describing what you want the connect expert to do. Include connect_type, desired behavior, and any relevant constraints. The expert will respond or ask for missing details. Always include confirmation that you are authorized to perform this action."
+                        Description = "A concise message describing what you want the connect expert to do. Include connect_type and the desired behavior. Use this to request adding a new Connect, listing Connects, deleting a Connect, or retrieving its source code. Always include confirmation that you are authorized to perform this action."
                     },
                     ["agent_location"] = new PropertyDefinition
                     {
