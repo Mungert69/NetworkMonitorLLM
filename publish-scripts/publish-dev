@@ -6,6 +6,7 @@
 ./publish-instance eu BlogMonitor
 ./publish-instance eu Quantum
 ./publish-instance eu Timesfm
+./publish-instance eu Connect
 #sudo ./publish-instance eu MonitorSys
 ./publish-instance eu Monitor
 ./publish-instance eu json_dynamic
