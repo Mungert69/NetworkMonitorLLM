@@ -586,6 +586,141 @@ namespace NetworkMonitor.Connection
 
             AddAssistantMessageWithToolCall(
                 messages,
+                "Please add an API Health Check connect that pings a URL, checks status, and optionally validates JSON or content, on agent London - UK",
+                @"<function_call name=""add_connect"">
+    <parameters>
+        <connect_type>ApiHealth</connect_type>
+        <source_code>
+        <![CDATA[
+using System;
+using System.Collections.Generic;
+using System.Net.Http;
+using System.Text.Json;
+using System.Threading.Tasks;
+using NetworkMonitor.Objects;
+using NetworkMonitor.Utils;
+
+namespace NetworkMonitor.Connection
+{
+    public class ApiHealthConnect : NetConnect
+    {
+        private static readonly List<ArgSpec> _schema = new()
+        {
+            new() { Key = ""url"", Required = false, IsFlag = false, TypeHint = ""value"", Help = ""API URL (defaults to Address)"" },
+            new() { Key = ""method"", Required = false, IsFlag = false, TypeHint = ""value"", DefaultValue = ""GET"", Help = ""HTTP method"" },
+            new() { Key = ""status"", Required = false, IsFlag = false, TypeHint = ""int"", DefaultValue = ""200"", Help = ""Expected HTTP status code"" },
+            new() { Key = ""jsonKey"", Required = false, IsFlag = false, TypeHint = ""value"", Help = ""JSON key path to check (dot-separated)"" },
+            new() { Key = ""contains"", Required = false, IsFlag = false, TypeHint = ""value"", Help = ""Substring that must appear in response body"" }
+        };
+
+        private static bool TryGetJsonPath(JsonElement element, string path)
+        {
+            var current = element;
+            foreach (var segment in path.Split('.', StringSplitOptions.RemoveEmptyEntries))
+            {
+                if (!current.TryGetProperty(segment, out var next))
+                {
+                    return false;
+                }
+                current = next;
+            }
+            return true;
+        }
+
+        public override async Task Connect()
+        {
+            PreConnect();
+            Timer.Reset();
+
+            try
+            {
+                var parsed = CliArgParser.Parse(MpiStatic.Args ?? string.Empty, _schema);
+                if (!parsed.Success)
+                {
+                    ProcessException(parsed.Message, ""BadArgs"");
+                    return;
+                }
+
+                string url = parsed.GetString(""url"", MpiStatic.Address);
+                if (!url.StartsWith(""http"", StringComparison.OrdinalIgnoreCase))
+                {
+                    url = ""https://"" + url;
+                }
+
+                string method = parsed.GetString(""method"", ""GET"").ToUpperInvariant();
+                int expectedStatus = parsed.GetInt(""status"", 200);
+                string jsonKey = parsed.GetString(""jsonKey"", """");
+                string contains = parsed.GetString(""contains"", """");
+
+                using var client = new HttpClient
+                {
+                    Timeout = TimeSpan.FromMilliseconds(MpiStatic.Timeout)
+                };
+
+                var request = new HttpRequestMessage(new HttpMethod(method), url);
+                Timer.Start();
+                var response = await client.SendAsync(request, Cts.Token);
+                Timer.Stop();
+
+                if ((int)response.StatusCode != expectedStatus)
+                {
+                    ProcessException($""Unexpected status {(int)response.StatusCode}"", ""BadStatus"");
+                    return;
+                }
+
+                if (!string.IsNullOrWhiteSpace(jsonKey) || !string.IsNullOrWhiteSpace(contains))
+                {
+                    var body = await response.Content.ReadAsStringAsync(Cts.Token);
+
+                    if (!string.IsNullOrWhiteSpace(contains) && !body.Contains(contains, StringComparison.OrdinalIgnoreCase))
+                    {
+                        ProcessException($""Body missing: {contains}"", ""MissingContent"");
+                        return;
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(jsonKey))
+                    {
+                        using var doc = JsonDocument.Parse(body);
+                        if (!TryGetJsonPath(doc.RootElement, jsonKey))
+                        {
+                            ProcessException($""JSON key missing: {jsonKey}"", ""JsonMissing"");
+                            return;
+                        }
+                    }
+                }
+
+                ProcessStatus(""API OK"", (ushort)Timer.ElapsedMilliseconds);
+            }
+            catch (OperationCanceledException)
+            {
+                ProcessException(""Timeout"", ""Timeout"");
+            }
+            catch (Exception ex)
+            {
+                ProcessException(ex.Message, ""Exception"");
+            }
+            finally
+            {
+                PostConnect();
+            }
+        }
+    }
+}
+        ]]>
+        </source_code>
+        <agent_location>London - UK</agent_location>
+    </parameters>
+</function_call>",
+                @"{""message"" : ""Success: added ApiHealth connect"", ""success"" : true, ""agent_location"" : ""London - UK"" }",
+                "add_connect"
+            );
+
+            messages.Add(ChatMessage.FromAssistant(
+                "I have added the ApiHealth connect type. Configure it via Args (e.g., --url https://api.example.com --method GET --status 200 --jsonKey data.ok --contains healthy)."
+            ));
+
+            AddAssistantMessageWithToolCall(
+                messages,
                 "What connect types are available on agent London - UK?",
                 @"<function_call name=""get_connect_list"">
     <parameters>
@@ -615,6 +750,23 @@ namespace NetworkMonitor.Connection
 
             messages.Add(ChatMessage.FromAssistant(
                 "The Tcp connect type has been removed from the agent."
+            ));
+
+            AddAssistantMessageWithToolCall(
+                messages,
+                "Please delete the ApiHealth connect type.",
+                @"<function_call name=""delete_connect"">
+    <parameters>
+        <connect_type>ApiHealth</connect_type>
+        <agent_location>London - UK</agent_location>
+    </parameters>
+</function_call>",
+                @"{""message"" : ""Success: deleted ApiHealth connect type"", ""success"" : true, ""agent_location"" : ""London - UK"" }",
+                "delete_connect"
+            );
+
+            messages.Add(ChatMessage.FromAssistant(
+                "The ApiHealth connect type has been removed from the agent."
             ));
 
             return messages;
