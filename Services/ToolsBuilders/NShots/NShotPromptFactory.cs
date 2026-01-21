@@ -531,6 +531,7 @@ Examples:
 using System;
 using System.Net.Sockets;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using NetworkMonitor.Objects;
 
 namespace NetworkMonitor.Connection
@@ -543,6 +544,7 @@ namespace NetworkMonitor.Connection
             try
             {
                 PreConnect();
+                Logger?.LogInformation(""TcpConnect starting for {Address}"", MpiStatic.Address);
                 var host = MpiStatic.Address;
                 var port = MpiStatic.Port == 0 ? 443 : MpiStatic.Port;
 
@@ -604,6 +606,7 @@ namespace NetworkMonitor.Connection
 {
     public class ApiHealthConnect : NetConnect
     {
+        private const string ProcessorType = ""HttpProbe"";
         private static readonly List<ArgSpec> _schema = new()
         {
             new() { Key = ""url"", Required = false, IsFlag = false, TypeHint = ""value"", Help = ""API URL (defaults to Address)"" },
@@ -641,6 +644,7 @@ namespace NetworkMonitor.Connection
                     return;
                 }
 
+                Logger?.LogInformation(""ApiHealthConnect running with args: {Args}"", MpiStatic.Args);
                 string url = parsed.GetString(""url"", MpiStatic.Address);
                 if (!url.StartsWith(""http"", StringComparison.OrdinalIgnoreCase))
                 {
@@ -652,44 +656,32 @@ namespace NetworkMonitor.Connection
                 string jsonKey = parsed.GetString(""jsonKey"", """");
                 string contains = parsed.GetString(""contains"", """");
 
-                using var client = new HttpClient
+                var processor = CmdProcessorProvider?.GetCmdProcessor(ProcessorType);
+                if (processor == null)
                 {
-                    Timeout = TimeSpan.FromMilliseconds(MpiStatic.Timeout)
-                };
-
-                var request = new HttpRequestMessage(new HttpMethod(method), url);
-                Timer.Start();
-                var response = await client.SendAsync(request, Cts.Token);
-                Timer.Stop();
-
-                if ((int)response.StatusCode != expectedStatus)
-                {
-                    ProcessException($""Unexpected status {(int)response.StatusCode}"", ""BadStatus"");
+                    ProcessException($""Cmd processor '{ProcessorType}' not available"", ""NoProcessor"");
                     return;
                 }
 
-                if (!string.IsNullOrWhiteSpace(jsonKey) || !string.IsNullOrWhiteSpace(contains))
+                var args = $""--url {url} --method {method} --status {expectedStatus}"";
+                if (!string.IsNullOrWhiteSpace(jsonKey))
                 {
-                    var body = await response.Content.ReadAsStringAsync(Cts.Token);
-
-                    if (!string.IsNullOrWhiteSpace(contains) && !body.Contains(contains, StringComparison.OrdinalIgnoreCase))
-                    {
-                        ProcessException($""Body missing: {contains}"", ""MissingContent"");
-                        return;
-                    }
-
-                    if (!string.IsNullOrWhiteSpace(jsonKey))
-                    {
-                        using var doc = JsonDocument.Parse(body);
-                        if (!TryGetJsonPath(doc.RootElement, jsonKey))
-                        {
-                            ProcessException($""JSON key missing: {jsonKey}"", ""JsonMissing"");
-                            return;
-                        }
-                    }
+                    args += $"" --jsonKey {jsonKey}"";
+                }
+                if (!string.IsNullOrWhiteSpace(contains))
+                {
+                    args += $"" --contains {contains}"";
                 }
 
-                ProcessStatus(""API OK"", (ushort)Timer.ElapsedMilliseconds);
+                var result = await processor.RunCommand(args, Cts.Token, null);
+                if (!result.Success)
+                {
+                    ProcessException(result.Message ?? ""Probe failed"", ""ProbeFailed"");
+                    return;
+                }
+
+                Timer.Stop();
+                ProcessStatus(""API OK"", (ushort)Timer.ElapsedMilliseconds, result.Message ?? string.Empty);
             }
             catch (OperationCanceledException)
             {
@@ -767,6 +759,91 @@ namespace NetworkMonitor.Connection
 
             messages.Add(ChatMessage.FromAssistant(
                 "The ApiHealth connect type has been removed from the agent."
+            ));
+
+            AddAssistantMessageWithToolCall(
+                messages,
+                "Create a new connect that runs a complex TLS scan using a cmd processor. If the cmd processor does not exist, create it first.",
+                @"<function_call name=""call_cmd_processor_expert"">
+    <parameters>
+        <message>""Create a cmd processor named TlsDeepScan that runs a detailed TLS scan for a target host and port using schema-based args: --target (required), --port (default 443), --timeout (ms). Return a concise summary. Confirm authorized to create it.""</message>
+        <agent_location>London - UK</agent_location>
+    </parameters>
+</function_call>",
+                @"{""message"" : ""Success: added TlsDeepScan cmd processor"", ""success"" : true, ""agent_location"" : ""London - UK"" }",
+                "call_cmd_processor_expert"
+            );
+
+            AddAssistantMessageWithToolCall(
+                messages,
+                "Now add a connect that invokes the TlsDeepScan cmd processor for each host.",
+                @"<function_call name=""add_connect"">
+    <parameters>
+        <connect_type>TlsDeepConnect</connect_type>
+        <source_code>
+        <![CDATA[
+using System;
+using System.Threading.Tasks;
+using NetworkMonitor.Objects;
+
+namespace NetworkMonitor.Connection
+{
+    public class TlsDeepConnect : NetConnect
+    {
+        private const string ProcessorType = ""TlsDeepScan"";
+
+        public override async Task Connect()
+        {
+            PreConnect();
+            Timer.Reset();
+
+            try
+            {
+                var processor = CmdProcessorProvider?.GetCmdProcessor(ProcessorType);
+                if (processor == null)
+                {
+                    ProcessException($""Cmd processor '{ProcessorType}' not available"", ""NoProcessor"");
+                    return;
+                }
+
+                var port = MpiStatic.Port == 0 ? 443 : MpiStatic.Port;
+                var args = $""--target {MpiStatic.Address} --port {port} --timeout {MpiStatic.Timeout}"";
+                var result = await processor.RunCommand(args, Cts.Token, null);
+                if (!result.Success)
+                {
+                    ProcessException(result.Message ?? ""Scan failed"", ""ScanFailed"");
+                    return;
+                }
+
+                Timer.Stop();
+                ProcessStatus(""TLS scan complete"", (ushort)Timer.ElapsedMilliseconds, result.Message ?? string.Empty);
+            }
+            catch (OperationCanceledException)
+            {
+                ProcessException(""Timeout"", ""Timeout"");
+            }
+            catch (Exception ex)
+            {
+                ProcessException(ex.Message, ""Exception"");
+            }
+            finally
+            {
+                PostConnect();
+            }
+        }
+    }
+}
+        ]]>
+        </source_code>
+        <agent_location>London - UK</agent_location>
+    </parameters>
+</function_call>",
+                @"{""message"" : ""Success: added TlsDeepConnect connect"", ""success"" : true, ""agent_location"" : ""London - UK"" }",
+                "add_connect"
+            );
+
+            messages.Add(ChatMessage.FromAssistant(
+                "I have added the TlsDeepConnect connect type, which calls the TlsDeepScan cmd processor."
             ));
 
             return messages;
