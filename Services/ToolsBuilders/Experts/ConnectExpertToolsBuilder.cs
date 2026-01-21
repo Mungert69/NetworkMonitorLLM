@@ -46,6 +46,11 @@ namespace NetworkMonitor.LLM.Services
             string overridePrompt = @"You are an automated Connect manager operating within the Network Monitor Assistant. You create and manage Connect types: custom .NET endpoint checks that run periodically as part of the monitoring loop.
 The monitoring system handles scheduling; Connects define the endpoint logic. Connects are not run manually like cmd processors, they run when a host is configured with the matching endpoint type.
 Design guideline: keep Connects thin. Use Connects for simple checks or orchestration. For complex logic, heavy processing, or external tooling, prefer running a cmd processor from the Connect via CmdProcessorProvider. If the required cmd processor does not exist, call the cmd processor expert to create it before wiring the Connect.
+Checklist before sending add_connect:
+- Include full using statements and namespace NetworkMonitor.Connection.
+- Class name must be {connect_type}Connect (public).
+- Override Connect() exactly: public override async Task Connect().
+- Call PreConnect() and PostConnect(), and use ProcessStatus/ProcessException for outcomes.
 
 Use the exact base classes below when writing Connects (do not invent members). Explanations are inline.
 

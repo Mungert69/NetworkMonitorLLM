@@ -597,8 +597,8 @@ namespace NetworkMonitor.Connection
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
-using System.Text.Json;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using NetworkMonitor.Objects;
 using NetworkMonitor.Utils;
 
@@ -615,20 +615,6 @@ namespace NetworkMonitor.Connection
             new() { Key = ""jsonKey"", Required = false, IsFlag = false, TypeHint = ""value"", Help = ""JSON key path to check (dot-separated)"" },
             new() { Key = ""contains"", Required = false, IsFlag = false, TypeHint = ""value"", Help = ""Substring that must appear in response body"" }
         };
-
-        private static bool TryGetJsonPath(JsonElement element, string path)
-        {
-            var current = element;
-            foreach (var segment in path.Split('.', StringSplitOptions.RemoveEmptyEntries))
-            {
-                if (!current.TryGetProperty(segment, out var next))
-                {
-                    return false;
-                }
-                current = next;
-            }
-            return true;
-        }
 
         public override async Task Connect()
         {
