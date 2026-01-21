@@ -21,6 +21,7 @@ namespace NetworkMonitor.LLM.Services
         private readonly FunctionDefinition fn_get_connect_source_code;
         private readonly FunctionDefinition fn_add_connect;
         private readonly FunctionDefinition fn_delete_connect;
+        private readonly FunctionDefinition fn_call_cmd_processor_expert;
 
         public ConnectExpertToolsBuilder()
         {
@@ -28,13 +29,15 @@ namespace NetworkMonitor.LLM.Services
             fn_get_connect_source_code = ConnectTools.BuildSourceCodeFunction();
             fn_add_connect = ConnectTools.BuildAddFunction();
             fn_delete_connect = ConnectTools.BuildDeleteFunction();
+            fn_call_cmd_processor_expert = ExpertTools.BuildCmdProcessorExpertFunction();
 
             _tools = new List<ToolDefinition>()
             {
                 new ToolDefinition() { Function = fn_get_connect_list, Type = "function" },
                 new ToolDefinition() { Function = fn_get_connect_source_code, Type = "function" },
                 new ToolDefinition() { Function = fn_add_connect, Type = "function" },
-                new ToolDefinition() { Function = fn_delete_connect, Type = "function" }
+                new ToolDefinition() { Function = fn_delete_connect, Type = "function" },
+                new ToolDefinition() { Function = fn_call_cmd_processor_expert, Type = "function" }
             };
         }
 
@@ -42,6 +45,7 @@ namespace NetworkMonitor.LLM.Services
         {
             string overridePrompt = @"You are an automated Connect manager operating within the Network Monitor Assistant. You create and manage Connect types: custom .NET endpoint checks that run periodically as part of the monitoring loop.
 The monitoring system handles scheduling; Connects define the endpoint logic. Connects are not run manually like cmd processors, they run when a host is configured with the matching endpoint type.
+Design guideline: keep Connects thin. Use Connects for simple checks or orchestration. For complex logic, heavy processing, or external tooling, prefer running a cmd processor from the Connect via CmdProcessorProvider. If the required cmd processor does not exist, call the cmd processor expert to create it before wiring the Connect.
 
 Use the exact base classes below when writing Connects (do not invent members). Explanations are inline.
 
@@ -61,6 +65,10 @@ public abstract class NetConnect : INetConnect
     private ushort _roundTrip;
     private bool _isLongRunning = false;
     protected Stopwatch Timer = new Stopwatch();                       // Use for response time measurements
+    protected ILogger? Logger { get; private set; }
+    protected NetConnectConfig? NetConfig { get; private set; }
+    protected ICmdProcessorProvider? CmdProcessorProvider { get; private set; }
+    protected IBrowserHost? BrowserHost { get; private set; }
 
     public ushort RoundTrip { get => _roundTrip; set => _roundTrip = value; }
     public uint PiID { get => _piID; set => _piID = value; }
@@ -75,6 +83,17 @@ public abstract class NetConnect : INetConnect
     protected int ExtendTimeoutMultiplier { get => _extendTimeoutMultiplier; set => _extendTimeoutMultiplier = value; }
 
     public abstract Task Connect();                                    // Implement your check here
+    public virtual void Init(
+        ILogger logger,
+        NetConnectConfig cfg,
+        ICmdProcessorProvider? cmdProcessorProvider = null,
+        IBrowserHost? browserHost = null)
+    {
+        Logger = logger;
+        NetConfig = cfg;
+        CmdProcessorProvider = cmdProcessorProvider;
+        BrowserHost = browserHost;
+    }
 
     public void PreConnect()
     {
@@ -156,6 +175,14 @@ public class MPIStatic
 }";
 
             string contentPart2 = @"
+// Dynamic Connects may use a parameterless constructor; the runtime will call Init(...) to inject Logger/NetConfig/CmdProcessorProvider/BrowserHost.
+// You may still provide constructors or static Create methods if you prefer, but they are optional.
+// Quick usage examples:
+// Logger?.LogInformation(""Starting connect for {Address}"", MpiStatic.Address);
+// var binPath = NetConfig?.CommandPath; // access global config values
+// var processor = CmdProcessorProvider?.GetCmdProcessor(""nmap""); // run a cmd processor if needed
+// var status = await BrowserHost!.RunWithPage(page => page.TitleAsync(), Cts.Token); // shared Chromium for full-page checks
+
 // MPIConnect result container (full)
 public class MPIConnect
 {

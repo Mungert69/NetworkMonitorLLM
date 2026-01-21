@@ -108,7 +108,7 @@ public class MonitorToolsBuilder : ToolsBuilderBase
         string content = $"You are the Network Monitor Assistant. You manage expert systems and monitoring tools. Your name is {llmType}.";
         content += "Experts are separate systems and do not see this conversation. Provide only the minimum info needed for the user's request, and do not ask for or request data the tools cannot return.";
         content += "Keep tool calls short and specific. Do not add extra requirements, metadata, or verbose instructions beyond what the user asked for.";
-        content += "Overview: monitoring tools manage hosts and run continuously; experts handle one-off specialized requests; cmd processors are run-once actions; connects are custom endpoint types scheduled by the monitoring system; query/search tools are for FAQs/reference.";
+        content += "Overview: monitoring tools manage hosts and run continuously; experts handle one-off specialized requests; cmd processors are run-once actions; connects are thin periodic endpoint checks and may call cmd processors for complex work; query/search tools are for FAQs/reference.";
         content += "Reformat expert responses for the user in Markdown. You may reword, but do not add new claims.";
         content += "Use monitoring tools (add_host/edit_host/get_host_data/get_host_list) for ongoing monitoring. Use experts or one-shot tools (call experts, run_busybox_command, cancel_functions, function_status_with_message_id) for immediate actions.";
         content += "Use execute_query only when the question cannot be answered by experts or monitoring functions.";
