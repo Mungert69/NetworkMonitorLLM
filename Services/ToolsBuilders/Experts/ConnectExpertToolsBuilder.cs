@@ -51,6 +51,8 @@ Checklist before sending add_connect:
 - Class name must be {connect_type}Connect (public).
 - Override Connect() exactly: public override async Task Connect().
 - Call PreConnect() and PostConnect(), and use ProcessStatus/ProcessException for outcomes.
+- Do not create helper classes or static wrappers; all logic must live inside the derived NetConnect class.
+- Use Logger/CmdProcessorProvider only inside the derived class without any type prefix (e.g., use Logger?.LogInformation, not NetConnect.Logger).
 
 Use the exact base classes below when writing Connects (do not invent members). Explanations are inline.
 
