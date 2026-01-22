@@ -642,7 +642,7 @@ namespace NetworkMonitor.Connection
                 string jsonKey = parsed.GetString(""jsonKey"", """");
                 string contains = parsed.GetString(""contains"", """");
 
-                var processor = CmdProcessorProvider?.GetCmdProcessor(ProcessorType);
+                var processor = CmdProcessorProvider?.GetProcessor(ProcessorType);
                 if (processor == null)
                 {
                     ProcessException($""Cmd processor '{ProcessorType}' not available"", ""NoProcessor"");
