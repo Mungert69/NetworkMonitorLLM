@@ -37,6 +37,85 @@ This codebase implements a **modular**, **multi-backend** Large Language Model (
 * **`OpenAIRunner`**:
   Handles OpenAI and HuggingFace chat completions (via flag), function/tool calls, and session history.
 
+---
+
+# Model Selection and Provider Configuration
+
+This service supports two main LLM modes that are selected per runner type and app settings:
+
+## TurboLLM (OpenAI schema)
+
+TurboLLM uses the OpenAI chat-completions schema via `OpenAIApi`.
+
+Key settings:
+
+```json
+{
+  "LlmUseHF": false,
+  "LlmProvider": "OpenAI",
+  "LlmGptModel": "gpt-5-mini",
+  "GptModelVersion": "gpt",
+  "OpenAIApiKey": ".env",
+  "LlmOpenAIUrl": ""
+}
+```
+
+Notes:
+
+- If `LlmOpenAIUrl` is empty, the OpenAI SDK uses the default OpenAI base domain.
+- If `LlmOpenAIUrl` is set, only its **base domain** is used (the path is ignored).
+
+## HugLLM (HF JSON schema)
+
+HugLLM uses the HuggingFace/OpenRouter JSON schema via `HuggingFaceApi`.
+
+Key settings:
+
+```json
+{
+  "LlmUseHF": true,
+  "LlmHFModelID": "mistralai/devstral-2512:free",
+  "LlmHFKey": "sk-or-…",
+  "LlmHFUrl": "https://openrouter.ai/api/v1/chat/completions",
+  "LlmHFModelVersion": "llama_3.2"
+}
+```
+
+Notes:
+
+- `LlmHFUrl` is used to derive the **base domain** for the HTTP client.
+- `LlmHFModelID` must be a model ID accepted by the HF/OpenRouter endpoint.
+
+## Provider Routing
+
+Runner selection is fixed in code:
+
+- `TurboLLM` → `OpenAIRunner(useHF=false)` → provider from `LlmProvider`
+- `HugLLM` → `OpenAIRunner(useHF=true)` → provider forced to `HuggingFace`
+
+The `LlmProvider` field supports:
+
+```text
+OpenAI | HuggingFace | OpenAIRabbit | HuggingFaceRabbit
+```
+
+`appsettings-eu-timesfm.json` currently uses `HuggingFaceRabbit` while the other EU configs use `OpenAI`.
+
+## Tool Calling IDs
+
+Some providers require short alphanumeric tool-call IDs. Configure:
+
+```json
+{
+  "LlmToolCallIdLength": 9,
+  "LlmToolCallIdPrefix": ""
+}
+```
+
+If a provider rejects tool calls, set `LlmHfSupportsFunctionCalling: false` to fall back to JSON/XML parsing.
+
+---
+
 ## 3. Function/Tool Calling
 
 * **`ToolsBuilderBase` & Derived Builders**:
@@ -186,4 +265,3 @@ Explore real-world examples of the system in action:
 - 🌐 **Official Project Site**  
   The Full Quantum Network Monitor Service in action.  
   [https://readyforquantum.com/?utm_source=github&utm_medium=referral&utm_campaign=readme](https://readyforquantum.com/?utm_source=github&utm_medium=referral&utm_campaign=networkmonitorllm_readme)
-
