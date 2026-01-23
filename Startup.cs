@@ -14,9 +14,9 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-using NetworkMonitor.Utils;
 using NetworkMonitor.Objects.Factory;
 using NetworkMonitor.Objects.Repository;
+using NetworkMonitor.Utils;
 using HostInitActions;
 using Microsoft.Extensions.Logging;
 using NetworkMonitor.Utils.Helpers;
@@ -72,6 +72,7 @@ namespace NetworkMonitor.LLM
                 var systemParamsHelper = provider.GetRequiredService<ISystemParamsHelper>();
                 var mlParams = systemParamsHelper.GetMLParams();
                 var useHF = mlParams.LlmUseHF;
+                StringUtils.ConfigureToolCallId(mlParams.LlmToolCallIdPrefix, mlParams.LlmToolCallIdLength);
                 OpenAIOptions openAIOptions;
                 if (useHF)
                 {
@@ -96,6 +97,11 @@ namespace NetworkMonitor.LLM
                     {
                         ApiKey = mlParams.OpenAIApiKey,
                     };
+                    if (!string.IsNullOrWhiteSpace(mlParams.LlmOpenAIUrl)
+                        && Uri.TryCreate(mlParams.LlmOpenAIUrl, UriKind.Absolute, out var openAiUri))
+                    {
+                        openAIOptions.BaseDomain = openAiUri.GetLeftPart(UriPartial.Authority);
+                    }
                 }
 
                 // Inner (native) handler
