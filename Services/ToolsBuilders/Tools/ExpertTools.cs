@@ -35,10 +35,10 @@ public class ExpertTools
                     ["agent_location"] = new PropertyDefinition
                     {
                         Type = "string",
-                        Description = "The agent location that will execute the secutiry assessment. If no location is specified ask the user to choose from available agents to ensure the scan is executed from the correct network or geographic location."
+                        Description = "The agent location that will execute the secutiry assessment."
                     }
                 },
-                Required = new List<string> { "message" }
+                Required = new List<string> { "message","agent_location" }
             }
         };
     }
@@ -62,10 +62,10 @@ public class ExpertTools
                     ["agent_location"] = new PropertyDefinition
                     {
                         Type = "string",
-                        Description = "The agent location that will execute the penetration test. If no location is specified ask the user to choose from available agents to ensure the scan is executed from the correct network or geographic location."
+                        Description = "The agent location that will execute the penetration test."
                     }
                 },
-                Required = new List<string> { "message" }
+                Required = new List<string> { "message","agent_location" }
             }
         };
     }
@@ -92,7 +92,7 @@ public class ExpertTools
                         Description = "The agent location that will perform the web search"
                     }
                 },
-                Required = new List<string> { "message" }
+                Required = new List<string> { "message","agent_location"}
             }
         };
     }
@@ -116,10 +116,10 @@ public class ExpertTools
                     ["agent_location"] = new PropertyDefinition
                     {
                         Type = "string",
-                        Description = "The agent location on which the cmd processors should be managed. If not provided, the expert may ask the user to select an available agent."
+                        Description = "The agent location on which the cmd processors should be managed."
                     }
                 },
-                Required = new List<string> { "message" }
+                Required = new List<string> { "message","agent_location" }
             }
         };
     }
@@ -143,10 +143,10 @@ public class ExpertTools
                     ["agent_location"] = new PropertyDefinition
                     {
                         Type = "string",
-                        Description = "The agent location on which the connect types should be managed. If not provided, the expert may ask the user to select an available agent."
+                        Description = "The agent location on which the connect types should be managed."
                     }
                 },
-                Required = new List<string> { "message" }
+                Required = new List<string> { "message","agent_location" }
             }
         };
     }
@@ -174,10 +174,10 @@ public class ExpertTools
                     ["agent_location"] = new PropertyDefinition
                     {
                         Type = "string",
-                        Description = "The agent location that will execute the quantum assessment. Quantum tests require specialized agents - verify availability first using get_agents."
+                        Description = "The agent location that will execute the quantum assessment."
                     }
                 },
-                Required = new List<string> { "message" }
+                Required = new List<string> { "message","agent_location" }
             }
         };
     }
