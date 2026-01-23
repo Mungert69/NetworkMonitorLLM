@@ -349,68 +349,11 @@ public class OpenAIRunner : ILLMRunner
 
             if (completionSuccess)
             {
-                if (completionResult?.Choices == null || completionResult.Choices.Count == 0)
-                {
-                    _logger.LogWarning("Completion succeeded but returned no choices for MessageID {MessageID}", serviceObj.MessageID);
-                    await NotifyUserErrorAsync(
-                        serviceObj,
-                        "I didn't get a response from the model. Please try again.",
-                        null,
-                        detailed: false);
-                }
-                else
-                {
-                    ChatChoiceResponse choice = completionResult.Choices[0];
-                    if (choice.Message.ToolCalls != null && choice.Message.ToolCalls.Any())
-                    {
-                        await HandleFunctionProcessing(serviceObj, choice.Message, localHistory, responseServiceObj, assistantChatMessage, isFuncMessage);
-                    }
-                    else
-                    {
-                        await ProcessAssistantMessageAsync(choice, responseServiceObj, assistantChatMessage, localHistory, _history, serviceObj);
-                    }
-
-                    int tokensUsed = completionResult.Usage.TotalTokens;
-                    _logger.LogInformation($"TOKENS USED {tokensUsed}");
-                    if (!_useHF)
-                    {
-                        var usage = completionResult.Usage;
-                        int prompt = usage?.PromptTokens ?? 0;
-                        int completion = usage?.CompletionTokens ?? 0;
-                        int cached = usage?.PromptTokensDetails?.CachedTokens ?? 0;
-
-                        // Guards
-                        cached = Math.Min(cached, prompt);
-                        var d = Math.Clamp(_mlParams.PromptCacheDiscountFraction, 0m, 1m); // 0..1
-                        var k = _mlParams.CompletionCostMultiplier;
-                        if (k < 1m) k = 1m;
-
-                        // Billable prompt tokens = non-cached + discounted-cached
-                        decimal billedPrompt = (prompt - cached) + (cached * (1m - d));
-
-                        // Billable completion tokens = completion * multiplier
-                        decimal billedCompletion = completion * k;
-
-                        // Adjusted “cost-weighted tokens”
-                        int adjusted = (int)Math.Round(billedPrompt + billedCompletion, MidpointRounding.AwayFromZero);
-                        responseServiceObj.TokensUsed = adjusted;
-
-                        _logger.LogInformation(
-                          $"Usage raw: total={usage?.TotalTokens}, prompt={prompt}, completion={completion}, cached={cached}. " +
-                          $"Pricing: cacheDiscount={d:P0}, completionX={k}. " +
-                          $"Billed: prompt={billedPrompt}, completion={billedCompletion}, adjusted={adjusted}");
-
-                    }
-                }
-
+                await HandleCompletionSuccessAsync(completionResult, serviceObj, responseServiceObj, assistantChatMessage, localHistory, isFuncMessage);
             }
             else
             {
-                if (completionResult.Error != null)
-                {
-                    await HandleOpenAIError(serviceObj, completionResult?.Error?.Message ?? "", localHistory, _history);
-                    localHistory = new List<ChatMessage>();
-                }
+                await HandleCompletionFailureAsync(completionResult, serviceObj, localHistory);
             }
 
             if (localHistory.Count > 0)
@@ -451,6 +394,91 @@ public class OpenAIRunner : ILLMRunner
             LoadChanged?.Invoke(-1, _type);
         }
 
+    }
+
+    private async Task HandleCompletionSuccessAsync(
+        ChatCompletionCreateResponse completionResult,
+        LLMServiceObj serviceObj,
+        LLMServiceObj responseServiceObj,
+        ChatMessage assistantChatMessage,
+        List<ChatMessage> localHistory,
+        bool isFuncMessage)
+    {
+        if (completionResult?.Choices == null || completionResult.Choices.Count == 0)
+        {
+            _logger.LogWarning("Completion succeeded but returned no choices for MessageID {MessageID}", serviceObj.MessageID);
+            await NotifyUserErrorAsync(
+                serviceObj,
+                "I didn't get a response from the model. Please try again.",
+                null,
+                detailed: false,
+                forceError: true);
+            return;
+        }
+
+        var choice = completionResult.Choices[0];
+        if (choice.Message.ToolCalls != null && choice.Message.ToolCalls.Any())
+        {
+            await HandleFunctionProcessing(serviceObj, choice.Message, localHistory, responseServiceObj, assistantChatMessage, isFuncMessage);
+        }
+        else
+        {
+            await ProcessAssistantMessageAsync(choice, responseServiceObj, assistantChatMessage, localHistory, _history, serviceObj);
+        }
+
+        int tokensUsed = completionResult.Usage.TotalTokens;
+        _logger.LogInformation($"TOKENS USED {tokensUsed}");
+        if (!_useHF) UpdateUsageCostTokens(completionResult, responseServiceObj);
+    }
+
+    private async Task HandleCompletionFailureAsync(
+        ChatCompletionCreateResponse completionResult,
+        LLMServiceObj serviceObj,
+        List<ChatMessage> localHistory)
+    {
+        if (completionResult?.Error != null)
+        {
+            await HandleOpenAIError(serviceObj, completionResult.Error.Message ?? "", localHistory, _history);
+            localHistory.Clear();
+            return;
+        }
+
+        _logger.LogWarning("Completion failed with no error details for MessageID {MessageID}", serviceObj.MessageID);
+        await NotifyUserErrorAsync(
+            serviceObj,
+            "The model did not return a response. Please try again.",
+            null,
+            detailed: false,
+            forceError: true);
+    }
+
+    private void UpdateUsageCostTokens(ChatCompletionCreateResponse completionResult, LLMServiceObj responseServiceObj)
+    {
+        var usage = completionResult.Usage;
+        int prompt = usage?.PromptTokens ?? 0;
+        int completion = usage?.CompletionTokens ?? 0;
+        int cached = usage?.PromptTokensDetails?.CachedTokens ?? 0;
+
+        // Guards
+        cached = Math.Min(cached, prompt);
+        var d = Math.Clamp(_mlParams.PromptCacheDiscountFraction, 0m, 1m); // 0..1
+        var k = _mlParams.CompletionCostMultiplier;
+        if (k < 1m) k = 1m;
+
+        // Billable prompt tokens = non-cached + discounted-cached
+        decimal billedPrompt = (prompt - cached) + (cached * (1m - d));
+
+        // Billable completion tokens = completion * multiplier
+        decimal billedCompletion = completion * k;
+
+        // Adjusted “cost-weighted tokens”
+        int adjusted = (int)Math.Round(billedPrompt + billedCompletion, MidpointRounding.AwayFromZero);
+        responseServiceObj.TokensUsed = adjusted;
+
+        _logger.LogInformation(
+          $"Usage raw: total={usage?.TotalTokens}, prompt={prompt}, completion={completion}, cached={cached}. " +
+          $"Pricing: cacheDiscount={d:P0}, completionX={k}. " +
+          $"Billed: prompt={billedPrompt}, completion={billedCompletion}, adjusted={adjusted}");
     }
 
     private List<ChatMessage> HandleFunctionCallStatus(LLMServiceObj serviceObj)
@@ -857,7 +885,7 @@ public class OpenAIRunner : ILLMRunner
         if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
     }
     // ADD to OpenAIRunner class
-    private async Task NotifyUserErrorAsync(LLMServiceObj serviceObj, string userFacing, Exception? ex = null, bool detailed = false)
+    private async Task NotifyUserErrorAsync(LLMServiceObj serviceObj, string userFacing, Exception? ex = null, bool detailed = false, bool forceError = false)
     {
         try
         {
@@ -879,7 +907,7 @@ public class OpenAIRunner : ILLMRunner
                 LlmMessage = msg.ToString()
             };
 
-            if (_isPrimaryLlm || _isSystemLlm)
+            if (forceError || _isPrimaryLlm || _isSystemLlm)
                 await _responseProcessor.ProcessLLMOutputError(resp);
             else
                 await _responseProcessor.ProcessLLMOutput(resp);
@@ -988,11 +1016,35 @@ public class OpenAIRunner : ILLMRunner
             localHistory.Add(assistantChatMessage);
 
         }
+        else if (choice.FinishReason == "length" || choice.FinishReason == "content_filter")
+        {
+            await EmitFinishReasonNoticeAsync(choice.FinishReason, responseServiceObj);
+        }
 
         responseServiceObj.LlmMessage = "<end-of-line>";
         _funcsInARow = 0;
         if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
 
+    }
+
+    private async Task EmitFinishReasonNoticeAsync(string finishReason, LLMServiceObj responseServiceObj)
+    {
+        string notice = finishReason == "length"
+            ? "⚠️ The response was truncated due to length limits. Please ask the expert to continue."
+            : "⚠️ The response was blocked by the content filter.";
+
+        responseServiceObj.SetAsNotCall();
+        if (_isPrimaryLlm)
+        {
+            responseServiceObj.LlmMessage = "<Assistant:>" + notice + "\n";
+            if (!_isStream) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+        }
+        else
+        {
+            if (!_isSystemLlm) responseServiceObj.SetAsResponseComplete();
+            responseServiceObj.LlmMessage = "<Assistant:>" + notice + "\n";
+            if (!_isStream) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+        }
     }
 
 
