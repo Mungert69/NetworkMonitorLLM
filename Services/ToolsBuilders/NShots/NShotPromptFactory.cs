@@ -966,7 +966,7 @@ namespace NetworkMonitor.Connection
 
 3. **Quantum Security**  
    - Validate quantum-safe encryption on your servers.  
-   - Test post-quantum cryptographic algorithms like Kyber512 and Dilithium2.  
+   - Test TLS KEM support and post-quantum certificate usage.  
 
 4. **Network Diagnostics**  
    - Run BusyBox commands for network troubleshooting (e.g., ping, ifconfig).  
