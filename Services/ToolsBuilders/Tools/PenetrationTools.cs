@@ -24,8 +24,7 @@ public class PenetrationTools
             Description = "Executes a Metasploit module with parameter validation. Structure requests as: " +
                           "1. First search modules with search_metasploit_modules " +
                           "2. Get module details with get_metasploit_module_info " +
-                          "3. Execute with required parameters. " +
-                          "Example: To exploit EternalBlue: {'module_name':'exploit/windows/smb/ms17_010_eternalblue','target':'192.168.1.5','module_options':{'RHOSTS':'192.168.1.5','LHOST':'10.0.0.1'}}",
+                          "3. Execute with required parameters. " ,
             Parameters = new PropertyDefinition
             {
                 Type = "object",
@@ -50,7 +49,7 @@ public class PenetrationTools
                     ["agent_location"] = new PropertyDefinition
                     {
                         Type = "string",
-                        Description = "Predefined agent locations. Default: auto-assign based on target geoIP"
+                        Description = "Agent location that will run metasploit"
                     },
                     ["number_lines"] = new PropertyDefinition
                     {
@@ -63,7 +62,7 @@ public class PenetrationTools
                         Description = "Pagination for large outputs. Start with 1. Increment if 'truncated' flag is set."
                     }
                 },
-                Required = new List<string> { "module_name", "target" }
+                Required = new List<string> { "module_name", "target","agent_location" }
             }
         };
     }
@@ -128,10 +127,10 @@ public class PenetrationTools
                     ["agent_location"] = new PropertyDefinition
                     {
                         Type = "string",
-                        Description = "Predefined agent locations. Default: auto-assign based on target geoIP"
+                        Description = "Agent location that will run the search."
                     }
                 },
-                Required = new List<string> { "keywords" }
+                Required = new List<string> { "keywords" ,"agent_location"}
             }
         };
     }
@@ -166,7 +165,7 @@ public class PenetrationTools
                     ["agent_location"] = new PropertyDefinition
                     {
                         Type = "string",
-                        Description = "Predefined agent locations. Default: auto-assign based on target geoIP"
+                        Description = "Agent location that will provide the module info."
                     },
                     ["number_lines"] = new PropertyDefinition
                     {
@@ -179,7 +178,7 @@ public class PenetrationTools
                         Description = "Pagination for large outputs. Start with 1. Increment if 'truncated' flag is set."
                     }
                 },
-                Required = new List<string> { "module_name" }
+                Required = new List<string> { "module_name","agent_location" }
             }
         };
     }
