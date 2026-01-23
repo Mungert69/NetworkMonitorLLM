@@ -349,46 +349,58 @@ public class OpenAIRunner : ILLMRunner
 
             if (completionSuccess)
             {
-                ChatChoiceResponse choice = completionResult.Choices.First();
-                if (choice.Message.ToolCalls != null && choice.Message.ToolCalls.Any())
+                if (completionResult?.Choices == null || completionResult.Choices.Count == 0)
                 {
-                    await HandleFunctionProcessing(serviceObj, choice.Message, localHistory, responseServiceObj, assistantChatMessage, isFuncMessage);
+                    _logger.LogWarning("Completion succeeded but returned no choices for MessageID {MessageID}", serviceObj.MessageID);
+                    await NotifyUserErrorAsync(
+                        serviceObj,
+                        "I didn't get a response from the model. Please try again.",
+                        null,
+                        detailed: false);
                 }
                 else
                 {
-                    await ProcessAssistantMessageAsync(choice, responseServiceObj, assistantChatMessage, localHistory, _history, serviceObj);
-                }
+                    ChatChoiceResponse choice = completionResult.Choices[0];
+                    if (choice.Message.ToolCalls != null && choice.Message.ToolCalls.Any())
+                    {
+                        await HandleFunctionProcessing(serviceObj, choice.Message, localHistory, responseServiceObj, assistantChatMessage, isFuncMessage);
+                    }
+                    else
+                    {
+                        await ProcessAssistantMessageAsync(choice, responseServiceObj, assistantChatMessage, localHistory, _history, serviceObj);
+                    }
 
-                int tokensUsed = completionResult.Usage.TotalTokens;
-                _logger.LogInformation($"TOKENS USED {tokensUsed}");
-                if (!_useHF)
-                {
-                    var usage = completionResult.Usage;
-                    int prompt = usage?.PromptTokens ?? 0;
-                    int completion = usage?.CompletionTokens ?? 0;
-                    int cached = usage?.PromptTokensDetails?.CachedTokens ?? 0;
+                    int tokensUsed = completionResult.Usage.TotalTokens;
+                    _logger.LogInformation($"TOKENS USED {tokensUsed}");
+                    if (!_useHF)
+                    {
+                        var usage = completionResult.Usage;
+                        int prompt = usage?.PromptTokens ?? 0;
+                        int completion = usage?.CompletionTokens ?? 0;
+                        int cached = usage?.PromptTokensDetails?.CachedTokens ?? 0;
 
-                    // Guards
-                    cached = Math.Min(cached, prompt);
-                    var d = Math.Clamp(_mlParams.PromptCacheDiscountFraction, 0m, 1m); // 0..1
-                    var k = _mlParams.CompletionCostMultiplier;
-                    if (k < 1m) k = 1m;
+                        // Guards
+                        cached = Math.Min(cached, prompt);
+                        var d = Math.Clamp(_mlParams.PromptCacheDiscountFraction, 0m, 1m); // 0..1
+                        var k = _mlParams.CompletionCostMultiplier;
+                        if (k < 1m) k = 1m;
 
-                    // Billable prompt tokens = non-cached + discounted-cached
-                    decimal billedPrompt = (prompt - cached) + (cached * (1m - d));
+                        // Billable prompt tokens = non-cached + discounted-cached
+                        decimal billedPrompt = (prompt - cached) + (cached * (1m - d));
 
-                    // Billable completion tokens = completion * multiplier
-                    decimal billedCompletion = completion * k;
+                        // Billable completion tokens = completion * multiplier
+                        decimal billedCompletion = completion * k;
 
-                    // Adjusted “cost-weighted tokens”
-                    int adjusted = (int)Math.Round(billedPrompt + billedCompletion, MidpointRounding.AwayFromZero);
-                    responseServiceObj.TokensUsed = adjusted;
+                        // Adjusted “cost-weighted tokens”
+                        int adjusted = (int)Math.Round(billedPrompt + billedCompletion, MidpointRounding.AwayFromZero);
+                        responseServiceObj.TokensUsed = adjusted;
 
-                    _logger.LogInformation(
-                      $"Usage raw: total={usage?.TotalTokens}, prompt={prompt}, completion={completion}, cached={cached}. " +
-                      $"Pricing: cacheDiscount={d:P0}, completionX={k}. " +
-                      $"Billed: prompt={billedPrompt}, completion={billedCompletion}, adjusted={adjusted}");
+                        _logger.LogInformation(
+                          $"Usage raw: total={usage?.TotalTokens}, prompt={prompt}, completion={completion}, cached={cached}. " +
+                          $"Pricing: cacheDiscount={d:P0}, completionX={k}. " +
+                          $"Billed: prompt={billedPrompt}, completion={billedCompletion}, adjusted={adjusted}");
 
+                    }
                 }
 
             }

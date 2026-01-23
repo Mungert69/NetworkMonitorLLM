@@ -17,6 +17,7 @@ internal sealed class OpenAILoggingHandler : DelegatingHandler
 
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
     {
+        _logger.LogInformation("OpenAI HTTP -> {Method} {Uri}", request.Method, request.RequestUri);
         string? reqBody = null;
         if (_logBodies && request.Content != null)
             reqBody = await request.Content.ReadAsStringAsync(ct);
