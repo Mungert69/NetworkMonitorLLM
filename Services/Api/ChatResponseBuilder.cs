@@ -219,6 +219,7 @@ public class ChatResponseBuilder
             queue.Enqueue(json);
         }
 
+        var hydrated = false;
         foreach (var toolCall in message.ToolCalls)
         {
             var functionCall = toolCall.FunctionCall;
@@ -241,7 +242,13 @@ public class ChatResponseBuilder
             }
 
             functionCall.Arguments = queue.Dequeue();
+            hydrated = true;
             _logger.LogDebug("Hydrated empty tool call arguments from XML for {FunctionName}.", name);
+        }
+
+        if (hydrated)
+        {
+            message.Content = string.Empty;
         }
     }
 }
