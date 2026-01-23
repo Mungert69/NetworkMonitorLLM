@@ -156,7 +156,7 @@ public class ExpertTools
         return new FunctionDefinition
         {
             Name = "call_quantum_expert",
-            Description = "Communicate a quantum security assessment request to a Quantum Expert LLM. You will craft a detailed message describing the user's request for quantum safety validation, which may involve testing post-quantum cryptographic algorithms, scanning quantum-vulnerable ports, or validating quantum-resistant configurations. The message should specify target servers, ports to test, algorithms to verify (e.g., Kyber512, Dilithium2), and any special parameters. If the quantum expert requires additional information, present these queries to the user in simple terms and assist in formulating appropriate responses.",
+            Description = "Communicate a quantum security assessment request to a Quantum Expert LLM. You will craft a detailed message describing the user's request for quantum safety validation, which may involve testing TLS KEM support, scanning quantum-vulnerable ports, or validating quantum-resistant certificate usage and configurations. The message should specify target servers, ports to test, any algorithm preferences if provided, and any special parameters. If the quantum expert requires additional information, present these queries to the user in simple terms and assist in formulating appropriate responses.",
             Parameters = new PropertyDefinition
             {
                 Type = "object",
@@ -167,9 +167,9 @@ public class ExpertTools
                         Type = "string",
                         Description = "The message to send to the quantum expert LLM should include:\n" +
                                       "1. Target server(s) or IP addresses to assess\n" +
-                                      "2. Specific quantum algorithms to test, or do not specify to test all quantum tls kems.\n" +
+                                      "2. Specific quantum algorithms to test (if the user provides), or omit to test all supported TLS KEMs.\n" +
                                       "3. Ports to scan for quantum vulnerabilities\n" +
-                                      "Example: \"Test example.com:443 for Kyber512 support, scan ports 443 and 8443 for quantum-vulnerable services\""
+                                      "Example: \"Test example.com:443 for TLS KEM support, scan ports 443 and 8443 for quantum-vulnerable services\""
                     },
                     ["agent_location"] = new PropertyDefinition
                     {
