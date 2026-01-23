@@ -70,21 +70,31 @@ namespace NetworkMonitor.LLM
                 var loggerFactory = provider.GetRequiredService<ILoggerFactory>();
                 var httpLogger = loggerFactory.CreateLogger<OpenAILoggingHandler>();
                 var systemParamsHelper = provider.GetRequiredService<ISystemParamsHelper>();
-                var useHF = systemParamsHelper.GetMLParams().LlmUseHF;
+                var mlParams = systemParamsHelper.GetMLParams();
+                var useHF = mlParams.LlmUseHF;
                 OpenAIOptions openAIOptions;
                 if (useHF)
                 {
+                    string? baseDomain = null;
+                    if (!string.IsNullOrWhiteSpace(mlParams.LlmHFUrl)
+                        && Uri.TryCreate(mlParams.LlmHFUrl, UriKind.Absolute, out var hfUri))
+                    {
+                        baseDomain = hfUri.GetLeftPart(UriPartial.Authority);
+                    }
                     openAIOptions = new OpenAIOptions
                     {
-                        ApiKey = systemParamsHelper.GetMLParams().LlmHFKey,
-                        BaseDomain = "https://api.novita.ai"   // domain only; we’ll inject /openai via handler
+                        ApiKey = mlParams.LlmHFKey,
                     };
+                    if (!string.IsNullOrWhiteSpace(baseDomain))
+                    {
+                        openAIOptions.BaseDomain = baseDomain;
+                    }
                 }
                 else
                 {
                     openAIOptions = new OpenAIOptions
                     {
-                        ApiKey = systemParamsHelper.GetMLParams().OpenAIApiKey,
+                        ApiKey = mlParams.OpenAIApiKey,
                     };
                 }
 
