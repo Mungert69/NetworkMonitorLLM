@@ -125,6 +125,26 @@ If a provider rejects tool calls, set `LlmHfSupportsFunctionCalling: false` to f
 * **`TokenBroadcasterBase` & Derived**:
   Parses LLM output for function calls (JSON or XML), sanitizes/repairs output, and broadcasts tokens/chunks to the response processor.
 
+### Function call formats (XML vs JSON)
+
+The project supports two function-call output formats, toggled by `MLParams.XmlFunctionParsing`. This influences both the prompt footer (what the model is asked to emit) and the parsing path used for tool calls.
+
+**XML format**
+* The model is instructed to emit `<function_call name="..."><parameters>...</parameters></function_call>` blocks.
+* Parsing is done by `TokenBroadcasterBase.ParseInputForXml`, which:
+  * Extracts XML blocks with regex.
+  * Converts the `<parameters>` XML to JSON (`SerializeXmlNode`) and adds `args_escaped=false`.
+  * Returns `(json, functionName)` tuples.
+
+**JSON format**
+* The model is instructed to emit JSON tool-call objects or model-specific wrappers.
+* Parsing is model-specific via `TokenBroadcaster*` classes (e.g., `TokenBroadcasterFunc_3_1`, `TokenBroadcasterFunc_3_2`, `TokenBroadcasterPhi_4`, `TokenBroadcasterGemma_3`, `TokenBroadcasterXlam2`, `TokenBroadcasterLFM_2`).
+* These parsers extract function name + arguments and repair/sanitize JSON via `JsonSanitizer`.
+
+**Where parsing is applied**
+* For OpenAI responses, XML parsing is applied in `ChatResponseBuilder.BuildResponseFromOpenAI` when `XmlFunctionParsing=true`.
+* For HuggingFace responses, `ChatResponseBuilder.BuildResponse` prefers structured tool calls if present; otherwise it falls back to XML/JSON parsing based on `XmlFunctionParsing`.
+
 ## 4. Response Processing
 
 * **`LLMResponseProcessor`**:

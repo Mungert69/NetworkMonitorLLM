@@ -140,6 +140,10 @@ public class ChatResponseBuilder
             }
             else
             {
+                if (_isXml && !string.IsNullOrEmpty(message.Content))
+                {
+                    TryHydrateEmptyToolCallArgumentsFromXml(message);
+                }
                 if (string.IsNullOrEmpty(choice.FinishReason))
                 {
                     choice.FinishReason = "tool_calls";
@@ -189,5 +193,55 @@ public class ChatResponseBuilder
         //string payloadJson = JsonConvert.SerializeObject(chatResponse, Formatting.Indented);
         //_logger.LogInformation($"{payloadJson}");
         return chatResponse;
+    }
+
+    private void TryHydrateEmptyToolCallArgumentsFromXml(HuggingFaceMessage message)
+    {
+        if (message.ToolCalls == null || !message.ToolCalls.Any())
+        {
+            return;
+        }
+
+        var xmlCalls = _tokenBroadcaster.ParseInputForXml(message.Content);
+        if (xmlCalls.Count == 0)
+        {
+            return;
+        }
+
+        var callsByName = new Dictionary<string, Queue<string>>(StringComparer.OrdinalIgnoreCase);
+        foreach (var (json, functionName) in xmlCalls)
+        {
+            if (!callsByName.TryGetValue(functionName, out var queue))
+            {
+                queue = new Queue<string>();
+                callsByName[functionName] = queue;
+            }
+            queue.Enqueue(json);
+        }
+
+        foreach (var toolCall in message.ToolCalls)
+        {
+            var functionCall = toolCall.FunctionCall;
+            if (functionCall == null)
+            {
+                continue;
+            }
+
+            var args = functionCall.Arguments ?? "";
+            var isEmptyArgs = string.IsNullOrWhiteSpace(args) || args.Trim() == "{}";
+            if (!isEmptyArgs)
+            {
+                continue;
+            }
+
+            var name = functionCall.Name ?? "";
+            if (!callsByName.TryGetValue(name, out var queue) || queue.Count == 0)
+            {
+                continue;
+            }
+
+            functionCall.Arguments = queue.Dequeue();
+            _logger.LogDebug("Hydrated empty tool call arguments from XML for {FunctionName}.", name);
+        }
     }
 }
