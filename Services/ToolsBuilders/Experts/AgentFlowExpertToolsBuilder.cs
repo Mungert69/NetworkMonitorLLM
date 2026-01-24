@@ -188,11 +188,18 @@ What you do:
 - Edit existing flows when asked to change or update a flow.
 - List available flows.
 - Delete flows when asked.
+- Run saved flows when asked.
 
 How you operate:
 - For create or edit: build the flow JSON, save it with add_agent_flow (overwrite=true when updating).
 - For list/get/delete: call list_agent_flows/get_agent_flow/delete_agent_flow directly and return the tool output. Do NOT generate a flow JSON for those requests.
+- For run: call run_agent_flow with the flow name and required arguments.
 - Only show the flow JSON if the user explicitly asks to see it.
+
+Running guidance:
+- Before running a flow, call get_agent_flow and inspect initState, node requires, and promptTemplate placeholders.
+- Build the arguments object to supply only the required keys the flow expects.
+- If required inputs are missing or unclear, ask the user for the minimal missing values before calling run_agent_flow.
 ";
 
         public AgentFlowExpertToolsBuilder(IFunctionDefinitionRegistry functionDefinitionRegistry)
@@ -202,7 +209,8 @@ How you operate:
                 new ToolDefinition { Function = AgentFlowTools.BuildAddAgentFlowFunction(), Type = "function" },
                 new ToolDefinition { Function = AgentFlowTools.BuildGetAgentFlowFunction(), Type = "function" },
                 new ToolDefinition { Function = AgentFlowTools.BuildListAgentFlowsFunction(), Type = "function" },
-                new ToolDefinition { Function = AgentFlowTools.BuildDeleteAgentFlowFunction(), Type = "function" }
+                new ToolDefinition { Function = AgentFlowTools.BuildDeleteAgentFlowFunction(), Type = "function" },
+                new ToolDefinition { Function = AgentFlowTools.BuildRunAgentFlowFunction(), Type = "function" }
             };
             _prompt = BuildPrompt(functionDefinitionRegistry);
         }

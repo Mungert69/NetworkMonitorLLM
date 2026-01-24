@@ -97,4 +97,36 @@ public static class AgentFlowTools
             }
         };
     }
+
+    public static FunctionDefinition BuildRunAgentFlowFunction()
+    {
+        return new FunctionDefinition
+        {
+            Name = "run_agent_flow",
+            Description = "Run a saved agent flow by name with optional arguments.",
+            Parameters = new PropertyDefinition
+            {
+                Type = "object",
+                Properties = new Dictionary<string, PropertyDefinition>
+                {
+                    ["flow_name"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "The flow name to run."
+                    },
+                    ["arguments"] = new PropertyDefinition
+                    {
+                        Type = "object",
+                        Description = "Optional key/value arguments passed into the flow."
+                    },
+                    ["agent_location"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Optional agent location override for the flow."
+                    }
+                },
+                Required = new List<string> { "flow_name" }
+            }
+        };
+    }
 }
