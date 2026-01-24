@@ -100,12 +100,12 @@ public class QuantumTools
                     ["timeout"] = new PropertyDefinition
                     {
                         Type = "integer",
-                        Description = "The maximum time (in milliseconds) to wait for the scan to complete, optional. Default is 59000ms."
+                        Description = "Per-port scan timeout in milliseconds. Also used for nmap discovery timeout; overall scan timeout is derived from per-port timeout and parallelism. Optional. Default is 59000ms."
                     },
                     ["nmap_options"] = new PropertyDefinition
                     {
                         Type = "string",
-                        Description = "Custom Nmap options for port scanning, optional. Default is '-T4 --open'."
+                        Description = "Custom Nmap options for port scanning, optional. Default is '-T4 --open --max-retries 2 --host-timeout 30s --initial-rtt-timeout 200ms --max-rtt-timeout 1s'."
                     },
                     ["agent_location"] = new PropertyDefinition
                     {
