@@ -7,8 +7,8 @@
 ./publish-instance eu Quantum
 ./publish-instance eu Timesfm
 ./publish-instance eu Connect
+./publish-instance eu AgentFlow
 #sudo ./publish-instance eu MonitorSys
 ./publish-instance eu Monitor
 ./publish-instance eu json_dynamic
 sudo pkill -u root -f 'dotnet.*(MSBuild|VBCSCompiler)\.dll' || true
-

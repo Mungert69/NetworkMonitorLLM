@@ -124,6 +124,33 @@ public class ExpertTools
         };
     }
 
+    public static FunctionDefinition BuildAgentFlowExpertFunction()
+    {
+        return new FunctionDefinition
+        {
+            Name = "call_agent_flow_expert",
+            Description = "Communicate a request to an Agent Flow expert that designs Agenic-Flow graph JSON files. Use this to build or revise agent flow JSON for a given goal. The expert returns only JSON.",
+            Parameters = new PropertyDefinition
+            {
+                Type = "object",
+                Properties = new Dictionary<string, PropertyDefinition>
+                {
+                    ["message"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "A concise, complete description of the desired agent flow, including goal, required tools, constraints, and any example inputs. The expert does not see the rest of this chat."
+                    },
+                    ["agent_location"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Optional: include a preferred agent location if the flow should default to a specific agent."
+                    }
+                },
+                Required = new List<string> { "message" }
+            }
+        };
+    }
+
     public static FunctionDefinition BuildConnectExpertFunction()
     {
         return new FunctionDefinition
