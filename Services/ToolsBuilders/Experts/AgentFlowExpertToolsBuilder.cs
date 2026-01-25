@@ -178,6 +178,14 @@ branch-llm nodes
 - No trailing commas, extra keys, wrapper arrays, or explanatory text.
 - Any deviation causes the runtime to reject the graph.
 
+7. HARD REQUIREMENTS CHECKLIST
+- Top-level required keys: version, startNode, nodes, toolSpecs.
+- Each node must include: id, type, toolSpecId, promptTemplate.
+- template-llm nodes must include outputs.
+- branch-llm nodes must include branches and must not include outputs.
+- Each toolSpec must include: id, systemPrompt.
+- Every toolSpecId referenced by nodes must exist in toolSpecs.
+
 ";
 
         private const string PromptRules = @"
@@ -200,6 +208,11 @@ Running guidance:
 - Before running a flow, call get_agent_flow and inspect initState, node requires, and promptTemplate placeholders.
 - Build the arguments object to supply only the required keys the flow expects.
 - If required inputs are missing or unclear, ask the user for the minimal missing values before calling run_agent_flow.
+
+Self-validation:
+- Before producing final JSON, verify the required keys checklist, toolSpecId references, and branch statuses.
+- Confirm every referenced function exists in toolSpecs and required parameters are present in the promptTemplate.
+- Confirm each node output is either used by a downstream requires or is part of the final outputs.
 ";
 
         public AgentFlowExpertToolsBuilder(IFunctionDefinitionRegistry functionDefinitionRegistry)
