@@ -1,1 +1,1 @@
-~/code/models/llama.cpp/llama-completion -c 12000  -m ~/code/models/Qwen3-4B-Instruct-2507-q4_k_m.gguf  --prompt-cache context-qwen-3.gguf  -f system_prompt_qwen_3   -r "<|im_end|>"   -sp  -i --temp 0 --simple-io -no-cnv 
+~/code/models/llama.cpp/llama-completion -c 12000  -m ~/code/models/Qwen3-4B-Instruct-2507-q8_0.gguf --prompt-cache context-qwen-3.gguf  -f system_prompt_qwen_3   -r "<|im_end|>"   -sp  -i --temp 0 --simple-io -no-cnv  
