@@ -49,7 +49,8 @@ public class SecurityTools
                         Type = "string",
                         Description = "The target to scan - can be an IP address (e.g., '192.168.1.1'), " +
                                       "IP range ('192.168.1.0/24'), domain name ('example.com'), " +
-                                      "or hostname. Validate the target with the user if ambiguous."
+                                      "or hostname. This must be a single string; if multiple targets are needed, " +
+                                      "pass them as a comma-separated string (e.g., '1.1.1.1,example.com')."
                     },
                     ["agent_location"] = new PropertyDefinition
                     {
@@ -98,7 +99,7 @@ public class SecurityTools
                         Description = "OpenSSL command and options constructed for the specific task. " +
                                       "Examples: 's_client -connect example.com:443 -showcerts' for certificate analysis, " +
                                       "'ciphers -v' to list supported ciphers, 'x509 -text -noout' for certificate details. " +
-                                      "Include all necessary flags for the requested analysis."
+                                      "This must be a single string (not an object). Include all necessary flags for the requested analysis."
                     },
                     ["target"] = new PropertyDefinition
                     {
