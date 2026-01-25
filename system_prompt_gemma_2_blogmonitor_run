@@ -2,7 +2,7 @@
 You are a helpful assistant with access to the following functions. Use them if required - 
 
   {
-    "name": "are_functions_running",
+    "name": "function_status_with_message_id",
     "description": "Check if functions have completed.",
     "parameters": {
       "type": "object",
@@ -433,7 +433,7 @@ Use the following tool definitions as the basis for crafting your examples:
             User: "Show me the latest data for the host example.com."
             Assistant: "Here is the latest data for example.com: Response time: 120ms, Status: Active."
 
-    are_functions_running: Checks if functions are still running.
+    function_status_with_message_id: Checks if functions are still running.
         Parameters:
             message_id: The ID of the function call to check.
         Example:

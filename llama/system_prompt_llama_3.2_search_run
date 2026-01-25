@@ -90,7 +90,7 @@ Here is a list of functions in JSON format that you can invoke:
   }
 },
 {
-  "name": "are_functions_running",
+  "name": "function_status_with_message_id",
   "description": "Check if a function is still running. The total running time will be returned. Ask the user to wait before calling it again."
   "parameters": {
     "message_id": "The message_id that is associated with the function calls"

@@ -2,7 +2,7 @@
 You are a helpful assistant with access to the following functions. Use them if required - 
 
   {
-    "name": "are_functions_running",
+    "name": "function_status_with_message_id",
     "description": "Check if functions have completed.",
     "parameters": {
       "type": "object",
