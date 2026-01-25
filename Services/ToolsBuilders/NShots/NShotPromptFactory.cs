@@ -846,7 +846,7 @@ namespace NetworkMonitor.Connection
         private static List<ChatMessage> GetAgentFlowPrompt(params object[] args)
         {
             var messages = new List<ChatMessage>();
-            const string flowJson = "{\"version\":1,\"startNode\":\"get_targets\",\"initState\":{\"agent_location\":\"Scanner - EU\"},\"nodes\":[{\"id\":\"get_targets\",\"type\":\"template-llm\",\"toolSpecId\":\"monitor-tool\",\"promptTemplate\":\"Call get_host_list to retrieve enabled monitored hosts. Output targets as a comma-separated string in key 'targets'. If no hosts are found, return an empty string.\",\"outputs\":[\"targets\"],\"next\":\"run_nmap\"},{\"id\":\"run_nmap\",\"type\":\"template-llm\",\"toolSpecId\":\"monitor-tool\",\"promptTemplate\":\"Use scan_options '-sT -sV --open --top-ports 100 --max-retries 1'. Call run_nmap with target={{targets}}, scan_options as strings, and agent_location={{agent_location}}. Save the raw output in 'nmap_results'.\",\"requires\":[\"targets\",\"agent_location\"],\"outputs\":[\"nmap_results\"],\"next\":null}],\"toolSpecs\":[{\"id\":\"monitor-tool\",\"systemPrompt\":\"Use get_host_list and run_nmap only. Return raw tool outputs for downstream steps.\",\"functions\":[\"get_host_list\",\"run_nmap\"]}]}";
+            const string flowJson = "{\"version\":1,\"startNode\":\"get_targets\",\"initState\":{\"agent_location\":\"Scanner - EU\"},\"nodes\":[{\"id\":\"get_targets\",\"type\":\"template-llm\",\"toolSpecId\":\"monitor-tool\",\"promptTemplate\":\"Call get_host_list to retrieve enabled monitored hosts. Output targets as a space-separated string in key 'targets'. If no hosts are found, return an empty string.\",\"outputs\":[\"targets\"],\"next\":\"run_nmap\"},{\"id\":\"run_nmap\",\"type\":\"template-llm\",\"toolSpecId\":\"monitor-tool\",\"promptTemplate\":\"Use scan_options '-sT -sV --open --top-ports 100 --max-retries 1'. Call run_nmap with target={{targets}}, scan_options as strings, and agent_location={{agent_location}}. Save the raw output in 'nmap_results'.\",\"requires\":[\"targets\",\"agent_location\"],\"outputs\":[\"nmap_results\"],\"next\":null}],\"toolSpecs\":[{\"id\":\"monitor-tool\",\"systemPrompt\":\"Use get_host_list and run_nmap only. Return raw tool outputs for downstream steps.\",\"functions\":[\"get_host_list\",\"run_nmap\"]}]}";
             var arguments = JsonSerializer.Serialize(new Dictionary<string, object?>
             {
                 ["flow_name"] = "quick-scan",
@@ -864,7 +864,7 @@ namespace NetworkMonitor.Connection
             );
 
             messages.Add(ChatMessage.FromAssistant(
-                "I created the flow and saved it. It calls get_host_list to build a comma-separated targets string, then runs run_nmap with explicit scan_options."
+                "I created the flow and saved it. It calls get_host_list to build a space-separated targets string, then runs run_nmap with explicit scan_options."
             ));
 
             return messages;
