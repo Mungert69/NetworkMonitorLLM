@@ -16,6 +16,6 @@
  ./publish-instance eu json_dynamic
  ./publish-instance eu Timesfm
  ./publish-instance eu Connect
-
+ ./publish-instance eu AgentFlow
 sudo pkill -u root -f 'dotnet.*(MSBuild|VBCSCompiler)\.dll' || true
 
