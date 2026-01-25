@@ -510,9 +510,9 @@ Use the function 'run_crawl_page' to 'Extract content and hyperlinks from a webp
     "required": ["url"]
   }
 }
-Use the function 'are_functions_running' to 'Check the completion status of long running function calls.'
+Use the function 'function_status_with_message_id' to 'Check the completion status of long running function calls.'
 {
-  "name": "are_functions_running",
+  "name": "function_status_with_message_id",
   "description": "Check if functions have completed. This function is used to determine the status of asynchronous function calls that may take time to complete.",
   "parameters": {
     "type": "object",

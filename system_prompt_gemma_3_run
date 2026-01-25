@@ -432,7 +432,7 @@ def run_busybox_command(
         Timeout in seconds for commands that may take longer to execute.
     """
 
-def are_functions_running(
+def function_status_with_message_id(
     *,
     message_id: str,
     auto_check_interval_seconds: int = 0

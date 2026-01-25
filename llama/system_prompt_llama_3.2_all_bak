@@ -485,7 +485,7 @@ Here is a list of functions in JSON format that you can invoke:
   }
 }
 {
-  "name": "are_functions_running",
+  "name": "function_status_with_message_id",
   "description": "Check if functions have completed. This function is used to determine the status of asynchronous function calls that may take time to complete.",
   "parameters": {
     "type": "object",
