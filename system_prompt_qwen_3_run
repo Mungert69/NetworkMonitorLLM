@@ -31,4 +31,3 @@ whats my user info<|im_end|>
 {"name": "get_user_info", "arguments": {"detail_response" : false}}
 </tool-call>
 <|im_end|>
-
