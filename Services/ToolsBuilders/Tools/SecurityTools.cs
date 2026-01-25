@@ -50,7 +50,7 @@ public class SecurityTools
                         Description = "The target to scan - can be an IP address (e.g., '192.168.1.1'), " +
                                       "IP range ('192.168.1.0/24'), domain name ('example.com'), " +
                                       "or hostname. This must be a single string; if multiple targets are needed, " +
-                                      "pass them as a comma-separated string (e.g., '1.1.1.1,example.com')."
+                                      "pass them as a space-separated string (e.g., '1.1.1.1 example.com')."
                     },
                     ["agent_location"] = new PropertyDefinition
                     {
