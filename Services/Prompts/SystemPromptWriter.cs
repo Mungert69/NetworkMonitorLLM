@@ -259,6 +259,7 @@ public sealed class SystemPromptWriter : ISystemPromptWriter
             var timeoutMs = Math.Max(1000, _mlParams.LlmSystemPromptTimeout * 1000);
             var eotToken = config.EOTToken ?? string.Empty;
             var stdoutBuilder = new System.Text.StringBuilder();
+            var stderrBuilder = new System.Text.StringBuilder();
 
             var readTask = Task.Run(async () =>
             {
@@ -292,6 +293,21 @@ public sealed class SystemPromptWriter : ISystemPromptWriter
                     }
                 }
             });
+            var readErrorTask = Task.Run(async () =>
+            {
+                var buffer = new char[1024];
+                while (!process.HasExited)
+                {
+                    int read = await process.StandardError.ReadAsync(buffer, 0, buffer.Length);
+                    if (read <= 0)
+                    {
+                        await Task.Delay(50);
+                        continue;
+                    }
+
+                    stderrBuilder.Append(buffer, 0, read);
+                }
+            });
 
             if (!process.WaitForExit(timeoutMs))
             {
@@ -309,17 +325,25 @@ public sealed class SystemPromptWriter : ISystemPromptWriter
 
             if (process.ExitCode != 0)
             {
-                string output = process.StandardOutput.ReadToEnd();
-                string error = process.StandardError.ReadToEnd();
+                readTask.Wait(TimeSpan.FromSeconds(2));
+                readErrorTask.Wait(TimeSpan.FromSeconds(2));
+                string output = stdoutBuilder.Length > 0 ? stdoutBuilder.ToString() : process.StandardOutput.ReadToEnd();
+                string error = stderrBuilder.Length > 0 ? stderrBuilder.ToString() : process.StandardError.ReadToEnd();
                 _logger.LogWarning("Prompt cache build failed. ExitCode={ExitCode} Output={Output} Error={Error}", process.ExitCode, output, error);
                 return false;
             }
 
             readTask.Wait(TimeSpan.FromSeconds(2));
+            readErrorTask.Wait(TimeSpan.FromSeconds(2));
             string stdout = stdoutBuilder.ToString();
             if (!string.IsNullOrWhiteSpace(stdout))
             {
                 _logger.LogDebug("Prompt cache build output: {Output}", stdout);
+            }
+            string stderr = stderrBuilder.ToString();
+            if (!string.IsNullOrWhiteSpace(stderr))
+            {
+                _logger.LogDebug("Prompt cache build error output: {Output}", stderr);
             }
 
             _logger.LogInformation("Prompt cache build completed successfully.");
