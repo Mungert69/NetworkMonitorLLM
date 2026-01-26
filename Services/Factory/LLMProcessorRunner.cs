@@ -41,7 +41,6 @@ public class LLMProcessRunner : ILLMRunner
     private LLMConfig _config;
     private LLMServiceObj _startServiceoObj;
     private readonly ISystemPromptWriter _systemPromptWriter;
-    private string? _dynamicPrefill;
 
     public bool IsStateReady { get => _isStateReady; }
     public bool IsStateStarting { get => _isStateStarting; }
@@ -63,7 +62,7 @@ public class LLMProcessRunner : ILLMRunner
     private ConcurrentDictionary<string, StringBuilder?> _assistantMessages = new ConcurrentDictionary<string, StringBuilder?>();
     private ConcurrentDictionary<string, StringBuilder?> _systemMessages = new ConcurrentDictionary<string, StringBuilder?>();
 
-    public LLMProcessRunner(ILogger<LLMProcessRunner> logger, ILLMResponseProcessor responseProcessor, SystemParams systemParams, MLParams mlParams, LLMServiceObj startServiceObj, SemaphoreSlim? processRunnerSemaphore, IAudioGenerator audioGenerator, ICpuUsageMonitor cpuUsageMonitor, IQueryCoordinator queryCoordinator, ISystemPromptWriter systemPromptWriter)
+    public LLMProcessRunner(ILogger<LLMProcessRunner> logger, ILLMResponseProcessor responseProcessor,   SystemParams systemParams,  MLParams mlParams, LLMServiceObj startServiceObj, SemaphoreSlim? processRunnerSemaphore, IAudioGenerator audioGenerator, ICpuUsageMonitor cpuUsageMonitor, IQueryCoordinator queryCoordinator, ISystemPromptWriter systemPromptWriter)
     {
         _logger = logger;
         _responseProcessor = responseProcessor;
@@ -139,8 +138,7 @@ public class LLMProcessRunner : ILLMRunner
         }
         _config = LLMConfigFactory.GetConfig(_mlParams.LlmVersion);
         _systemPromptWriter.EnsurePromptFile(serviceObj, _config);
-        _dynamicPrefill = BuildDynamicPrefill(serviceObj);
-
+        
         if (!_isEnabled || _isStateStarting) return;
         _isStateStarting = true;
         _isStateReady = false;
@@ -229,29 +227,6 @@ public class LLMProcessRunner : ILLMRunner
         _logger.LogDebug(
             "Agent location init (LLMProcessRunner): {Location}",
             serviceObj.ChatAgentLocation.Trim());
-    }
-
-    private string BuildDynamicPrefill(LLMServiceObj serviceObj)
-    {
-        if (_mlParams.NoNShot)
-        {
-            return string.Empty;
-        }
-
-        string currentTime = serviceObj.GetClientStartTime().ToString("yyyy-MM-ddTHH:mm:ss");
-        var dynamicMessages = NShotPromptFactory.GetDynamicPrompt(
-            _serviceID,
-            _mlParams.XmlFunctionParsing,
-            currentTime,
-            serviceObj,
-            _config);
-
-        if (dynamicMessages.Count == 0)
-        {
-            return string.Empty;
-        }
-
-        return PromptRenderer.RenderPromptMessages(_config, dynamicMessages);
     }
 
     public Task RemoveProcess(string sessionId)
@@ -603,14 +578,7 @@ public class LLMProcessRunner : ILLMRunner
             }
 
 
-            string prefill = string.Empty;
-            if (!string.IsNullOrEmpty(_dynamicPrefill))
-            {
-                prefill = _dynamicPrefill;
-                _dynamicPrefill = string.Empty;
-            }
-
-            string llmInput = preSystemMessage + preAssistantMessage + functionStatusMessage + prefill + userInput;
+            string llmInput = preSystemMessage + preAssistantMessage + functionStatusMessage + userInput;
             if (string.IsNullOrEmpty(llmInput))
             {
                 _logger.LogWarning(" Warning : LLM Input is empty");
