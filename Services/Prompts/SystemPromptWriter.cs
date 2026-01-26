@@ -90,7 +90,11 @@ public sealed class SystemPromptWriter : ISystemPromptWriter
         }
 
         string suffixPrompt = LoadOptionalPrompt($"system_prompt_suffix_{_mlParams.LlmVersion}");
-        systemMessages[0].Content = JoinSections(systemMessages[0].Content, functionDefs, promptFooter, suffixPrompt);
+        systemMessages[0].Content = JoinSections(
+            systemMessages[0].Content ?? string.Empty,
+            functionDefs ?? string.Empty,
+            promptFooter ?? string.Empty,
+            suffixPrompt ?? string.Empty);
 
         var promptMessages = new List<ChatMessage>();
         promptMessages.AddRange(systemMessages);
