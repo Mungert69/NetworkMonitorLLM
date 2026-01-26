@@ -75,7 +75,7 @@ public class LLMProcessRunnerFactory : LLMRunnerFactoryBase
 
     public override ILLMRunner CreateRunner(IServiceProvider serviceProvider, LLMServiceObj serviceObj, SemaphoreSlim? runnerSemaphore, List<ChatMessage> history, ICpuUsageMonitor cpuUsageMonitor)
     {
-        return new LLMProcessRunner(serviceProvider.GetRequiredService<ILogger<LLMProcessRunner>>(), serviceProvider.GetRequiredService<ILLMResponseProcessor>(), serviceProvider.GetRequiredService<SystemParams>(), serviceProvider.GetRequiredService<MLParams>(), serviceObj, runnerSemaphore, serviceProvider.GetRequiredService<IAudioGenerator>(), cpuUsageMonitor, serviceProvider.GetRequiredService<IQueryCoordinator>());
+        return new LLMProcessRunner(serviceProvider.GetRequiredService<ILogger<LLMProcessRunner>>(), serviceProvider.GetRequiredService<ILLMResponseProcessor>(), serviceProvider.GetRequiredService<SystemParams>(), serviceProvider.GetRequiredService<MLParams>(), serviceObj, runnerSemaphore, serviceProvider.GetRequiredService<IAudioGenerator>(), cpuUsageMonitor, serviceProvider.GetRequiredService<IQueryCoordinator>(), serviceProvider.GetRequiredService<ISystemPromptWriter>());
     }
 }
 

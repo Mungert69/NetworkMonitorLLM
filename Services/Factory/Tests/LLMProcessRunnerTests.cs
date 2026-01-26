@@ -26,6 +26,7 @@ public class LLMProcessRunnerTests
         var cpuUsageMonitor = new Mock<ICpuUsageMonitor>();
         cpuUsageMonitor.Setup(m => m.IsMemoryAvailable(It.IsAny<int>())).Returns(true);
         var queryCoordinator = Mock.Of<IQueryCoordinator>();
+        var systemPromptWriter = Mock.Of<ISystemPromptWriter>();
 
         return new LLMProcessRunner(
             logger.Object,
@@ -36,7 +37,8 @@ public class LLMProcessRunnerTests
             new SemaphoreSlim(1, 1),
             Mock.Of<IAudioGenerator>(),
             cpuUsageMonitor.Object,
-            queryCoordinator);
+            queryCoordinator,
+            systemPromptWriter);
     }
 
     [Fact]
