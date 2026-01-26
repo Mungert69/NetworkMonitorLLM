@@ -14,6 +14,41 @@ namespace NetworkMonitor.LLM.Services
 {
     public static class NShotPromptFactory
     {
+        public static List<ChatMessage> GetStaticPrompt(string name, bool isXml = false, params object[] args)
+        {
+            string key = isXml ? name + "xml" : name;
+            switch (key.ToLowerInvariant())
+            {
+                case "cmdprocessorxml":
+                    return GetCmdProcessorXml(args);
+                case "connectxml":
+                    return GetConnectXml(args);
+                case "connect":
+                    return GetConnectPrompt(args);
+                case "agentflow":
+                    return GetAgentFlowPrompt(args);
+                default:
+                    return new List<ChatMessage>();
+            }
+        }
+
+        public static List<ChatMessage> GetDynamicPrompt(string name, bool isXml = false, params object[] args)
+        {
+            string key = isXml ? name + "xml" : name;
+            switch (key.ToLowerInvariant())
+            {
+                case "cmdprocessorxml":
+                case "connectxml":
+                case "connect":
+                case "agentflow":
+                    return new List<ChatMessage>();
+                case "user":
+                    return GetUserSimulatorPrompt(args);
+                default:
+                    return GetDefaultPrompt(args);
+            }
+        }
+
         // Factory method to return the appropriate prompt by name
         public static List<ChatMessage> GetPrompt(string name, bool isXml = false, params object[] args)
         {

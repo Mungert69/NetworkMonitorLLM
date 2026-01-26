@@ -148,6 +148,7 @@ namespace NetworkMonitor.LLM
             services.AddSingleton<IQueryCoordinator, QueryCoordinator>();
             services.AddSingleton<IFunctionDefinitionRegistry, FunctionDefinitionRegistry>();
             services.AddSingleton<IToolsBuilderFactory, ToolsBuilderFactory>();
+            services.AddSingleton<ISystemPromptWriter, SystemPromptWriter>();
             services.AddSingleton<MLParams>(sp =>
             {
                 var systemParamsHelper = sp.GetRequiredService<ISystemParamsHelper>();

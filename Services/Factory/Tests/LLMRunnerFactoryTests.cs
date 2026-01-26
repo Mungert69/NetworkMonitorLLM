@@ -33,6 +33,7 @@ public class LLMRunnerFactoryTests
         services.AddSingleton(Mock.Of<IAudioGenerator>());
         services.AddSingleton(Mock.Of<ICpuUsageMonitor>());
         services.AddSingleton(Mock.Of<IQueryCoordinator>());
+        services.AddSingleton(Mock.Of<ISystemPromptWriter>());
         var provider = services.BuildServiceProvider();
 
         var factory = new LLMProcessRunnerFactory();
