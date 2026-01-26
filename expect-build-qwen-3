@@ -1,0 +1,23 @@
+#!/usr/bin/expect
+# Set the timeout to 300 seconds (5 minutes)
+set timeout 600
+# Start the llama-completion command with absolute paths
+spawn /home/user/code/models/llama.cpp/llama-completion -c 12000 -m /home/user/code/models/Qwen3-4B-Instruct-2507-q8_0.gguf --prompt-cache /home/user/code/models/context-qwen-3.gguf -f /home/user/code/models/system_prompt_qwen_3 -r "<|im_end|>" -no-cnv -sp -i --temp 0 --simple-io --verbose --no-repack
+
+# Wait for the expected output
+expect {
+    "</tool_call><|im_end|>" {
+        # Send Ctrl+C to terminate the command
+        send \x03
+        exp_continue
+    }
+    eof {
+        # Exit when the command ends
+        exit 0
+    }
+    timeout {
+        # Exit if the command takes too long
+        send_user "Timeout occurred. Exiting...\n"
+        exit 0
+    }
+}
