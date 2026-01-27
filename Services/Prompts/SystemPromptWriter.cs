@@ -471,9 +471,32 @@ public sealed class SystemPromptWriter : ISystemPromptWriter
         string directory = Path.GetDirectoryName(baseFileName) ?? string.Empty;
         string name = Path.GetFileNameWithoutExtension(baseFileName);
         string ext = Path.GetExtension(baseFileName);
+        name = StripExistingHashSuffix(name, promptHash);
         string hashedName = $"{name}.{promptHash}{(string.IsNullOrEmpty(ext) ? ".gguf" : ext)}";
 
         return string.IsNullOrEmpty(directory) ? hashedName : Path.Combine(directory, hashedName);
+    }
+
+    private static string StripExistingHashSuffix(string name, string promptHash)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return name;
+        }
+
+        int lastDot = name.LastIndexOf('.', StringComparison.Ordinal);
+        if (lastDot <= 0 || lastDot == name.Length - 1)
+        {
+            return name;
+        }
+
+        string suffix = name.Substring(lastDot + 1);
+        if (suffix.Length == promptHash.Length && suffix.All(c => Uri.IsHexDigit(c)))
+        {
+            return name.Substring(0, lastDot);
+        }
+
+        return name;
     }
 
     private static string EnsureTrailingNewline(string prompt)
