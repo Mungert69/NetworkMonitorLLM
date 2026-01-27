@@ -458,7 +458,7 @@
                 "type": "function",
                 "function": {
                     "name": "get_agents",
-                    "description": "Retrieve a list of monitoring agent details. Call this to give the user a list of agents to choose from. Note the agents with the users email address in the strings are the user\u0027s local agents used for local network tasks. The other agents (Scanner - EU etc.) are internet based agents. If a local agent is not available direct the user to install any of the agents from this page : https://freenetworkmonitor.click/download ",
+                    "description": "Retrieve a list of monitoring agent details. Call this to give the user a list of agents to choose from. Note the agents with the users email address in the strings are the user\u0027s local agents used for local network tasks. The other agents (Scanner - EU etc.) are internet based agents. If a local agent is not available direct the user to install any of the agents from this page : https://readtforquantum.com/download ",
                     "parameters": {
                         "type": "object",
                         "properties": {

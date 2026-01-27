@@ -250,7 +250,7 @@ def get_agents(detail_response: bool) -> list[dict]:
     (UserId) in the strings are the user's local agents used for local network
     tasks. The other agents (e.g., 'Scanner - EU') are internet-based agents.
     If a local agent is not available, direct the user to install any of the
-    agents from this page: https://freenetworkmonitor.click/download.
+    agents from this page: https://readtforquantum.com/download.
 
     Parameters
     ----------
