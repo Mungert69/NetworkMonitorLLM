@@ -484,7 +484,7 @@ public sealed class SystemPromptWriter : ISystemPromptWriter
             return name;
         }
 
-        int lastDot = name.LastIndexOf('.', StringComparison.Ordinal);
+        int lastDot = name.LastIndexOf('.');
         if (lastDot <= 0 || lastDot == name.Length - 1)
         {
             return name;
