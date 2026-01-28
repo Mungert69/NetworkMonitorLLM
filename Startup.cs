@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using NetworkMonitor.LLM.Services;
+using NetworkMonitor.LLM.Services.Cache;
 using NetworkMonitor.Data;
 using NetworkMonitor.Objects;
 using NetworkMonitor.Coordinator;
@@ -148,7 +149,21 @@ namespace NetworkMonitor.LLM
             services.AddSingleton<IQueryCoordinator, QueryCoordinator>();
             services.AddSingleton<IFunctionDefinitionRegistry, FunctionDefinitionRegistry>();
             services.AddSingleton<IToolsBuilderFactory, ToolsBuilderFactory>();
+            
+            // Configure Remote Cache Services
+            services.Configure<RemoteCacheOptions>(Configuration.GetSection("RemoteCache"));
+            services.Configure<S3CacheOptions>(Configuration.GetSection("S3Cache"));
+            
+            // Register HTTP Remote Cache Service
+            services.AddHttpClient<IRemoteCacheService, HttpRemoteCacheService>()
+                .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+                {
+                    AutomaticDecompression = System.Net.DecompressionMethods.GZip | System.Net.DecompressionMethods.Deflate
+                });
+            
+            // Register System Prompt Writer
             services.AddSingleton<ISystemPromptWriter, SystemPromptWriter>();
+            
             services.AddSingleton<MLParams>(sp =>
             {
                 var systemParamsHelper = sp.GetRequiredService<ISystemParamsHelper>();
