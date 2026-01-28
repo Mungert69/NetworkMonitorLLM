@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Betalgo.Ranul.OpenAI.ObjectModels.RequestModels;
 using NetworkMonitor.Objects;
@@ -257,11 +258,13 @@ public sealed class SystemPromptWriter : ISystemPromptWriter
                 {
                     _logger.LogInformation("Found context file in remote cache, downloading...");
                     
-                    if (_remoteCache.DownloadContextFileAsync(hashedContextFileName, promptHash).GetAwaiter().GetResult())
-                    {
-                        _logger.LogInformation("Successfully downloaded context file from remote cache: {ContextFile}", contextPath);
-                        return;
-                    }
+                byte[] fileData = _remoteCache.DownloadContextFileAsync(hashedContextFileName, promptHash).GetAwaiter().GetResult();
+                if (fileData != null && fileData.Length > 0)
+                {
+                    File.WriteAllBytes(contextPath, fileData);
+                    _logger.LogInformation("Successfully downloaded context file from remote cache: {ContextFile}", contextPath);
+                    return;
+                }
                     else
                     {
                         _logger.LogWarning("Failed to download context file from remote cache");
@@ -297,14 +300,8 @@ public sealed class SystemPromptWriter : ISystemPromptWriter
                 _logger.LogInformation("Uploading context file to remote cache...");
                 byte[] fileData = File.ReadAllBytes(contextPath);
                 
-                if (_remoteCache.UploadContextFileAsync(hashedContextFileName, promptHash, fileData).GetAwaiter().GetResult())
-                {
-                    _logger.LogInformation("Successfully uploaded context file to remote cache: {ContextFileName}", hashedContextFileName);
-                }
-                else
-                {
-                    _logger.LogWarning("Failed to upload context file to remote cache");
-                }
+                _remoteCache.UploadContextFileAsync(hashedContextFileName, promptHash, fileData).GetAwaiter().GetResult();
+                _logger.LogInformation("Successfully uploaded context file to remote cache: {ContextFileName}", hashedContextFileName);
             }
             catch (Exception ex)
             {
