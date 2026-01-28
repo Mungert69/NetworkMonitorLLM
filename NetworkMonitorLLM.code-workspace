@@ -10,10 +10,7 @@
 			"path": "../NetworkMonitorData"
 		},
 		{
-			"path": "../NetworkMonitorService"
-		},
-		{
-			"path": "../FreeNetworkMonitor"
+			"path": "../NetworkMonitorCacheHttp"
 		}
 	],
 	"settings": {

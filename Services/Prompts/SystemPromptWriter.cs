@@ -11,6 +11,7 @@ using Betalgo.Ranul.OpenAI.ObjectModels.RequestModels;
 using NetworkMonitor.Objects;
 using NetworkMonitor.Objects.ServiceMessage;
 using NetworkMonitor.Utils.Helpers;
+using NetworkMonitor.LLM.Services.Cache;
 
 namespace NetworkMonitor.LLM.Services;
 
@@ -26,19 +27,25 @@ public sealed class SystemPromptWriter : ISystemPromptWriter
     private readonly IHostEnvironment _hostEnvironment;
     private readonly SystemParams _systemParams;
     private readonly MLParams _mlParams;
+    private readonly IRemoteCacheService _remoteCache;
+    private readonly RemoteCacheOptions _cacheOptions;
 
     public SystemPromptWriter(
         ILogger<SystemPromptWriter> logger,
         IToolsBuilderFactory toolsBuilderFactory,
         IHostEnvironment hostEnvironment,
         SystemParams systemParams,
-        MLParams mlParams)
+        MLParams mlParams,
+        IRemoteCacheService remoteCache,
+        IOptions<RemoteCacheOptions> cacheOptions)
     {
         _logger = logger;
         _toolsBuilderFactory = toolsBuilderFactory;
         _hostEnvironment = hostEnvironment;
         _systemParams = systemParams;
         _mlParams = mlParams;
+        _remoteCache = remoteCache;
+        _cacheOptions = cacheOptions?.Value ?? throw new ArgumentNullException(nameof(cacheOptions));
     }
 
     public void EnsurePromptFile(LLMServiceObj serviceObj, LLMConfig config)
@@ -232,12 +239,46 @@ public sealed class SystemPromptWriter : ISystemPromptWriter
             promptHash,
             contextPath);
 
+        // Check if context file exists locally
         if (File.Exists(contextPath))
         {
-            _logger.LogInformation("Prompt cache already exists: {ContextFile}", contextPath);
+            _logger.LogInformation("Prompt cache already exists locally: {ContextFile}", contextPath);
             return;
         }
 
+        // Check remote cache before expensive operation
+        if (_cacheOptions.Enabled && _cacheOptions.Type == "Http")
+        {
+            try
+            {
+                _logger.LogInformation("Checking remote cache for context file: {ContextFileName}", hashedContextFileName);
+                
+                if (_remoteCache.HasContextFileAsync(hashedContextFileName, promptHash).GetAwaiter().GetResult())
+                {
+                    _logger.LogInformation("Found context file in remote cache, downloading...");
+                    
+                    if (_remoteCache.DownloadContextFileAsync(hashedContextFileName, promptHash).GetAwaiter().GetResult())
+                    {
+                        _logger.LogInformation("Successfully downloaded context file from remote cache: {ContextFile}", contextPath);
+                        return;
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Failed to download context file from remote cache");
+                    }
+                }
+                else
+                {
+                    _logger.LogInformation("Context file not found in remote cache");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error checking remote cache, falling back to local build");
+            }
+        }
+
+        // Only do expensive operation if cache is not available
         var startInfo = BuildFallbackStartInfo(basePromptPath, contextPath, config);
         int promptEotCount = CountOccurrences(basePrompt, config.EOTToken);
         _logger.LogInformation(
@@ -245,7 +286,31 @@ public sealed class SystemPromptWriter : ISystemPromptWriter
             config.EOTToken ?? string.Empty,
             promptEotCount,
             _mlParams.LlmSystemPromptTimeout);
-        RunPromptCacheCommand(startInfo, config, promptEotCount);
+        
+        bool buildSuccess = RunPromptCacheCommand(startInfo, config, promptEotCount);
+        
+        // Upload to cache after successful build
+        if (buildSuccess && _cacheOptions.Enabled && _cacheOptions.Type == "Http")
+        {
+            try
+            {
+                _logger.LogInformation("Uploading context file to remote cache...");
+                byte[] fileData = File.ReadAllBytes(contextPath);
+                
+                if (_remoteCache.UploadContextFileAsync(hashedContextFileName, promptHash, fileData).GetAwaiter().GetResult())
+                {
+                    _logger.LogInformation("Successfully uploaded context file to remote cache: {ContextFileName}", hashedContextFileName);
+                }
+                else
+                {
+                    _logger.LogWarning("Failed to upload context file to remote cache");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error uploading to remote cache");
+            }
+        }
     }
 
     private bool RunPromptCacheCommand(ProcessStartInfo startInfo, LLMConfig config, int promptEotCount)
