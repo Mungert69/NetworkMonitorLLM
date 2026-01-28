@@ -329,9 +329,9 @@ public class HuggingFaceApi : ILLMApi
 
     private async Task<string?> SendHttpRequestAsync(string payloadJson)
     {
-        const int maxRetries = 3;
-        const int delayBetweenRetries = 10000;
-        const int timeout = 120000;
+        int maxRetries = _mlParams.HfRetryMaxAttempts;
+        int delayBetweenRetries = _mlParams.HfRetryDelaySeconds * 1000; // Convert to milliseconds
+        int timeout = _mlParams.HfRequestTimeoutSeconds * 1000; // Convert to milliseconds
 
         for (int attempt = 1; attempt <= maxRetries; attempt++)
         {
