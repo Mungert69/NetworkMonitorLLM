@@ -151,11 +151,11 @@ namespace NetworkMonitor.LLM
             services.AddSingleton<IToolsBuilderFactory, ToolsBuilderFactory>();
             
             // Configure Remote Cache Services
-            services.Configure<RemoteCacheOptions>(Configuration.GetSection("RemoteCache"));
-            services.Configure<S3CacheOptions>(Configuration.GetSection("S3Cache"));
+            // Register Remote Cache Service Factory
+            services.AddSingleton<IRemoteCacheServiceFactory, RemoteCacheServiceFactory>();
             
-            // Register HTTP Remote Cache Service
-            services.AddHttpClient<IRemoteCacheService, HttpRemoteCacheService>()
+            // Register HTTP Client for Remote Cache
+            services.AddHttpClient("RemoteCache")
                 .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
                 {
                     AutomaticDecompression = System.Net.DecompressionMethods.GZip | System.Net.DecompressionMethods.Deflate

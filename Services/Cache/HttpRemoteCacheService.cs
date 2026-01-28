@@ -19,17 +19,16 @@ public class HttpRemoteCacheService : IRemoteCacheService
 
     public HttpRemoteCacheService(
         HttpClient httpClient,
-        IOptions<RemoteCacheOptions> options,
+        RemoteCacheConfig config,
         ILogger<HttpRemoteCacheService> logger)
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         
-        var cacheOptions = options?.Value ?? throw new ArgumentNullException(nameof(options));
-        _baseUrl = cacheOptions.BaseUrl ?? throw new ArgumentException("BaseUrl is required", nameof(options));
-        _apiKey = cacheOptions.ApiKey ?? throw new ArgumentException("ApiKey is required", nameof(options));
-        _timeoutSeconds = cacheOptions.TimeoutSeconds > 0 ? cacheOptions.TimeoutSeconds : 30;
-        _retryAttempts = cacheOptions.RetryAttempts > 0 ? cacheOptions.RetryAttempts : 3;
+        _baseUrl = config.BaseUrl ?? throw new ArgumentException("BaseUrl is required");
+        _apiKey = config.ApiKey ?? throw new ArgumentException("ApiKey is required");
+        _timeoutSeconds = config.TimeoutSeconds > 0 ? config.TimeoutSeconds : 30;
+        _retryAttempts = config.RetryAttempts > 0 ? config.RetryAttempts : 3;
         
         // Configure HttpClient timeout
         _httpClient.Timeout = TimeSpan.FromSeconds(_timeoutSeconds);
