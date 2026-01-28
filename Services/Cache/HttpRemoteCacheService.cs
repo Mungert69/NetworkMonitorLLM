@@ -43,7 +43,7 @@ public class HttpRemoteCacheService : IRemoteCacheService
             return false;
         }
 
-        var request = new HttpRequestMessage(HttpMethod.Head, $"{_baseUrl}/cache/{fileHash}");
+        var request = new HttpRequestMessage(HttpMethod.Head, $"{_baseUrl}/cache/{fileName}/{fileHash}");
         AddAuthHeaders(request);
 
         try
@@ -65,7 +65,7 @@ public class HttpRemoteCacheService : IRemoteCacheService
             throw new ArgumentException("File hash cannot be null or empty", nameof(fileHash));
         }
 
-        var request = new HttpRequestMessage(HttpMethod.Get, $"{_baseUrl}/cache/{fileHash}");
+        var request = new HttpRequestMessage(HttpMethod.Get, $"{_baseUrl}/cache/{fileName}/{fileHash}/download");
         AddAuthHeaders(request);
 
         try
@@ -96,12 +96,15 @@ public class HttpRemoteCacheService : IRemoteCacheService
             throw new ArgumentException("File data cannot be null or empty", nameof(fileData));
         }
 
-        var content = new ByteArrayContent(fileData);
-        content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-        
-        var request = new HttpRequestMessage(HttpMethod.Put, $"{_baseUrl}/cache/{fileHash}")
+        var multipart = new MultipartFormDataContent();
+        var fileContent = new ByteArrayContent(fileData);
+        fileContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+        multipart.Add(fileContent, "file", fileName);
+        multipart.Add(new StringContent(fileHash), "hash");
+
+        var request = new HttpRequestMessage(HttpMethod.Post, $"{_baseUrl}/cache/{fileName}/{fileHash}")
         {
-            Content = content
+            Content = multipart
         };
         AddAuthHeaders(request);
 
