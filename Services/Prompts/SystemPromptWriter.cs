@@ -28,8 +28,8 @@ public sealed class SystemPromptWriter : ISystemPromptWriter
     private readonly IHostEnvironment _hostEnvironment;
     private readonly SystemParams _systemParams;
     private readonly MLParams _mlParams;
-    private readonly IRemoteCacheService _remoteCache;
-    private readonly RemoteCacheOptions _cacheOptions;
+    private readonly IRemoteCacheServiceFactory _remoteCacheFactory;
+    private readonly RemoteCacheConfig _cacheConfig;
 
     public SystemPromptWriter(
         ILogger<SystemPromptWriter> logger,
@@ -37,16 +37,15 @@ public sealed class SystemPromptWriter : ISystemPromptWriter
         IHostEnvironment hostEnvironment,
         SystemParams systemParams,
         MLParams mlParams,
-        IRemoteCacheService remoteCache,
-        IOptions<RemoteCacheOptions> cacheOptions)
+        IRemoteCacheServiceFactory remoteCacheFactory)
     {
         _logger = logger;
         _toolsBuilderFactory = toolsBuilderFactory;
         _hostEnvironment = hostEnvironment;
         _systemParams = systemParams;
         _mlParams = mlParams;
-        _remoteCache = remoteCache;
-        _cacheOptions = cacheOptions?.Value ?? throw new ArgumentNullException(nameof(cacheOptions));
+        _remoteCacheFactory = remoteCacheFactory ?? throw new ArgumentNullException(nameof(remoteCacheFactory));
+        _cacheConfig = mlParams.RemoteCache;
     }
 
     public void EnsurePromptFile(LLMServiceObj serviceObj, LLMConfig config)
@@ -248,17 +247,18 @@ public sealed class SystemPromptWriter : ISystemPromptWriter
         }
 
         // Check remote cache before expensive operation
-        if (_cacheOptions.Enabled && _cacheOptions.Type == "Http")
+        if (_cacheConfig.Enabled && _cacheConfig.Type == "Http")
         {
             try
             {
                 _logger.LogInformation("Checking remote cache for context file: {ContextFileName}", hashedContextFileName);
                 
-                if (_remoteCache.HasContextFileAsync(hashedContextFileName, promptHash).GetAwaiter().GetResult())
+                var remoteCache = _remoteCacheFactory.CreateService();
+                if (remoteCache.HasContextFileAsync(hashedContextFileName, promptHash).GetAwaiter().GetResult())
                 {
                     _logger.LogInformation("Found context file in remote cache, downloading...");
                     
-                byte[] fileData = _remoteCache.DownloadContextFileAsync(hashedContextFileName, promptHash).GetAwaiter().GetResult();
+                byte[] fileData = remoteCache.DownloadContextFileAsync(hashedContextFileName, promptHash).GetAwaiter().GetResult();
                 if (fileData != null && fileData.Length > 0)
                 {
                     File.WriteAllBytes(contextPath, fileData);
@@ -293,14 +293,15 @@ public sealed class SystemPromptWriter : ISystemPromptWriter
         bool buildSuccess = RunPromptCacheCommand(startInfo, config, promptEotCount);
         
         // Upload to cache after successful build
-        if (buildSuccess && _cacheOptions.Enabled && _cacheOptions.Type == "Http")
+        if (buildSuccess && _cacheConfig.Enabled && _cacheConfig.Type == "Http")
         {
             try
             {
                 _logger.LogInformation("Uploading context file to remote cache...");
                 byte[] fileData = File.ReadAllBytes(contextPath);
                 
-                _remoteCache.UploadContextFileAsync(hashedContextFileName, promptHash, fileData).GetAwaiter().GetResult();
+                var remoteCache = _remoteCacheFactory.CreateService();
+                remoteCache.UploadContextFileAsync(hashedContextFileName, promptHash, fileData).GetAwaiter().GetResult();
                 _logger.LogInformation("Successfully uploaded context file to remote cache: {ContextFileName}", hashedContextFileName);
             }
             catch (Exception ex)
