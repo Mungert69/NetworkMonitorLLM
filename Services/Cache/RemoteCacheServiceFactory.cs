@@ -1,6 +1,8 @@
 using System;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using NetworkMonitor.Utils.Helpers;
 
 namespace NetworkMonitor.LLM.Services.Cache;
 
@@ -12,17 +14,14 @@ public interface IRemoteCacheServiceFactory
 public class RemoteCacheServiceFactory : IRemoteCacheServiceFactory
 {
     private readonly ISystemParamsHelper _systemParamsHelper;
-    private readonly ILogger<RemoteCacheServiceFactory> _logger;
-    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly ILoggerFactory _loggerFactory;
 
     public RemoteCacheServiceFactory(
         ISystemParamsHelper systemParamsHelper,
-        ILogger<RemoteCacheServiceFactory> logger,
-        IHttpClientFactory httpClientFactory)
+        ILoggerFactory loggerFactory)
     {
         _systemParamsHelper = systemParamsHelper ?? throw new ArgumentNullException(nameof(systemParamsHelper));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
+        _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
     }
 
     public IRemoteCacheService CreateService()
@@ -32,44 +31,39 @@ public class RemoteCacheServiceFactory : IRemoteCacheServiceFactory
 
         if (!remoteCacheConfig.Enabled)
         {
-            _logger.LogInformation("Remote cache is disabled");
+            var logger = _loggerFactory.CreateLogger<RemoteCacheServiceFactory>();
+            logger.LogInformation("Remote cache is disabled");
             return new NoOpRemoteCacheService();
         }
 
         if (string.Equals(remoteCacheConfig.Type, "Http", StringComparison.OrdinalIgnoreCase))
         {
-            _logger.LogInformation("Creating HTTP remote cache service");
-            var httpClient = _httpClientFactory.CreateClient("RemoteCache");
+            var logger = _loggerFactory.CreateLogger<HttpRemoteCacheService>();
+            logger.LogInformation("Creating HTTP remote cache service");
+            var httpClient = new HttpClient();
+            httpClient.Timeout = TimeSpan.FromSeconds(remoteCacheConfig.TimeoutSeconds);
             return new HttpRemoteCacheService(
                 httpClient,
                 remoteCacheConfig,
-                _logger);
+                logger);
         }
         else if (string.Equals(remoteCacheConfig.Type, "S3", StringComparison.OrdinalIgnoreCase))
         {
-            _logger.LogInformation("Creating S3 remote cache service");
+            var logger = _loggerFactory.CreateLogger<RemoteCacheServiceFactory>();
+            logger.LogInformation("Creating S3 remote cache service");
             // Note: S3 implementation would need to be updated to use SystemParamsHelper pattern
             // For now, return a placeholder
             return new NoOpRemoteCacheService();
         }
         else
         {
-            _logger.LogWarning("Unknown remote cache type: {Type}", remoteCacheConfig.Type);
+            var logger = _loggerFactory.CreateLogger<RemoteCacheServiceFactory>();
+            logger.LogWarning("Unknown remote cache type: {Type}", remoteCacheConfig.Type);
             return new NoOpRemoteCacheService();
         }
     }
 }
 
-// Configuration class that uses SystemParamsHelper pattern
-public class RemoteCacheConfig
-{
-    public bool Enabled { get; set; } = false;
-    public string Type { get; set; } = "Http";
-    public string BaseUrl { get; set; } = string.Empty;
-    public string ApiKey { get; set; } = string.Empty;
-    public int TimeoutSeconds { get; set; } = 30;
-    public int RetryAttempts { get; set; } = 3;
-}
 
 // No-op implementation for when cache is disabled or unavailable
 public class NoOpRemoteCacheService : IRemoteCacheService

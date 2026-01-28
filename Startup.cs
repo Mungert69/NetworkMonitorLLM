@@ -1,35 +1,27 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NetworkMonitor.LLM.Services;
 using NetworkMonitor.LLM.Services.Cache;
-using NetworkMonitor.Data;
 using NetworkMonitor.Objects;
-using NetworkMonitor.Coordinator;
-using Microsoft.AspNetCore.Http;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Collections.Generic;
-using NetworkMonitor.Objects.Factory;
 using NetworkMonitor.Objects.Repository;
+using NetworkMonitor.Coordinator;
 using NetworkMonitor.Utils;
-using HostInitActions;
-using Microsoft.Extensions.Logging;
 using NetworkMonitor.Utils.Helpers;
-using NetworkMonitor.Objects.ServiceMessage;
 using Betalgo.Ranul.OpenAI;
-using Betalgo.Ranul.OpenAI.Builders;
-using Betalgo.Ranul.OpenAI.Managers;
 using Betalgo.Ranul.OpenAI.ObjectModels;
 using Betalgo.Ranul.OpenAI.ObjectModels.RequestModels;
-using Betalgo.Ranul.OpenAI.ObjectModels.SharedModels;
+using Betalgo.Ranul.OpenAI.Managers;
+using System;
 using System.Net;
 using System.Net.Http;
+using System.Threading;
+using System.Threading.Tasks;
+using HostInitActions;
 
 namespace NetworkMonitor.LLM
 {
@@ -154,13 +146,6 @@ namespace NetworkMonitor.LLM
             // Register Remote Cache Service Factory
             services.AddSingleton<IRemoteCacheServiceFactory, RemoteCacheServiceFactory>();
             
-            // Register HTTP Client for Remote Cache
-            services.AddHttpClient("RemoteCache")
-                .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
-                {
-                    AutomaticDecompression = System.Net.DecompressionMethods.GZip | System.Net.DecompressionMethods.Deflate
-                });
-            
             // Register System Prompt Writer
             services.AddSingleton<ISystemPromptWriter, SystemPromptWriter>();
             
@@ -207,18 +192,11 @@ namespace NetworkMonitor.LLM
                    endpoints.MapGet("/health", async context =>
                    {
                        context.Response.ContentType = "application/json";
-                       await context.Response.WriteAsync("{\"status\": \"healthy\"}");
-                   });
-                   // Serve the index.html file
-                   endpoints.MapGet("/", async context =>
-                   {
-                       context.Response.ContentType = "text/html";
-                       await context.Response.SendFileAsync("wwwroot/index.html");
+                       var jsonBytes = System.Text.Encoding.UTF8.GetBytes("{\"status\": \"healthy\"}");
+                       await context.Response.BodyWriter.WriteAsync(jsonBytes);
                    });
                });
-
             }
-
 
             appLifetime.ApplicationStopping.Register(() =>
             {
