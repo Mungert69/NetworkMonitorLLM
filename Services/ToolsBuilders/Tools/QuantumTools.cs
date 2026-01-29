@@ -119,34 +119,32 @@ public class QuantumTools
         };
     }
 
-    public static FunctionDefinition BuildQuantumAlgoInfoFunction()
+  public static FunctionDefinition BuildQuantumAlgoInfoFunction()
+{
+    return new FunctionDefinition
     {
-        return new FunctionDefinition
+        Name = "get_quantum_algorithm_info",
+        Description = "Retrieves detailed information about a specific quantum-safe algorithm. Use this to understand properties and security levels of PQC algorithms.",
+        Parameters = new PropertyDefinition
         {
-            Name = "get_quantum_algorithm_info",
-            Description = "Retrieves detailed information about a specific quantum-safe algorithm. Use this to understand the properties, strengths, and weaknesses of a given algorithm.",
-            Parameters = new PropertyDefinition
+            Type = "object",
+            Properties = new Dictionary<string, PropertyDefinition>
             {
-                Type = "object",
-                Properties = new Dictionary<string, PropertyDefinition>
+                ["algorithm_name"] = new PropertyDefinition
                 {
-                    ["algorithm_name"] = new PropertyDefinition
-                    {
-                        Type = "string",
-                        Description = "The name of the quantum-safe algorithm to retrieve information for, required. Examples include 'Kyber512', 'Dilithium2', 'Falcon512'."
-                    },
-                    ["agent_location"] = new PropertyDefinition
-                    {
-                        Type = "string",
-                        Description = "Optional. Preferred agent location if testing from different network perspectives. " +
-                                      "Important for testing internal vs external services or geographic-specific configurations."
-                    }
+                    Type = "string",
+                    Description = "Quantum-safe algorithm name (canonical form), required. Examples: 'mlkem768', 'mldsa44', 'falcon512', 'slhdsa128s', 'x25519_mlkem768'."
                 },
-                Required = new List<string> { "algorithm_name" }
-            }
-        };
-    }
-
+                ["agent_location"] = new PropertyDefinition
+                {
+                    Type = "string",
+                    Description = "Optional. Preferred agent location for geographic-specific testing."
+                }
+            },
+            Required = new List<string> { "algorithm_name" }
+        }
+    };
+}
     public static FunctionDefinition BuildTestQuantumCertificateFunction()
     {
         return new FunctionDefinition
