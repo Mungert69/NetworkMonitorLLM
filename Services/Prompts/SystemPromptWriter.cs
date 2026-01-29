@@ -291,7 +291,7 @@ public sealed class SystemPromptWriter : ISystemPromptWriter
             promptEotCount,
             _mlParams.LlmSystemPromptTimeout);
         
-        bool buildSuccess = RunPromptCacheCommand(startInfo, config, promptEotCount);
+        bool buildSuccess = RunPromptCacheCommand(startInfo, config, promptEotCount, contextPath);
         
         // Upload to cache after successful build
         if (buildSuccess && _cacheConfig.Enabled && _cacheConfig.Type == "Http")
@@ -312,7 +312,7 @@ public sealed class SystemPromptWriter : ISystemPromptWriter
         }
     }
 
-    private bool RunPromptCacheCommand(ProcessStartInfo startInfo, LLMConfig config, int promptEotCount)
+    private bool RunPromptCacheCommand(ProcessStartInfo startInfo, LLMConfig config, int promptEotCount, string contextPath)
     {
         try
         {
@@ -384,21 +384,18 @@ public sealed class SystemPromptWriter : ISystemPromptWriter
                     // Best effort cleanup.
                 }
                 _logger.LogWarning("Prompt cache build timed out after {TimeoutMs}ms.", timeoutMs);
-                return false;
-            }
-
-            if (process.ExitCode != 0)
-            {
-                readTask.Wait(TimeSpan.FromSeconds(2));
-                readErrorTask.Wait(TimeSpan.FromSeconds(2));
-                string output = stdoutBuilder.Length > 0 ? stdoutBuilder.ToString() : process.StandardOutput.ReadToEnd();
-                string error = stderrBuilder.Length > 0 ? stderrBuilder.ToString() : process.StandardError.ReadToEnd();
-                _logger.LogWarning("Prompt cache build failed. ExitCode={ExitCode} Output={Output} Error={Error}", process.ExitCode, output, error);
-                return false;
+                return File.Exists(contextPath);
             }
 
             readTask.Wait(TimeSpan.FromSeconds(2));
             readErrorTask.Wait(TimeSpan.FromSeconds(2));
+            if (process.ExitCode != 0)
+            {
+                string output = stdoutBuilder.Length > 0 ? stdoutBuilder.ToString() : process.StandardOutput.ReadToEnd();
+                string error = stderrBuilder.Length > 0 ? stderrBuilder.ToString() : process.StandardError.ReadToEnd();
+                _logger.LogWarning("Prompt cache build exited non-zero. ExitCode={ExitCode} Output={Output} Error={Error}", process.ExitCode, output, error);
+            }
+
             string stdout = stdoutBuilder.ToString();
             if (!string.IsNullOrWhiteSpace(stdout))
             {
@@ -410,14 +407,62 @@ public sealed class SystemPromptWriter : ISystemPromptWriter
                 _logger.LogDebug("Prompt cache build error output: {Output}", stderr);
             }
 
-            _logger.LogInformation("Prompt cache build completed successfully.");
-            return true;
+            if (WaitForStableFile(contextPath, TimeSpan.FromSeconds(90), _logger))
+            {
+                _logger.LogInformation("Prompt cache build produced cache file: {ContextPath}", contextPath);
+                return true;
+            }
+
+            _logger.LogWarning("Prompt cache build did not produce cache file: {ContextPath}", contextPath);
+            return false;
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Prompt cache build failed.");
             return false;
         }
+    }
+
+    private static bool WaitForStableFile(string path, TimeSpan maxWait, ILogger logger)
+    {
+        var start = DateTime.UtcNow;
+        long lastSize = -1;
+        int stableCount = 0;
+        DateTime lastLog = DateTime.UtcNow;
+
+        while (DateTime.UtcNow - start < maxWait)
+        {
+            if (File.Exists(path))
+            {
+                long size = new FileInfo(path).Length;
+                if (size > 0 && size == lastSize)
+                {
+                    stableCount++;
+                    if (stableCount >= 2)
+                        return true;
+                }
+                else
+                {
+                    stableCount = 0;
+                }
+                lastSize = size;
+                if ((DateTime.UtcNow - lastLog) > TimeSpan.FromSeconds(5))
+                {
+                    logger.LogInformation("Waiting for cache file to stabilize. Path={ContextPath} SizeBytes={SizeBytes}", path, size);
+                    lastLog = DateTime.UtcNow;
+                }
+            }
+            else if ((DateTime.UtcNow - lastLog) > TimeSpan.FromSeconds(5))
+            {
+                logger.LogInformation("Waiting for cache file to appear. Path={ContextPath}", path);
+                lastLog = DateTime.UtcNow;
+            }
+
+            System.Threading.Thread.Sleep(1000);
+        }
+
+        logger.LogWarning("Timed out waiting for cache file to stabilize. Path={ContextPath} LastSizeBytes={SizeBytes}", path, lastSize);
+        return File.Exists(path);
     }
 
     private static int CountOccurrences(string source, string? token)
