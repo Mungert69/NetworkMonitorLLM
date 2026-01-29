@@ -244,6 +244,27 @@ public sealed class SystemPromptWriter : ISystemPromptWriter
         if (File.Exists(contextPath))
         {
             _logger.LogInformation("Prompt cache already exists locally: {ContextFile}", contextPath);
+
+            // If remote cache is enabled, ensure it's uploaded
+            if (_cacheConfig.Enabled && _cacheConfig.Type == "Http")
+            {
+                try
+                {
+                    var remoteCache = _remoteCacheFactory.CreateService();
+                    if (!remoteCache.HasContextFileAsync(baseContextFileName, promptHash).GetAwaiter().GetResult())
+                    {
+                        _logger.LogInformation("Remote cache missing; uploading local context file: {ContextFileName}", baseContextFileName);
+                        byte[] fileData = File.ReadAllBytes(contextPath);
+                        remoteCache.UploadContextFileAsync(baseContextFileName, promptHash, fileData).GetAwaiter().GetResult();
+                        _logger.LogInformation("Successfully uploaded local context file to remote cache: {ContextFileName}", baseContextFileName);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Error syncing local context file to remote cache");
+                }
+            }
+
             return;
         }
 
