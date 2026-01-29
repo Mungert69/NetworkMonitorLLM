@@ -106,6 +106,7 @@ public class HttpRemoteCacheService : IRemoteCacheService
         {
             throw new ArgumentException("File data cannot be null or empty", nameof(fileData));
         }
+        _logger.LogInformation("Remote cache upload size: {FileName} {SizeBytes} bytes", fileName, fileData.Length);
 
         try
         {
@@ -155,6 +156,17 @@ public class HttpRemoteCacheService : IRemoteCacheService
                 var response = await _httpClient.SendAsync(request);
                 if (response.IsSuccessStatusCode)
                 {
+                    return response;
+                }
+                if ((int)response.StatusCode >= 400 && (int)response.StatusCode < 500
+                    && response.StatusCode != System.Net.HttpStatusCode.RequestTimeout
+                    && response.StatusCode != System.Net.HttpStatusCode.TooManyRequests)
+                {
+                    _logger.LogWarning("Remote cache request not retryable. Method={Method} Url={Url} Status={StatusCode} Reason={ReasonPhrase}",
+                        request.Method.Method,
+                        request.RequestUri?.ToString() ?? string.Empty,
+                        (int)response.StatusCode,
+                        response.ReasonPhrase);
                     return response;
                 }
                 _logger.LogWarning("Remote cache request failed. Method={Method} Url={Url} Status={StatusCode} Reason={ReasonPhrase}",
