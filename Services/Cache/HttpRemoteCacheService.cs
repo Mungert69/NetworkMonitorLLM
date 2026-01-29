@@ -43,13 +43,17 @@ public class HttpRemoteCacheService : IRemoteCacheService
             return false;
         }
 
-        var request = new HttpRequestMessage(HttpMethod.Head, $"{_baseUrl}/cache/{fileName}/{fileHash}");
-        AddAuthHeaders(request);
-
         try
         {
-            var response = await ExecuteWithRetryAsync(() => _httpClient.SendAsync(request));
-            return response.IsSuccessStatusCode;
+            using var request = new HttpRequestMessage(HttpMethod.Head, $"{_baseUrl}/cache/{fileName}/{fileHash}");
+            AddAuthHeaders(request);
+            using var response = await _httpClient.SendAsync(request);
+            if (response.IsSuccessStatusCode)
+                return true;
+            if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                return false;
+            response.EnsureSuccessStatusCode();
+            return false;
         }
         catch (Exception ex)
         {
@@ -65,13 +69,14 @@ public class HttpRemoteCacheService : IRemoteCacheService
             throw new ArgumentException("File hash cannot be null or empty", nameof(fileHash));
         }
 
-        var request = new HttpRequestMessage(HttpMethod.Get, $"{_baseUrl}/cache/{fileName}/{fileHash}/download");
-        AddAuthHeaders(request);
-
         try
         {
-            var response = await ExecuteWithRetryAsync(() => _httpClient.SendAsync(request));
-            response.EnsureSuccessStatusCode();
+            using var response = await ExecuteWithRetryAsync(() =>
+            {
+                var req = new HttpRequestMessage(HttpMethod.Get, $"{_baseUrl}/cache/{fileName}/{fileHash}/download");
+                AddAuthHeaders(req);
+                return req;
+            });
             
             var fileData = await response.Content.ReadAsByteArrayAsync();
             _logger.LogInformation("Successfully downloaded context file {FileName} (hash: {FileHash})", fileName, fileHash);
@@ -96,22 +101,23 @@ public class HttpRemoteCacheService : IRemoteCacheService
             throw new ArgumentException("File data cannot be null or empty", nameof(fileData));
         }
 
-        var multipart = new MultipartFormDataContent();
-        var fileContent = new ByteArrayContent(fileData);
-        fileContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-        multipart.Add(fileContent, "file", fileName);
-        multipart.Add(new StringContent(fileHash), "hash");
-
-        var request = new HttpRequestMessage(HttpMethod.Post, $"{_baseUrl}/cache/{fileName}/{fileHash}")
-        {
-            Content = multipart
-        };
-        AddAuthHeaders(request);
-
         try
         {
-            var response = await ExecuteWithRetryAsync(() => _httpClient.SendAsync(request));
-            response.EnsureSuccessStatusCode();
+            using var response = await ExecuteWithRetryAsync(() =>
+            {
+                var multipart = new MultipartFormDataContent();
+                var fileContent = new ByteArrayContent(fileData);
+                fileContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+                multipart.Add(fileContent, "file", fileName);
+                multipart.Add(new StringContent(fileHash), "hash");
+
+                var req = new HttpRequestMessage(HttpMethod.Post, $"{_baseUrl}/cache/{fileName}/{fileHash}")
+                {
+                    Content = multipart
+                };
+                AddAuthHeaders(req);
+                return req;
+            });
             _logger.LogInformation("Successfully uploaded context file {FileName} (hash: {FileHash})", fileName, fileHash);
         }
         catch (Exception ex)
@@ -129,7 +135,7 @@ public class HttpRemoteCacheService : IRemoteCacheService
         }
     }
 
-    private async Task<HttpResponseMessage> ExecuteWithRetryAsync(Func<Task<HttpResponseMessage>> operation)
+    private async Task<HttpResponseMessage> ExecuteWithRetryAsync(Func<HttpRequestMessage> buildRequest)
     {
         Exception lastException = null;
 
@@ -137,7 +143,8 @@ public class HttpRemoteCacheService : IRemoteCacheService
         {
             try
             {
-                var response = await operation();
+                using var request = buildRequest();
+                var response = await _httpClient.SendAsync(request);
                 if (response.IsSuccessStatusCode)
                 {
                     return response;
