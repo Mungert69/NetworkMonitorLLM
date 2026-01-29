@@ -228,6 +228,7 @@ public sealed class SystemPromptWriter : ISystemPromptWriter
             return;
         }
 
+        string baseContextFileName = _mlParams.LlmContextFileName;
         string promptHash = HashHelper.ComputeSha256Hash(basePrompt);
         string hashedContextFileName = BuildHashedContextFileName(_mlParams.LlmContextFileName, promptHash);
         _mlParams.LlmContextFileName = hashedContextFileName;
@@ -251,14 +252,14 @@ public sealed class SystemPromptWriter : ISystemPromptWriter
         {
             try
             {
-                _logger.LogInformation("Checking remote cache for context file: {ContextFileName}", hashedContextFileName);
+                _logger.LogInformation("Checking remote cache for context file: {ContextFileName}", baseContextFileName);
                 
                 var remoteCache = _remoteCacheFactory.CreateService();
-                if (remoteCache.HasContextFileAsync(hashedContextFileName, promptHash).GetAwaiter().GetResult())
+                if (remoteCache.HasContextFileAsync(baseContextFileName, promptHash).GetAwaiter().GetResult())
                 {
                     _logger.LogInformation("Found context file in remote cache, downloading...");
                     
-                byte[] fileData = remoteCache.DownloadContextFileAsync(hashedContextFileName, promptHash).GetAwaiter().GetResult();
+                byte[] fileData = remoteCache.DownloadContextFileAsync(baseContextFileName, promptHash).GetAwaiter().GetResult();
                 if (fileData != null && fileData.Length > 0)
                 {
                     File.WriteAllBytes(contextPath, fileData);
@@ -301,8 +302,8 @@ public sealed class SystemPromptWriter : ISystemPromptWriter
                 byte[] fileData = File.ReadAllBytes(contextPath);
                 
                 var remoteCache = _remoteCacheFactory.CreateService();
-                remoteCache.UploadContextFileAsync(hashedContextFileName, promptHash, fileData).GetAwaiter().GetResult();
-                _logger.LogInformation("Successfully uploaded context file to remote cache: {ContextFileName}", hashedContextFileName);
+                remoteCache.UploadContextFileAsync(baseContextFileName, promptHash, fileData).GetAwaiter().GetResult();
+                _logger.LogInformation("Successfully uploaded context file to remote cache: {ContextFileName}", baseContextFileName);
             }
             catch (Exception ex)
             {
