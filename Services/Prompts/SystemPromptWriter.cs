@@ -228,16 +228,17 @@ public sealed class SystemPromptWriter : ISystemPromptWriter
             return;
         }
 
-        string baseContextFileName = _mlParams.LlmContextFileName;
+        string baseContextFileName = GetBaseContextFileName(_mlParams.LlmContextFileName);
         string promptHash = HashHelper.ComputeSha256Hash(basePrompt);
-        string hashedContextFileName = BuildHashedContextFileName(_mlParams.LlmContextFileName, promptHash);
+        string hashedContextFileName = BuildHashedContextFileName(baseContextFileName, promptHash);
         _mlParams.LlmContextFileName = hashedContextFileName;
         string contextPath = Path.Combine(_mlParams.LlmModelPath, hashedContextFileName);
 
         _logger.LogInformation(
-            "Prompt cache target resolved. BasePrompt={BasePrompt} Hash={Hash} ContextFile={ContextFile}",
+            "Prompt cache target resolved. BasePrompt={BasePrompt} Hash={Hash} BaseContextFile={BaseContextFile} ContextFile={ContextFile}",
             basePromptName,
             promptHash,
+            baseContextFileName,
             contextPath);
 
         // Check if context file exists locally
@@ -637,6 +638,21 @@ public sealed class SystemPromptWriter : ISystemPromptWriter
         }
 
         return prompt.EndsWith("\n", StringComparison.Ordinal) ? prompt : $"{prompt}\n";
+    }
+
+    private static string GetBaseContextFileName(string fileName)
+    {
+        if (string.IsNullOrWhiteSpace(fileName))
+        {
+            return fileName;
+        }
+
+        // If filename already includes a 64-hex hash suffix (e.g., name.<hash>.gguf), strip it.
+        var match = System.Text.RegularExpressions.Regex.Match(
+            fileName,
+            @"^(?<base>.+)\.[0-9a-fA-F]{64}(?<ext>\.[^\.]+)$");
+
+        return match.Success ? $"{match.Groups["base"].Value}{match.Groups["ext"].Value}" : fileName;
     }
 
     private static string SanitizePromptModeForCache(string promptMode)
