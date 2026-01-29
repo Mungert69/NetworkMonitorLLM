@@ -45,13 +45,17 @@ public class HttpRemoteCacheService : IRemoteCacheService
 
         try
         {
-            using var request = new HttpRequestMessage(HttpMethod.Head, $"{_baseUrl}/cache/{fileName}/{fileHash}");
+            var url = $"{_baseUrl}/cache/{fileName}/{fileHash}";
+            _logger.LogInformation("Remote cache HEAD {Url}", url);
+            using var request = new HttpRequestMessage(HttpMethod.Head, url);
             AddAuthHeaders(request);
             using var response = await _httpClient.SendAsync(request);
             if (response.IsSuccessStatusCode)
                 return true;
             if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
                 return false;
+            _logger.LogWarning("Remote cache HEAD failed. Url={Url} Status={StatusCode} Reason={ReasonPhrase}",
+                url, (int)response.StatusCode, response.ReasonPhrase);
             response.EnsureSuccessStatusCode();
             return false;
         }
@@ -73,7 +77,9 @@ public class HttpRemoteCacheService : IRemoteCacheService
         {
             using var response = await ExecuteWithRetryAsync(() =>
             {
-                var req = new HttpRequestMessage(HttpMethod.Get, $"{_baseUrl}/cache/{fileName}/{fileHash}/download");
+                var url = $"{_baseUrl}/cache/{fileName}/{fileHash}/download";
+                _logger.LogInformation("Remote cache GET {Url}", url);
+                var req = new HttpRequestMessage(HttpMethod.Get, url);
                 AddAuthHeaders(req);
                 return req;
             });
@@ -105,13 +111,15 @@ public class HttpRemoteCacheService : IRemoteCacheService
         {
             using var response = await ExecuteWithRetryAsync(() =>
             {
+                var url = $"{_baseUrl}/cache/{fileName}/{fileHash}";
+                _logger.LogInformation("Remote cache POST {Url}", url);
                 var multipart = new MultipartFormDataContent();
                 var fileContent = new ByteArrayContent(fileData);
                 fileContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
                 multipart.Add(fileContent, "file", fileName);
                 multipart.Add(new StringContent(fileHash), "hash");
 
-                var req = new HttpRequestMessage(HttpMethod.Post, $"{_baseUrl}/cache/{fileName}/{fileHash}")
+                var req = new HttpRequestMessage(HttpMethod.Post, url)
                 {
                     Content = multipart
                 };
@@ -149,6 +157,11 @@ public class HttpRemoteCacheService : IRemoteCacheService
                 {
                     return response;
                 }
+                _logger.LogWarning("Remote cache request failed. Method={Method} Url={Url} Status={StatusCode} Reason={ReasonPhrase}",
+                    request.Method.Method,
+                    request.RequestUri?.ToString() ?? string.Empty,
+                    (int)response.StatusCode,
+                    response.ReasonPhrase);
                 
                 // If not successful, throw to trigger retry
                 response.EnsureSuccessStatusCode();
