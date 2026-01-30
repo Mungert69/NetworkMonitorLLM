@@ -66,7 +66,8 @@ public sealed class SystemPromptWriter : ISystemPromptWriter
         IToolsBuilder toolsBuilder = _toolsBuilderFactory.Create(
             toolsId,
             serviceObj.JsonToolsBuilderSpec,
-            enableAgentFlow);
+            enableAgentFlow,
+            serviceObj.LLMRunnerType);
 
         string toolsJson = BuildToolsJsonForPrompt(toolsBuilder.Tools);
         if (string.IsNullOrWhiteSpace(toolsJson))

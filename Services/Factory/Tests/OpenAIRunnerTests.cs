@@ -76,7 +76,7 @@ public class OpenAIRunnerTests
             .Returns(Task.CompletedTask);
 
         var toolsFactory = new Mock<IToolsBuilderFactory>();
-        toolsFactory.Setup(t => t.Create(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>()))
+        toolsFactory.Setup(t => t.Create(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<string>()))
             .Returns(new FakeToolsBuilder());
 
         var mlParams = new MLParams
@@ -143,7 +143,7 @@ public class OpenAIRunnerTests
             .Returns(Task.CompletedTask);
 
         var toolsFactory = new Mock<IToolsBuilderFactory>();
-        toolsFactory.Setup(t => t.Create(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>()))
+        toolsFactory.Setup(t => t.Create(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<string>()))
             .Returns(new FakeToolsBuilder());
 
         var mlParams = new MLParams
@@ -212,7 +212,7 @@ public class OpenAIRunnerTests
             .Returns(Task.CompletedTask);
 
         var toolsFactory = new Mock<IToolsBuilderFactory>();
-        toolsFactory.Setup(t => t.Create(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>()))
+        toolsFactory.Setup(t => t.Create(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<string>()))
             .Returns(new FakeToolsBuilder());
 
         var mlParams = new MLParams
