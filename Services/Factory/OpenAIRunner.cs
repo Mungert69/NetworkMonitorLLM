@@ -126,7 +126,8 @@ public class OpenAIRunner : ILLMRunner
         IToolsBuilder toolsBuilder = _toolsBuilderFactory.Create(
     toolsId,
     serviceObj.JsonToolsBuilderSpec,
-    enableAgentFlow
+    enableAgentFlow,
+    serviceObj.LLMRunnerType
 );
 
         _useHF = useHF;

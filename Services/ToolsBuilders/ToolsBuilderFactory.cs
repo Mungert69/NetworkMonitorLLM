@@ -12,7 +12,7 @@ public interface IToolsBuilderFactory
     /// <summary>Create a tools builder by its identifier.</summary>
     /// <param name="toolsId">The tools identifier (e.g. "nmap", "json_dynamic").</param>
     /// <param name="jsonSpec">When using "json_dynamic", the serialized <see cref="ToolBuilderSpec"/>.</param>
-    IToolsBuilder Create(string toolsId, string? jsonSpec = null, bool enableAgentFlow = false);
+    IToolsBuilder Create(string toolsId, string? jsonSpec = null, bool enableAgentFlow = false, string? runnerType = null);
 
     /// <summary>All statically-registered tools IDs.</summary>
     IEnumerable<string> AvailableIds();
@@ -24,6 +24,8 @@ public sealed class ToolsBuilderFactory : IToolsBuilderFactory
 
     private readonly ILogger _logger;
     private readonly IFunctionDefinitionRegistry _functionDefinitionRegistry;
+    private readonly MLParams _mlParams;
+    private readonly SystemParams _systemParams;
 
     // No userInfo anymore — parameterless ctor factory
     private readonly Dictionary<string, Func<IToolsBuilder>> _static;
@@ -34,10 +36,14 @@ public sealed class ToolsBuilderFactory : IToolsBuilderFactory
 
     public ToolsBuilderFactory(
         ILogger<ToolsBuilderFactory> logger,
-        IFunctionDefinitionRegistry functionDefinitionRegistry)
+        IFunctionDefinitionRegistry functionDefinitionRegistry,
+        MLParams mlParams,
+        SystemParams systemParams)
     {
         _logger = logger;
         _functionDefinitionRegistry = functionDefinitionRegistry;
+        _mlParams = mlParams;
+        _systemParams = systemParams;
 
         _static = new(StringComparer.OrdinalIgnoreCase)
         {
@@ -58,7 +64,7 @@ public sealed class ToolsBuilderFactory : IToolsBuilderFactory
     }
 
     // MAIN ENTRY POINT ----------------------------------------------------
-    public IToolsBuilder Create(string toolsId, string? jsonSpec = null, bool enableAgentFlow = false)
+    public IToolsBuilder Create(string toolsId, string? jsonSpec = null, bool enableAgentFlow = false, string? runnerType = null)
     {
         // 1️⃣  Dynamic JSON path
         if (toolsId.Equals(JSON_DYNAMIC_ID, StringComparison.OrdinalIgnoreCase))
@@ -76,6 +82,11 @@ public sealed class ToolsBuilderFactory : IToolsBuilderFactory
                 _ => new JsonDrivenToolsBuilder(spec, _functionDefinitionRegistry));
         }
 
+        if (ShouldUseSimpleMonitorPrompt(toolsId, runnerType))
+        {
+            return new MonitorSimpleToolsBuilder();
+        }
+
         // 2️⃣  Static path
         if (_static.TryGetValue(toolsId, out var ctor))
         {
@@ -87,4 +98,34 @@ public sealed class ToolsBuilderFactory : IToolsBuilderFactory
     }
 
     public IEnumerable<string> AvailableIds() => _static.Keys;
+
+    private bool ShouldUseSimpleMonitorPrompt(string toolsId, string? runnerType)
+    {
+        if (string.IsNullOrWhiteSpace(runnerType))
+        {
+            return false;
+        }
+
+        if (!IsMonitorToolsId(toolsId))
+        {
+            return false;
+        }
+
+        if (!IsMonitorUserFacingService())
+        {
+            return false;
+        }
+
+        return _mlParams.SimpleMonitorPromptByRunner.TryGetValue(runnerType, out var useSimple) && useSimple;
+    }
+
+    private static bool IsMonitorToolsId(string toolsId)
+    {
+        return toolsId.Equals("monitor", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private bool IsMonitorUserFacingService()
+    {
+        return _systemParams.UserFacingServiceId?.Equals("monitor", StringComparison.OrdinalIgnoreCase) == true;
+    }
 }

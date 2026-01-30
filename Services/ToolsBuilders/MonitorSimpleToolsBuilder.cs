@@ -30,7 +30,7 @@ public class MonitorSimpleToolsBuilder : ToolsBuilderBase
     private readonly FunctionDefinition fn_scan_quantum_ports;
     private readonly FunctionDefinition fn_test_quantum_certificate;
 
-    public MonitorSimpleToolsBuilder(UserInfo userInfo)
+    public MonitorSimpleToolsBuilder(UserInfo? userInfo = null)
     {
         fn_add_host = MonitorTools.BuildAddHostFunction();
         fn_edit_host = MonitorTools.BuildEditHostFunction();
