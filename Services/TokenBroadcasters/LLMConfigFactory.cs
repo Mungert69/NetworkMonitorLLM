@@ -378,7 +378,7 @@ You may call one or more functions to assist with the user query. You have the f
 {0}
 ```
 For tool call returns, you MUST use the following format:
-<tool_call>{""name"": ""function-name"", ""arguments"": {""param1"": ""value1"", ""param2"": ""value2""}}</tool_call>
+<tool_call>{{""name"": ""function-name"", ""arguments"": {{""param1"": ""value1"", ""param2"": ""value2""}}}}</tool_call>
 <|end_of_tool_description|>",
                 PromptFooter = "",
                 CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
@@ -409,7 +409,7 @@ For tool call returns, you MUST use the following format:
                 FunctionResponse = "[{1}]",
                 FunctionDefsWrap = @"You have access to a set of tools. When using tools, make calls in a single JSON array: 
 
-[{""name"": ""tool_call_name"", ""arguments"": {{...}}}, ... (additional parallel tool calls as needed)]
+[{{""name"": ""tool_call_name"", ""arguments"": {{...}}}}, ... (additional parallel tool calls as needed)]
 
 If no tool is suitable, state that explicitly. If the user's input lacks required parameters, ask for clarification. Do not interpret or respond until tool results are returned. Once they are available, process them or make additional calls if needed. For tasks that don't require tools, such as casual conversation or general advice, respond directly in plain text. The available tools are:
 {0}
