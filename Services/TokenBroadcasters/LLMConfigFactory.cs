@@ -357,6 +357,34 @@ Reminder:
                         new TokenBroadcasterQwen_3(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
             },
 
+            "youtu" => new LLMConfig
+            {
+                UserReplace = "<|User|>",
+                FunctionReplace = "<|User|><tool_response>",
+                AssistantHeader = "<|Assistant|>",
+                UserInputTemplate = "<|User|>{0}",
+                AssistantMessageTemplate = "<|Assistant|>{0}<|end_of_text|>",
+                SystemMessageTemplate = "{0}",
+                EOTToken = "<|end_of_text|>",
+                ThinkBeginToken = "<think>",
+                ThinkEndToken = "</think>",
+                FunctionResponseTemplate = "<|User|><tool_response>{1}</tool_response>",
+
+                FunctionBuilder = "<tool_call>{1}</tool_call>",
+                FunctionResponse = "<tool_response>{1}</tool_response>",
+                FunctionDefsWrap = @"<|begin_of_tool_description|>Tool calling capabilities.
+You may call one or more functions to assist with the user query. You have the following functions available:
+```json
+{0}
+```
+For tool call returns, you MUST use the following format:
+<tool_call>{""name"": ""function-name"", ""arguments"": {""param1"": ""value1"", ""param2"": ""value2""}}</tool_call>
+<|end_of_tool_description|>",
+                PromptFooter = "",
+                CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
+                        new TokenBroadcasterQwen_3(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
+            },
+
 
             "xlam_2" => new LLMConfig
             {
