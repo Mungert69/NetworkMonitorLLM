@@ -438,7 +438,7 @@ If no tool is suitable, state that explicitly. If the user's input lacks require
                 // End of turn token
                 EOTToken = "<|im_end|>",
 
-                FunctionBuilder = "<|tool_call_start|>[{\"name\":\"{0}\", \"parameters\":{1}}]<|tool_call_end|>",
+                FunctionBuilder = "<|tool_call_start|>[{{\"name\":\"{0}\", \"parameters\":{1}}}]<|tool_call_end|>",
                 FunctionResponse = "<|tool_response_start|>[{1}]<|tool_response_end|>",
                 FunctionDefsWrap = @"<|tool_list_start|>{0}<|tool_list_end|>",
                 PromptFooter = "",
@@ -465,7 +465,7 @@ If no tool is suitable, state that explicitly. If the user's input lacks require
                 // End of turn token
                 EOTToken = "<|im_end|>",
 
-                FunctionBuilder = "<|tool_call_start|>[{\"name\":\"{0}\", \"parameters\":{1}}]<|tool_call_end|>",
+                FunctionBuilder = "<|tool_call_start|>[{{\"name\":\"{0}\", \"parameters\":{1}}}]<|tool_call_end|>",
                 FunctionResponse = "<|tool_response_start|>[{1}]<|tool_response_end|>",
                 FunctionDefsWrap = @"List of tools: {0}",
                 PromptFooter = @"",
