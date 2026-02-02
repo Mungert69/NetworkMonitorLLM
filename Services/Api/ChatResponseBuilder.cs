@@ -109,15 +109,19 @@ public class ChatResponseBuilder
                 if (_isXml) functionCalls = _tokenBroadcaster.ParseInputForXml(message.Content);
                 else functionCalls = _tokenBroadcaster.ParseInputForJson(message.Content);
 
-                if (functionCalls.Any())
+                var validFunctionCalls = functionCalls
+                    .Where(fc => !string.IsNullOrWhiteSpace(fc.functionName))
+                    .ToList();
+
+                if (validFunctionCalls.Any())
                 {
                     choice.FinishReason = "tool_calls";
-                    foreach (var fc in functionCalls)
+                    foreach (var fc in validFunctionCalls)
                     {
                         _logger.LogDebug($"Function call detected - Name: {fc.functionName}, JSON: {fc.json}");
                     }
 
-                    choice.Message.ToolCalls = functionCalls.Select(fc => new ToolCall
+                    choice.Message.ToolCalls = validFunctionCalls.Select(fc => new ToolCall
                     {
                         Type = "function",
                         Id = StringUtils.NewToolCallId(),
