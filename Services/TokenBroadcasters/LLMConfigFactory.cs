@@ -446,6 +446,34 @@ If no tool is suitable, state that explicitly. If the user's input lacks require
                 CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
                                     new TokenBroadcasterLFM_2(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
             },
+            "lfm_2.5" => new LLMConfig
+            {
+                // User message formatting
+                UserReplace = "<|im_start|>user\\\n",
+                UserInputTemplate = "<|im_start|>user\\\n{0}",
+                FunctionReplace = "<|im_start|>tool\\\n",
+                // System prompt formatting
+                SystemMessageTemplate = "<|im_start|>system\\\n{0}<|im_end|>",
+
+                // Assistant message formatting
+                AssistantHeader = "<|im_start|>assistant\n",
+                AssistantMessageTemplate = "<|im_start|>assistant\\\n{0}<|im_end|>",
+
+                // Tool response formatting
+                FunctionResponseTemplate = "<|im_start|>tool\\\n<|tool_response_start|>{1}<|tool_response_end|>",
+
+                // End of turn token
+                EOTToken = "<|im_end|>",
+
+                FunctionBuilder = "<|tool_call_start|>[{\"name\":\"{0}\", \"parameters\":{1}}]<|tool_call_end|>",
+                FunctionResponse = "<|tool_response_start|>[{1}]<|tool_response_end|>",
+                FunctionDefsWrap = @"List of tools: [{0}]",
+                PromptFooter = @"When calling tools, return python-style calls inside the wrapper:
+<|tool_call_start|>[function_name(arg1=""value1"", arg2=123)]<|tool_call_end|>
+You may also return a JSON list of tool calls inside the same wrapper.",
+                CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
+                                    new TokenBroadcasterLFM_2(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
+            },
             // Configuration for gemma_3
             "gemma_3" => new LLMConfig
             {
