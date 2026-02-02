@@ -405,7 +405,7 @@ For tool call returns, you MUST use the following format:
                 // End of turn token
                 EOTToken = "<|im_end|>",
 
-                FunctionBuilder = "[{\"name\":\"{0}\", \"parameters\":{1}}]",
+                FunctionBuilder = "[{{\"name\":\"{0}\", \"parameters\":{1}}}]",
                 FunctionResponse = "[{1}]",
                 FunctionDefsWrap = @"You have access to a set of tools. When using tools, make calls in a single JSON array: 
 
