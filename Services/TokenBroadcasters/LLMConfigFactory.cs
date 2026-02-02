@@ -467,10 +467,8 @@ If no tool is suitable, state that explicitly. If the user's input lacks require
 
                 FunctionBuilder = "<|tool_call_start|>[{\"name\":\"{0}\", \"parameters\":{1}}]<|tool_call_end|>",
                 FunctionResponse = "<|tool_response_start|>[{1}]<|tool_response_end|>",
-                FunctionDefsWrap = @"List of tools: [{0}]",
-                PromptFooter = @"When calling tools, return python-style calls inside the wrapper:
-<|tool_call_start|>[function_name(arg1=""value1"", arg2=123)]<|tool_call_end|>
-You may also return a JSON list of tool calls inside the same wrapper.",
+                FunctionDefsWrap = @"List of tools: {0}",
+                PromptFooter = @"",
                 CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
                                     new TokenBroadcasterLFM_2(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
             },
