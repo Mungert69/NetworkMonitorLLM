@@ -108,6 +108,11 @@ public sealed class SystemPromptWriter : ISystemPromptWriter
         promptMessages.AddRange(systemMessages);
 
         string renderedPrompt = PromptRenderer.RenderPromptMessages(config, promptMessages);
+        if (!string.IsNullOrEmpty(config.BosToken)
+            && !renderedPrompt.StartsWith(config.BosToken, StringComparison.Ordinal))
+        {
+            renderedPrompt = config.BosToken + renderedPrompt;
+        }
         string cacheTail = BuildDefaultCacheTail(config);
         string staticShots = BuildStaticNShots(config, currentTime, serviceObj, toolsId) ?? string.Empty;
         string basePrompt = EnsureTrailingNewline(JoinSections(
