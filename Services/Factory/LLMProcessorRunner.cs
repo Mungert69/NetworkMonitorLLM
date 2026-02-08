@@ -96,7 +96,13 @@ public class LLMProcessRunner : ILLMRunner
     public void SetStartInfo(ProcessStartInfo startInfo, MLParams mlParams)
     {
         string promptPrefix = "";
-        string promptSuffix = $" --in-suffix \"{_config.EOTToken}{_config.AssistantHeader}\" ";
+        string suffixCore = _config.AssistantHeader ?? string.Empty;
+        string suffixWithEot = string.IsNullOrEmpty(_config.EOTToken)
+            ? suffixCore
+            : $"{_config.EOTToken}{suffixCore}";
+        string promptSuffix = _config.AppendEotToSuffix
+            ? $" --in-suffix \"{suffixWithEot}\" "
+            : $" --in-suffix \"{suffixCore}\" ";
         int recommendedCpuCount = _cpuUsageMonitor.RecommendCpuCount(mlParams.LlmThreads, 80f);
         _logger.LogInformation($" CPU Usage using {recommendedCpuCount} from the configured {mlParams.LlmThreads} threads");
         if (_startServiceoObj.UserInfo.AccountType == null)
