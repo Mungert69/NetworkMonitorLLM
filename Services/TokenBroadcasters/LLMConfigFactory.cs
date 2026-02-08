@@ -366,6 +366,7 @@ Reminder:
                 AssistantMessageTemplate = "<|Assistant|>{0}<|end_of_text|>",
                 SystemMessageTemplate = "{0}",
                 EOTToken = "<|end_of_text|>",
+                BosToken = "<|begin_of_text|>",
                 ThinkBeginToken = "<think>",
                 ThinkEndToken = "</think>",
                 FunctionResponseTemplate = "<|User|><tool_response>{1}</tool_response>",
@@ -381,6 +382,7 @@ For tool call returns, you MUST use the following format:
 <tool_call>{{""name"": ""function-name"", ""arguments"": {{""param1"": ""value1"", ""param2"": ""value2""}}}}</tool_call>
 <|end_of_tool_description|>",
                 PromptFooter = "",
+                AppendEotToSuffix = false,
                 CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
                         new TokenBroadcasterQwen_3(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
             },
@@ -405,7 +407,7 @@ For tool call returns, you MUST use the following format:
                 // End of turn token
                 EOTToken = "<|im_end|>",
 
-                FunctionBuilder = "[{\"name\":\"{0}\", \"parameters\":{1}}]",
+                FunctionBuilder = "[{{\"name\":\"{0}\", \"parameters\":{1}}}]",
                 FunctionResponse = "[{1}]",
                 FunctionDefsWrap = @"You have access to a set of tools. When using tools, make calls in a single JSON array: 
 
@@ -438,7 +440,7 @@ If no tool is suitable, state that explicitly. If the user's input lacks require
                 // End of turn token
                 EOTToken = "<|im_end|>",
 
-                FunctionBuilder = "<|tool_call_start|>[{\"name\":\"{0}\", \"parameters\":{1}}]<|tool_call_end|>",
+                FunctionBuilder = "<|tool_call_start|>[{{\"name\":\"{0}\", \"parameters\":{1}}}]<|tool_call_end|>",
                 FunctionResponse = "<|tool_response_start|>[{1}]<|tool_response_end|>",
                 FunctionDefsWrap = @"<|tool_list_start|>{0}<|tool_list_end|>",
                 PromptFooter = "",
@@ -465,10 +467,11 @@ If no tool is suitable, state that explicitly. If the user's input lacks require
                 // End of turn token
                 EOTToken = "<|im_end|>",
 
-                FunctionBuilder = "<|tool_call_start|>[{\"name\":\"{0}\", \"parameters\":{1}}]<|tool_call_end|>",
+                FunctionBuilder = "<|tool_call_start|>[{{\"name\":\"{0}\", \"parameters\":{1}}}]<|tool_call_end|>",
                 FunctionResponse = "<|tool_response_start|>[{1}]<|tool_response_end|>",
                 FunctionDefsWrap = @"List of tools: {0}",
                 PromptFooter = @"",
+                AppendEotToSuffix = true,
                 CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
                                     new TokenBroadcasterLFM_2(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
             },
@@ -619,6 +622,8 @@ public class LLMConfig
     public string NoThinkToken { get; set; } = string.Empty;
     public string ReversePrompt { get; set; } = string.Empty;
     public string ExtraReversePrompt { get; set; } = string.Empty;
+    public string BosToken { get; set; } = string.Empty;
+    public bool AppendEotToSuffix { get; set; } = true;
     public Func<ILLMResponseProcessor, ILogger, bool, ITokenBroadcaster> CreateBroadcaster { get; set; } =
             (_, _, _) => throw new InvalidOperationException("No broadcaster defined for this LLMConfig.");
 

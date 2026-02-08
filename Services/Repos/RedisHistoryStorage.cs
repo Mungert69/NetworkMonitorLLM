@@ -89,46 +89,64 @@ namespace NetworkMonitor.LLM.Services
         {
             var sessions = new ConcurrentDictionary<string, Session>();
 
-            //await EnsureIndexSetAsync(); /// remove this after first run 
-
-            // 1) Grab your pre‐maintained index of history‐keys:
-            var rawKeys = await _db.SetMembersAsync(_indexKey);
-            if (rawKeys.Length == 0)
-                return sessions;
-
-            // 2) Convert RedisValue[] to RedisKey[] so we can MGET
-            var redisKeysList = new List<RedisKey>(rawKeys.Length);
-            foreach (var rawKey in rawKeys)
+            try
             {
-                if (!rawKey.HasValue) continue;
-                var keyString = rawKey.ToString();
-                if (string.IsNullOrEmpty(keyString)) continue;
-                redisKeysList.Add((RedisKey)keyString);
-            }
+                //await EnsureIndexSetAsync(); /// remove this after first run 
 
-            if (redisKeysList.Count == 0)
+                // 1) Grab your pre‐maintained index of history‐keys:
+                var rawKeys = await _db.SetMembersAsync(_indexKey);
+                if (rawKeys.Length == 0)
+                    return sessions;
+
+                // 2) Convert RedisValue[] to RedisKey[] so we can MGET
+                var redisKeysList = new List<RedisKey>(rawKeys.Length);
+                foreach (var rawKey in rawKeys)
+                {
+                    if (!rawKey.HasValue) continue;
+                    var keyString = rawKey.ToString();
+                    if (string.IsNullOrEmpty(keyString)) continue;
+                    redisKeysList.Add((RedisKey)keyString);
+                }
+
+                if (redisKeysList.Count == 0)
+                    return sessions;
+
+                // 3) MGET all values in one round‐trip
+                var rawValues = await _db.StringGetAsync(redisKeysList.ToArray());
+
+                // 4) Deserialize and build your session map
+                for (int i = 0; i < redisKeysList.Count; i++)
+                {
+                    var json = rawValues[i];
+                    if (!json.HasValue) continue;
+
+                    var history = JsonConvert
+                        .DeserializeObject<HistoryDisplayName>(json.ToString());
+                    if (history?.SessionId is null or { Length: 0 }) continue;
+
+                    sessions.TryAdd(
+                        history.SessionId,
+                        new Session { HistoryDisplayName = history }
+                    );
+                }
+                _logger.LogInformation($"Success : Got {sessions.Count} histories");
                 return sessions;
-
-            // 3) MGET all values in one round‐trip
-            var rawValues = await _db.StringGetAsync(redisKeysList.ToArray());
-
-            // 4) Deserialize and build your session map
-            for (int i = 0; i < redisKeysList.Count; i++)
-            {
-                var json = rawValues[i];
-                if (!json.HasValue) continue;
-
-                var history = JsonConvert
-                    .DeserializeObject<HistoryDisplayName>(json.ToString());
-                if (history?.SessionId is null or { Length: 0 }) continue;
-
-                sessions.TryAdd(
-                    history.SessionId,
-                    new Session { HistoryDisplayName = history }
-                );
             }
-            _logger.LogInformation($"Success : Got {sessions.Count} histories");
-            return sessions;
+            catch (RedisTimeoutException ex)
+            {
+                _logger.LogWarning(ex, "Redis timeout while loading histories; continuing without cached sessions.");
+                return sessions;
+            }
+            catch (RedisConnectionException ex)
+            {
+                _logger.LogWarning(ex, "Redis connection error while loading histories; continuing without cached sessions.");
+                return sessions;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Unexpected error while loading histories; continuing without cached sessions.");
+                return sessions;
+            }
         }
 
         public async Task<List<HistoryDisplayName>> GetHistoryDisplayNamesAsync(string userId, string? serviceId = null)
