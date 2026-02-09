@@ -201,6 +201,32 @@ VERY IMPORTANT : Only call functions using this format :  {""name"": ""function_
                 CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
                       new TokenBroadcasterDeepseek_3_2_Exp(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
             },
+            "deepseek_r1" => new LLMConfig
+            {
+                UserReplace = "<｜User｜>",
+                FunctionReplace = "<｜tool▁outputs▁begin｜>",
+                AssistantHeader = "<｜Assistant｜>",
+                UserInputTemplate = "<｜User｜>{0}",
+                AssistantMessageTemplate = "<｜Assistant｜>{0}<｜end▁of▁sentence｜>",
+                SystemMessageTemplate = "{0}",
+                EOTToken = "<｜end▁of▁sentence｜>",
+                ThinkBeginToken = "<think>",
+                ThinkEndToken = "</think>",
+                FunctionResponseTemplate = "<｜tool▁output▁begin｜>{1}<｜tool▁output▁end｜>",
+                FunctionBuilder = "<｜tool▁calls▁begin｜><｜tool▁call▁begin｜>function<｜tool▁sep｜>{0}\n```json\n{1}\n```<｜tool▁call▁end｜><｜tool▁calls▁end｜>",
+                FunctionResponse = "{1}",
+                FunctionDefsWrap = @"Available tools:
+{0}",
+                PromptFooter = @"When calling a tool, respond ONLY with tool call blocks using this format:
+<｜tool▁calls▁begin｜><｜tool▁call▁begin｜>function<｜tool▁sep｜>{function_name}
+```json
+{arguments_json}
+```
+<｜tool▁call▁end｜><｜tool▁calls▁end｜>
+Do not add any other text around the tool call.",
+                CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
+                      new TokenBroadcasterDeepseekR1(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
+            },
 
 
             // Configuration for phi_4

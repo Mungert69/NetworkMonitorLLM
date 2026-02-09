@@ -44,34 +44,34 @@ public class TokenBroadcasterLlama_3_2 : TokenBroadcasterBase
     public override List<(string json, string functionName)> ParseInputForJson(string input)
     {
         var functionCalls = new List<(string json, string functionName)>();
+        if (string.IsNullOrWhiteSpace(input))
+        {
+            return functionCalls;
+        }
         // Use a regular expression to remove the "type": "function" part ONLY at the start of the input
         input = Regex.Replace(input, @"^\s*{\s*""type""\s*:\s*""function""\s*,?\s*", "{");
+        // Normalize pretty-printed JSON so "{" immediately precedes ""name"".
+        input = Regex.Replace(input, @"{\s*(?=""name"")", "{");
 
-        // Regex to match the entire JSON block containing "name" and "parameters"
-        var pattern = @"{""name""\s*:\s*""(?<name>[^""]+)"",\s*""parameters""\s*:\s*(?<parameters>{(?:[^{}]*|\{(?:[^{}]*|\{.*?\})*\})*})}";
-        var matches = Regex.Matches(input, pattern);
-
-        foreach (Match match in matches)
+        foreach (var candidate in ExtractJsonObjects(input))
         {
+            if (!LooksLikeFunctionCallCandidate(candidate))
+            {
+                continue;
+            }
             try
             {
-                // Capture the entire JSON block (name + parameters)
-                var entireJson = match.Value;
-
                 // Attempt to repair the entire JSON block
-                var repairedJson = JsonSanitizer.RepairJson(entireJson, _ignoreParameters);
+                var repairedJson = JsonSanitizer.RepairJson(candidate, _ignoreParameters);
 
                 // Parse the repaired JSON into a structured object
                 using var document = JsonDocument.Parse(repairedJson);
                 var root = document.RootElement;
 
-                // Extract the function name
-                var functionName = root.GetProperty("name").GetString() ?? "";
-
-                // Extract the parameters as JSON
-                var parametersElement = root.GetProperty("parameters");
-                var parametersJson = parametersElement.GetRawText();
-
+                if (!TryExtractFunctionCall(root, out var functionName, out var parametersJson))
+                {
+                    continue;
+                }
                 // Optionally sanitize the JSON parameters
                 var sanitizedJson = JsonSanitizer.RepairJson(parametersJson, _ignoreParameters) ?? "";
 
@@ -83,11 +83,127 @@ public class TokenBroadcasterLlama_3_2 : TokenBroadcasterBase
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to parse or repair JSON block: {JsonBlock}", match.Value);
+                _logger.LogError(ex, "Failed to parse or repair JSON block: {JsonBlock}", candidate);
             }
         }
 
         return functionCalls;
+    }
+
+    private static bool LooksLikeFunctionCallCandidate(string json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return false;
+        }
+        return json.Contains("\"name\"")
+               && (json.Contains("\"parameters\"") || json.Contains("\"arguments\"") || json.Contains("\"function\""));
+    }
+
+    private static IEnumerable<string> ExtractJsonObjects(string input)
+    {
+        var start = -1;
+        var depth = 0;
+        var inString = false;
+        var escape = false;
+
+        for (var i = 0; i < input.Length; i++)
+        {
+            var c = input[i];
+            if (inString)
+            {
+                if (escape)
+                {
+                    escape = false;
+                    continue;
+                }
+                if (c == '\\')
+                {
+                    escape = true;
+                    continue;
+                }
+                if (c == '"')
+                {
+                    inString = false;
+                }
+                continue;
+            }
+
+            if (c == '"')
+            {
+                inString = true;
+                continue;
+            }
+
+            if (c == '{')
+            {
+                if (depth == 0)
+                {
+                    start = i;
+                }
+                depth++;
+                continue;
+            }
+
+            if (c == '}')
+            {
+                if (depth > 0)
+                {
+                    depth--;
+                    if (depth == 0 && start >= 0)
+                    {
+                        yield return input.Substring(start, i - start + 1);
+                        start = -1;
+                    }
+                }
+            }
+        }
+    }
+
+    private static bool TryExtractFunctionCall(JsonElement element, out string functionName, out string parametersJson)
+    {
+        functionName = "";
+        parametersJson = "";
+
+        if (element.ValueKind != JsonValueKind.Object)
+        {
+            return false;
+        }
+
+        return TryExtractFromObject(element, out functionName, out parametersJson);
+    }
+
+    private static bool TryExtractFromObject(JsonElement element, out string functionName, out string parametersJson)
+    {
+        functionName = "";
+        parametersJson = "";
+
+        if (element.TryGetProperty("name", out var nameElement) && nameElement.ValueKind == JsonValueKind.String)
+        {
+            if (element.TryGetProperty("parameters", out var parametersElement) ||
+                element.TryGetProperty("arguments", out parametersElement))
+            {
+                functionName = nameElement.GetString() ?? "";
+                parametersJson = ExtractParametersJson(parametersElement);
+                return !string.IsNullOrEmpty(functionName);
+            }
+        }
+
+        if (element.TryGetProperty("function", out var functionElement) && functionElement.ValueKind == JsonValueKind.Object)
+        {
+            return TryExtractFromObject(functionElement, out functionName, out parametersJson);
+        }
+
+        return false;
+    }
+
+    private static string ExtractParametersJson(JsonElement parametersElement)
+    {
+        if (parametersElement.ValueKind == JsonValueKind.String)
+        {
+            return parametersElement.GetString() ?? "";
+        }
+        return parametersElement.GetRawText();
     }
 
     private string TryRepairJson(string jsonContent)
