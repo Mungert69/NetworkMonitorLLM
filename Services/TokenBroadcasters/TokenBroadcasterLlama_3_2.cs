@@ -44,6 +44,7 @@ public class TokenBroadcasterLlama_3_2 : TokenBroadcasterBase
     public override List<(string json, string functionName)> ParseInputForJson(string input)
     {
         var functionCalls = new List<(string json, string functionName)>();
+        var seen = new HashSet<string>(StringComparer.Ordinal);
         if (string.IsNullOrWhiteSpace(input))
         {
             return functionCalls;
@@ -76,7 +77,11 @@ public class TokenBroadcasterLlama_3_2 : TokenBroadcasterBase
                 var sanitizedJson = JsonSanitizer.RepairJson(parametersJson, _ignoreParameters) ?? "";
 
                 // Add the parsed result to the list
-                functionCalls.Add((sanitizedJson, functionName));
+                var key = $"{functionName}\n{sanitizedJson}";
+                if (seen.Add(key))
+                {
+                    functionCalls.Add((sanitizedJson, functionName));
+                }
 
                 // Debug logging
                 _logger.LogDebug("Parsed and repaired function call: {FunctionName}, JSON: {SanitizedJson}", functionName, sanitizedJson);
@@ -102,8 +107,7 @@ public class TokenBroadcasterLlama_3_2 : TokenBroadcasterBase
 
     private static IEnumerable<string> ExtractJsonObjects(string input)
     {
-        var start = -1;
-        var depth = 0;
+        var stack = new Stack<int>();
         var inString = false;
         var escape = false;
 
@@ -137,24 +141,16 @@ public class TokenBroadcasterLlama_3_2 : TokenBroadcasterBase
 
             if (c == '{')
             {
-                if (depth == 0)
-                {
-                    start = i;
-                }
-                depth++;
+                stack.Push(i);
                 continue;
             }
 
             if (c == '}')
             {
-                if (depth > 0)
+                if (stack.Count > 0)
                 {
-                    depth--;
-                    if (depth == 0 && start >= 0)
-                    {
-                        yield return input.Substring(start, i - start + 1);
-                        start = -1;
-                    }
+                    var start = stack.Pop();
+                    yield return input.Substring(start, i - start + 1);
                 }
             }
         }

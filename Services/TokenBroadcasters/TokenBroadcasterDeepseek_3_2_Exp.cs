@@ -1,16 +1,19 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Xml;
+using System.Text.Json;
 using Microsoft.Extensions.Logging;
+using NetworkMonitor.Objects.ServiceMessage;
 
 namespace NetworkMonitor.LLM.Services
 {
     public sealed class TokenBroadcasterDeepseek_3_2_Exp : TokenBroadcasterBase
     {
+        private const string ToolCallBegin = "<｜tool▁call▁begin｜>";
+        private const string ToolCallEnd = "<｜tool▁call▁end｜>";
+        private const string ToolSep = "<｜tool▁sep｜>";
+        private const string ToolOutputBegin = "<｜tool▁output▁begin｜>";
+        private const string ToolOutputEnd = "<｜tool▁output▁end｜>";
+
         public TokenBroadcasterDeepseek_3_2_Exp(
             ILLMResponseProcessor responseProcessor,
             ILogger logger,
@@ -23,43 +26,42 @@ namespace NetworkMonitor.LLM.Services
         public override List<(string json, string functionName)> ParseInputForJson(string input)
         {
             var functionCalls = new List<(string json, string functionName)>();
-          
-            try
+            if (string.IsNullOrWhiteSpace(input))
             {
-                var invokeMatches = Regex.Matches(input, @"<invoke\s+name=""(?<name>[^""]+)""[^>]*>(?<parameters>.*?)</invoke>", RegexOptions.Singleline);
-                foreach (Match match in invokeMatches)
+                return functionCalls;
+            }
+
+            input = RemoveThinking(input);
+
+            var index = 0;
+            while (true)
+            {
+                var callStart = input.IndexOf(ToolCallBegin, index, StringComparison.Ordinal);
+                if (callStart < 0)
                 {
-                    var functionName = match.Groups["name"].Value.Trim();
-                    if (string.IsNullOrEmpty(functionName)) continue;
-
-                    var parametersFragment = match.Groups["parameters"].Value;
-                    var parametersDoc = new XmlDocument();
-                    parametersDoc.LoadXml($"<parameters>{parametersFragment}</parameters>");
-                    var parametersNode = parametersDoc.DocumentElement;
-                    if (parametersNode == null) continue;
-
-                    var parametersDictionary = new Dictionary<string, object>();
-                    foreach (XmlNode node in parametersNode.ChildNodes)
-                    {
-                        if (node is not XmlElement element || element.Name != "parameter") continue;
-                        var nameAttr = element.GetAttribute("name");
-                        if (string.IsNullOrWhiteSpace(nameAttr)) continue;
-                        if (_ignoreParameters.Contains(nameAttr)) continue;
-
-                        parametersDictionary[nameAttr] = ConvertParameterValue(element);
-                    }
-
-                    parametersDictionary["args_escaped"] = false;
-                    var json = Newtonsoft.Json.JsonConvert.SerializeObject(parametersDictionary, Newtonsoft.Json.Formatting.None);
-                    functionCalls.Add((json, functionName));
+                    break;
                 }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to parse DeepSeek invoke XML: {Input}", input);
+
+                callStart += ToolCallBegin.Length;
+                var callEnd = input.IndexOf(ToolCallEnd, callStart, StringComparison.Ordinal);
+                if (callEnd < 0)
+                {
+                    break;
+                }
+
+                var callBody = input.Substring(callStart, callEnd - callStart).Trim();
+                index = callEnd + ToolCallEnd.Length;
+
+                if (!TryParseToolCall(callBody, out var functionName, out var argsJson))
+                {
+                    continue;
+                }
+
+                var sanitizedJson = JsonSanitizer.RepairJson(argsJson, _ignoreParameters) ?? "";
+                functionCalls.Add((sanitizedJson, functionName));
             }
 
-            if (functionCalls.Count == 0)
+            if (functionCalls.Count == 0 && _xmlFunctionParsing)
             {
                 return base.ParseInputForXml(input);
             }
@@ -67,40 +69,63 @@ namespace NetworkMonitor.LLM.Services
             return functionCalls;
         }
 
-        private static object ConvertParameterValue(XmlElement element)
+        private static bool TryParseToolCall(string callBody, out string functionName, out string argsJson)
         {
-            if (element == null) return string.Empty;
+            functionName = "";
+            argsJson = "";
 
-            if (element.ChildNodes.Count > 0 && element.ChildNodes.Cast<XmlNode>().All(n => n.NodeType == XmlNodeType.CDATA))
+            if (string.IsNullOrWhiteSpace(callBody))
             {
-                var builder = new StringBuilder();
-                foreach (XmlCDataSection cdata in element.ChildNodes)
-                {
-                    builder.Append(cdata.Value);
-                }
-                return builder.ToString();
+                return false;
             }
 
-            var text = element.InnerText?.Trim() ?? string.Empty;
-            if (string.IsNullOrEmpty(text)) return string.Empty;
-
-            if (bool.TryParse(text, out var boolValue)) return boolValue;
-            if (long.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out var longValue)) return longValue;
-            if (double.TryParse(text, NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out var doubleValue)) return doubleValue;
-
-            if ((text.StartsWith("{") && text.EndsWith("}")) || (text.StartsWith("[") && text.EndsWith("]")))
+            var sepIndex = callBody.IndexOf(ToolSep, StringComparison.Ordinal);
+            if (sepIndex < 0)
             {
-                try
+                return false;
+            }
+
+            functionName = callBody.Substring(0, sepIndex).Trim();
+            if (string.IsNullOrWhiteSpace(functionName))
+            {
+                return false;
+            }
+
+            var remainder = callBody.Substring(sepIndex + ToolSep.Length).Trim();
+            if (string.IsNullOrWhiteSpace(remainder))
+            {
+                return false;
+            }
+
+            argsJson = ExtractArgumentsJson(remainder);
+            return !string.IsNullOrWhiteSpace(argsJson);
+        }
+
+        private static string ExtractArgumentsJson(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return "";
+            }
+
+            var outputStart = text.IndexOf(ToolOutputBegin, StringComparison.Ordinal);
+            if (outputStart >= 0)
+            {
+                var outputEnd = text.IndexOf(ToolOutputEnd, outputStart + ToolOutputBegin.Length, StringComparison.Ordinal);
+                if (outputEnd > outputStart)
                 {
-                    return Newtonsoft.Json.JsonConvert.DeserializeObject(text) ?? text;
-                }
-                catch
-                {
-                    return text;
+                    text = text.Substring(0, outputStart);
                 }
             }
 
-            return text;
+            var firstBrace = text.IndexOf('{');
+            var lastBrace = text.LastIndexOf('}');
+            if (firstBrace >= 0 && lastBrace > firstBrace)
+            {
+                return text.Substring(firstBrace, lastBrace - firstBrace + 1).Trim();
+            }
+
+            return text.Trim();
         }
     }
 }

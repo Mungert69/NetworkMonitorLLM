@@ -61,6 +61,11 @@ public class TokenBroadcasterDeepseekR1 : TokenBroadcasterBase
             functionCalls.Add((sanitizedJson, functionName));
         }
 
+        if (functionCalls.Count == 0 && _xmlFunctionParsing)
+        {
+            return base.ParseInputForXml(input);
+        }
+
         return functionCalls;
     }
 

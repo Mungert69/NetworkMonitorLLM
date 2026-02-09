@@ -175,29 +175,24 @@ VERY IMPORTANT : Only call functions using this format :  {""name"": ""function_
             // Only working for OpenAIRunner at the moment. When trying to fix is the | suposed to be a special character with ' | ' the ascii for that?
             "deepseek_3.2_exp" => new LLMConfig
             {
-                UserReplace = "<|User|>",
-                FunctionReplace = "<function_calls>",
-                AssistantHeader = "<|Assistant|></think>",
-                UserInputTemplate = "<|User|>{0}",
-                AssistantMessageTemplate = "<|Assistant|></think>{0}<|end_of_sentence|>",
-                SystemMessageTemplate = "{0}<|end_of_sentence|>",
-                EOTToken = "<|end_of_sentence|>",
+                UserReplace = "<｜User｜>",
+                FunctionReplace = "<｜tool▁output▁begin｜>",
+                AssistantHeader = "<｜Assistant｜>",
+                UserInputTemplate = "<｜User｜>{0}",
+                AssistantMessageTemplate = "<｜Assistant｜>{0}<｜end▁of▁sentence｜>",
+                SystemMessageTemplate = "{0}",
+                EOTToken = "<｜end▁of▁sentence｜>",
                 ThinkBeginToken = "<think>",
                 ThinkEndToken = "</think>",
-                // What should we use here ??
-                FunctionResponseTemplate = "{1}",
-                // Note this is not going to work as the arg {1} will be json it will be to be converted to the deepseek xml format example<function_calls>\n<invoke name=\"get_host_list\">\n<parameter name=\"detail_response\">true</parameter>\n</invoke>\n</function_calls>
-                FunctionBuilder = "<function_calls>\n<invoke name={0}>\n{1}>\n</invoke>\n</function_calls>",
+                FunctionResponseTemplate = "<｜tool▁output▁begin｜>{1}<｜tool▁output▁end｜>",
+                FunctionBuilder = "<｜tool▁calls▁begin｜><｜tool▁call▁begin｜>{0}<｜tool▁sep｜>{1}<｜tool▁call▁end｜><｜tool▁calls▁end｜>",
                 FunctionResponse = "{1}",
                 FunctionDefsWrap = @"Available tools:
 {0}",
                 XmlPromptFooter = _xmlPromptFooter,
-                PromptFooter = @"When you must call a function, respond with XML in this form:
-<function_calls>
-  <invoke name=""function_name"">
-    <parameter name=""argument_name"">argument_value</parameter>
-  </invoke>
-</function_calls>",
+                PromptFooter = @"When calling a tool, respond ONLY with tool call blocks using this format:
+<｜tool▁calls▁begin｜><｜tool▁call▁begin｜>{function_name}<｜tool▁sep｜>{arguments_json}<｜tool▁call▁end｜><｜tool▁calls▁end｜>
+Do not add any other text around the tool call.",
                 CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
                       new TokenBroadcasterDeepseek_3_2_Exp(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
             },
@@ -217,6 +212,7 @@ VERY IMPORTANT : Only call functions using this format :  {""name"": ""function_
                 FunctionResponse = "{1}",
                 FunctionDefsWrap = @"Available tools:
 {0}",
+                XmlPromptFooter = _xmlPromptFooter,
                 PromptFooter = @"When calling a tool, respond ONLY with tool call blocks using this format:
 <｜tool▁calls▁begin｜><｜tool▁call▁begin｜>function<｜tool▁sep｜>{function_name}
 ```json
