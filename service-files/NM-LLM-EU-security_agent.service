@@ -6,7 +6,7 @@ Description=Network Monitor security_agent
 WorkingDirectory=/home/mahadeva/code/services/llm-eu-security_agent
 # systemd will run this executable to start the service
 # if /usr/bin/dotnet doesn't work, use `which dotnet` to find correct dotnet executable path
-ExecStart=/usr/bin/dotnet /home/mahadeva/code/services/llm-eu-security_agent/NetworkMonitorLLM.dll
+ExecStart=/usr/local/bin/dotnet /home/mahadeva/code/services/llm-eu-security_agent/NetworkMonitorLLM.dll
 # to query logs using journalctl, set a logical name here  
 SyslogIdentifier=NM-LLM-EU-security_agent
 
