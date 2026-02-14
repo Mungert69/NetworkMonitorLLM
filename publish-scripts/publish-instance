@@ -8,6 +8,11 @@ if [ -z "${1:-}" ] || [ -z "${2:-}" ]; then
   exit 1
 fi
 
+if [ "$EUID" -ne 0 ]; then
+  echo "ERROR: Run this script with sudo."
+  exit 1
+fi
+
 REGION="$1"
 SERVICE_NAME_PASCAL="$2"
 SERVICE_NAME_LOWER=$(echo "$SERVICE_NAME_PASCAL" | tr '[:upper:]' '[:lower:]')
@@ -17,6 +22,20 @@ SERVICE="NM-LLM-${REGION^^}-$SERVICE_NAME_PASCAL.service"
 TARGET_BASE="$ROOTDIR/code/services"
 TARGET_DIR="$TARGET_BASE/llm-$REGION-$SERVICE_NAME_LOWER"
 ENV_SOURCE="$ROOTDIR/code/securefiles/domain-env"
+HOST_ARCH="$(uname -m)"
+
+case "$HOST_ARCH" in
+  aarch64|arm64)
+    DOTNET_ARCH="arm64"
+    ;;
+  x86_64|amd64)
+    DOTNET_ARCH="x64"
+    ;;
+  *)
+    echo "ERROR: Unsupported architecture '$HOST_ARCH' (expected arm64 or x64)."
+    exit 1
+    ;;
+esac
 
 SERVICE_SOURCE_DIR="$(dirname "$0")/../service-files"
 SERVICE_FILE="$SERVICE_SOURCE_DIR/$SERVICE"
@@ -30,6 +49,7 @@ echo "Service Lower:     $SERVICE_NAME_LOWER"
 echo "Service Unit:      $SERVICE"
 echo "Service Source:    $SERVICE_FILE"
 echo "Target Directory:  $TARGET_DIR"
+echo "Host Architecture: $HOST_ARCH -> dotnet arch '$DOTNET_ARCH'"
 echo "------------------------------------------------------------"
 
 # --- Ensure nmuser/nmgroup exist ---
@@ -67,14 +87,19 @@ if ! sudo systemctl stop "$SERVICE"; then
   echo "Warning: Failed to stop service $SERVICE (maybe not running yet)"
 fi
 
+# --- Remove stale files from prior runtime model/architecture outputs ---
+echo "Cleaning target directory: $TARGET_DIR"
+sudo find "$TARGET_DIR" -mindepth 1 -delete
+
 # --- Publish as root ---
 echo "Publishing project to $TARGET_DIR ..."
 cp "../appsettings-$REGION-$SERVICE_NAME_LOWER.json" ../appsettings.json
 
 dotnet publish ../NetworkMonitorLLM.csproj \
-  --os linux --arch x64 \
+  --os linux --arch "$DOTNET_ARCH" \
   --output "$TARGET_DIR" \
-  -c Release --self-contained true \
+  -c Release --self-contained false \
+  /p:UseAppHost=false \
   /nodeReuse:false
 
 # --- Fix ownership & permissions afterwards ---
@@ -82,12 +107,12 @@ echo "Fixing ownership and permissions for nmuser:nmgroup ..."
 sudo chown -R nmuser:nmgroup "$TARGET_DIR"
 sudo find "$TARGET_DIR" -type d -exec chmod 750 {} \;
 sudo find "$TARGET_DIR" -type f -exec chmod 640 {} \;
-sudo chmod +x "$TARGET_DIR/NetworkMonitorLLM" || true
-
 # --- Env symlink ---
 echo "Setting up env symlink ..."
-rm -f "$TARGET_DIR/.env"
-ln -sf "$ENV_SOURCE" "$TARGET_DIR/.env"
+sudo chgrp nmgroup "$ENV_SOURCE"
+sudo chmod 640 "$ENV_SOURCE"
+sudo rm -f "$TARGET_DIR/.env"
+sudo ln -sf "$ENV_SOURCE" "$TARGET_DIR/.env"
 
 # --- Start service ---
 echo "Starting service: $SERVICE"
@@ -95,4 +120,3 @@ sudo systemctl start "$SERVICE"
 
 echo "Publish completed for $SERVICE"
 echo "------------------------------------------------------------"
-
