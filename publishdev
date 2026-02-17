@@ -1,6 +1,35 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+usage() {
+    echo "Usage: $0 [--dotnet-path /path/to/dotnet]"
+}
+
+DOTNET_PATH_OVERRIDE=""
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --dotnet-path)
+            shift
+            if [[ $# -eq 0 ]]; then
+                echo "ERROR: --dotnet-path requires a value."
+                usage
+                exit 1
+            fi
+            DOTNET_PATH_OVERRIDE="$1"
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            echo "ERROR: Unknown argument: $1"
+            usage
+            exit 1
+            ;;
+    esac
+    shift
+done
+
 # Ensure group exists (ignore if it already does)
 if ! getent group 1654 >/dev/null; then
     echo "Creating group nmgroup (gid=1654)"
@@ -28,4 +57,8 @@ sudo chown -R mahadeva:nmgroup /home/mahadeva/code/services
 #dotnet test ../NetworkMonitorData/NetworkMonitorData.csproj
 
 cd publish-scripts
-sudo ./publish-dev
+if [[ -n "$DOTNET_PATH_OVERRIDE" ]]; then
+    sudo ./publish-dev --dotnet-path "$DOTNET_PATH_OVERRIDE"
+else
+    sudo ./publish-dev
+fi

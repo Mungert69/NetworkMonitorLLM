@@ -1,6 +1,44 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+usage() {
+    echo "Usage: $0 [--dotnet-path /path/to/dotnet]"
+}
+
+DOTNET_PATH_OVERRIDE=""
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --dotnet-path)
+            shift
+            if [[ $# -eq 0 ]]; then
+                echo "ERROR: --dotnet-path requires a value."
+                usage
+                exit 1
+            fi
+            DOTNET_PATH_OVERRIDE="$1"
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            echo "ERROR: Unknown argument: $1"
+            usage
+            exit 1
+            ;;
+    esac
+    shift
+done
+
+DOTNET_CMD="dotnet"
+if [[ -n "$DOTNET_PATH_OVERRIDE" ]]; then
+    if [[ ! -x "$DOTNET_PATH_OVERRIDE" ]]; then
+        echo "ERROR: dotnet path is not executable: $DOTNET_PATH_OVERRIDE"
+        exit 1
+    fi
+    DOTNET_CMD="$DOTNET_PATH_OVERRIDE"
+fi
+
 # Ensure group exists (ignore if it already does)
 if ! getent group 1654 >/dev/null; then
     echo "Creating group nmgroup (gid=1654)"
@@ -23,9 +61,13 @@ sudo chmod o+x /home/mahadeva
 sudo chmod o+x /home/mahadeva/code
 sudo chown -R mahadeva:nmgroup /home/mahadeva/code/services
 
-dotnet test 
-dotnet test ../NetworkMonitorLib/NetworkMonitor.csproj
-dotnet test ../NetworkMonitorData/NetworkMonitorData.csproj
+"$DOTNET_CMD" test
+"$DOTNET_CMD" test ../NetworkMonitorLib/NetworkMonitor.csproj
+"$DOTNET_CMD" test ../NetworkMonitorData/NetworkMonitorData.csproj
 
 cd publish-scripts
-sudo ./publish
+if [[ -n "$DOTNET_PATH_OVERRIDE" ]]; then
+    sudo ./publish --dotnet-path "$DOTNET_PATH_OVERRIDE"
+else
+    sudo ./publish
+fi
