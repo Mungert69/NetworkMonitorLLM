@@ -1,10 +1,37 @@
 #!/bin/bash
 set -euo pipefail
 
-# Usage: ./publish-instance <region> <ServiceNamePascalCase>
+usage() {
+  echo "Usage: $0 <region> <ServiceNamePascalCase> [--dotnet-path /path/to/dotnet]"
+}
+
+DOTNET_PATH_OVERRIDE="${DOTNET_PATH:-}"
+POSITIONAL_ARGS=()
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --dotnet-path)
+      shift
+      if [[ $# -eq 0 ]]; then
+        echo "ERROR: --dotnet-path requires a value."
+        usage
+        exit 1
+      fi
+      DOTNET_PATH_OVERRIDE="$1"
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      POSITIONAL_ARGS+=("$1")
+      ;;
+  esac
+  shift
+done
+set -- "${POSITIONAL_ARGS[@]}"
 
 if [ -z "${1:-}" ] || [ -z "${2:-}" ]; then
-  echo "Usage: $0 <region> <ServiceNamePascalCase>"
+  usage
   exit 1
 fi
 
@@ -40,6 +67,20 @@ esac
 SERVICE_SOURCE_DIR="$(dirname "$0")/../service-files"
 SERVICE_FILE="$SERVICE_SOURCE_DIR/$SERVICE"
 
+if [[ -n "$DOTNET_PATH_OVERRIDE" ]]; then
+  if [[ ! -x "$DOTNET_PATH_OVERRIDE" ]]; then
+    echo "ERROR: dotnet path is not executable: $DOTNET_PATH_OVERRIDE"
+    exit 1
+  fi
+  DOTNET_CMD="$DOTNET_PATH_OVERRIDE"
+else
+  DOTNET_CMD="$(command -v dotnet || true)"
+  if [[ -z "$DOTNET_CMD" ]]; then
+    echo "ERROR: dotnet was not found in PATH. Use --dotnet-path /path/to/dotnet"
+    exit 1
+  fi
+fi
+
 umask 022
 
 echo "------------------------------------------------------------"
@@ -50,6 +91,7 @@ echo "Service Unit:      $SERVICE"
 echo "Service Source:    $SERVICE_FILE"
 echo "Target Directory:  $TARGET_DIR"
 echo "Host Architecture: $HOST_ARCH -> dotnet arch '$DOTNET_ARCH'"
+echo "Dotnet Command:    $DOTNET_CMD"
 echo "------------------------------------------------------------"
 
 # --- Ensure nmuser/nmgroup exist ---
@@ -73,8 +115,17 @@ if [ ! -f "$SERVICE_FILE" ]; then
   exit 1
 fi
 
+escape_sed_replacement() {
+  printf '%s' "$1" | sed -e 's/[\/&]/\\&/g'
+}
+
+SERVICE_TMP_FILE="$(mktemp)"
+sed "s|/usr/bin/dotnet|$(escape_sed_replacement "$DOTNET_CMD")|g" "$SERVICE_FILE" > "$SERVICE_TMP_FILE"
+
 echo "Installing/Updating service unit: $SERVICE_FILE -> /etc/systemd/system/$SERVICE"
-sudo cp "$SERVICE_FILE" "/etc/systemd/system/$SERVICE"
+sudo cp "$SERVICE_TMP_FILE" "/etc/systemd/system/$SERVICE"
+rm -f "$SERVICE_TMP_FILE"
+
 sudo systemctl daemon-reload
 sudo systemctl enable "$SERVICE"
 
@@ -95,7 +146,7 @@ sudo find "$TARGET_DIR" -mindepth 1 -delete
 echo "Publishing project to $TARGET_DIR ..."
 cp "../appsettings-$REGION-$SERVICE_NAME_LOWER.json" ../appsettings.json
 
-dotnet publish ../NetworkMonitorLLM.csproj \
+"$DOTNET_CMD" publish ../NetworkMonitorLLM.csproj \
   --os linux --arch "$DOTNET_ARCH" \
   --output "$TARGET_DIR" \
   -c Release --self-contained false \

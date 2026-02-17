@@ -1,14 +1,51 @@
-./publish-instance eu Nmap
-./publish-instance eu Meta
-./publish-instance eu Search
-./publish-instance eu CmdProcessor
-./publish-instance eu ReportData
-./publish-instance eu BlogMonitor
-./publish-instance eu Quantum
-./publish-instance eu Timesfm
-./publish-instance eu Connect
-./publish-instance eu AgentFlow
-#sudo ./publish-instance eu MonitorSys
-./publish-instance eu Monitor
-./publish-instance eu json_dynamic
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  echo "Usage: $0 [--dotnet-path /path/to/dotnet]"
+}
+
+DOTNET_PATH_OVERRIDE=""
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --dotnet-path)
+      shift
+      if [[ $# -eq 0 ]]; then
+        echo "ERROR: --dotnet-path requires a value."
+        usage
+        exit 1
+      fi
+      DOTNET_PATH_OVERRIDE="$1"
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      echo "ERROR: Unknown argument: $1"
+      usage
+      exit 1
+      ;;
+  esac
+  shift
+done
+
+PUBLISH_INSTANCE_ARGS=()
+if [[ -n "$DOTNET_PATH_OVERRIDE" ]]; then
+  PUBLISH_INSTANCE_ARGS=(--dotnet-path "$DOTNET_PATH_OVERRIDE")
+fi
+
+./publish-instance eu Nmap "${PUBLISH_INSTANCE_ARGS[@]}"
+./publish-instance eu Meta "${PUBLISH_INSTANCE_ARGS[@]}"
+./publish-instance eu Search "${PUBLISH_INSTANCE_ARGS[@]}"
+./publish-instance eu CmdProcessor "${PUBLISH_INSTANCE_ARGS[@]}"
+./publish-instance eu ReportData "${PUBLISH_INSTANCE_ARGS[@]}"
+./publish-instance eu BlogMonitor "${PUBLISH_INSTANCE_ARGS[@]}"
+./publish-instance eu Quantum "${PUBLISH_INSTANCE_ARGS[@]}"
+./publish-instance eu Timesfm "${PUBLISH_INSTANCE_ARGS[@]}"
+./publish-instance eu Connect "${PUBLISH_INSTANCE_ARGS[@]}"
+./publish-instance eu AgentFlow "${PUBLISH_INSTANCE_ARGS[@]}"
+# ./publish-instance eu MonitorSys "${PUBLISH_INSTANCE_ARGS[@]}"
+./publish-instance eu Monitor "${PUBLISH_INSTANCE_ARGS[@]}"
+./publish-instance eu json_dynamic "${PUBLISH_INSTANCE_ARGS[@]}"
 sudo pkill -u root -f 'dotnet.*(MSBuild|VBCSCompiler)\.dll' || true
