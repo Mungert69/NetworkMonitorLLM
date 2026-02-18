@@ -71,7 +71,7 @@ public class HuggingFaceApi : ILLMApi
         _temperature = temperature;
         _modelVersion = mlParams.LlmHFModelVersion;
         _modelID = mlParams.LlmHFModelID;
-        _authToken = mlParams.LlmHFKey;
+        _authToken = mlParams.LlmHFKey;     
         _isXml = _mlParams.XmlFunctionParsing;
         _httpClient.DefaultRequestHeaders.Add("api-key", _authToken);
         _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _authToken);
@@ -153,7 +153,7 @@ public class HuggingFaceApi : ILLMApi
                 NullValueHandling = NullValueHandling.Ignore
             });
 
-            _logger.LogDebug($"{payloadJson}");
+            _logger.LogDebug($"PAYLOAD =====> {payloadJson}");
 
             if (!_isStream)
             {
