@@ -626,6 +626,14 @@ public class OpenAIRunner : ILLMRunner
             if (TryExtractMediaArtifact(serviceObj.UserInput, effectiveFuncCallId, out var mediaArtifact))
             {
                 _pendingMediaByToolCall[effectiveFuncCallId] = mediaArtifact;
+                _logger.LogInformation(
+                    "Media detected in function response: MessageID={MessageID} ToolCallId={ToolCallId} MediaId={MediaId} Url={Url} Mime={MimeType} Sha256={Sha256}",
+                    serviceObj.MessageID,
+                    effectiveFuncCallId,
+                    mediaArtifact.Id,
+                    mediaArtifact.Url,
+                    mediaArtifact.MimeType,
+                    mediaArtifact.Sha256);
             }
 
             // Use effectiveFuncCallId instead of serviceObj.FunctionCallId
@@ -668,6 +676,13 @@ public class OpenAIRunner : ILLMRunner
                     {
                         AddMediaToSessionStore(serviceObj.SessionId, media);
                         localHistory.Add(BuildMediaAttachmentMessage(media));
+                        _logger.LogInformation(
+                            "Media attached to completion context: SessionId={SessionId} MessageID={MessageID} ToolCallId={ToolCallId} MediaId={MediaId} Url={Url}",
+                            serviceObj.SessionId,
+                            serviceObj.MessageID,
+                            toolCall.Id,
+                            media.Id,
+                            media.Url);
                     }
                 }
 
@@ -860,6 +875,12 @@ public class OpenAIRunner : ILLMRunner
         {
             queue.TryDequeue(out _);
         }
+        _logger.LogInformation(
+            "Media stored in session media store: SessionId={SessionId} MediaId={MediaId} Url={Url} StoreCount={StoreCount}",
+            sessionId,
+            mediaArtifact.Id,
+            mediaArtifact.Url,
+            queue.Count);
     }
 
     private ChatMessage BuildMediaAttachmentMessage(MediaArtifact mediaArtifact)
