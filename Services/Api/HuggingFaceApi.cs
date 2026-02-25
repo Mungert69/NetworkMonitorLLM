@@ -247,13 +247,43 @@ public class HuggingFaceApi : ILLMApi
             messages = messages.Select(m => new
             {
                 role = m.Role,
-                content = m.Content
+                content = FlattenContentForTextOnly(m)
             }).ToList(),
             max_tokens = maxTokens,
             stream = _isStream,
             temperature = _temperature,
             response_format = new { type = "text" }
         };
+    }
+
+    private static string FlattenContentForTextOnly(ChatMessage message)
+    {
+        if (!string.IsNullOrWhiteSpace(message.Content))
+        {
+            return message.Content;
+        }
+
+        var messageContents = ExtractMessageContents(message);
+        if (messageContents.Count == 0)
+        {
+            return string.Empty;
+        }
+
+        var parts = new List<string>();
+        foreach (var part in messageContents)
+        {
+            if (string.Equals(part.Type, "text", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrWhiteSpace(part.Text))
+            {
+                parts.Add(part.Text);
+            }
+            else if (string.Equals(part.Type, "image_url", StringComparison.OrdinalIgnoreCase) &&
+                     !string.IsNullOrWhiteSpace(part.ImageUrl?.Url))
+            {
+                parts.Add($"[image_url: {part.ImageUrl.Url}]");
+            }
+        }
+
+        return string.Join("\n", parts);
     }
 
     private List<Dictionary<string, object?>> ConvertMessagesForOpenAIToolMode(IEnumerable<ChatMessage> messages)
@@ -280,7 +310,7 @@ public class HuggingFaceApi : ILLMApi
             var toolCalls = message.ToolCalls ?? new List<ToolCall>();
             if (toolCalls.Any())
             {
-                entry["content"] = message.Content ?? string.Empty;
+                entry["content"] = BuildStructuredContent(message);
                 entry["tool_calls"] = toolCalls.Select(tc =>
                     new Dictionary<string, object?>
                     {
@@ -297,13 +327,59 @@ public class HuggingFaceApi : ILLMApi
             }
             else
             {
-                entry["content"] = message.Content ?? string.Empty;
+                entry["content"] = BuildStructuredContent(message);
             }
 
             formatted.Add(entry);
         }
 
         return formatted;
+    }
+
+    private static object BuildStructuredContent(ChatMessage message)
+    {
+        var messageContents = ExtractMessageContents(message);
+        if (messageContents.Count > 0)
+        {
+            return messageContents.Select(part =>
+            {
+                if (string.Equals(part.Type, "image_url", StringComparison.OrdinalIgnoreCase))
+                {
+                    return new Dictionary<string, object?>
+                    {
+                        ["type"] = "image_url",
+                        ["image_url"] = new Dictionary<string, object?>
+                        {
+                            ["url"] = part.ImageUrl?.Url ?? string.Empty,
+                            ["detail"] = string.IsNullOrWhiteSpace(part.ImageUrl?.Detail) ? "auto" : part.ImageUrl.Detail
+                        }
+                    };
+                }
+
+                return new Dictionary<string, object?>
+                {
+                    ["type"] = "text",
+                    ["text"] = part.Text ?? string.Empty
+                };
+            }).ToList();
+        }
+
+        return message.Content ?? string.Empty;
+    }
+
+    private static List<MessageContent> ExtractMessageContents(ChatMessage message)
+    {
+        if (message.ContentCalculated is IList<MessageContent> typedList)
+        {
+            return typedList.ToList();
+        }
+
+        if (message.ContentCalculated is IEnumerable<MessageContent> typedEnumerable)
+        {
+            return typedEnumerable.ToList();
+        }
+
+        return new List<MessageContent>();
     }
 
     private ChatCompletionCreateResponse GetErrorResponse(string message) =>

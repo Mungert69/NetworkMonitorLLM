@@ -95,14 +95,27 @@ public class OpenAIRunner : ILLMRunner
 
     private readonly Queue<(string? FunctionName, string? ArgumentsJson)> _recentFunctionCalls = new Queue<(string?, string?)>();
     private const int MaxRecentFunctionCalls = 5;
+    private const int MaxMediaArtifactsPerSession = 32;
     private int _funcsInARow = 0;
     private string? _lastChatAgentLocation;
+    private readonly ConcurrentDictionary<string, MediaArtifact> _pendingMediaByToolCall = new(StringComparer.Ordinal);
+    private readonly ConcurrentDictionary<string, ConcurrentQueue<MediaArtifact>> _sessionMediaStore = new(StringComparer.Ordinal);
     private static readonly Regex AgentLocationRegex =
         new Regex(@"Agent with location\s+(?<location>.+?)\s+use this for the agent_location",
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
     private readonly IQueryCoordinator _queryCoordinator;
     private readonly IToolsBuilderFactory _toolsBuilderFactory;
+
+    private sealed class MediaArtifact
+    {
+        public string Id { get; set; } = "";
+        public string Url { get; set; } = "";
+        public string MimeType { get; set; } = "";
+        public string Sha256 { get; set; } = "";
+        public string ToolCallId { get; set; } = "";
+        public DateTime CapturedUtc { get; set; }
+    }
 
 #pragma warning disable CS8618
     public OpenAIRunner(ILogger<OpenAIRunner> logger, ILLMResponseProcessor responseProcessor, OpenAIService openAiService, SystemParams systemParams, MLParams mlParams, LLMServiceObj serviceObj, SemaphoreSlim? openAIRunnerSemaphore, IAudioGenerator audioGenerator, bool useHF, List<ChatMessage> history, IQueryCoordinator queryCoordinator, IToolsBuilderFactory toolsBuilderFactory)
@@ -610,6 +623,11 @@ public class OpenAIRunner : ILLMRunner
 
         if (funcCallChatMessage != null && funcCallChatMessage.ToolCalls?.Count > 0)
         {
+            if (TryExtractMediaArtifact(serviceObj.UserInput, effectiveFuncCallId, out var mediaArtifact))
+            {
+                _pendingMediaByToolCall[effectiveFuncCallId] = mediaArtifact;
+            }
+
             // Use effectiveFuncCallId instead of serviceObj.FunctionCallId
             if (_pendingFunctionResponses.TryGetValue(effectiveFuncCallId, out var existingFuncResponseChatMessage))
             {
@@ -644,6 +662,12 @@ public class OpenAIRunner : ILLMRunner
                         localHistory.Add(response);
                         _pendingFunctionResponses.TryRemove(toolCall.Id!, out _);
                         count++;
+                    }
+
+                    if (_pendingMediaByToolCall.TryRemove(toolCall.Id!, out var media))
+                    {
+                        AddMediaToSessionStore(serviceObj.SessionId, media);
+                        localHistory.Add(BuildMediaAttachmentMessage(media));
                     }
                 }
 
@@ -714,7 +738,9 @@ public class OpenAIRunner : ILLMRunner
                     var oldId = tc.Id ?? string.Empty;
                     var newId = StringUtils.NewToolCallId();     // ← NEW id for the copy
                     if (!string.IsNullOrEmpty(oldId))
+                    {
                         toolCallIdMap[oldId] = newId;
+                    }
 
                     return new ToolCall
                     {
@@ -825,6 +851,79 @@ public class OpenAIRunner : ILLMRunner
         }
         return;
     }
+
+    private void AddMediaToSessionStore(string sessionId, MediaArtifact mediaArtifact)
+    {
+        var queue = _sessionMediaStore.GetOrAdd(sessionId, _ => new ConcurrentQueue<MediaArtifact>());
+        queue.Enqueue(mediaArtifact);
+        while (queue.Count > MaxMediaArtifactsPerSession)
+        {
+            queue.TryDequeue(out _);
+        }
+    }
+
+    private ChatMessage BuildMediaAttachmentMessage(MediaArtifact mediaArtifact)
+    {
+        var messageParts = new List<MessageContent>
+        {
+            MessageContent.TextContent("Function returned media. Continue current task with attached image context."),
+            MessageContent.TextContent($"Media metadata: id={mediaArtifact.Id}, sha256={mediaArtifact.Sha256}"),
+            MessageContent.ImageUrlContent(mediaArtifact.Url, "high")
+        };
+        return new ChatMessage("user", messageParts, null, null, null);
+    }
+
+    private static bool TryExtractMediaArtifact(string payload, string toolCallId, out MediaArtifact mediaArtifact)
+    {
+        mediaArtifact = new MediaArtifact();
+        if (string.IsNullOrWhiteSpace(payload))
+        {
+            return false;
+        }
+
+        try
+        {
+            using var doc = JsonDocument.Parse(payload);
+            if (doc.RootElement.ValueKind != JsonValueKind.Object)
+            {
+                return false;
+            }
+
+            if (!doc.RootElement.TryGetProperty("raw_data_url", out var rawDataUrlElement))
+            {
+                return false;
+            }
+
+            var rawDataUrl = rawDataUrlElement.GetString() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(rawDataUrl))
+            {
+                return false;
+            }
+
+            var mimeType = doc.RootElement.TryGetProperty("raw_data_mime_type", out var mimeElement)
+                ? (mimeElement.GetString() ?? string.Empty)
+                : string.Empty;
+            var sha256 = doc.RootElement.TryGetProperty("raw_data_sha256", out var shaElement)
+                ? (shaElement.GetString() ?? string.Empty)
+                : string.Empty;
+
+            mediaArtifact = new MediaArtifact
+            {
+                Id = StringUtils.GetNanoid(),
+                Url = rawDataUrl,
+                MimeType = mimeType,
+                Sha256 = sha256,
+                ToolCallId = toolCallId,
+                CapturedUtc = DateTime.UtcNow
+            };
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     private async Task HandleFunctionCallAsync(LLMServiceObj serviceObj, ToolCall fnCall, LLMServiceObj responseServiceObj, ChatMessage assistantChatMessage)
     {
         var fn = fnCall.FunctionCall;
