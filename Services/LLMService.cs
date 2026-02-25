@@ -37,7 +37,8 @@ public class LLMService : ILLMService
     {"meta", "Penetration"},
     {"cmdprocessor", "Cmd Processor"},
     {"search", "Search"},
-    {"quantum", "Quantum"}
+    {"quantum", "Quantum"},
+    {"camera", "Camera"}
     // Add more mappings as needed
 };
     private readonly IServiceProvider _serviceProvider;

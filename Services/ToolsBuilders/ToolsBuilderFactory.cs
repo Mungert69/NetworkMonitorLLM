@@ -58,6 +58,7 @@ public sealed class ToolsBuilderFactory : IToolsBuilderFactory
             { "meta",        () => new PenetrationExpertToolsBuilder() },
             { "search",      () => new SearchExpertToolsBuilder() },
             { "quantum",     () => new QuantumExpertToolsBuilder() },
+            { "camera",      () => new CameraExpertToolsBuilder() },
             { "agentflow",   () => new AgentFlowExpertToolsBuilder(_functionDefinitionRegistry) },
 
         };

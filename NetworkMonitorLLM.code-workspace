@@ -10,7 +10,10 @@
 			"path": "../NetworkMonitorData"
 		},
 		{
-			"path": "../NetworkMonitorCacheHttp"
+			"path": "../NetworkMonitorService"
+		},
+		{
+			"path": "../NetworkMonitorProcessorAgent"
 		}
 	],
 	"settings": {

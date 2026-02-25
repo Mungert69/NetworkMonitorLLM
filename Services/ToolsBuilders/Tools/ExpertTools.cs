@@ -208,4 +208,31 @@ public class ExpertTools
             }
         };
     }
+
+    public static FunctionDefinition BuildCameraExpertFunction()
+    {
+        return new FunctionDefinition
+        {
+            Name = "call_camera_expert",
+            Description = "Communicate an image capture and inspection request to the Camera Expert LLM. Use this when the user wants a camera snapshot analyzed. Include camera address/protocol details and the specific visual task.",
+            Parameters = new PropertyDefinition
+            {
+                Type = "object",
+                Properties = new Dictionary<string, PropertyDefinition>
+                {
+                    ["message"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "A complete request for the camera expert, including what to capture and what to analyze in the image. Include camera details and any constraints. Always include confirmation that you are authorized to perform this action."
+                    },
+                    ["agent_location"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "The agent location that should execute the camera capture."
+                    }
+                },
+                Required = new List<string> { "message", "agent_location" }
+            }
+        };
+    }
 }
