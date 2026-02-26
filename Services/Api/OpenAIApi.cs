@@ -124,7 +124,7 @@ public class OpenAIApi : ILLMApi
         }
         catch (Exception ex)
         {
-            _logger.LogError($"Exception in CreateCompletionAsync: {ex.Message}");
+            _logger.LogError(ex, "Exception in CreateCompletionAsync");
 
             // Create a ChatCompletionCreateResponse with error details
             var errorChatResponse = new ChatCompletionCreateResponse
