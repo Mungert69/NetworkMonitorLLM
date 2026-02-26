@@ -236,10 +236,42 @@ namespace NetworkMonitor.LLM.Services
             MLParams mlParams // <-- add this
         )
         {
-            var msgWire = messages.Select(m => new Dictionary<string, object?>
+            var msgWire = messages.Select(m =>
             {
-                ["role"] = m.Role,
-                ["content"] = m.Content
+                var entry = new Dictionary<string, object?>
+                {
+                    ["role"] = m.Role
+                };
+
+                if (!string.IsNullOrWhiteSpace(m.Name) &&
+                    string.Equals(m.Role, "tool", StringComparison.OrdinalIgnoreCase))
+                {
+                    entry["name"] = m.Name;
+                }
+
+                if (!string.IsNullOrWhiteSpace(m.ToolCallId))
+                {
+                    entry["tool_call_id"] = m.ToolCallId;
+                }
+
+                if (m.ToolCalls is { Count: > 0 })
+                {
+                    entry["tool_calls"] = m.ToolCalls.Select(tc => new Dictionary<string, object?>
+                    {
+                        ["id"] = tc.Id,
+                        ["type"] = string.IsNullOrWhiteSpace(tc.Type) ? "function" : tc.Type,
+                        ["function"] = tc.FunctionCall == null
+                            ? null
+                            : new Dictionary<string, object?>
+                            {
+                                ["name"] = tc.FunctionCall.Name,
+                                ["arguments"] = tc.FunctionCall.Arguments
+                            }
+                    }).ToList();
+                }
+
+                entry["content"] = BuildStructuredContent(m);
+                return entry;
             }).ToList();
 
             object? tools = null;
@@ -269,6 +301,52 @@ namespace NetworkMonitor.LLM.Services
                 tool_choice = tools is null ? "none" : "auto"
                 // NOTE: reply_key is appended later by the transport
             };
+        }
+
+        private static object BuildStructuredContent(ChatMessage message)
+        {
+            var parts = ExtractMessageContents(message);
+            if (parts.Count > 0)
+            {
+                return parts.Select(part =>
+                {
+                    if (string.Equals(part.Type, "image_url", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return new Dictionary<string, object?>
+                        {
+                            ["type"] = "image_url",
+                            ["image_url"] = new Dictionary<string, object?>
+                            {
+                                ["url"] = part.ImageUrl?.Url ?? string.Empty,
+                                ["detail"] = string.IsNullOrWhiteSpace(part.ImageUrl?.Detail) ? "auto" : part.ImageUrl.Detail
+                            }
+                        };
+                    }
+
+                    return new Dictionary<string, object?>
+                    {
+                        ["type"] = "text",
+                        ["text"] = part.Text ?? string.Empty
+                    };
+                }).ToList();
+            }
+
+            return message.Content ?? string.Empty;
+        }
+
+        private static List<MessageContent> ExtractMessageContents(ChatMessage message)
+        {
+            if (message.ContentCalculated is IList<MessageContent> list)
+            {
+                return list.ToList();
+            }
+
+            if (message.ContentCalculated is IEnumerable<MessageContent> enumerable)
+            {
+                return enumerable.ToList();
+            }
+
+            return new List<MessageContent>();
         }
 
     }
