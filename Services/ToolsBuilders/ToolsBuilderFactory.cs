@@ -83,6 +83,11 @@ public sealed class ToolsBuilderFactory : IToolsBuilderFactory
                 _ => new JsonDrivenToolsBuilder(spec, _functionDefinitionRegistry));
         }
 
+        if (TryCreatePrimaryMonitorBuilder(toolsId, runnerType, enableAgentFlow, out var monitorBuilder))
+        {
+            return monitorBuilder;
+        }
+
         if (ShouldUseSimpleMonitorPrompt(toolsId, runnerType))
         {
             return new MonitorSimpleToolsBuilder();
@@ -128,5 +133,55 @@ public sealed class ToolsBuilderFactory : IToolsBuilderFactory
     private bool IsMonitorUserFacingService()
     {
         return _systemParams.UserFacingServiceId?.Equals("monitor", StringComparison.OrdinalIgnoreCase) == true;
+    }
+
+    private bool TryCreatePrimaryMonitorBuilder(string toolsId, string? runnerType, bool enableAgentFlow, out IToolsBuilder builder)
+    {
+        builder = null!;
+        if (!IsMonitorToolsId(toolsId) || !IsMonitorUserFacingService())
+        {
+            return false;
+        }
+
+        var role = ResolvePrimaryMonitorRole(runnerType);
+        if (string.IsNullOrWhiteSpace(role))
+        {
+            return false;
+        }
+
+        switch (role.Trim().ToLowerInvariant())
+        {
+            case "standard":
+                builder = new MonitorToolsBuilder(enableAgentFlow);
+                return true;
+            case "simple":
+                builder = new MonitorSimpleToolsBuilder();
+                return true;
+            case "hal9000":
+            case "hal":
+                builder = new Hal9000MonitorToolsBuilder(enableAgentFlow);
+                return true;
+            case "hal9000_simple":
+            case "hal_simple":
+                builder = new Hal9000MonitorSimpleToolsBuilder();
+                return true;
+            default:
+                _logger.LogWarning(
+                    "Unknown PrimaryMonitorRole '{Role}'. Falling back to legacy monitor prompt selection.",
+                    role);
+                return false;
+        }
+    }
+
+    private string ResolvePrimaryMonitorRole(string? runnerType)
+    {
+        if (!string.IsNullOrWhiteSpace(runnerType) &&
+            _mlParams.PrimaryMonitorRoleByRunner.TryGetValue(runnerType, out var byRunnerRole) &&
+            !string.IsNullOrWhiteSpace(byRunnerRole))
+        {
+            return byRunnerRole;
+        }
+
+        return _mlParams.PrimaryMonitorRole;
     }
 }
