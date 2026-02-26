@@ -104,6 +104,13 @@ namespace NetworkMonitor.LLM.Services
         {
             try
             {
+                var (multimodalCount, imagePartCount) = GetContentShapeStats(messages);
+                _logger.LogInformation(
+                    "OpenAIRabbit request content mode: MultimodalMessages={MultimodalMessages}, ImageParts={ImageParts}, TotalMessages={TotalMessages}",
+                    multimodalCount,
+                    imagePartCount,
+                    messages.Count);
+
                 var req = BuildOpenAIChatRequest(
      messages,
      maxTokens,
@@ -347,6 +354,22 @@ namespace NetworkMonitor.LLM.Services
             }
 
             return new List<MessageContent>();
+        }
+
+        private static (int multimodalCount, int imagePartCount) GetContentShapeStats(IEnumerable<ChatMessage> messages)
+        {
+            int multimodalCount = 0;
+            int imagePartCount = 0;
+
+            foreach (var message in messages)
+            {
+                var parts = ExtractMessageContents(message);
+                if (parts.Count == 0) continue;
+                multimodalCount++;
+                imagePartCount += parts.Count(p => string.Equals(p.Type, "image_url", StringComparison.OrdinalIgnoreCase));
+            }
+
+            return (multimodalCount, imagePartCount);
         }
 
     }
