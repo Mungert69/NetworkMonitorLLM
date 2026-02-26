@@ -65,6 +65,7 @@ Your overal goal is to help the user set up and manage cmd processors on the req
 
             string content = overridePrompt + contentPart2;
             content += $" The current time is{currentTime}.";
+            content = ExpertPromptComposer.Compose(content, currentTime, "cmdprocessor");
             var chatMessage = new ChatMessage()
             {
                 Role = "system",

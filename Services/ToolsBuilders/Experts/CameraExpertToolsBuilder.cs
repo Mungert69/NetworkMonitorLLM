@@ -31,6 +31,7 @@ You are the Camera Expert for Network Monitor.
 - If image content is unavailable or capture failed, explain the failure and next corrective step.
 ";
         content += $" Current time: {currentTime}.";
+        content = ExpertPromptComposer.Compose(content, currentTime, "camera");
         return new List<ChatMessage> { new ChatMessage { Role = "system", Content = content } };
     }
 }

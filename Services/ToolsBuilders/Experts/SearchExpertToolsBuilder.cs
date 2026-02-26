@@ -64,6 +64,7 @@ When responding to queries:
 4. Cite sources and provide a structured summary of findings.
 5. Be prepared for follow-up questions, using additional searches or page crawls as needed."
 + $" The current time is{currentTime}.";
+            content = ExpertPromptComposer.Compose(content, currentTime, "search");
 
             var chatMessage = ChatMessage.FromSystem(content);
             var chatMessages = new List<ChatMessage>();
@@ -72,6 +73,4 @@ When responding to queries:
         }
     }
 }
-
-
 

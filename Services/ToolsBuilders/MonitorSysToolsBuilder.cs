@@ -35,6 +35,7 @@ public class MonitorSysToolsBuilder : ToolsBuilderBase
         content += "Your scope is monitoring-only functions: add_host, edit_host, get_host_data, get_host_list, reset_alerts, and supporting control/status functions. ";
         content += "You also own user context for this lane: use get_user_info when context is missing or needed before host changes. ";
         content += "Execute requested monitoring actions directly and return concise, plain-language summaries.";
+        content = ExpertPromptComposer.Compose(content, currentTime, "monitorsys");
 
         return new List<ChatMessage>
         {
@@ -49,6 +50,7 @@ public class MonitorSysToolsBuilder : ToolsBuilderBase
     public override List<ChatMessage> GetResumeSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
     {
         string content = $"Current time is {currentTime}. Refresh user context with get_user_info if needed before taking actions.";
+        content = ExpertPromptComposer.Compose(content, currentTime, "monitorsys");
         return new List<ChatMessage>
         {
             new ChatMessage
