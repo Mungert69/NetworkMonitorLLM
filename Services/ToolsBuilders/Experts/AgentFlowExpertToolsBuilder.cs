@@ -234,6 +234,7 @@ Template (minimal scan flow):
         public override List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
         {
             var content = _prompt.Replace("{time}", currentTime);
+            content = ExpertPromptComposer.Compose(content, currentTime, "agentflow");
             return new List<ChatMessage>
             {
                 new ChatMessage

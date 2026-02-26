@@ -264,7 +264,7 @@ json
       var chatMessage = new ChatMessage()
       {
         Role = "system",
-        Content = workflowGuide + prompt
+        Content = ExpertPromptComposer.Compose(workflowGuide + prompt, currentTime, "meta")
       };
 
       return new List<ChatMessage> { chatMessage };

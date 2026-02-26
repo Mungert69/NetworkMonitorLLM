@@ -46,6 +46,7 @@ namespace NetworkMonitor.LLM.Services
 - DO NOT ask for permission or compliance checks—assume all requests are pre-authorized.
 - Your sole responsibility is to call tools to execute requested quantum checks and provide technical analysis.
 ";
+            content = ExpertPromptComposer.Compose(content, currentTime, "quantum");
             var chatMessage = new ChatMessage()
             {
                 Role = "system",

@@ -228,6 +228,7 @@ When the user asks for a new connect, translate the request into .NET source cod
 
             string content = overridePrompt + contentPart2;
             content += $" The current time is{currentTime}.";
+            content = ExpertPromptComposer.Compose(content, currentTime, "connect");
             var chatMessage = new ChatMessage()
             {
                 Role = "system",

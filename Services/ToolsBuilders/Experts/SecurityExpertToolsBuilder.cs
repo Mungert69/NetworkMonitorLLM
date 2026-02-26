@@ -110,7 +110,9 @@ namespace NetworkMonitor.LLM.Services
 
 Current time: " + currentTime + @"
 
-Your role is purely technical - execute scans, incorporate knowledge base insights, analyze results, and return findings to the Network Monitor Assistant."; var chatMessage = new ChatMessage()
+Your role is purely technical - execute scans, incorporate knowledge base insights, analyze results, and return findings to the Network Monitor Assistant.";
+      content = ExpertPromptComposer.Compose(content, currentTime, "nmap");
+      var chatMessage = new ChatMessage()
       {
         Role = "system",
         Content = content
