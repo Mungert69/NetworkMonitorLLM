@@ -356,6 +356,7 @@ public class OpenAIRunner : ILLMRunner
 
             TruncateTokens(_history, serviceObj);
             var currentHistory = new List<ChatMessage>(_history.Concat(localHistory));
+            SanitizeMessagesForCompletion(currentHistory);
 
             var completionSuccessResult = await _llmApi.CreateCompletionAsync(currentHistory, _responseTokens, serviceObj);
             var completionResult = completionSuccessResult.Response;
@@ -885,12 +886,20 @@ public class OpenAIRunner : ILLMRunner
 
     private ChatMessage BuildMediaAttachmentMessage(MediaArtifact mediaArtifact)
     {
+        if (!Uri.TryCreate(mediaArtifact.Url, UriKind.Absolute, out var uri) ||
+            (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+        {
+            return ChatMessage.FromUser(
+                $"Function returned media metadata only. Media URL was invalid: {mediaArtifact.Url}");
+        }
+
         var messageParts = new List<MessageContent>
         {
             MessageContent.TextContent("Function returned media. Analyze the attached image directly and continue the current task."),
             MessageContent.TextContent($"Media metadata: id={mediaArtifact.Id}, sha256={mediaArtifact.Sha256}"),
             MessageContent.ImageUrlContent(mediaArtifact.Url, "high")
         };
+
         return new ChatMessage("user", messageParts, null, null, null);
     }
 
@@ -1329,6 +1338,23 @@ public class OpenAIRunner : ILLMRunner
         // If this is the “primary” or “system” LLM, do
         if (serviceObj.IsPrimaryLlm || serviceObj.IsSystemLlm) await _responseProcessor.ProcessLLMOutputError(responseObj);
         _logger.LogError($" {_serviceID} {responseObj.LlmMessage}");
+    }
+
+    private static void SanitizeMessagesForCompletion(List<ChatMessage> messages)
+    {
+        foreach (var message in messages)
+        {
+            message.Role ??= "user";
+            if (message.ContentCalculated is IList<MessageContent> parts && parts.Count > 0)
+            {
+                var content = message.Content;
+                if (!string.IsNullOrWhiteSpace(content) &&
+                    content.Contains("System.Collections.Generic.List`1[", StringComparison.Ordinal))
+                {
+                    message.Content = null;
+                }
+            }
+        }
     }
     private void RemoveUnansweredToolCalls(string sessionId, List<ChatMessage> sessionHistory)
     {
