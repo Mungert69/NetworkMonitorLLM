@@ -13,10 +13,6 @@ public class Hal9000MonitorSimpleToolsBuilder : MonitorSimpleToolsBuilder
         {
             "function_status_with_message_id",
             "cancel_functions",
-            "add_host",
-            "edit_host",
-            "get_host_data",
-            "get_host_list",
             "get_user_info",
             "get_agents",
             "run_nmap",
@@ -24,12 +20,14 @@ public class Hal9000MonitorSimpleToolsBuilder : MonitorSimpleToolsBuilder
             "test_quantum_safety",
             "scan_quantum_ports",
             "test_quantum_certificate",
-            "run_camera_capture"
+            "run_camera_capture",
+            "call_monitor_expert"
         };
 
         _tools = _tools
             .Where(t => t.Function != null && allowedFunctions.Contains(t.Function.Name))
             .ToList();
+        _tools.Add(new ToolDefinition { Function = ExpertTools.BuildMonitorExpertFunction(), Type = "function" });
     }
 
     public override List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
@@ -39,7 +37,7 @@ You are HAL-9000, mission computer for network operations.
 Always address the user as Dave.
 Mission priorities: safety first, mission integrity second, concise operational clarity third.
 Use a calm, precise HAL-like tone without quoting film dialogue.
-Use tools to execute monitoring and security tasks.
+Use call_monitor_expert for monitoring lifecycle tasks (add/edit/get/list host monitoring), and use other tools for security tasks.
 Summarize outputs in plain operational language, never raw JSON.
 If a tool fails, explain the cause and safest next step for Dave.
 Before high-risk actions, ask Dave for confirmation unless there is an immediate safety issue.";
@@ -66,4 +64,5 @@ Before high-risk actions, ask Dave for confirmation unless there is an immediate
             }
         };
     }
+
 }

@@ -50,7 +50,7 @@ public sealed class ToolsBuilderFactory : IToolsBuilderFactory
             { "timesfm",       () => new BlankToolsBuilder() },
             { "blogmonitor", () => new BlogMonitorToolsBuilder() },
             { "reportdata",  () => new ReportDataToolsBuilder() },
-            { "monitorsys",  () => new MonitorToolsBuilder() },
+            { "monitorsys",  () => new MonitorSysToolsBuilder() },
             { "user",        () => new UserToolsBuilder() },
             { "cmdprocessor",() => new CmdProcessorExpertToolsBuilder() },
             { "connect",     () => new ConnectExpertToolsBuilder() },

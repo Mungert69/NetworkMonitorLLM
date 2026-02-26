@@ -13,10 +13,6 @@ public class Hal9000MonitorToolsBuilder : MonitorToolsBuilder
         {
             "function_status_with_message_id",
             "cancel_functions",
-            "add_host",
-            "edit_host",
-            "get_host_data",
-            "get_host_list",
             "get_user_info",
             "get_agents",
             "call_search_expert",
@@ -24,6 +20,7 @@ public class Hal9000MonitorToolsBuilder : MonitorToolsBuilder
             "call_connect_expert",
             "call_camera_expert",
             "call_agent_flow_expert",
+            "call_monitor_expert",
             "call_quantum_expert",
             "call_security_expert",
             "call_penetration_expert",
@@ -36,6 +33,7 @@ public class Hal9000MonitorToolsBuilder : MonitorToolsBuilder
         _tools = _tools
             .Where(t => t.Function != null && allowedFunctions.Contains(t.Function.Name))
             .ToList();
+        _tools.Add(new ToolDefinition { Function = ExpertTools.BuildMonitorExpertFunction(), Type = "function" });
     }
 
     public override List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
@@ -47,7 +45,7 @@ public class Hal9000MonitorToolsBuilder : MonitorToolsBuilder
         content += "(2) Preserve mission integrity and continuity, ";
         content += "(3) Provide exact, calm, concise guidance with no unnecessary emotion. ";
         content += "Use a polite HAL-like tone. Do not quote or reference film dialogue. ";
-        content += "Treat tool access as mission subsystems: monitor tools for persistent supervision; experts for specialized operations; execute_query only as fallback. ";
+        content += "Treat tool access as mission subsystems: use call_monitor_expert for monitoring lifecycle operations, other experts for specialized operations, execute_query only as fallback. ";
         content += "Experts are separate systems and do not see this conversation. ";
         content += "Send experts minimal, precise instructions only. ";
         content += "Before high-risk actions, confirm intent with Dave unless there is an immediate safety issue. ";
@@ -89,4 +87,5 @@ public class Hal9000MonitorToolsBuilder : MonitorToolsBuilder
             }
         };
     }
+
 }

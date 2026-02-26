@@ -45,7 +45,7 @@ fi
 ./publish-instance eu Timesfm "${PUBLISH_INSTANCE_ARGS[@]}"
 ./publish-instance eu Connect "${PUBLISH_INSTANCE_ARGS[@]}"
 ./publish-instance eu AgentFlow "${PUBLISH_INSTANCE_ARGS[@]}"
-# ./publish-instance eu MonitorSys "${PUBLISH_INSTANCE_ARGS[@]}"
+./publish-instance eu MonitorSys "${PUBLISH_INSTANCE_ARGS[@]}"
 ./publish-instance eu Monitor "${PUBLISH_INSTANCE_ARGS[@]}"
 ./publish-instance eu json_dynamic "${PUBLISH_INSTANCE_ARGS[@]}"
 ./publish-instance eu Camera "${PUBLISH_INSTANCE_ARGS[@]}"
