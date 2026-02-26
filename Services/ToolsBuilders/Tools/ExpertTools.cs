@@ -16,6 +16,28 @@ namespace NetworkMonitor.LLM.Services;
 
 public class ExpertTools
 {
+    public static FunctionDefinition BuildMonitorExpertFunction()
+    {
+        return new FunctionDefinition
+        {
+            Name = "call_monitor_expert",
+            Description = "Communicate a monitoring management request to the Monitor System Expert LLM. Use this for host monitoring lifecycle operations such as add/edit hosts, list monitored hosts, fetch host monitoring data, and reset monitor alerts.",
+            Parameters = new PropertyDefinition
+            {
+                Type = "object",
+                Properties = new Dictionary<string, PropertyDefinition>
+                {
+                    ["message"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "A concise but complete request for the monitor expert. Include the target host(s), monitor type/protocol details, interval/timeout settings when relevant, and desired operation."
+                    }
+                },
+                Required = new List<string> { "message" }
+            }
+        };
+    }
+
     public static FunctionDefinition BuildSecurityExpertFunction()
     {
         return new FunctionDefinition
