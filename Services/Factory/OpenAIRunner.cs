@@ -887,7 +887,7 @@ public class OpenAIRunner : ILLMRunner
     {
         var messageParts = new List<MessageContent>
         {
-            MessageContent.TextContent("Function returned media. Continue current task with attached image context."),
+            MessageContent.TextContent("Function returned media. Analyze the attached image directly and continue the current task."),
             MessageContent.TextContent($"Media metadata: id={mediaArtifact.Id}, sha256={mediaArtifact.Sha256}"),
             MessageContent.ImageUrlContent(mediaArtifact.Url, "high")
         };
@@ -907,26 +907,54 @@ public class OpenAIRunner : ILLMRunner
             using var doc = JsonDocument.Parse(payload);
             if (doc.RootElement.ValueKind != JsonValueKind.Object)
             {
-                return false;
+                return TryExtractMediaArtifactFromText(payload, toolCallId, out mediaArtifact);
             }
 
-            if (!doc.RootElement.TryGetProperty("raw_data_url", out var rawDataUrlElement))
-            {
-                return false;
-            }
-
-            var rawDataUrl = rawDataUrlElement.GetString() ?? string.Empty;
+            var rawDataUrl = GetStringFromJson(
+                doc.RootElement,
+                "raw_data_url",
+                "image_url",
+                "url",
+                "file_url");
             if (string.IsNullOrWhiteSpace(rawDataUrl))
             {
-                return false;
+                if (doc.RootElement.TryGetProperty("media", out var mediaObj) &&
+                    mediaObj.ValueKind == JsonValueKind.Object)
+                {
+                    rawDataUrl = GetStringFromJson(
+                        mediaObj,
+                        "raw_data_url",
+                        "image_url",
+                        "url",
+                        "file_url");
+                }
             }
 
-            var mimeType = doc.RootElement.TryGetProperty("raw_data_mime_type", out var mimeElement)
-                ? (mimeElement.GetString() ?? string.Empty)
-                : string.Empty;
-            var sha256 = doc.RootElement.TryGetProperty("raw_data_sha256", out var shaElement)
-                ? (shaElement.GetString() ?? string.Empty)
-                : string.Empty;
+            if (string.IsNullOrWhiteSpace(rawDataUrl))
+            {
+                return TryExtractMediaArtifactFromText(payload, toolCallId, out mediaArtifact);
+            }
+
+            var mimeType = GetStringFromJson(
+                doc.RootElement,
+                "raw_data_mime_type",
+                "mime_type",
+                "content_type");
+            var sha256 = GetStringFromJson(
+                doc.RootElement,
+                "raw_data_sha256",
+                "sha256",
+                "hash");
+
+            if (string.IsNullOrWhiteSpace(mimeType) &&
+                doc.RootElement.TryGetProperty("media", out var mediaObject) &&
+                mediaObject.ValueKind == JsonValueKind.Object)
+            {
+                mimeType = GetStringFromJson(mediaObject, "raw_data_mime_type", "mime_type", "content_type");
+                sha256 = string.IsNullOrWhiteSpace(sha256)
+                    ? GetStringFromJson(mediaObject, "raw_data_sha256", "sha256", "hash")
+                    : sha256;
+            }
 
             mediaArtifact = new MediaArtifact
             {
@@ -941,8 +969,40 @@ public class OpenAIRunner : ILLMRunner
         }
         catch
         {
+            return TryExtractMediaArtifactFromText(payload, toolCallId, out mediaArtifact);
+        }
+    }
+
+    private static string GetStringFromJson(JsonElement root, params string[] keys)
+    {
+        foreach (var key in keys)
+        {
+            if (!root.TryGetProperty(key, out var value)) continue;
+            var text = value.GetString() ?? string.Empty;
+            if (!string.IsNullOrWhiteSpace(text)) return text;
+        }
+        return string.Empty;
+    }
+
+    private static bool TryExtractMediaArtifactFromText(string payload, string toolCallId, out MediaArtifact mediaArtifact)
+    {
+        mediaArtifact = new MediaArtifact();
+        var match = Regex.Match(payload, @"https?://\S+\.(jpg|jpeg|png|webp|gif)(\?\S*)?", RegexOptions.IgnoreCase);
+        if (!match.Success)
+        {
             return false;
         }
+
+        mediaArtifact = new MediaArtifact
+        {
+            Id = StringUtils.GetNanoid(),
+            Url = match.Value.Trim(),
+            MimeType = string.Empty,
+            Sha256 = string.Empty,
+            ToolCallId = toolCallId,
+            CapturedUtc = DateTime.UtcNow
+        };
+        return true;
     }
 
     private async Task HandleFunctionCallAsync(LLMServiceObj serviceObj, ToolCall fnCall, LLMServiceObj responseServiceObj, ChatMessage assistantChatMessage)
