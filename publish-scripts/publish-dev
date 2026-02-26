@@ -48,4 +48,5 @@ fi
 # ./publish-instance eu MonitorSys "${PUBLISH_INSTANCE_ARGS[@]}"
 ./publish-instance eu Monitor "${PUBLISH_INSTANCE_ARGS[@]}"
 ./publish-instance eu json_dynamic "${PUBLISH_INSTANCE_ARGS[@]}"
+./publish-instance eu Camera "${PUBLISH_INSTANCE_ARGS[@]}"
 sudo pkill -u root -f 'dotnet.*(MSBuild|VBCSCompiler)\.dll' || true
