@@ -777,12 +777,10 @@ public class OpenAIRunner : ILLMRunner
 
 
         string messageIdStr = "";
-        string messageIdJson = "";
 
         if (serviceObj.IsPrimaryLlm)
         {
             messageIdStr = $"using message_id {serviceObj.MessageID}";
-            messageIdJson = " , \"message_id\" : \"" + serviceObj.MessageID + "\"";
         }
 
         string pluralCall = "call";
@@ -805,8 +803,19 @@ public class OpenAIRunner : ILLMRunner
                     await HandleFunctionCallAsync(serviceObj, fnCall, responseServiceObj, assistantChatMessage);
                     await Task.Delay(500);
                     string extraMessage = "";
-                    if (serviceObj.IsPrimaryLlm) extraMessage = "There is no need to call function_status_with_message_id because the system is actively monitoring the status and you will be informed as soon as the function completes..\"";
-                    var toolResponse = ChatMessage.FromTool("{\"message\" : \"The function call " + funcName + " is currently running. " + extraMessage + messageIdJson + "}", funcId!);
+                    if (serviceObj.IsPrimaryLlm)
+                    {
+                        extraMessage = "There is no need to call function_status_with_message_id because the system is actively monitoring the status and you will be informed as soon as the function completes.";
+                    }
+                    var toolRunningPayload = new Dictionary<string, object?>
+                    {
+                        ["message"] = $"The function call {funcName} is currently running. {extraMessage}".Trim()
+                    };
+                    if (serviceObj.IsPrimaryLlm && !string.IsNullOrWhiteSpace(serviceObj.MessageID))
+                    {
+                        toolRunningPayload["message_id"] = serviceObj.MessageID;
+                    }
+                    var toolResponse = ChatMessage.FromTool(JsonSerializer.Serialize(toolRunningPayload), funcId!);
                     toolResponse.Role = "tool";
                     toolResponse.Name = funcName;
                     toolResponces.Add(toolResponse);
@@ -1330,14 +1339,27 @@ public class OpenAIRunner : ILLMRunner
         }
 
 
-        // Optionally send user a friendly error
-        var responseObj = new LLMServiceObj(serviceObj, fs => fs.SetAsResponseErrorComplete())
+        var errorText = $"I encountered an error when calling {_type}.{extraMessage}\nError detail: {errorMessage}\n";
+
+        if (serviceObj.IsPrimaryLlm || serviceObj.IsSystemLlm)
         {
-            LlmMessage = $"I encountered an error when calling {_type}.{extraMessage}\nError detail: {errorMessage}\n",
-        };
-        // If this is the “primary” or “system” LLM, do
-        if (serviceObj.IsPrimaryLlm || serviceObj.IsSystemLlm) await _responseProcessor.ProcessLLMOutputError(responseObj);
-        _logger.LogError($" {_serviceID} {responseObj.LlmMessage}");
+            var responseObj = new LLMServiceObj(serviceObj, fs => fs.SetAsResponseErrorComplete())
+            {
+                LlmMessage = errorText,
+            };
+            await _responseProcessor.ProcessLLMOutputError(responseObj);
+        }
+        else
+        {
+            // Expert lane: return error context upstream as a normal response so the caller LLM can decide user-facing wording.
+            var responseObj = new LLMServiceObj(serviceObj, fs => fs.SetAsResponseComplete())
+            {
+                LlmMessage = errorText,
+            };
+            await _responseProcessor.ProcessLLMOutput(responseObj);
+        }
+
+        _logger.LogError(" {ServiceId} {ErrorText}", _serviceID, errorText);
     }
 
     private static void SanitizeMessagesForCompletion(List<ChatMessage> messages)

@@ -58,6 +58,16 @@ public class ChatResponseBuilder
     // Add this method to the ChatResponseBuilder class
     public ChatCompletionCreateResponse BuildResponseFromOpenAI(ChatCompletionCreateResponse openAIResponse)
     {
+        if (openAIResponse == null)
+        {
+            return new ChatCompletionCreateResponse();
+        }
+
+        if (openAIResponse.Choices == null || openAIResponse.Choices.Count == 0)
+        {
+            return openAIResponse;
+        }
+
         foreach (var choice in openAIResponse.Choices)
         {
             if (choice.Message == null) continue;
