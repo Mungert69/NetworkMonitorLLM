@@ -44,12 +44,7 @@ public sealed class ToolsBuilderFactory : IToolsBuilderFactory
         _functionDefinitionRegistry = functionDefinitionRegistry;
         _mlParams = mlParams;
         _systemParams = systemParams;
-        var fallbackProfile = _mlParams.ExpertPromptProfile;
-        if (string.IsNullOrWhiteSpace(fallbackProfile))
-        {
-            fallbackProfile = "default";
-        }
-        ExpertPromptComposer.SetProfile(fallbackProfile, _mlParams.PrimaryMonitorRole, _mlParams.ExpertPromptProfileByToolsId);
+        ExpertPromptComposer.SetExtraPrompt(_mlParams.ExpertExtraPrompt);
 
         _static = new(StringComparer.OrdinalIgnoreCase)
         {
