@@ -1229,21 +1229,12 @@ public class OpenAIRunner : ILLMRunner
             {
                 if (_createAudio)
                 {
-                    bool isFirstChunk = true;
+                    // Never block primary text output on audio backend health.
+                    responseServiceObj.LlmMessage = "<Assistant:>" + responseChoiceStr + "\n";
+                    if (!_isStream) await _responseProcessor.ProcessLLMOutputInChunks(responseServiceObj);
 
-                    await foreach (var audioUrl in _audioGenerator.StreamAudioInOrder(responseChoiceStr))
-                    {
-                        if (isFirstChunk)
-                        {
-                            responseServiceObj.LlmMessage = "<Assistant:>" + responseChoiceStr + "\n";
-                            if (!_isStream) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
-                            isFirstChunk = false;
-                        }
-
-                        responseServiceObj.LlmMessage = $"</audio>{audioUrl}";
-                        _logger.LogInformation(responseServiceObj.LlmMessage);
-                        await _responseProcessor.ProcessLLMOutput(responseServiceObj);
-                    }
+                    // Best-effort async audio; failures/timeouts should not hold up LLM text responses.
+                    _ = StreamAudioBestEffortAsync(responseChoiceStr, responseServiceObj);
                 }
 
                 else
@@ -1294,6 +1285,64 @@ public class OpenAIRunner : ILLMRunner
             if (!_isSystemLlm) responseServiceObj.SetAsResponseComplete();
             responseServiceObj.LlmMessage = "<Assistant:>" + notice + "\n";
             if (!_isStream) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+        }
+    }
+
+    private async Task StreamAudioBestEffortAsync(string responseText, LLMServiceObj baseServiceObj)
+    {
+        if (string.IsNullOrWhiteSpace(responseText))
+        {
+            return;
+        }
+
+        // No hard total timeout: allow long responses as long as chunks keep arriving.
+        // Abort only when audio generation stalls with no next chunk for too long.
+        const int audioChunkStallTimeoutSeconds = 45;
+        using var cts = new CancellationTokenSource();
+        try
+        {
+            await using var enumerator = _audioGenerator.StreamAudioInOrder(responseText, cts.Token).GetAsyncEnumerator();
+            while (true)
+            {
+                var nextTask = enumerator.MoveNextAsync().AsTask();
+                var timeoutTask = Task.Delay(TimeSpan.FromSeconds(audioChunkStallTimeoutSeconds));
+                var completed = await Task.WhenAny(nextTask, timeoutTask);
+                if (completed != nextTask)
+                {
+                    cts.Cancel();
+                    _logger.LogWarning(
+                        "Audio generation stalled for > {Timeout}s and was cancelled for MessageID {MessageID}",
+                        audioChunkStallTimeoutSeconds,
+                        baseServiceObj.MessageID);
+                    try { await nextTask; } catch { /* cancellation best effort */ }
+                    break;
+                }
+
+                if (!await nextTask)
+                {
+                    break;
+                }
+
+                var audioUrl = enumerator.Current;
+                if (string.IsNullOrWhiteSpace(audioUrl))
+                {
+                    continue;
+                }
+
+                var audioServiceObj = new LLMServiceObj(baseServiceObj);
+                audioServiceObj.SetAsNotCall();
+                audioServiceObj.LlmMessage = $"</audio>{audioUrl}";
+                _logger.LogInformation(audioServiceObj.LlmMessage);
+                await _responseProcessor.ProcessLLMOutput(audioServiceObj);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogWarning("Audio generation cancelled for MessageID {MessageID}", baseServiceObj.MessageID);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Audio generation failed for MessageID {MessageID}", baseServiceObj.MessageID);
         }
     }
 
