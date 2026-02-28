@@ -632,7 +632,7 @@ public class OpenAIRunner : ILLMRunner
                     serviceObj.MessageID,
                     effectiveFuncCallId,
                     mediaArtifact.Id,
-                    mediaArtifact.Url,
+                    GetSafeMediaUrlForLog(mediaArtifact.Url),
                     mediaArtifact.MimeType,
                     mediaArtifact.Sha256);
             }
@@ -683,7 +683,7 @@ public class OpenAIRunner : ILLMRunner
                             serviceObj.MessageID,
                             toolCall.Id,
                             media.Id,
-                            media.Url);
+                            GetSafeMediaUrlForLog(media.Url));
                     }
                 }
 
@@ -889,14 +889,13 @@ public class OpenAIRunner : ILLMRunner
             "Media stored in session media store: SessionId={SessionId} MediaId={MediaId} Url={Url} StoreCount={StoreCount}",
             sessionId,
             mediaArtifact.Id,
-            mediaArtifact.Url,
+            GetSafeMediaUrlForLog(mediaArtifact.Url),
             queue.Count);
     }
 
     private ChatMessage BuildMediaAttachmentMessage(MediaArtifact mediaArtifact)
     {
-        if (!Uri.TryCreate(mediaArtifact.Url, UriKind.Absolute, out var uri) ||
-            (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+        if (!IsSupportedMediaUrl(mediaArtifact.Url))
         {
             return ChatMessage.FromUser(
                 $"Function returned media metadata only. Media URL was invalid: {mediaArtifact.Url}");
@@ -910,6 +909,41 @@ public class OpenAIRunner : ILLMRunner
         };
 
         return new ChatMessage("user", messageParts, null, null, null);
+    }
+
+    private static bool IsSupportedMediaUrl(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return false;
+        }
+
+        if (value.StartsWith("data:image/", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        if (!Uri.TryCreate(value, UriKind.Absolute, out var uri))
+        {
+            return false;
+        }
+
+        return uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps;
+    }
+
+    private static string GetSafeMediaUrlForLog(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return "";
+        }
+
+        if (value.StartsWith("data:image/", StringComparison.OrdinalIgnoreCase))
+        {
+            return "[inline-data-url]";
+        }
+
+        return StringUtils.Truncate(value, 240);
     }
 
     private static bool TryExtractMediaArtifact(string payload, string toolCallId, out MediaArtifact mediaArtifact)
@@ -934,6 +968,11 @@ public class OpenAIRunner : ILLMRunner
                 "image_url",
                 "url",
                 "file_url");
+            var rawDataBase64 = GetStringFromJson(
+                doc.RootElement,
+                "raw_data_base64",
+                "image_base64",
+                "base64_data");
             if (string.IsNullOrWhiteSpace(rawDataUrl))
             {
                 if (doc.RootElement.TryGetProperty("media", out var mediaObj) &&
@@ -945,12 +984,10 @@ public class OpenAIRunner : ILLMRunner
                         "image_url",
                         "url",
                         "file_url");
+                    rawDataBase64 = string.IsNullOrWhiteSpace(rawDataBase64)
+                        ? GetStringFromJson(mediaObj, "raw_data_base64", "image_base64", "base64_data")
+                        : rawDataBase64;
                 }
-            }
-
-            if (string.IsNullOrWhiteSpace(rawDataUrl))
-            {
-                return TryExtractMediaArtifactFromText(payload, toolCallId, out mediaArtifact);
             }
 
             var mimeType = GetStringFromJson(
@@ -972,6 +1009,20 @@ public class OpenAIRunner : ILLMRunner
                 sha256 = string.IsNullOrWhiteSpace(sha256)
                     ? GetStringFromJson(mediaObject, "raw_data_sha256", "sha256", "hash")
                     : sha256;
+            }
+
+            rawDataBase64 = string.IsNullOrWhiteSpace(rawDataBase64)
+                ? ""
+                : Regex.Replace(rawDataBase64, @"\s+", "");
+            if (string.IsNullOrWhiteSpace(rawDataUrl) && !string.IsNullOrWhiteSpace(rawDataBase64))
+            {
+                var safeMimeType = string.IsNullOrWhiteSpace(mimeType) ? "image/jpeg" : mimeType;
+                rawDataUrl = $"data:{safeMimeType};base64,{rawDataBase64}";
+            }
+
+            if (string.IsNullOrWhiteSpace(rawDataUrl))
+            {
+                return TryExtractMediaArtifactFromText(payload, toolCallId, out mediaArtifact);
             }
 
             mediaArtifact = new MediaArtifact
