@@ -48,10 +48,30 @@ public static class CameraTools
                         Type = "string",
                         Description = "Optional RTSP path when address is host-only."
                     },
+                    ["rtsp_port"] = new PropertyDefinition
+                    {
+                        Type = "integer",
+                        Description = "Optional RTSP port override (for example 554). If omitted, address/default behavior is used."
+                    },
+                    ["onvif_port"] = new PropertyDefinition
+                    {
+                        Type = "integer",
+                        Description = "Optional ONVIF HTTP(S) port override (for example 2020). If omitted, camera-specific and generic ONVIF discovery defaults are used."
+                    },
                     ["high_detail"] = new PropertyDefinition
                     {
                         Type = "boolean",
                         Description = "Set true for higher detail capture (1280 long edge). Defaults to false (1024 long edge)."
+                    },
+                    ["allow_insecure_tls"] = new PropertyDefinition
+                    {
+                        Type = "boolean",
+                        Description = "Optional TLS setting for ONVIF HTTPS cameras with self-signed certificates. Defaults to true."
+                    },
+                    ["ffmpeg_path"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Optional ffmpeg executable path override. Defaults to ffmpeg."
                     },
                     ["instruction"] = new PropertyDefinition
                     {
