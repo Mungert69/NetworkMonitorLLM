@@ -50,16 +50,24 @@ Use this response shape:
 4) Recommended next actions (1-3)
 5) Authorization question only when disruptive action is proposed.";
 
-        var contextAgentLocation = string.IsNullOrEmpty(serviceObj.ChatAgentLocation)
-            ? "unspecified"
-            : serviceObj.ChatAgentLocation;
-        var contextDeviceSummary = string.IsNullOrEmpty(serviceObj.ChatDeviceContext)
-            ? "unavailable"
-            : serviceObj.ChatDeviceContext;
-        content +=
-            "\nSESSION METADATA (internal, authoritative): " +
-            $"preferred_agent_location={contextAgentLocation}; " +
-            $"device_context_summary={contextDeviceSummary}.\n";
+        var hasAgentLocation = !string.IsNullOrEmpty(serviceObj.ChatAgentLocation);
+        var hasDeviceSummary = !string.IsNullOrEmpty(serviceObj.ChatDeviceContext);
+        var deviceSummaryHasLocation = hasDeviceSummary
+            && serviceObj.ChatDeviceContext!.IndexOf("location=", StringComparison.OrdinalIgnoreCase) >= 0;
+        var includeAgentLocationLine = hasAgentLocation && !deviceSummaryHasLocation;
+        if (includeAgentLocationLine || hasDeviceSummary)
+        {
+            content += "\nAgent information for this session:\n";
+            if (includeAgentLocationLine)
+            {
+                content += $"- Agent location: {serviceObj.ChatAgentLocation}\n";
+            }
+            if (hasDeviceSummary)
+            {
+                content += $"- {serviceObj.ChatDeviceContext}\n";
+            }
+            content += "- Purpose: Use this agent information to choose tools and defaults (for example, agent_location) unless the user explicitly overrides it.\n";
+        }
 
         return new List<ChatMessage>
         {
