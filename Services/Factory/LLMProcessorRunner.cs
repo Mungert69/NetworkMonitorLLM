@@ -223,16 +223,25 @@ public class LLMProcessRunner : ILLMRunner
     private void AddInitialAgentLocationMessage(LLMServiceObj serviceObj)
     {
         if (!serviceObj.IsPrimaryLlm) return;
-        if (string.IsNullOrWhiteSpace(serviceObj.ChatAgentLocation)) return;
+        if (!string.IsNullOrWhiteSpace(serviceObj.ChatAgentLocation))
+        {
+            var message =
+                $"The user is using an Agent with location {serviceObj.ChatAgentLocation.Trim()} " +
+                "use this for the agent_location when calling experts unless the user specifies another agent location to use.";
+            var key = $"agent_location_init_{serviceObj.SessionId}_{Guid.NewGuid():N}";
+            _systemMessages.TryAdd(key, new StringBuilder(message));
+            _logger.LogDebug(
+                "Agent location init (LLMProcessRunner): {Location}",
+                serviceObj.ChatAgentLocation.Trim());
+        }
 
-        var message =
-            $"The user is using an Agent with location {serviceObj.ChatAgentLocation.Trim()} " +
-            "use this for the agent_location when calling experts unless the user specifies another agent location to use.";
-        var key = $"agent_location_init_{serviceObj.SessionId}_{Guid.NewGuid():N}";
-        _systemMessages.TryAdd(key, new StringBuilder(message));
-        _logger.LogDebug(
-            "Agent location init (LLMProcessRunner): {Location}",
-            serviceObj.ChatAgentLocation.Trim());
+        if (!string.IsNullOrWhiteSpace(serviceObj.ChatDeviceContext))
+        {
+            var contextKey = $"agent_device_context_init_{serviceObj.SessionId}_{Guid.NewGuid():N}";
+            _systemMessages.TryAdd(
+                contextKey,
+                new StringBuilder($"Device context for this session: {serviceObj.ChatDeviceContext.Trim()}"));
+        }
     }
 
     public Task RemoveProcess(string sessionId)
