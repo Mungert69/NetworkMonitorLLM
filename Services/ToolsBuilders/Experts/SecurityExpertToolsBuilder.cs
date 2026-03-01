@@ -103,8 +103,7 @@ namespace NetworkMonitor.LLM.Services
 4. You -> Network Monitor Assistant: Return scan results, citing relevant knowledge base insights within the analysis.
 
 - Special Notes:
-- The MITRE ATT&CK context is automatically provided from RAG using the user's query as the search term. Caution! it may not be relevant. If you deem it to be relevant then it can be used to provide the user with possible attack vectors that they may want to consider.
-- When knowledge base output or MITRE context aligns with scan findings, explicitly tie them together in your commentary.
+- Use the Knowledge base query only when you have limited knowledge and it will help complete the user's query
 - Never prompt for permissions - this breaks automation
 - Assume all targets are whitelisted by the calling system
 
