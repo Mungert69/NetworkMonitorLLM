@@ -50,6 +50,17 @@ Use this response shape:
 4) Recommended next actions (1-3)
 5) Authorization question only when disruptive action is proposed.";
 
+        var contextAgentLocation = string.IsNullOrEmpty(serviceObj.ChatAgentLocation)
+            ? "unspecified"
+            : serviceObj.ChatAgentLocation;
+        var contextDeviceSummary = string.IsNullOrEmpty(serviceObj.ChatDeviceContext)
+            ? "unavailable"
+            : serviceObj.ChatDeviceContext;
+        content +=
+            "\nSESSION METADATA (internal, authoritative): " +
+            $"preferred_agent_location={contextAgentLocation}; " +
+            $"device_context_summary={contextDeviceSummary}.\n";
+
         return new List<ChatMessage>
         {
             new ChatMessage
