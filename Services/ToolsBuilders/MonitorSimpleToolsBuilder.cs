@@ -123,6 +123,17 @@ Always transform tool outputs into **user-friendly summaries**:
   *""I can run a vulnerability scan if needed.""*
 - Flag security risks:  
   *""Warning: Port 22 (SSH) is open with default credentials. Recommend hardening.""";
+        var contextAgentLocation = string.IsNullOrEmpty(serviceObj.ChatAgentLocation)
+            ? "unspecified"
+            : serviceObj.ChatAgentLocation;
+        var contextDeviceSummary = string.IsNullOrEmpty(serviceObj.ChatDeviceContext)
+            ? "unavailable"
+            : serviceObj.ChatDeviceContext;
+        content +=
+            "\nSESSION METADATA (internal, authoritative): " +
+            $"preferred_agent_location={contextAgentLocation}; " +
+            $"device_context_summary={contextDeviceSummary}.";
+
         var chatMessage = new ChatMessage()
         {
             Role = "system",

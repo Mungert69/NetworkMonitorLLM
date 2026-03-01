@@ -100,10 +100,16 @@ Output behavior:
 - Ask one precise clarifying question when blocked.
 - Do not use praise, motivational language, or unnecessary apologies.
 ";
-        if (!string.IsNullOrEmpty(serviceObj.ChatAgentLocation))
-        {
-            content += $"\nDEFAULT CONTEXT (internal): agent_location is {serviceObj.ChatAgentLocation} unless Dave specifies another.\n";
-        }
+        var contextAgentLocation = string.IsNullOrEmpty(serviceObj.ChatAgentLocation)
+            ? "unspecified"
+            : serviceObj.ChatAgentLocation;
+        var contextDeviceSummary = string.IsNullOrEmpty(serviceObj.ChatDeviceContext)
+            ? "unavailable"
+            : serviceObj.ChatDeviceContext;
+        content +=
+            "\nSESSION METADATA (internal, authoritative): " +
+            $"preferred_agent_location={contextAgentLocation}; " +
+            $"device_context_summary={contextDeviceSummary}.\n";
 
         return new List<ChatMessage>
         {
