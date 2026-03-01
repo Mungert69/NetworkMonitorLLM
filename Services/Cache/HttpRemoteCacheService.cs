@@ -198,7 +198,7 @@ public class HttpRemoteCacheService : IRemoteCacheService
             }
         }
 
-        throw lastException;
+        throw lastException ?? new InvalidOperationException("Remote cache operation failed with no captured exception.");
     }
 }
 

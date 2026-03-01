@@ -1,5 +1,6 @@
 using Betalgo.Ranul.OpenAI.ObjectModels.RequestModels;
 using NetworkMonitor.Objects.ServiceMessage;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
