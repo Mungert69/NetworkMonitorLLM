@@ -117,10 +117,24 @@ public class MonitorToolsBuilder : ToolsBuilderBase
         content += "Overview: monitoring tools manage hosts and run continuously; experts handle one-off specialized requests; cmd processors are run-once actions; connects are thin periodic endpoint checks and may call cmd processors for complex work; query/search tools are for FAQs/reference.";
         content += "Use monitoring tools (add_host/edit_host/get_host_data/get_host_list) for ongoing monitoring. Use experts or one-shot tools (call experts, run_busybox_command, cancel_functions, function_status_with_message_id) for immediate actions.";
         content += "Use execute_query only when the question cannot be answered by experts or monitoring functions.";
-        if (!string.IsNullOrEmpty(serviceObj.ChatAgentLocation))
-            content += $"Default agent_location is {serviceObj.ChatAgentLocation} unless the user specifies another.";
-        if (!string.IsNullOrEmpty(serviceObj.ChatDeviceContext))
-            content += $" Device context: {serviceObj.ChatDeviceContext}.";
+        var hasAgentLocation = !string.IsNullOrEmpty(serviceObj.ChatAgentLocation);
+        var hasDeviceSummary = !string.IsNullOrEmpty(serviceObj.ChatDeviceContext);
+        var deviceSummaryHasLocation = hasDeviceSummary
+            && serviceObj.ChatDeviceContext!.IndexOf("location=", StringComparison.OrdinalIgnoreCase) >= 0;
+        var includeAgentLocationLine = hasAgentLocation && !deviceSummaryHasLocation;
+        if (includeAgentLocationLine || hasDeviceSummary)
+        {
+            content += "\nAgent information for this session:\n";
+            if (includeAgentLocationLine)
+            {
+                content += $"- Agent location: {serviceObj.ChatAgentLocation}\n";
+            }
+            if (hasDeviceSummary)
+            {
+                content += $"- {serviceObj.ChatDeviceContext}\n";
+            }
+            content += "- Purpose: Use this agent information to choose tools and defaults (for example, agent_location) unless the user explicitly overrides it.";
+        }
         var chatMessage = new ChatMessage()
         {
             Role = "system",
