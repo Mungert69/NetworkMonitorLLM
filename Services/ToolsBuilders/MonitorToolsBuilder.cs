@@ -119,6 +119,8 @@ public class MonitorToolsBuilder : ToolsBuilderBase
         content += "Use execute_query only when the question cannot be answered by experts or monitoring functions.";
         if (!string.IsNullOrEmpty(serviceObj.ChatAgentLocation))
             content += $"Default agent_location is {serviceObj.ChatAgentLocation} unless the user specifies another.";
+        if (!string.IsNullOrEmpty(serviceObj.ChatDeviceContext))
+            content += $" Device context: {serviceObj.ChatDeviceContext}.";
         var chatMessage = new ChatMessage()
         {
             Role = "system",
