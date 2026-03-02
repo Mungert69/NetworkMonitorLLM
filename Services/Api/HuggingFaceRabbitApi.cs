@@ -82,7 +82,9 @@ namespace NetworkMonitor.LLM.Services
         }
 
         public string WrapFunctionResponse(string name, string funcStr)
-            => string.Format(_config.FunctionResponse, name, funcStr);
+            => _mlParams.LlmUseToolRoleForFunctionResponses
+                ? funcStr
+                : string.Format(_config.FunctionResponse, name, funcStr);
 
         private string ToolsWrapper(string toolsStr)
             => string.Format(_config.FunctionDefsWrap, toolsStr);

@@ -47,12 +47,24 @@ public class HuggingFaceApiTests
     [Fact]
     public void WrapFunctionResponse_UsesCurrentConfig()
     {
+        _mlParams.LlmUseToolRoleForFunctionResponses = false;
         var api = CreateApi();
         var expected = string.Format(api.Config.FunctionResponse, "tool", "payload");
 
         var wrapped = api.WrapFunctionResponse("tool", "payload");
 
         Assert.Equal(expected, wrapped);
+    }
+
+    [Fact]
+    public void WrapFunctionResponse_IsPassthrough_WhenToolRoleModeEnabled()
+    {
+        _mlParams.LlmUseToolRoleForFunctionResponses = true;
+        var api = CreateApi();
+
+        var wrapped = api.WrapFunctionResponse("tool", "payload");
+
+        Assert.Equal("payload", wrapped);
     }
 
     [Fact]

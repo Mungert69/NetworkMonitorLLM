@@ -86,6 +86,7 @@ public class HuggingFaceApi : ILLMApi
 
     public string WrapFunctionResponse(string name, string funcStr)
     {
+        if (_mlParams.LlmUseToolRoleForFunctionResponses) return funcStr;
         return string.Format(_config.FunctionResponse, name, funcStr);
 
     }
@@ -253,7 +254,9 @@ public class HuggingFaceApi : ILLMApi
             model = _modelID,
             messages = messages.Select(m => new
             {
-                role = m.Role,
+                role = (!_mlParams.LlmUseToolRoleForFunctionResponses && string.Equals(m.Role, "tool", StringComparison.OrdinalIgnoreCase))
+                    ? "user"
+                    : m.Role,
                 content = FlattenContentForTextOnly(m)
             }).ToList(),
             max_tokens = maxTokens,
