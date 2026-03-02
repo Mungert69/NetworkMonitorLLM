@@ -522,10 +522,10 @@ public class OpenAIRunner : ILLMRunner
         localHistory.Add(fakeFunctionCallMessage);
 
         // Create a fake function response as if the tool returned a result
-        var fakeFunctionResponseMessage = ChatMessage.FromTool(serviceObj.UserInput, fakeFunctionCallId);
-        fakeFunctionResponseMessage.Role = "tool";
-        fakeFunctionResponseMessage.Name = "function_status_with_message_id";
-        fakeFunctionResponseMessage.Content = _llmApi.WrapFunctionResponse(serviceObj.FunctionName, serviceObj.UserInput) + "\n";
+        var fakeFunctionResponseMessage = BuildFunctionHistoryResponseMessage(
+            "function_status_with_message_id",
+            _llmApi.WrapFunctionResponse(serviceObj.FunctionName, serviceObj.UserInput) + "\n",
+            fakeFunctionCallId);
         // Add the fake function response to the message history
         localHistory.Add(fakeFunctionResponseMessage);
         /*}
@@ -646,11 +646,10 @@ public class OpenAIRunner : ILLMRunner
             }
             else
             {
-                funcResponseChatMessage = ChatMessage.FromTool("", effectiveFuncCallId);
-                funcResponseChatMessage.Role = "tool";
-                funcResponseChatMessage.Name = serviceObj.FunctionName;
-                funcResponseChatMessage.Content =
-                    _llmApi.WrapFunctionResponse(serviceObj.FunctionName, serviceObj.UserInput) + "\n";
+                funcResponseChatMessage = BuildFunctionHistoryResponseMessage(
+                    serviceObj.FunctionName,
+                    _llmApi.WrapFunctionResponse(serviceObj.FunctionName, serviceObj.UserInput) + "\n",
+                    effectiveFuncCallId);
 
                 _pendingFunctionResponses.TryAdd(effectiveFuncCallId, funcResponseChatMessage);
             }
@@ -815,9 +814,17 @@ public class OpenAIRunner : ILLMRunner
                     {
                         toolRunningPayload["message_id"] = serviceObj.MessageID;
                     }
-                    var toolResponse = ChatMessage.FromTool(JsonSerializer.Serialize(toolRunningPayload), funcId!);
-                    toolResponse.Role = "tool";
-                    toolResponse.Name = funcName;
+                    ChatMessage toolResponse;
+                    if (_mlParams.LlmUseToolRoleForFunctionResponses)
+                    {
+                        toolResponse = ChatMessage.FromTool(JsonSerializer.Serialize(toolRunningPayload), funcId!);
+                        toolResponse.Role = "tool";
+                        toolResponse.Name = funcName;
+                    }
+                    else
+                    {
+                        toolResponse = ChatMessage.FromUser(JsonSerializer.Serialize(toolRunningPayload));
+                    }
                     toolResponces.Add(toolResponse);
 
                     if (!isDuplicateSet) isDuplicate = _recentFunctionCalls.Any(f =>
@@ -875,6 +882,20 @@ public class OpenAIRunner : ILLMRunner
             _funcsInARow = 0;
         }
         return;
+    }
+
+    private ChatMessage BuildFunctionHistoryResponseMessage(string functionName, string content, string toolCallId)
+    {
+        if (_mlParams.LlmUseToolRoleForFunctionResponses)
+        {
+            var toolMessage = ChatMessage.FromTool("", toolCallId);
+            toolMessage.Role = "tool";
+            toolMessage.Name = functionName;
+            toolMessage.Content = content;
+            return toolMessage;
+        }
+
+        return ChatMessage.FromUser(content);
     }
 
     private void AddMediaToSessionStore(string sessionId, MediaArtifact mediaArtifact)
