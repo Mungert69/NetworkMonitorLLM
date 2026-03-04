@@ -10,6 +10,7 @@ using NetworkMonitor.Utils.Helpers;
 using NetworkMonitor.Objects;
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Logging;
+using NetworkMonitor.Objects.Repository;
 
 namespace NetworkMonitor.LLM.Services
 {
@@ -22,14 +23,18 @@ namespace NetworkMonitor.LLM.Services
         private bool _disposed = false;
         private readonly ILogger _logger;
         private readonly string _serviceId;
+        private readonly IRabbitRepo? _rabbitRepo;
+        private readonly string _serviceAuthKey;
 
-        public RedisHistoryStorage(ILogger<RedisHistoryStorage> logger, SystemParams systemParams)
+        public RedisHistoryStorage(ILogger<RedisHistoryStorage> logger, SystemParams systemParams, IRabbitRepo? rabbitRepo = null)
         {
             var configuration = BuildConfiguration(systemParams.RedisUrl, systemParams.RedisSecret);
             _logger = logger;
             _redis = ConnectionMultiplexer.Connect(configuration);
             _db = _redis.GetDatabase();
             _serviceId = SanitizeServiceId(systemParams.ServiceID);
+            _serviceAuthKey = systemParams.ServiceAuthKey ?? "Missing";
+            _rabbitRepo = rabbitRepo;
             _keyPrefix = $"history:{_serviceId}:";
             _indexKey = $"idx:history:{_serviceId}:all";
         }
@@ -219,6 +224,22 @@ namespace NetworkMonitor.LLM.Services
             _ = tran.SetAddAsync(_indexKey, key);
 
             await tran.ExecuteAsync().ConfigureAwait(false);
+
+            await PublishMirrorRequestAsync(new HistoryStoreRequest
+            {
+                Operation = HistoryStoreOperation.upsert,
+                AppID = _serviceId,
+                AuthKey = _serviceAuthKey,
+                ServiceId = _serviceId,
+                SessionId = historyDisplayName.SessionId,
+                UserId = historyDisplayName.UserId,
+                StartUnixTime = historyDisplayName.StartUnixTime,
+                Name = historyDisplayName.Name,
+                LlmType = historyDisplayName.LlmType,
+                HistoryJson = json,
+                MessageID = Guid.NewGuid().ToString("N"),
+                ResponseExchange = $"{_serviceId}HistoryStoreResult"
+            }).ConfigureAwait(false);
         }
 
         public async Task DeleteHistoryAsync(string sessionId)
@@ -243,6 +264,17 @@ namespace NetworkMonitor.LLM.Services
                 }
             }
             await tran.ExecuteAsync().ConfigureAwait(false);
+
+            await PublishMirrorRequestAsync(new HistoryStoreRequest
+            {
+                Operation = HistoryStoreOperation.delete,
+                AppID = _serviceId,
+                AuthKey = _serviceAuthKey,
+                ServiceId = _serviceId,
+                SessionId = sessionId,
+                MessageID = Guid.NewGuid().ToString("N"),
+                ResponseExchange = $"{_serviceId}HistoryStoreResult"
+            }).ConfigureAwait(false);
         }
 
 
@@ -329,6 +361,21 @@ namespace NetworkMonitor.LLM.Services
         ~RedisHistoryStorage()
         {
             Dispose(false);
+        }
+
+        private async Task PublishMirrorRequestAsync(HistoryStoreRequest request)
+        {
+            if (_rabbitRepo == null) return;
+
+            try
+            {
+                await _rabbitRepo.PublishAsync("historyStore", request);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed publishing history mirror request for {Operation} session {SessionId}",
+                    request.Operation, request.SessionId);
+            }
         }
     }
 }
