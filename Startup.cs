@@ -157,7 +157,10 @@ namespace NetworkMonitor.LLM
             services.AddSingleton<SystemParams>(sp =>
            {
                var systemParamsHelper = sp.GetRequiredService<ISystemParamsHelper>();
-               return systemParamsHelper.GetSystemParams();
+               var logger = sp.GetRequiredService<ILogger<Startup>>();
+               var systemParams = systemParamsHelper.GetSystemParams();
+               ServiceAuthKeyHydrator.Resolve(systemParams, logger, nameof(Startup));
+               return systemParams;
            });
 
             services.AddHostedService<CpuUsageMonitor>();
