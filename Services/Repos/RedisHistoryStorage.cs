@@ -33,7 +33,7 @@ namespace NetworkMonitor.LLM.Services
             _redis = ConnectionMultiplexer.Connect(configuration);
             _db = _redis.GetDatabase();
             _serviceId = SanitizeServiceId(systemParams.ServiceID);
-            _serviceAuthKey = systemParams.ServiceAuthKey ?? "Missing";
+            _serviceAuthKey = ServiceAuthKeyHydrator.Resolve(systemParams, _logger, nameof(RedisHistoryStorage));
             _rabbitRepo = rabbitRepo;
             _keyPrefix = $"history:{_serviceId}:";
             _indexKey = $"idx:history:{_serviceId}:all";

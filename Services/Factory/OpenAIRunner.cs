@@ -125,7 +125,7 @@ public class OpenAIRunner : ILLMRunner
         _openAiService = openAiService;
         _openAIRunnerSemaphore = new SemaphoreSlim(1);
         _serviceID = systemParams.ServiceID!;
-        _serviceAuthKey = systemParams.ServiceAuthKey!;
+        _serviceAuthKey = ServiceAuthKeyHydrator.Resolve(systemParams, _logger, nameof(OpenAIRunner));
         _mlParams = mlParams;
         bool enableAgentFlow = _mlParams.EnableAgentFlow;
         _noThink = _mlParams.LlmNoThink;
