@@ -66,9 +66,87 @@ Use this function whenever you need information from the local knowledge base.
                     {
                         Type = "string",
                         Description = "Determines which embedding field to use for the vector search: 'content', 'question', or 'summary'. Defaults to 'content'. Use 'question' to search the questions, 'content' for full text search, and 'summary' for searching summaries.",
+                    },
+                    ["user_id"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Optional. For memory-style indices (for example llm_history_turns), filter results to this user id."
+                    },
+                    ["session_id"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Optional. For memory-style indices, filter results to a single session id."
+                    },
+                    ["top_k"] = new PropertyDefinition
+                    {
+                        Type = "number",
+                        Description = "Optional. Number of results to return. Defaults to backend default."
+                    },
+                    ["include_tool_turns"] = new PropertyDefinition
+                    {
+                        Type = "boolean",
+                        Description = "Optional. For memory-style indices, include tool-call and tool-response turns. Defaults to false."
                     }
                 },
                 Required = new List<string> { "query_text", "index_name","vector_search_mode" }
+            }
+        };
+    }
+
+    public static FunctionDefinition BuildMemoryQueryFunction()
+    {
+        const string description = @"
+Retrieve conversation memory from the local memory index.
+Use this for prior user/assistant turns and tool-status context, especially when context has been trimmed.
+This function does not use the public internet.
+";
+
+        return new FunctionDefinition
+        {
+            Name = "execute_query_memory",
+            Description = description,
+            Parameters = new PropertyDefinition
+            {
+                Type = "object",
+                Properties = new Dictionary<string, PropertyDefinition>
+                {
+                    ["query_text"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "The memory lookup query, for example a prior decision, preference, or unresolved task."
+                    },
+                    ["index_name"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "The memory index name. Use 'llm_history_turns'."
+                    },
+                    ["vector_search_mode"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Use 'content' for memory lookup."
+                    },
+                    ["user_id"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Filter memory to this user id."
+                    },
+                    ["session_id"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Optional session id filter."
+                    },
+                    ["top_k"] = new PropertyDefinition
+                    {
+                        Type = "number",
+                        Description = "Optional maximum results."
+                    },
+                    ["include_tool_turns"] = new PropertyDefinition
+                    {
+                        Type = "boolean",
+                        Description = "Optional include tool call/response turns."
+                    }
+                },
+                Required = new List<string> { "query_text", "index_name", "vector_search_mode", "user_id" }
             }
         };
     }

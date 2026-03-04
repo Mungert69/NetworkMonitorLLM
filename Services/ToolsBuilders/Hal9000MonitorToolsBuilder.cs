@@ -20,6 +20,7 @@ public class Hal9000MonitorToolsBuilder : MonitorToolsBuilder
             "call_cmd_processor_expert",
             "call_connect_expert",
             "call_camera_expert",
+            "call_memory_expert",
             "call_agent_flow_expert",
             "call_monitor_expert",
             "call_quantum_expert",

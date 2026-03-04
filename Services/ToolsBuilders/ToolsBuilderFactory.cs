@@ -60,6 +60,7 @@ public sealed class ToolsBuilderFactory : IToolsBuilderFactory
             { "search",      () => new SearchExpertToolsBuilder() },
             { "quantum",     () => new QuantumExpertToolsBuilder() },
             { "camera",      () => new CameraExpertToolsBuilder() },
+            { "memory",      () => new MemoryExpertToolsBuilder() },
             { "agentflow",   () => new AgentFlowExpertToolsBuilder(_functionDefinitionRegistry) },
 
         };
