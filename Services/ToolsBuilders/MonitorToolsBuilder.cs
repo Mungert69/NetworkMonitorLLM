@@ -119,7 +119,7 @@ public class MonitorToolsBuilder : ToolsBuilderBase
         content += "Keep message to experts short and specific. Do not add extra requirements, metadata, or verbose instructions beyond what the user asked for. Only request what is needed to fulfill the user's request.";
         content += "Overview: monitoring tools manage hosts and run continuously; experts handle one-off specialized requests; cmd processors are run-once actions; connects are thin periodic endpoint checks and may call cmd processors for complex work; query/search tools are for FAQs/reference.";
         content += "Use monitoring tools (add_host/edit_host/get_host_data/get_host_list) for ongoing monitoring. Use experts or one-shot tools (call experts, run_busybox_command, cancel_functions, function_status_with_message_id) for immediate actions.";
-        content += "Use execute_query only when the question cannot be answered by experts or monitoring functions.";
+        content += "Memory routing rule: for questions about prior conversation content (for example: 'what did I say before', 'do you remember', 'yesterday we discussed', 'recall if I mentioned X'), call call_memory_expert first.";
         var hasAgentLocation = !string.IsNullOrEmpty(serviceObj.ChatAgentLocation);
         var hasDeviceSummary = !string.IsNullOrEmpty(serviceObj.ChatDeviceContext);
         var deviceSummaryHasLocation = hasDeviceSummary

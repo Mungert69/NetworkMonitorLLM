@@ -36,11 +36,6 @@ The backend applies defaults and scoping; provide only what is necessary.
                     {
                         Type = "integer",
                         Description = "Optional max number of memory items to return."
-                    },
-                    ["session_only"] = new PropertyDefinition
-                    {
-                        Type = "boolean",
-                        Description = "Optional. True to search only the current session; false to search all user memory."
                     }
                 },
                 Required = new List<string> { "message" }
