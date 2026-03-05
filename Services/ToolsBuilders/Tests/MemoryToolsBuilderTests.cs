@@ -19,6 +19,7 @@ public class MemoryToolsBuilderTests
         var parameters = fn.Parameters!;
         Assert.True(parameters.Required!.Contains("message"));
         Assert.True(parameters.Properties!.ContainsKey("message"));
+        Assert.False(parameters.Properties.ContainsKey("session_only"));
         Assert.False(parameters.Properties.ContainsKey("index_name"));
         Assert.False(parameters.Properties.ContainsKey("vector_search_mode"));
     }

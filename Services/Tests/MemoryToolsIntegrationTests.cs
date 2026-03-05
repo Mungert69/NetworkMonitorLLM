@@ -11,19 +11,18 @@ namespace NetworkMonitor.LLM.Services;
 public class MemoryToolsIntegrationTests
 {
     [Fact]
-    public void QueryTools_BuildMemoryQueryFunction_ExposesMemoryParameters()
+    public void MemoryQueryTools_BuildMemoryQueryFunction_ExposesSimpleParameters()
     {
-        var fn = QueryTools.BuildMemoryQueryFunction();
+        var fn = MemoryQueryTools.BuildMemoryQueryFunction();
 
         Assert.Equal("execute_query_memory", fn.Name);
         Assert.NotNull(fn.Parameters);
-        Assert.Contains("query_text", fn.Parameters.Required);
-        Assert.Contains("index_name", fn.Parameters.Required);
-        Assert.Contains("vector_search_mode", fn.Parameters.Required);
-        Assert.Contains("user_id", fn.Parameters.Required);
-        Assert.True(fn.Parameters.Properties.ContainsKey("session_id"));
+        Assert.Contains("message", fn.Parameters.Required);
+        Assert.True(fn.Parameters.Properties.ContainsKey("message"));
         Assert.True(fn.Parameters.Properties.ContainsKey("top_k"));
-        Assert.True(fn.Parameters.Properties.ContainsKey("include_tool_turns"));
+        Assert.False(fn.Parameters.Properties.ContainsKey("session_only"));
+        Assert.False(fn.Parameters.Properties.ContainsKey("index_name"));
+        Assert.False(fn.Parameters.Properties.ContainsKey("vector_search_mode"));
     }
 
     [Fact]
@@ -34,8 +33,9 @@ public class MemoryToolsIntegrationTests
         Assert.Equal("call_memory_expert", fn.Name);
         Assert.NotNull(fn.Parameters);
         Assert.Contains("message", fn.Parameters.Required);
-        Assert.True(fn.Parameters.Properties.ContainsKey("user_id"));
-        Assert.True(fn.Parameters.Properties.ContainsKey("session_id"));
+        Assert.True(fn.Parameters.Properties.ContainsKey("message"));
+        Assert.False(fn.Parameters.Properties.ContainsKey("user_id"));
+        Assert.False(fn.Parameters.Properties.ContainsKey("session_id"));
     }
 
     [Fact]
