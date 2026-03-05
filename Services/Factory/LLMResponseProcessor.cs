@@ -75,8 +75,20 @@ public class LLMResponseProcessor : ILLMResponseProcessor
         //Console.WriteLine(serviceObj.LlmMessage);
         serviceObj.ResultMessage = "Sending Fail Output";
         serviceObj.ResultSuccess = false;
+        if (!string.IsNullOrEmpty(serviceObj.LlmMessage) && !HasOutOfBandWrapper(serviceObj.LlmMessage))
+        {
+            serviceObj.LlmMessage = MessageHelper.ErrorMessage(serviceObj.LlmMessage);
+        }
         if (_sendOutput && !string.IsNullOrEmpty(serviceObj.LlmMessage)) await RabbitRepo.PublishAsync<LLMServiceObj>("llmServiceMessage", serviceObj);
         //return Task.CompletedTask;
+    }
+
+    private static bool HasOutOfBandWrapper(string message)
+    {
+        return message.StartsWith("</llm-error>", StringComparison.Ordinal) ||
+               message.StartsWith("</llm-warning>", StringComparison.Ordinal) ||
+               message.StartsWith("</llm-info>", StringComparison.Ordinal) ||
+               message.StartsWith("</llm-success>", StringComparison.Ordinal);
     }
 
     public async Task ProcessLLMOutputInChunks(LLMServiceObj serviceObj)
@@ -86,7 +98,7 @@ public class LLMResponseProcessor : ILLMResponseProcessor
         const int baseDelay = 100; // Base delay in ms
         const int delayPerChar = 2; // Additional delay per character
 
-        char[] delimiters = { ' ', ',', '!', '?', '{', '}', '.', ':', '\n' };
+        char[] delimiters = { ' ', ',', '!', '?', '{', '}', '.', '\n' };
         var splitResult = StringUtils.SplitAndPreserveDelimiters(serviceObj.LlmMessage, delimiters);
 
         var buffer = new StringBuilder();
