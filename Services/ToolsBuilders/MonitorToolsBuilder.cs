@@ -33,6 +33,7 @@ public class MonitorToolsBuilder : ToolsBuilderBase
     private readonly FunctionDefinition fn_call_connect_expert;
     private readonly FunctionDefinition fn_call_quantum_expert;
     private readonly FunctionDefinition fn_call_camera_expert;
+    private readonly FunctionDefinition fn_call_memory_expert;
     private readonly FunctionDefinition fn_call_agent_flow_expert;
     private readonly FunctionDefinition fn_call_security_basic_flow;
     private readonly FunctionDefinition fn_call_penetration_flow;
@@ -61,6 +62,7 @@ public class MonitorToolsBuilder : ToolsBuilderBase
         fn_call_connect_expert = ExpertTools.BuildConnectExpertFunction();
         fn_call_quantum_expert = ExpertTools.BuildQuantumExpertFunction();
         fn_call_camera_expert = ExpertTools.BuildCameraExpertFunction();
+        fn_call_memory_expert = ExpertTools.BuildMemoryExpertFunction();
         fn_call_agent_flow_expert = ExpertTools.BuildAgentFlowExpertFunction();
 
         fn_call_security_basic_flow = SecurityAgent.BuildSecurityBasicAgent();
@@ -88,6 +90,7 @@ public class MonitorToolsBuilder : ToolsBuilderBase
             new ToolDefinition() { Function = fn_call_connect_expert, Type = "function" },
             new ToolDefinition() { Function = fn_call_agent_flow_expert, Type = "function" },
             new ToolDefinition() { Function = fn_call_camera_expert, Type = "function" },
+            new ToolDefinition() { Function = fn_call_memory_expert, Type = "function" },
             new ToolDefinition() { Function = fn_execute_query, Type = "function" },
             new ToolDefinition() { Function = fn_run_busybox, Type = "function" }
         };
