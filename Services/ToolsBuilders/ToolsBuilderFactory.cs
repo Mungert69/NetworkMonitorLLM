@@ -61,7 +61,6 @@ public sealed class ToolsBuilderFactory : IToolsBuilderFactory
             { "memory",      () => new MemoryExpertToolsBuilder() },
             { "quantum",     () => new QuantumExpertToolsBuilder() },
             { "camera",      () => new CameraExpertToolsBuilder() },
-            { "memory",      () => new MemoryExpertToolsBuilder() },
             { "agentflow",   () => new AgentFlowExpertToolsBuilder(_functionDefinitionRegistry) },
 
         };
