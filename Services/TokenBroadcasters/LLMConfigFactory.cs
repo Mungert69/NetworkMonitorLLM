@@ -378,6 +378,33 @@ Reminder:
                 CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
                         new TokenBroadcasterQwen_3(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
             },
+            "nvid_nano_v2" => new LLMConfig
+            {
+                UserReplace = "<SPECIAL_11>User\\\n",
+                FunctionReplace = "<SPECIAL_11>User\\\n<TOOL_RESPONSE>[",
+                AssistantHeader = "<SPECIAL_11>Assistant\n",
+                UserInputTemplate = "<SPECIAL_11>User\\\n{0}",
+                AssistantMessageTemplate = "<SPECIAL_11>Assistant\\\n{0}\\\n<SPECIAL_12>\\\n",
+                SystemMessageTemplate = "<SPECIAL_10>System\\\n{0}",
+                EOTToken = "<SPECIAL_12>",
+                FunctionResponseTemplate = "<SPECIAL_11>User\\\n<TOOL_RESPONSE>[{1}]</TOOL_RESPONSE>\\\n",
+                NoThinkToken = "/no_think",
+                ThinkBeginToken = "<think>",
+                ThinkEndToken = "</think>",
+                FunctionBuilder = "<TOOLCALL>[{{\"name\": \"{0}\", \"arguments\": {1}}}]</TOOLCALL>",
+                FunctionResponse = "<TOOL_RESPONSE>[{1}]</TOOL_RESPONSE>",
+                FunctionDefsWrap = @"You can use the following tools to assist the user if required:
+<AVAILABLE_TOOLS>[{0}]</AVAILABLE_TOOLS>",
+                PromptFooter = @"If you decide to call any tool(s), use the following format:
+<TOOLCALL>[{""name"": ""tool_name1"", ""arguments"": ""tool_args1""}, {""name"": ""tool_name2"", ""arguments"": ""tool_args2""}]</TOOLCALL>
+
+The user will execute tool-calls and return responses from tool(s) in this format:
+<TOOL_RESPONSE>[{""tool_response1""}, {""tool_response2""}]</TOOL_RESPONSE>
+
+Based on the tool responses, you can call additional tools if needed, correct tool calls if any errors are found, or just respond to the user.",
+                CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
+                        new TokenBroadcasterNvid_Nano_V2(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
+            },
 
             "youtu" => new LLMConfig
             {

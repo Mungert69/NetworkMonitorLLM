@@ -44,6 +44,11 @@ public class ChatResponseBuilder
 
      private string CleanThinking(string response)
     {
+        if (string.IsNullOrEmpty(response))
+        {
+            return string.Empty;
+        }
+
         // Just return response if no thinking tokens are defined
         if (string.IsNullOrEmpty(_config.ThinkBeginToken) || string.IsNullOrEmpty(_config.ThinkEndToken))
         {
@@ -106,6 +111,8 @@ public class ChatResponseBuilder
         {
             var message = choice.Message;
             if (message == null) continue;
+            message.Content ??= string.Empty;
+            message.ReasoningContent ??= string.Empty;
 
             message.PopulateToolCallsFromRaw();
 

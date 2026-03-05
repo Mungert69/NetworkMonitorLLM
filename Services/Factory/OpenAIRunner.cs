@@ -765,7 +765,11 @@ public class OpenAIRunner : ILLMRunner
                             ? new FunctionCall
                             {
                                 Name = "get_function_result",
-                                Arguments = @"{{""message_id"": """ + serviceObj.MessageID + @""", ""function_name"": """ + tc.FunctionCall.Name + @"""}}"
+                                Arguments = JsonSerializer.Serialize(new
+                                {
+                                    message_id = serviceObj.MessageID,
+                                    function_name = tc.FunctionCall.Name
+                                })
                             }
                             : null
                     };

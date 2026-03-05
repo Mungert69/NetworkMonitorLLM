@@ -66,14 +66,14 @@ public class HuggingFaceApi : ILLMApi
         if (!float.TryParse(_mlParams.LlmTemp, out float temperature))
         {
             _logger.LogWarning($"Invalid temperature value '{_mlParams.LlmTemp}', using default 0.1");
-            temperature = 0.1f; // Default value
+            temperature = 0.3f; // Default value
         }
         _temperature = temperature;
         _modelVersion = mlParams.LlmHFModelVersion;
         _modelID = mlParams.LlmHFModelID;
         _authToken = mlParams.LlmHFKey;     
         _isXml = _mlParams.XmlFunctionParsing;
-        _httpClient.DefaultRequestHeaders.Add("api-key", _authToken);
+        //_httpClient.DefaultRequestHeaders.Add("api-key", _authToken);
         _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _authToken);
         _apiUrl = mlParams.LlmHFUrl.TrimEnd();
         if (_apiUrl.Contains("api-inference"))

@@ -27,6 +27,11 @@ public class TokenBroadcasterQwen_3: TokenBroadcasterBase
 
    public override List<(string json, string functionName)> ParseInputForJson(string input)
 {
+    if (string.IsNullOrEmpty(input))
+    {
+        return new List<(string json, string functionName)>();
+    }
+
     // remove thinking note qwen3 config has thinking begin and end token defs.
     input = RemoveThinking(input);
     var functionCalls = new List<(string json, string functionName)>();
