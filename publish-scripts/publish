@@ -56,4 +56,5 @@ fi
 ./publish-instance eu AgentFlow "${PUBLISH_INSTANCE_ARGS[@]}"
 ./publish-instance eu Camera "${PUBLISH_INSTANCE_ARGS[@]}"
 ./publish-instance eu MonitorSys "${PUBLISH_INSTANCE_ARGS[@]}"
+./publish-instance eu Memory "${PUBLISH_INSTANCE_ARGS[@]}"
 sudo pkill -u root -f 'dotnet.*(MSBuild|VBCSCompiler)\.dll' || true

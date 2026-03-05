@@ -257,4 +257,26 @@ public class ExpertTools
             }
         };
     }
+
+    public static FunctionDefinition BuildMemoryExpertFunction()
+    {
+        return new FunctionDefinition
+        {
+            Name = "call_memory_expert",
+            Description = "Communicate a memory retrieval request to a Memory Expert LLM. Use this when you need prior conversation context that is no longer in the active window.",
+            Parameters = new PropertyDefinition
+            {
+                Type = "object",
+                Properties = new Dictionary<string, PropertyDefinition>
+                {
+                    ["message"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "A concise request describing what needs to be recalled from conversation history."
+                    }
+                },
+                Required = new List<string> { "message" }
+            }
+        };
+    }
 }

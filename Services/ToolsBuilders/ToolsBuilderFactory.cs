@@ -58,6 +58,7 @@ public sealed class ToolsBuilderFactory : IToolsBuilderFactory
             { "nmap",        () => new SecurityExpertToolsBuilder() },
             { "meta",        () => new PenetrationExpertToolsBuilder() },
             { "search",      () => new SearchExpertToolsBuilder() },
+            { "memory",      () => new MemoryExpertToolsBuilder() },
             { "quantum",     () => new QuantumExpertToolsBuilder() },
             { "camera",      () => new CameraExpertToolsBuilder() },
             { "agentflow",   () => new AgentFlowExpertToolsBuilder(_functionDefinitionRegistry) },
