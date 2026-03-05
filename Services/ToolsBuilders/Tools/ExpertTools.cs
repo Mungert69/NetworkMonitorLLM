@@ -21,7 +21,7 @@ public class ExpertTools
         return new FunctionDefinition
         {
             Name = "call_monitor_expert",
-            Description = "Communicate a monitoring management request to the Monitor System Expert LLM. Use this for host monitoring lifecycle operations such as add/edit hosts, list monitored hosts, fetch host monitoring data, and reset monitor alerts.",
+            Description = "Communicate a monitoring management request to the Monitor System Expert LLM. Use this for host monitoring lifecycle operations such as add/edit hosts, list monitored hosts, fetch host monitoring data, and reset monitor alerts. Do not use for recalling prior chat history; use call_memory_expert for conversation recall.",
             Parameters = new PropertyDefinition
             {
                 Type = "object",

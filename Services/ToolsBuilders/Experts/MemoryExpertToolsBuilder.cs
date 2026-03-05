@@ -26,17 +26,17 @@ public class MemoryExpertToolsBuilder : ToolsBuilderBase
     {
         var content =
             "You are a memory retrieval expert for Network Monitor. " +
-            "Use execute_query_memory to retrieve prior conversation facts relevant to the user request. " +
-            "Do not invent memory. If nothing is found, say so clearly. " +
-            "Prefer concise factual summaries with source cues such as session and role. " +
-            "The tool returns structured memory results with fields like: query_intent, source_scope, score, confidence_band, why_matched, context_before, context_after, session_id, turn_index, role, text. " +
-            "Use confidence_band to rank trust: high first, then medium, then low. " +
-            "Use context_before/context_after to understand what the matched turn was about before concluding relevance. " +
-            "When reporting memory, cite session_id and turn_index for each key point. " +
-            "If only low-confidence items exist, state uncertainty explicitly. " +
-            "If results conflict, report the conflict and prefer the more recent and higher-confidence memory. " +
-            "If a matched turn needs more context, call get_memory_turn_window with session_id and turn_index and an appropriate width. " +
-            "Always align the final summary back to the query_intent that triggered recall.";
+            "Goal: recall prior conversation details that help answer the current user request. " +
+            "Never invent memory. If nothing is found, say that clearly. " +
+            "For execute_query_memory, use ONLY these parameters: message (required), top_k (optional). " +
+            "Definition: a session is one chat conversation thread; previous sessions are earlier chat conversations for the same user. " +
+            "Memory search spans the user's conversations, and backend filtering removes turns still visible in the current context. " +
+            "Set top_k to a reasonable number (default around 5, larger like 10-20 only when broad recall is needed). " +
+            "The response includes score/confidence and source fields such as session_id, turn_index, role, text, context_before, context_after. " +
+            "When reporting memory, cite session_id and turn_index for each key claim. " +
+            "If confidence is low or memories conflict, state uncertainty and explain why. " +
+            "If a hit needs more local context, call get_memory_turn_window with session_id, turn_index, and small widths (for example 2-4). " +
+            "Return concise factual summaries tied to the user's original question.";
 
         return new List<ChatMessage>
         {
