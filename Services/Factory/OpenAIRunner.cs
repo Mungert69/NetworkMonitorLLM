@@ -107,6 +107,7 @@ public class OpenAIRunner : ILLMRunner
 
     private readonly IQueryCoordinator _queryCoordinator;
     private readonly IToolsBuilderFactory _toolsBuilderFactory;
+    private static readonly ConcurrentDictionary<string, Task> _audioStreamChains = new(StringComparer.Ordinal);
 
     private sealed class MediaArtifact
     {
@@ -1262,8 +1263,8 @@ public class OpenAIRunner : ILLMRunner
                     responseServiceObj.LlmMessage = "<Assistant:>" + responseChoiceStr + "\n";
                     if (!_isStream) await _responseProcessor.ProcessLLMOutputInChunks(responseServiceObj);
 
-                    // Best-effort async audio; failures/timeouts should not hold up LLM text responses.
-                    _ = StreamAudioBestEffortAsync(responseChoiceStr, responseServiceObj);
+                    // Best-effort async audio; serialized per chat session so multi-reply audio cannot interleave.
+                    QueueAudioStreamBestEffort(responseChoiceStr, responseServiceObj);
                 }
 
                 else
@@ -1323,6 +1324,10 @@ public class OpenAIRunner : ILLMRunner
         {
             return;
         }
+        string audioStreamId = string.IsNullOrWhiteSpace(baseServiceObj.MessageID)
+            ? Guid.NewGuid().ToString("N")
+            : baseServiceObj.MessageID;
+        int audioSequence = 0;
 
         // No hard total timeout: allow long responses as long as chunks keep arriving.
         // Abort only when audio generation stalls with no next chunk for too long.
@@ -1360,9 +1365,11 @@ public class OpenAIRunner : ILLMRunner
 
                 var audioServiceObj = new LLMServiceObj(baseServiceObj);
                 audioServiceObj.SetAsNotCall();
-                audioServiceObj.LlmMessage = $"</audio>{audioUrl}";
+                string sequencedAudioUrl = AddAudioSequenceToUrl(audioUrl, audioStreamId, audioSequence);
+                audioServiceObj.LlmMessage = $"</audio>{sequencedAudioUrl}";
                 _logger.LogInformation(audioServiceObj.LlmMessage);
                 await _responseProcessor.ProcessLLMOutput(audioServiceObj);
+                audioSequence++;
             }
         }
         catch (OperationCanceledException)
@@ -1373,6 +1380,82 @@ public class OpenAIRunner : ILLMRunner
         {
             _logger.LogWarning(ex, "Audio generation failed for MessageID {MessageID}", baseServiceObj.MessageID);
         }
+    }
+
+    private void QueueAudioStreamBestEffort(string responseText, LLMServiceObj baseServiceObj)
+    {
+        if (string.IsNullOrWhiteSpace(responseText))
+        {
+            return;
+        }
+
+        string sessionKey = GetAudioSessionKey(baseServiceObj);
+        if (string.IsNullOrWhiteSpace(sessionKey))
+        {
+            sessionKey = Guid.NewGuid().ToString("N");
+        }
+
+        Task nextTask;
+        while (true)
+        {
+            var previousTask = _audioStreamChains.GetOrAdd(sessionKey, Task.CompletedTask);
+            nextTask = previousTask
+                .ContinueWith(
+                    _ => StreamAudioBestEffortAsync(responseText, baseServiceObj),
+                    CancellationToken.None,
+                    TaskContinuationOptions.None,
+                    TaskScheduler.Default)
+                .Unwrap();
+
+            if (_audioStreamChains.TryUpdate(sessionKey, nextTask, previousTask))
+            {
+                break;
+            }
+        }
+
+        _ = nextTask.ContinueWith(
+            task =>
+            {
+                if (task.IsFaulted)
+                {
+                    _logger.LogWarning(task.Exception, "Queued audio stream failed for session {SessionKey}", sessionKey);
+                }
+
+                if (_audioStreamChains.TryGetValue(sessionKey, out var currentTask) &&
+                    ReferenceEquals(currentTask, nextTask))
+                {
+                    _audioStreamChains.TryRemove(sessionKey, out _);
+                }
+            },
+            CancellationToken.None,
+            TaskContinuationOptions.None,
+            TaskScheduler.Default);
+    }
+
+    private static string GetAudioSessionKey(LLMServiceObj serviceObj)
+    {
+        if (!string.IsNullOrWhiteSpace(serviceObj.RequestSessionId))
+        {
+            return serviceObj.RequestSessionId;
+        }
+
+        if (!string.IsNullOrWhiteSpace(serviceObj.SessionId))
+        {
+            return serviceObj.SessionId;
+        }
+
+        return "";
+    }
+
+    private static string AddAudioSequenceToUrl(string audioUrl, string streamId, int sequence)
+    {
+        if (string.IsNullOrWhiteSpace(audioUrl))
+        {
+            return audioUrl;
+        }
+
+        string separator = audioUrl.Contains('#') ? "&" : "#";
+        return $"{audioUrl}{separator}stream={Uri.EscapeDataString(streamId)}&seq={sequence}";
     }
 
 
