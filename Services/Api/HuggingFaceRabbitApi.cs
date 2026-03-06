@@ -90,7 +90,13 @@ namespace NetworkMonitor.LLM.Services
             => string.Format(_config.FunctionDefsWrap, toolsStr);
 
         private string PromptFooter()
-            => _mlParams.XmlFunctionParsing ? _config.XmlPromptFooter : _config.PromptFooter;
+        {
+            if (_mlParams.LlmHfSupportsFunctionCalling && !_mlParams.XmlFunctionParsing)
+            {
+                return "";
+            }
+            return _mlParams.XmlFunctionParsing ? _config.XmlPromptFooter : _config.PromptFooter;
+        }
 
         public string GetFunctionNamesAsString(string separator = ", ")
             => _toolsBuilder.GetFunctionNamesAsString();

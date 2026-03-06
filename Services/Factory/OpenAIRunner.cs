@@ -22,6 +22,7 @@ using NetworkMonitor.Utils.Helpers;
 using NetworkMonitor.Objects.Factory;
 using NetworkMonitor.Utils;
 using NetworkMonitor.Coordinator;
+using NetworkMonitor.LLM.Services.Objects;
 
 namespace NetworkMonitor.LLM.Services;
 
@@ -710,7 +711,10 @@ public class OpenAIRunner : ILLMRunner
                 $"Function Error: No pending function call found for Message ID: {serviceObj.MessageID}\n\n";
 
             if (_isPrimaryLlm || _isSystemLlm)
-                await _responseProcessor.ProcessLLMOutputError(responseServiceObj);
+            {
+                responseServiceObj.LlmMessage = MessageHelper.WarningMessage(responseServiceObj.LlmMessage);
+                await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+            }
 
             _logger.LogWarning($"No pending function call found for Message ID: {serviceObj.MessageID}");
         }

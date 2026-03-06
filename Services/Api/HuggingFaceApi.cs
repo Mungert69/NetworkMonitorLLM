@@ -99,8 +99,11 @@ public class HuggingFaceApi : ILLMApi
 
     private string PromptFooter()
     {
-        if (_mlParams.XmlFunctionParsing) return _config.XmlPromptFooter;
-        else return _config.PromptFooter;
+        if (_supportsStructuredTools && !_mlParams.XmlFunctionParsing)
+        {
+            return "";
+        }
+        return _mlParams.XmlFunctionParsing ? _config.XmlPromptFooter : _config.PromptFooter;
     }
 
     public string GetFunctionNamesAsString(string separator = ", ")
