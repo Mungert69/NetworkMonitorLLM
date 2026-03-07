@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
+using System.Text.Json;
 using Betalgo.Ranul.OpenAI.ObjectModels.RequestModels;
 
 namespace NetworkMonitor.LLM.Services;
@@ -51,6 +53,7 @@ public static class PromptRenderer
     {
         string args = string.IsNullOrWhiteSpace(argumentsJson) ? "{}" : argumentsJson.Trim();
         string fullJson = $"{{\"name\": \"{functionName}\", \"arguments\": {args}}}";
+        string xmlParameters = BuildXmlParameterBlock(args);
 
         if (string.IsNullOrWhiteSpace(config.FunctionBuilder))
         {
@@ -59,8 +62,14 @@ public static class PromptRenderer
 
         string builder = config.FunctionBuilder;
 
-        if (builder.Contains("{0}", StringComparison.Ordinal) || builder.Contains("{1}", StringComparison.Ordinal))
+        if (builder.Contains("{0}", StringComparison.Ordinal)
+            || builder.Contains("{1}", StringComparison.Ordinal)
+            || builder.Contains("{2}", StringComparison.Ordinal))
         {
+            if (builder.Contains("{2}", StringComparison.Ordinal))
+            {
+                return string.Format(builder, functionName, args, xmlParameters);
+            }
             if (builder.Contains("{0}", StringComparison.Ordinal) && builder.Contains("{1}", StringComparison.Ordinal))
             {
                 return string.Format(builder, functionName, args);
@@ -74,6 +83,43 @@ public static class PromptRenderer
         }
 
         return fullJson;
+    }
+
+    private static string BuildXmlParameterBlock(string argsJson)
+    {
+        if (string.IsNullOrWhiteSpace(argsJson))
+        {
+            return string.Empty;
+        }
+
+        try
+        {
+            using var document = JsonDocument.Parse(argsJson);
+            if (document.RootElement.ValueKind != JsonValueKind.Object)
+            {
+                return $"<parameter=arguments>\n{argsJson}\n</parameter>";
+            }
+
+            var builder = new StringBuilder();
+            foreach (var property in document.RootElement.EnumerateObject())
+            {
+                string value = property.Value.ValueKind == JsonValueKind.String
+                    ? property.Value.GetString() ?? string.Empty
+                    : property.Value.GetRawText();
+
+                builder.Append("<parameter=")
+                    .Append(property.Name)
+                    .Append(">\n")
+                    .Append(value)
+                    .Append("\n</parameter>\n");
+            }
+
+            return builder.ToString().TrimEnd();
+        }
+        catch (JsonException)
+        {
+            return $"<parameter=arguments>\n{argsJson}\n</parameter>";
+        }
     }
 
     public static string NormalizeTemplate(string template)
