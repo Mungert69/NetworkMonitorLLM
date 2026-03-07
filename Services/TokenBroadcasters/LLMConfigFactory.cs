@@ -354,7 +354,7 @@ Reminder:
                 ThinkBeginToken = "<think>",
                 ThinkEndToken = "</think>",
                 FunctionBuilder = "<tool_call>\n{1}\n</tool_call>",
-                FunctionResponse = "<tool_response>{1}</tool_response>",
+                FunctionResponse = "<tool_response>\n{1}\n</tool_response>",
                 FunctionDefsWrap = @"# Tools
 
 You may call one or more functions to assist with the user query.
@@ -377,6 +377,52 @@ Reminder:
 ",
                 CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
                         new TokenBroadcasterQwen_3(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
+            },
+            "qwen_3.5" or "qwen_3_5" => new LLMConfig
+            {
+                UserReplace = "<|im_start|>user\\\n",
+                FunctionReplace = "<|im_start|>user\\\n<tool_response>",
+                AssistantHeader = "<|im_start|>assistant\n",
+                UserInputTemplate = "<|im_start|>user\\\n{0}",
+                AssistantMessageTemplate = "<|im_start|>assistant\\\n{0}<|im_end|>",
+                SystemMessageTemplate = "<|im_start|>system\\\n{0}<|im_end|>",
+                EOTToken = "<|im_end|>",
+                FunctionResponseTemplate = "<|im_start|>user\\\n<tool_response>\\\n{1}\\\n</tool_response>",
+                NoThinkToken = "/no_think",
+                ThinkBeginToken = "<think>",
+                ThinkEndToken = "</think>",
+                FunctionBuilder = "<tool_call>\n<function={0}>\n{1}\n</function>\n</tool_call>",
+                FunctionResponse = "<tool_response>\n{1}\n</tool_response>",
+                FunctionDefsWrap = @"# Tools
+
+You have access to the following functions:
+
+<tools>
+{0}
+</tools>",
+                XmlPromptFooter = _xmlPromptFooter,
+                PromptFooter = @"If you choose to call a function ONLY reply in the following format with NO suffix:
+
+<tool_call>
+<function=example_function_name>
+<parameter=example_parameter_1>
+value_1
+</parameter>
+<parameter=example_parameter_2>
+This is the value for the second parameter
+that can span
+multiple lines
+</parameter>
+</function>
+</tool_call>
+
+Reminder:
+- Function calls MUST follow the specified format: an inner <function=...></function> block must be nested within <tool_call></tool_call> XML tags
+- Required parameters MUST be specified
+- You may provide optional reasoning for your function call in natural language BEFORE the function call, but NOT after
+- If there is no function call available, answer the question like normal with your current knowledge and do not tell the user about function calls",
+                CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
+                        new TokenBroadcasterQwen_3_5(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
             },
             "nvid_nano_v2" => new LLMConfig
             {
