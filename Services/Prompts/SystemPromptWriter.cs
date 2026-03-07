@@ -98,8 +98,10 @@ public sealed class SystemPromptWriter : ISystemPromptWriter
         }
 
         string suffixPrompt = LoadOptionalPrompt($"system_prompt_suffix_{_mlParams.LlmVersion}");
+        string noThinkDirective = BuildNoThinkDirective(_mlParams.LlmNoThink, config.NoThinkToken);
         systemMessages[0].Content = JoinSections(
             systemMessages[0].Content ?? string.Empty,
+            noThinkDirective,
             functionDefs ?? string.Empty,
             promptFooter ?? string.Empty,
             suffixPrompt ?? string.Empty);
@@ -126,8 +128,8 @@ public sealed class SystemPromptWriter : ISystemPromptWriter
         string runPromptPath = Path.Combine(_mlParams.LlmModelPath, runPromptName);
         string basePromptPath = Path.Combine(_mlParams.LlmModelPath, basePromptName);
 
-        WritePromptIfChanged(basePromptPath, basePrompt);
-        WritePromptIfChanged(runPromptPath, runPrompt);
+        WritePromptFile(basePromptPath, basePrompt);
+        WritePromptFile(runPromptPath, runPrompt);
 
         EnsurePromptCache(basePromptPath, basePrompt, basePromptName, config);
     }
@@ -162,6 +164,16 @@ public sealed class SystemPromptWriter : ISystemPromptWriter
     private static string JoinSections(params string[] sections)
     {
         return string.Join("\n\n", sections.Where(section => !string.IsNullOrWhiteSpace(section)));
+    }
+
+    private static string BuildNoThinkDirective(bool llmNoThink, string noThinkToken)
+    {
+        if (!llmNoThink || string.IsNullOrWhiteSpace(noThinkToken))
+        {
+            return string.Empty;
+        }
+
+        return noThinkToken;
     }
 
     private static string BuildToolsJsonForPrompt(List<ToolDefinition> tools)
@@ -203,19 +215,10 @@ public sealed class SystemPromptWriter : ISystemPromptWriter
             new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
     }
 
-    private void WritePromptIfChanged(string path, string content)
+    private void WritePromptFile(string path, string content)
     {
         try
         {
-            if (File.Exists(path))
-            {
-                string existing = File.ReadAllText(path);
-                if (string.Equals(existing, content, StringComparison.Ordinal))
-                {
-                    return;
-                }
-            }
-
             Directory.CreateDirectory(Path.GetDirectoryName(path) ?? ".");
             File.WriteAllText(path, content);
             _logger.LogInformation("Wrote system prompt to {PromptPath}", path);
@@ -312,14 +315,11 @@ public sealed class SystemPromptWriter : ISystemPromptWriter
 
         // Only do expensive operation if cache is not available
         var startInfo = BuildFallbackStartInfo(basePromptPath, contextPath, config);
-        int promptEotCount = CountOccurrences(basePrompt, config.EOTToken);
         _logger.LogInformation(
-            "Starting prompt cache build. EOTToken={EotToken} ExpectedEOTCount={EotCount} TimeoutSeconds={TimeoutSeconds}",
-            config.EOTToken ?? string.Empty,
-            promptEotCount,
+            "Starting prompt cache build. TimeoutSeconds={TimeoutSeconds}",
             _mlParams.LlmSystemPromptTimeout);
         
-        bool buildSuccess = RunPromptCacheCommand(startInfo, config, promptEotCount, contextPath);
+        bool buildSuccess = RunPromptCacheCommand(startInfo, contextPath);
         
         // Upload to cache after successful build
         if (buildSuccess && _cacheConfig.Enabled && _cacheConfig.Type == "Http")
@@ -340,7 +340,7 @@ public sealed class SystemPromptWriter : ISystemPromptWriter
         }
     }
 
-    private bool RunPromptCacheCommand(ProcessStartInfo startInfo, LLMConfig config, int promptEotCount, string contextPath)
+    private bool RunPromptCacheCommand(ProcessStartInfo startInfo, string contextPath)
     {
         try
         {
@@ -349,7 +349,6 @@ public sealed class SystemPromptWriter : ISystemPromptWriter
             using var process = new Process { StartInfo = startInfo };
             process.Start();
             var timeoutMs = Math.Max(1000, _mlParams.LlmSystemPromptTimeout * 1000);
-            var eotToken = config.EOTToken ?? string.Empty;
             var stdoutBuilder = new System.Text.StringBuilder();
             var stderrBuilder = new System.Text.StringBuilder();
 
@@ -366,23 +365,6 @@ public sealed class SystemPromptWriter : ISystemPromptWriter
                     }
 
                     stdoutBuilder.Append(buffer, 0, read);
-                    if (!string.IsNullOrEmpty(eotToken))
-                    {
-                        int totalEot = CountOccurrences(stdoutBuilder.ToString(), eotToken);
-                        if (totalEot > promptEotCount)
-                        {
-                            _logger.LogInformation("Prompt cache build detected EOT after prompt output; stopping cache process.");
-                            try
-                            {
-                                ProcessSignalHelper.SendCtrlCSignal(process);
-                            }
-                            catch
-                            {
-                                // Best effort to stop.
-                            }
-                            break;
-                        }
-                    }
                 }
             });
             var readErrorTask = Task.Run(async () =>
@@ -493,24 +475,6 @@ public sealed class SystemPromptWriter : ISystemPromptWriter
         return File.Exists(path);
     }
 
-    private static int CountOccurrences(string source, string? token)
-    {
-        if (string.IsNullOrEmpty(source) || string.IsNullOrEmpty(token))
-        {
-            return 0;
-        }
-
-        int count = 0;
-        int index = 0;
-        while ((index = source.IndexOf(token, index, StringComparison.Ordinal)) != -1)
-        {
-            count++;
-            index += token.Length;
-        }
-
-        return count;
-    }
-
     private ProcessStartInfo BuildFallbackStartInfo(string basePromptPath, string contextPath, LLMConfig config)
     {
         string llamaPath = $"{_mlParams.LlmModelPath}llama.cpp/llama-completion";
@@ -519,7 +483,7 @@ public sealed class SystemPromptWriter : ISystemPromptWriter
         string modelPath = _mlParams.LlmModelPath + _mlParams.LlmModelFileName;
         string tempValue = "0";
         int threads = Math.Max(1, _mlParams.LlmThreads);
-        var args = $"{promptMode} {reversePrompt} -c {_mlParams.LlmCtxSize} -m \"{modelPath}\" --prompt-cache \"{contextPath}\" -f \"{basePromptPath}\" --temp {tempValue} -t {threads} -tb {threads}";
+        var args = $"{promptMode} {reversePrompt} -c {_mlParams.LlmCtxSize} -m \"{modelPath}\" --prompt-cache \"{contextPath}\" --prompt-cache-all -f \"{basePromptPath}\" --temp {tempValue} -n 1 -t {threads} -tb {threads}";
 
         return new ProcessStartInfo
         {
@@ -670,7 +634,11 @@ public sealed class SystemPromptWriter : ISystemPromptWriter
 
         var tokens = promptMode
             .Split(' ', StringSplitOptions.RemoveEmptyEntries)
-            .Select(token => token == "-if" ? "-i" : token)
+            .Where(token =>
+                token != "-i" &&
+                token != "-if" &&
+                token != "--interactive" &&
+                token != "--interactive-first")
             .Distinct(StringComparer.Ordinal);
 
         return string.Join(" ", tokens);

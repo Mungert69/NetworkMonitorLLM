@@ -391,7 +391,9 @@ Reminder:
                 NoThinkToken = "/no_think",
                 ThinkBeginToken = "<think>",
                 ThinkEndToken = "</think>",
-                FunctionBuilder = "<tool_call>\n<function={0}>\n{1}\n</function>\n</tool_call>",
+                // Note: {2} is the XML parameter block rendered by PromptRenderer (JSON args -> <parameter=...>...</parameter>).
+                // Use this for models/templates that require XML tool calls with explicit <parameter> tags (e.g., Qwen 3.5).
+                FunctionBuilder = "<tool_call>\n<function={0}>\n{2}\n</function>\n</tool_call>",
                 FunctionResponse = "<tool_response>\n{1}\n</tool_response>",
                 FunctionDefsWrap = @"# Tools
 

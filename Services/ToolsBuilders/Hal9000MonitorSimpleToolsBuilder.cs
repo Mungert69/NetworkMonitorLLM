@@ -21,8 +21,7 @@ public class Hal9000MonitorSimpleToolsBuilder : MonitorSimpleToolsBuilder
             "test_quantum_safety",
             "scan_quantum_ports",
             "test_quantum_certificate",
-            "run_camera_capture",
-            "call_monitor_expert"
+            "run_camera_capture"
         };
 
         _tools = _tools
