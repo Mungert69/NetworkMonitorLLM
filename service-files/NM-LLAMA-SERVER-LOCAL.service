@@ -1,0 +1,28 @@
+[Unit]
+Description=Network Monitor Local llama-server
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/mahadeva/code/NetworkMonitorLLM
+EnvironmentFile=-/home/mahadeva/code/NetworkMonitorLLM/.llama-server.env
+Environment=LLAMA_SERVER_BIN=/home/mahadeva/code/models/llama.cpp/llama-server
+Environment=MODEL_PATH=/home/mahadeva/code/models/Qwen3.5-0.8B-q5_0.gguf
+Environment=HOST=127.0.0.1
+Environment=PORT=8082
+Environment=CTX_SIZE=12000
+Environment=THREADS=4
+Environment=THREADS_BATCH=4
+Environment=PARALLEL_SLOTS=8
+Environment=SLOT_SAVE_PATH=/home/mahadeva/code/models/llama-slots
+ExecStart=/usr/bin/bash /home/mahadeva/code/NetworkMonitorLLM/scripts/run-llama-server-local.sh
+SyslogIdentifier=NM-LLAMA-SERVER-LOCAL
+User=nmuser
+Group=nmgroup
+Restart=always
+RestartSec=3
+KillSignal=SIGINT
+
+[Install]
+WantedBy=multi-user.target
+
