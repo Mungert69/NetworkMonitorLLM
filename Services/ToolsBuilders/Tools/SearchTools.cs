@@ -51,6 +51,16 @@ public class SearchTools
                     {
                         Type = "integer",
                         Description = "If data is truncated use pages to allow pagination through the data."
+                    },
+                    ["micro_timeout"] = new PropertyDefinition
+                    {
+                        Type = "integer",
+                        Description = "Per-step timeout in milliseconds for page operations. Optional."
+                    },
+                    ["macro_timeout"] = new PropertyDefinition
+                    {
+                        Type = "integer",
+                        Description = "Overall timeout in milliseconds for the full search operation. Optional."
                     }
                 },
                 Required = new List<string> { "search_term" }
@@ -88,6 +98,16 @@ public class SearchTools
                     {
                         Type = "integer",
                         Description = "If data is truncated use pages to allow pagination through the data."
+                    },
+                    ["micro_timeout"] = new PropertyDefinition
+                    {
+                        Type = "integer",
+                        Description = "Per-step timeout in milliseconds for crawl operations. Optional."
+                    },
+                    ["macro_timeout"] = new PropertyDefinition
+                    {
+                        Type = "integer",
+                        Description = "Overall timeout in milliseconds for the full page crawl. Optional."
                     }
                 },
                 Required = new List<string> { "url" }
