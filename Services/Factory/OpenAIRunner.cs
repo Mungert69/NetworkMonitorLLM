@@ -576,7 +576,7 @@ public class OpenAIRunner : ILLMRunner
         var message =
             $"User changed agent location from {previousLocation} to {currentLocation}. " +
             $"Use {currentLocation} for agent_location when calling experts unless the user specifies another agent location.";
-        localHistory.Insert(0, ChatMessage.FromSystem(message));
+        localHistory.Insert(0, BuildRuntimeGuidanceMessage(message));
     }
 
     private static string? NormalizeAgentLocation(string? location)
@@ -873,7 +873,7 @@ public class OpenAIRunner : ILLMRunner
         if (isDuplicate && duplicateCount > 1)
         {
             _logger.LogWarning($"Possible loop detected when calling the same function with the same parameters");
-            var duplicateMessage = ChatMessage.FromSystem(
+            var duplicateMessage = BuildRuntimeGuidanceMessage(
                 $" You are possibly stuck in a loop. Take a summary of what you have been doing and give the user feedback before continuing. If the user wants to call the same function again that is ok. Just check first.");
             localHistory.Add(duplicateMessage);
             numDequeue = 0;
@@ -885,12 +885,19 @@ public class OpenAIRunner : ILLMRunner
         if (++_funcsInARow >= _mlParams.MaxFunctionCallsInARow)
         {
             _logger.LogWarning($"Possible loop detected when calling functions without user feedback");
-            var duplicateMessage = ChatMessage.FromSystem(
+            var duplicateMessage = BuildRuntimeGuidanceMessage(
                 $"You have called {_funcsInARow} functions in a row without giving the user any feedback. Take a summary of what you have been doing and give the user feedback before continuing. If the user wants to continue that is ok. Just check first.");
             localHistory.Add(duplicateMessage);
             _funcsInARow = 0;
         }
         return;
+    }
+
+    private ChatMessage BuildRuntimeGuidanceMessage(string message)
+    {
+        return _mlParams.LlmAllowSystemMessagesAfterFirst
+            ? ChatMessage.FromSystem(message)
+            : ChatMessage.FromUser(message);
     }
 
     private ChatMessage BuildFunctionHistoryResponseMessage(string functionName, string content, string toolCallId)
