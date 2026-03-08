@@ -1,6 +1,7 @@
 using Betalgo.Ranul.OpenAI.ObjectModels.RequestModels;
 using Betalgo.Ranul.OpenAI.ObjectModels.SharedModels;
 using Betalgo.Ranul.OpenAI.ObjectModels.ResponseModels;
+using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
@@ -76,7 +77,7 @@ public class HuggingFaceMessage
             if (dto == null) continue;
 
             var functionName = dto.Function?.Name ?? string.Empty;
-            var arguments = dto.Function?.Arguments ?? "{}";
+            var arguments = dto.Function?.GetArgumentsAsString() ?? "{}";
 
             mapped.Add(new ToolCall
             {
@@ -169,5 +170,18 @@ public class HuggingFaceFunctionCallDto
     public string? Name { get; set; }
 
     [JsonProperty("arguments")]
-    public string? Arguments { get; set; }
+    public object? Arguments { get; set; }
+
+    public string GetArgumentsAsString()
+    {
+        if (Arguments == null) return "{}";
+
+        if (Arguments is string raw)
+        {
+            return string.IsNullOrWhiteSpace(raw) ? "{}" : raw;
+        }
+
+        // Some providers return function.arguments as a JSON object/array instead of a JSON string.
+        return JsonConvert.SerializeObject(Arguments);
+    }
 }

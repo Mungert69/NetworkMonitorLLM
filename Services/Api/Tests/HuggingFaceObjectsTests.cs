@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Betalgo.Ranul.OpenAI.ObjectModels.RequestModels;
 using Betalgo.Ranul.OpenAI.ObjectModels.SharedModels;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Xunit;
 
 namespace NetworkMonitor.LLM.Services;
@@ -104,5 +105,43 @@ public class HuggingFaceObjectsTests
         Assert.NotNull(delta.ToolCalls);
         Assert.Single(delta.ToolCalls!);
         Assert.Equal("tool", delta.ToolCalls![0].Function.Name);
+    }
+
+    [Fact]
+    public void PopulateToolCallsFromRaw_AcceptsObjectArguments()
+    {
+        const string json = """
+{
+  "choices": [
+    {
+      "message": {
+        "role": "assistant",
+        "content": "",
+        "tool_calls": [
+          {
+            "id": "call_1",
+            "type": "function",
+            "function": {
+              "name": "get_agents",
+              "arguments": {
+                "detail_response": false
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
+""";
+
+        var response = JsonConvert.DeserializeObject<HuggingFaceChatResponse>(json)!;
+        response.Choices[0].Message.PopulateToolCallsFromRaw();
+
+        var toolCall = Assert.Single(response.Choices[0].Message.ToolCalls);
+        Assert.Equal("get_agents", toolCall.FunctionCall?.Name);
+
+        var argsToken = JToken.Parse(toolCall.FunctionCall?.Arguments ?? "{}");
+        Assert.Equal(false, argsToken["detail_response"]?.Value<bool>());
     }
 }
