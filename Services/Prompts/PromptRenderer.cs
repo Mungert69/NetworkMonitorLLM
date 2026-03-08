@@ -54,6 +54,7 @@ public static class PromptRenderer
         string args = string.IsNullOrWhiteSpace(argumentsJson) ? "{}" : argumentsJson.Trim();
         string fullJson = $"{{\"name\": \"{functionName}\", \"arguments\": {args}}}";
         string xmlParameters = BuildXmlParameterBlock(args);
+        string argKeyValueXml = BuildArgKeyValueBlock(args);
 
         if (string.IsNullOrWhiteSpace(config.FunctionBuilder))
         {
@@ -64,8 +65,13 @@ public static class PromptRenderer
 
         if (builder.Contains("{0}", StringComparison.Ordinal)
             || builder.Contains("{1}", StringComparison.Ordinal)
-            || builder.Contains("{2}", StringComparison.Ordinal))
+            || builder.Contains("{2}", StringComparison.Ordinal)
+            || builder.Contains("{3}", StringComparison.Ordinal))
         {
+            if (builder.Contains("{3}", StringComparison.Ordinal))
+            {
+                return string.Format(builder, functionName, args, xmlParameters, argKeyValueXml);
+            }
             if (builder.Contains("{2}", StringComparison.Ordinal))
             {
                 return string.Format(builder, functionName, args, xmlParameters);
@@ -83,6 +89,43 @@ public static class PromptRenderer
         }
 
         return fullJson;
+    }
+
+    private static string BuildArgKeyValueBlock(string argsJson)
+    {
+        if (string.IsNullOrWhiteSpace(argsJson))
+        {
+            return string.Empty;
+        }
+
+        try
+        {
+            using var document = JsonDocument.Parse(argsJson);
+            if (document.RootElement.ValueKind != JsonValueKind.Object)
+            {
+                return $"<arg_key>arguments</arg_key><arg_value>{argsJson}</arg_value>";
+            }
+
+            var builder = new StringBuilder();
+            foreach (var property in document.RootElement.EnumerateObject())
+            {
+                string value = property.Value.ValueKind == JsonValueKind.String
+                    ? property.Value.GetString() ?? string.Empty
+                    : property.Value.GetRawText();
+
+                builder.Append("<arg_key>")
+                    .Append(property.Name)
+                    .Append("</arg_key><arg_value>")
+                    .Append(value)
+                    .Append("</arg_value>");
+            }
+
+            return builder.ToString();
+        }
+        catch (JsonException)
+        {
+            return $"<arg_key>arguments</arg_key><arg_value>{argsJson}</arg_value>";
+        }
     }
 
     private static string BuildXmlParameterBlock(string argsJson)
