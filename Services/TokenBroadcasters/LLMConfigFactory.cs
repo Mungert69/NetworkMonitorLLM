@@ -426,6 +426,41 @@ Reminder:
                 CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
                         new TokenBroadcasterQwen_3_5(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
             },
+            "glm_4.5" or "glm_4_5" => new LLMConfig
+            {
+                UserReplace = "<|user|>",
+                FunctionReplace = "<|observation|><tool_response>",
+                AssistantHeader = "<|assistant|>\n",
+                UserInputTemplate = "<|user|>{0}",
+                AssistantMessageTemplate = "<|assistant|>\n{0}",
+                SystemMessageTemplate = "<|system|>{0}",
+                EOTToken = "<|user|>",
+                ThinkBeginToken = "<think>",
+                ThinkEndToken = "</think>",
+                FunctionResponseTemplate = "<|observation|><tool_response>{1}</tool_response>",
+                BosToken = "[gMASK]<sop>\n",
+                AppendEotToSuffix = false,
+                FunctionBuilder = "<tool_call>{0}{3}</tool_call>",
+                FunctionResponse = "<tool_response>{1}</tool_response>",
+                FunctionDefsWrap = @"# Tools
+
+You may call one or more functions to assist with the user query.
+
+You are provided with function signatures within <tools></tools> XML tags:
+<tools>
+{0}
+</tools>",
+                PromptFooter = @"For each function call, output the function name and arguments within the following XML format:
+<tool_call>{function-name}<arg_key>{arg-key-1}</arg_key><arg_value>{arg-value-1}</arg_value><arg_key>{arg-key-2}</arg_key><arg_value>{arg-value-2}</arg_value>...</tool_call>
+
+Reminder:
+- Function calls MUST follow the specified format with a function name at the beginning of <tool_call>
+- Then emit each argument as <arg_key>...</arg_key><arg_value>...</arg_value> pairs
+- Required parameters MUST be specified
+- If no function is needed, answer normally",
+                CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
+                        new TokenBroadcasterGlm_4_5(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
+            },
             "nvid_nano_v2" => new LLMConfig
             {
                 UserReplace = "<SPECIAL_11>User\\\n",
