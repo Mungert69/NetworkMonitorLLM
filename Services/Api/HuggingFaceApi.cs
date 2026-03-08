@@ -24,6 +24,7 @@ using NetworkMonitor.Objects.Factory;
 using NetworkMonitor.Utils;
 using NetworkMonitor.LLM.Services;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 
 namespace NetworkMonitor.LLM.Services;
@@ -61,7 +62,9 @@ public class HuggingFaceApi : ILLMApi
         _serviceID = serviceID;
         _isStream = isStream;
         _httpClient = new HttpClient();
-        _httpClient.Timeout = TimeSpan.FromMilliseconds(120000);
+        // Use per-request CancellationToken timeout in SendHttpRequestAsync.
+        // A fixed HttpClient.Timeout here would override configured HfRequestTimeoutSeconds.
+        _httpClient.Timeout = Timeout.InfiniteTimeSpan;
         _mlParams = mlParams;
         if (!float.TryParse(_mlParams.LlmTemp, out float temperature))
         {
@@ -137,6 +140,7 @@ public class HuggingFaceApi : ILLMApi
     }
     public async Task<ChatCompletionCreateResponseSuccess> CreateCompletionAsync(List<ChatMessage> messages, int maxTokens, LLMServiceObj serviceObj)
     {
+        string? responseContent = null;
         var toolsPayload = _supportsStructuredTools
             ? JsonToolsBuilder.BuildOpenAIToolsPayload(_toolsBuilder.Tools)
             : null;
@@ -156,7 +160,6 @@ public class HuggingFaceApi : ILLMApi
         {
             object payload = BuildPayload(messages, maxTokens, toolsPayload, structuredMessages);
 
-            string? responseContent = null;
             HuggingFaceChatResponse? responseObject = null;
             string payloadJson = JsonConvert.SerializeObject(payload, Formatting.Indented, new JsonSerializerSettings
             {
@@ -169,7 +172,11 @@ public class HuggingFaceApi : ILLMApi
             if (!_isStream)
             {
                 responseContent = await SendHttpRequestAsync(payloadJson);
-                if (responseContent != null) responseObject = JsonConvert.DeserializeObject<HuggingFaceChatResponse>(responseContent);
+                if (responseContent != null)
+                {
+                    LogRawProviderToolCalls(responseContent);
+                    responseObject = JsonConvert.DeserializeObject<HuggingFaceChatResponse>(responseContent);
+                }
 
             }
             else
@@ -212,6 +219,13 @@ public class HuggingFaceApi : ILLMApi
         catch (Exception ex)
         {
             _logger.LogError($"Exception in CreateCompletionAsync: {ex.Message}");
+            if (!string.IsNullOrWhiteSpace(responseContent))
+            {
+                var snippet = responseContent.Length > 2000
+                    ? responseContent.Substring(0, 2000) + "...(truncated)"
+                    : responseContent;
+                _logger.LogError("Raw provider response (truncated): {ResponseSnippet}", snippet);
+            }
 
             // Create a ChatCompletionCreateResponse with error details
             var errorChatResponse = GetErrorResponse(ex.Message);
@@ -223,6 +237,28 @@ public class HuggingFaceApi : ILLMApi
         }
 
 
+    }
+
+    private void LogRawProviderToolCalls(string responseContent)
+    {
+        try
+        {
+            var root = JToken.Parse(responseContent);
+            var toolCalls = root.SelectToken("choices[0].message.tool_calls");
+            if (toolCalls == null || toolCalls.Type == JTokenType.Null)
+            {
+                return;
+            }
+
+            var argsToken = root.SelectToken("choices[0].message.tool_calls[0].function.arguments");
+            var argsType = argsToken?.Type.ToString() ?? "null";
+            _logger.LogInformation("HugLLM raw tool_calls detected. First function.arguments token type: {ArgumentsTokenType}", argsType);
+            _logger.LogDebug("HugLLM raw tool_calls payload: {ToolCallsJson}", toolCalls.ToString(Formatting.None));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug("Failed to inspect raw provider tool_calls payload: {Message}", ex.Message);
+        }
     }
 
     private object BuildPayload(List<ChatMessage> messages, int maxTokens, object? toolsPayload, List<Dictionary<string, object?>>? structuredMessages)

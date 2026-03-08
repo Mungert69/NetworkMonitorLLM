@@ -7,6 +7,13 @@ set -euo pipefail
 # - multimodal (when mmproj is provided)
 # - slot-based KV cache reuse and optional slot persistence
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ENV_FILE="${LLAMA_SERVER_ENV_FILE:-$SCRIPT_DIR/../.llama-server.env}"
+if [[ -f "$ENV_FILE" ]]; then
+  # shellcheck source=/dev/null
+  source "$ENV_FILE"
+fi
+
 LLAMA_SERVER_BIN="${LLAMA_SERVER_BIN:-/home/mahadeva/code/models/llama.cpp/llama-server}"
 MODEL_PATH="${MODEL_PATH:-/home/mahadeva/code/models/Qwen3.5-0.8B-q5_0.gguf}"
 MMPROJ_PATH="${MMPROJ_PATH:-}"
@@ -18,9 +25,10 @@ CTX_SIZE="${CTX_SIZE:-12000}"
 N_PREDICT="${N_PREDICT:--1}"
 THREADS="${THREADS:-4}"
 THREADS_BATCH="${THREADS_BATCH:-4}"
-PARALLEL_SLOTS="${PARALLEL_SLOTS:-8}"
+PARALLEL_SLOTS="${PARALLEL_SLOTS:-1}"
 TEMP="${TEMP:-0.3}"
 SLOT_PROMPT_SIMILARITY="${SLOT_PROMPT_SIMILARITY:-0.10}"
+REASONING_FORMAT="${REASONING_FORMAT:-none}"
 
 API_KEY="${API_KEY:-}"
 API_KEY_FILE="${API_KEY_FILE:-}"
@@ -53,6 +61,7 @@ args=(
   --cont-batching
   --metrics
   --no-webui
+  --reasoning-format "$REASONING_FORMAT"
   --temp "$TEMP"
 )
 
@@ -81,4 +90,3 @@ fi
 echo
 
 exec "$LLAMA_SERVER_BIN" "${args[@]}"
-
