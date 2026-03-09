@@ -55,6 +55,7 @@ public static class PromptRenderer
         string fullJson = $"{{\"name\": \"{functionName}\", \"arguments\": {args}}}";
         string xmlParameters = BuildXmlParameterBlock(args);
         string argKeyValueXml = BuildArgKeyValueBlock(args);
+        string invokeParameters = BuildInvokeParameterBlock(args);
 
         if (string.IsNullOrWhiteSpace(config.FunctionBuilder))
         {
@@ -62,33 +63,85 @@ public static class PromptRenderer
         }
 
         string builder = config.FunctionBuilder;
-
-        if (builder.Contains("{0}", StringComparison.Ordinal)
-            || builder.Contains("{1}", StringComparison.Ordinal)
-            || builder.Contains("{2}", StringComparison.Ordinal)
-            || builder.Contains("{3}", StringComparison.Ordinal))
+        if (!TryRenderNamedTemplate(builder, functionName, args, fullJson, xmlParameters, argKeyValueXml, invokeParameters, out var rendered))
         {
-            if (builder.Contains("{3}", StringComparison.Ordinal))
-            {
-                return string.Format(builder, functionName, args, xmlParameters, argKeyValueXml);
-            }
-            if (builder.Contains("{2}", StringComparison.Ordinal))
-            {
-                return string.Format(builder, functionName, args, xmlParameters);
-            }
-            if (builder.Contains("{0}", StringComparison.Ordinal) && builder.Contains("{1}", StringComparison.Ordinal))
-            {
-                return string.Format(builder, functionName, args);
-            }
-            if (builder.Contains("{1}", StringComparison.Ordinal))
-            {
-                return string.Format(builder, string.Empty, fullJson);
-            }
-
-            return string.Format(builder, fullJson);
+            return fullJson;
         }
 
-        return fullJson;
+        return rendered;
+    }
+
+    private static bool TryRenderNamedTemplate(
+        string builder,
+        string functionName,
+        string args,
+        string fullJson,
+        string xmlParameters,
+        string argKeyValueXml,
+        string invokeParameters,
+        out string rendered)
+    {
+        rendered = builder;
+        var replacements = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["{{function_name}}"] = functionName,
+            ["{{arguments_json}}"] = args,
+            ["{{tool_call_json}}"] = fullJson,
+            ["{{xml_parameters}}"] = xmlParameters,
+            ["{{arg_key_values}}"] = argKeyValueXml,
+            ["{{invoke_parameters}}"] = invokeParameters
+        };
+
+        bool usedNamedToken = false;
+        foreach (var (token, value) in replacements)
+        {
+            if (!rendered.Contains(token, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            usedNamedToken = true;
+            rendered = rendered.Replace(token, value, StringComparison.Ordinal);
+        }
+
+        return usedNamedToken;
+    }
+
+    private static string BuildInvokeParameterBlock(string argsJson)
+    {
+        if (string.IsNullOrWhiteSpace(argsJson))
+        {
+            return string.Empty;
+        }
+
+        try
+        {
+            using var document = JsonDocument.Parse(argsJson);
+            if (document.RootElement.ValueKind != JsonValueKind.Object)
+            {
+                return $"<parameter name=\"arguments\">\n{argsJson}\n</parameter>";
+            }
+
+            var builder = new StringBuilder();
+            foreach (var property in document.RootElement.EnumerateObject())
+            {
+                string value = property.Value.ValueKind == JsonValueKind.String
+                    ? property.Value.GetString() ?? string.Empty
+                    : property.Value.GetRawText();
+
+                builder.Append("<parameter name=\"")
+                    .Append(property.Name)
+                    .Append("\">\n")
+                    .Append(value)
+                    .Append("\n</parameter>\n");
+            }
+
+            return builder.ToString().TrimEnd();
+        }
+        catch (JsonException)
+        {
+            return $"<parameter name=\"arguments\">\n{argsJson}\n</parameter>";
+        }
     }
 
     private static string BuildArgKeyValueBlock(string argsJson)

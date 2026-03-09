@@ -3,6 +3,7 @@ using Betalgo.Ranul.OpenAI.ObjectModels.SharedModels;
 using Betalgo.Ranul.OpenAI.ObjectModels.ResponseModels;
 using System;
 using System.Collections.Generic;
+using System.Text.Json;
 using Newtonsoft.Json;
 
 namespace NetworkMonitor.LLM.Services;
@@ -76,8 +77,16 @@ public class HuggingFaceMessage
         {
             if (dto == null) continue;
 
-            var functionName = dto.Function?.Name ?? string.Empty;
+            var functionName = dto.Function?.Name?.Trim() ?? string.Empty;
             var arguments = dto.Function?.GetArgumentsAsString() ?? "{}";
+            if (string.IsNullOrWhiteSpace(functionName))
+            {
+                continue;
+            }
+            if (!IsValidArgumentsPayload(arguments))
+            {
+                continue;
+            }
 
             mapped.Add(new ToolCall
             {
@@ -92,6 +101,31 @@ public class HuggingFaceMessage
         }
 
         ToolCalls = mapped;
+    }
+
+    private static bool IsValidArgumentsPayload(string arguments)
+    {
+        if (string.IsNullOrWhiteSpace(arguments))
+        {
+            return false;
+        }
+
+        var trimmed = arguments.Trim();
+        if (string.Equals(trimmed, "null", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        try
+        {
+            using var doc = JsonDocument.Parse(trimmed);
+            return doc.RootElement.ValueKind == JsonValueKind.Object
+                || doc.RootElement.ValueKind == JsonValueKind.Array;
+        }
+        catch (JsonException)
+        {
+            return false;
+        }
     }
 }
 

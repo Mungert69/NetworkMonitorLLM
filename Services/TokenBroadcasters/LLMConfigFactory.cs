@@ -28,6 +28,7 @@ Where:
 ";
     public static LLMConfig GetConfig(string llmVersion)
     {
+        llmVersion = (llmVersion ?? string.Empty).Trim().ToLowerInvariant();
         return llmVersion switch
         {
             "func_2.4" => new LLMConfig
@@ -40,7 +41,7 @@ Where:
                 SystemMessageTemplate = "<|from|> system\\\n<|recipient|> all\\\n<|content|>{0}\\\n",
                 EOTToken = "<|stop|>",
                 FunctionResponseTemplate = "<|from|> {0}\\\n<|recipient|> all\\\n<|content|>{1}",
-                FunctionBuilder = "<|from|> {0}\\\n<|recipient|> all\\\n<|content|>{1}",
+                FunctionBuilder = "<|from|> {{function_name}}\\\n<|recipient|> all\\\n<|content|>{{arguments_json}}",
                 FunctionResponse = "<|from|> {0}\n<|recipient|> all\n<|content|>{1}",
                 FunctionDefsWrap = "{0}",
                 CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
@@ -58,7 +59,7 @@ Where:
                 EOTToken = "<|eot_id|>",
                 FunctionResponseTemplate = "<|start_header_id|>tool<|end_header_id|>\\\n\\\nname={0} {1}",
 
-                FunctionBuilder = " name = {0} {1}",
+                FunctionBuilder = " name = {{function_name}} {{arguments_json}}",
                 FunctionResponse = "<|reserved_special_token_249|>{0}\n{1}",
                 FunctionDefsWrap = "{0}",
                 CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
@@ -77,7 +78,7 @@ Where:
                 EOMToken = "<|eom_id|>",
                 FunctionResponseTemplate = "<|start_header_id|>ipython<|end_header_id|>\\\n\\\n{1}",
 
-                FunctionBuilder = "<function={0}>{1}</function>",
+                FunctionBuilder = "<function={{function_name}}>{{arguments_json}}</function>",
                 FunctionResponse = "{1}",
                 FunctionDefsWrap = "{0}",
                 PromptFooter = @"
@@ -139,7 +140,7 @@ ${content}
                 EOMToken = "<|eom_id|>",
                 FunctionResponseTemplate = "<|start_header_id|>ipython<|end_header_id|>\\\n\\\n{1}",
 
-                FunctionBuilder = "{{\"name\":\"{0}\", \"parameters\":{1}}}",
+                FunctionBuilder = "{\"name\":\"{{function_name}}\", \"parameters\":{{arguments_json}}}",
                 FunctionResponse = "{1}",
                 FunctionDefsWrap = @"
 Ensure that any function calls you use align with the user's request. Use only the functions necessary for the task. For failed function calls, provide feedback about the issue before retrying or switching functions.
@@ -185,7 +186,7 @@ VERY IMPORTANT : Only call functions using this format :  {""name"": ""function_
                 ThinkBeginToken = "<think>",
                 ThinkEndToken = "</think>",
                 FunctionResponseTemplate = "<｜tool▁output▁begin｜>{1}<｜tool▁output▁end｜>",
-                FunctionBuilder = "<｜tool▁calls▁begin｜><｜tool▁call▁begin｜>{0}<｜tool▁sep｜>{1}<｜tool▁call▁end｜><｜tool▁calls▁end｜>",
+                FunctionBuilder = "<｜tool▁calls▁begin｜><｜tool▁call▁begin｜>{{function_name}}<｜tool▁sep｜>{{arguments_json}}<｜tool▁call▁end｜><｜tool▁calls▁end｜>",
                 FunctionResponse = "{1}",
                 FunctionDefsWrap = @"Available tools:
 {0}",
@@ -208,7 +209,7 @@ Do not add any other text around the tool call.",
                 ThinkBeginToken = "<think>",
                 ThinkEndToken = "</think>",
                 FunctionResponseTemplate = "<｜tool▁output▁begin｜>{1}<｜tool▁output▁end｜>",
-                FunctionBuilder = "<｜tool▁calls▁begin｜><｜tool▁call▁begin｜>function<｜tool▁sep｜>{0}\n```json\n{1}\n```<｜tool▁call▁end｜><｜tool▁calls▁end｜>",
+                FunctionBuilder = "<｜tool▁calls▁begin｜><｜tool▁call▁begin｜>function<｜tool▁sep｜>{{function_name}}\n```json\n{{arguments_json}}\n```<｜tool▁call▁end｜><｜tool▁calls▁end｜>",
                 FunctionResponse = "{1}",
                 FunctionDefsWrap = @"Available tools:
 {0}",
@@ -238,7 +239,7 @@ Do not add any other text around the tool call.",
                 FunctionResponseTemplate = "<|im_start|>user<|im_sep|>\\\n<function_response name={0}>\\\n{1}\\\n</function_response>",
                 ThinkBeginToken = "<reasoning>",
                 ThinkEndToken = "</reasoning>",
-                FunctionBuilder = "<function={0}>{1}</function>",
+                FunctionBuilder = "<function={{function_name}}>{{arguments_json}}</function>",
                 FunctionResponse = "{1}",
                 FunctionDefsWrap = @"
 You have access to the following functions:
@@ -278,7 +279,7 @@ Reminder:
                 EOTToken = "<|end|>",
                 FunctionResponseTemplate = "<|tool_response|>[{1}]",
 
-                FunctionBuilder = "<tool_call>{1}</tool_call>",
+                FunctionBuilder = "<tool_call>{{tool_call_json}}</tool_call>",
                 FunctionResponse = "<|tool_response|>[{1}]",
                 FunctionDefsWrap = @"
 You are a helpful assistant with some tools.
@@ -314,7 +315,7 @@ Reminder:
                 SystemMessageTemplate = "<|im_start|>system\\\n{0}<|im_end|>",
                 EOTToken = "<|im_end|>",
                 FunctionResponseTemplate = "<|im_start|>user\\\n<tool_response>\\\n{1}\\\n</tool_response>",
-                FunctionBuilder = "<tool_call>\n{1}\n</tool_call>",
+                FunctionBuilder = "<tool_call>\n{{tool_call_json}}\n</tool_call>",
                 FunctionResponse = "<tool_response>{1}</tool_response>",
                 FunctionDefsWrap = @"# Tools
 
@@ -353,7 +354,7 @@ Reminder:
                 NoThinkToken = "/no_think",
                 ThinkBeginToken = "<think>",
                 ThinkEndToken = "</think>",
-                FunctionBuilder = "<tool_call>\n{1}\n</tool_call>",
+                FunctionBuilder = "<tool_call>\n{{tool_call_json}}\n</tool_call>",
                 FunctionResponse = "<tool_response>\n{1}\n</tool_response>",
                 FunctionDefsWrap = @"# Tools
 
@@ -393,7 +394,7 @@ Reminder:
                 ThinkEndToken = "</think>",
                 // Note: {2} is the XML parameter block rendered by PromptRenderer (JSON args -> <parameter=...>...</parameter>).
                 // Use this for models/templates that require XML tool calls with explicit <parameter> tags (e.g., Qwen 3.5).
-                FunctionBuilder = "<tool_call>\n<function={0}>\n{2}\n</function>\n</tool_call>",
+                FunctionBuilder = "<tool_call>\n<function={{function_name}}>\n{{xml_parameters}}\n</function>\n</tool_call>",
                 FunctionResponse = "<tool_response>\n{1}\n</tool_response>",
                 FunctionDefsWrap = @"# Tools
 
@@ -426,6 +427,46 @@ Reminder:
                 CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
                         new TokenBroadcasterQwen_3_5(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
             },
+            "minimax_2.5" or "minimax_2_5" or "minimax-2.5" => new LLMConfig
+            {
+                UserReplace = "]~b]user\\\n",
+                FunctionReplace = "]~b]tool\\\n",
+                AssistantHeader = "]~b]ai\\\n<think>\\\n",
+                UserInputTemplate = "]~b]user\\\n{0}[e~[\\\n",
+                AssistantMessageTemplate = "]~b]ai\\\n{0}[e~[\\\n",
+                SystemMessageTemplate = "]~!b[]~b]system\\\n{0}[e~[\\\n",
+                EOTToken = "[e~[",
+                FunctionResponseTemplate = "]~b]tool\\\n<response>{1}</response>[e~[\\\n",
+                ThinkBeginToken = "<think>",
+                ThinkEndToken = "</think>",
+                FunctionBuilder = "<minimax:tool_call>\\\n<invoke name=\"{{function_name}}\">\\\n{{invoke_parameters}}\\\n</invoke>\\\n</minimax:tool_call>",
+                FunctionResponse = "<response>{1}</response>",
+                FunctionDefsWrap = @"# Tools
+You may call one or more tools to assist with the user query.
+Here are the tools available in JSONSchema format:
+<tools>
+{0}
+</tools>",
+                PromptFooter = @"When making tool calls, use XML format to invoke tools and pass parameters:
+<minimax:tool_call>
+<invoke name=""tool-name-1"">
+<parameter name=""param-key-1"">param-value-1</parameter>
+<parameter name=""param-key-2"">param-value-2</parameter>
+...
+</invoke>
+</minimax:tool_call>",
+                XmlPromptFooter = @"When making tool calls, use XML format to invoke tools and pass parameters:
+<minimax:tool_call>
+<invoke name=""tool-name-1"">
+<parameter name=""param-key-1"">param-value-1</parameter>
+<parameter name=""param-key-2"">param-value-2</parameter>
+...
+</invoke>
+</minimax:tool_call>",
+                AppendEotToSuffix = false,
+                CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
+                        new TokenBroadcasterMinimax_2_5(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
+            },
             "glm_4.5" or "glm_4_5" => new LLMConfig
             {
                 UserReplace = "<|user|>",
@@ -440,7 +481,7 @@ Reminder:
                 FunctionResponseTemplate = "<|observation|><tool_response>{1}</tool_response>",
                 BosToken = "[gMASK]<sop>\n",
                 AppendEotToSuffix = false,
-                FunctionBuilder = "<tool_call>{0}{3}</tool_call>",
+                FunctionBuilder = "<tool_call>{{function_name}}{{arg_key_values}}</tool_call>",
                 FunctionResponse = "<tool_response>{1}</tool_response>",
                 FunctionDefsWrap = @"# Tools
 
@@ -474,7 +515,7 @@ Reminder:
                 NoThinkToken = "/no_think",
                 ThinkBeginToken = "<think>",
                 ThinkEndToken = "</think>",
-                FunctionBuilder = "<TOOLCALL>[{{\"name\": \"{0}\", \"arguments\": {1}}}]</TOOLCALL>",
+                FunctionBuilder = "<TOOLCALL>[{\"name\": \"{{function_name}}\", \"arguments\": {{arguments_json}}}]</TOOLCALL>",
                 FunctionResponse = "<TOOL_RESPONSE>[{1}]</TOOL_RESPONSE>",
                 FunctionDefsWrap = @"You can use the following tools to assist the user if required:
 <AVAILABLE_TOOLS>[{0}]</AVAILABLE_TOOLS>",
@@ -503,7 +544,7 @@ Based on the tool responses, you can call additional tools if needed, correct to
                 ThinkEndToken = "</think>",
                 FunctionResponseTemplate = "<|User|><tool_response>{1}</tool_response>",
 
-                FunctionBuilder = "<tool_call>{1}</tool_call>",
+                FunctionBuilder = "<tool_call>{{tool_call_json}}</tool_call>",
                 FunctionResponse = "<tool_response>{1}</tool_response>",
                 FunctionDefsWrap = @"<|begin_of_tool_description|>Tool calling capabilities.
 You may call one or more functions to assist with the user query. You have the following functions available:
@@ -539,7 +580,7 @@ For tool call returns, you MUST use the following format:
                 // End of turn token
                 EOTToken = "<|im_end|>",
 
-                FunctionBuilder = "[{{\"name\":\"{0}\", \"parameters\":{1}}}]",
+                FunctionBuilder = "[{\"name\":\"{{function_name}}\", \"parameters\":{{arguments_json}}}]",
                 FunctionResponse = "[{1}]",
                 FunctionDefsWrap = @"You have access to a set of tools. When using tools, make calls in a single JSON array: 
 
@@ -572,7 +613,7 @@ If no tool is suitable, state that explicitly. If the user's input lacks require
                 // End of turn token
                 EOTToken = "<|im_end|>",
 
-                FunctionBuilder = "<|tool_call_start|>[{{\"name\":\"{0}\", \"parameters\":{1}}}]<|tool_call_end|>",
+                FunctionBuilder = "<|tool_call_start|>[{\"name\":\"{{function_name}}\", \"parameters\":{{arguments_json}}}]<|tool_call_end|>",
                 FunctionResponse = "<|tool_response_start|>[{1}]<|tool_response_end|>",
                 FunctionDefsWrap = @"<|tool_list_start|>{0}<|tool_list_end|>",
                 PromptFooter = "",
@@ -599,7 +640,7 @@ If no tool is suitable, state that explicitly. If the user's input lacks require
                 // End of turn token
                 EOTToken = "<|im_end|>",
 
-                FunctionBuilder = "<|tool_call_start|>[{{\"name\":\"{0}\", \"parameters\":{1}}}]<|tool_call_end|>",
+                FunctionBuilder = "<|tool_call_start|>[{\"name\":\"{{function_name}}\", \"parameters\":{{arguments_json}}}]<|tool_call_end|>",
                 FunctionResponse = "<|tool_response_start|>[{1}]<|tool_response_end|>",
                 FunctionDefsWrap = @"List of tools: {0}",
                 PromptFooter = @"",
@@ -619,7 +660,7 @@ If no tool is suitable, state that explicitly. If the user's input lacks require
                 EOTToken = "<end_of_turn>",
                 FunctionResponseTemplate = "<start_of_turn>user\\\n```tool_output\\\n{1}\\\n```",
 
-                FunctionBuilder = "\n```tool_code\n{1}\n```",
+                FunctionBuilder = "\n```tool_code\n{{tool_call_json}}\n```",
                 FunctionResponse = "\n```tool_output\n{1}\n```",
                 FunctionDefsWrap = "{0}",
                 PromptFooter = "",
@@ -638,7 +679,7 @@ If no tool is suitable, state that explicitly. If the user's input lacks require
                 EOTToken = "",
                 FunctionResponseTemplate = "{1}",
 
-                FunctionBuilder = "{1}",
+                FunctionBuilder = "{{tool_call_json}}",
                 FunctionResponse = "{1}",
                 FunctionDefsWrap = "{0}",
                 PromptFooter = "",
@@ -671,7 +712,7 @@ If no tool is suitable, state that explicitly. If the user's input lacks require
                 // {0} must be "functions.NAME"
                 // {1} is JSON arguments
                 FunctionBuilder =
-                    "function.commentary to={0} <|constrain|>json<|message|>{1}",
+                    "function.commentary to={{function_name}} <|constrain|>json<|message|>{{arguments_json}}",
 
                 FunctionResponse = "{1}",
                 FunctionDefsWrap = "{0}",
@@ -696,7 +737,7 @@ If no tool is suitable, state that explicitly. If the user's input lacks require
                 EOTToken = "",
                 FunctionResponseTemplate = "{1}",
 
-                FunctionBuilder = "{1}",
+                FunctionBuilder = "{{tool_call_json}}",
                 FunctionResponse = "{1}",
                 FunctionDefsWrap = "{0}",
                 PromptFooter = "",
@@ -717,7 +758,7 @@ If no tool is suitable, state that explicitly. If the user's input lacks require
                 EOTToken = "",
                 FunctionResponseTemplate = "FUNCTION RESPONSE: {1}",
 
-                FunctionBuilder = "FUNCTION CALL: {1}",
+                FunctionBuilder = "FUNCTION CALL: {{tool_call_json}}",
                 FunctionResponse = "FUNCTION RESPONSE: {1}",
                 FunctionDefsWrap = "{0}",
                 PromptFooter = "",
