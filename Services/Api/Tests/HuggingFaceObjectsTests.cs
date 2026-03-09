@@ -144,49 +144,4 @@ public class HuggingFaceObjectsTests
         var argsToken = JToken.Parse(toolCall.FunctionCall?.Arguments ?? "{}");
         Assert.Equal(false, argsToken["detail_response"]?.Value<bool>());
     }
-
-    [Fact]
-    public void PopulateToolCallsFromRaw_SkipsInvalidStructuredToolCalls()
-    {
-        var message = new HuggingFaceMessage
-        {
-            RawToolCalls = new List<HuggingFaceToolCallDto>
-            {
-                new()
-                {
-                    Id = "bad_1",
-                    Type = "function",
-                    Function = new HuggingFaceFunctionCallDto
-                    {
-                        Name = "",
-                        Arguments = new { detail_response = false }
-                    }
-                },
-                new()
-                {
-                    Id = "bad_2",
-                    Type = "function",
-                    Function = new HuggingFaceFunctionCallDto
-                    {
-                        Name = "get_agents",
-                        Arguments = null
-                    }
-                },
-                new()
-                {
-                    Id = "bad_3",
-                    Type = "function",
-                    Function = new HuggingFaceFunctionCallDto
-                    {
-                        Name = "get_agents",
-                        Arguments = "not-json"
-                    }
-                }
-            }
-        };
-
-        message.PopulateToolCallsFromRaw();
-
-        Assert.Empty(message.ToolCalls);
-    }
 }

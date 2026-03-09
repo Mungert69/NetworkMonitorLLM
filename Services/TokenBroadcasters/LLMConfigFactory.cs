@@ -28,7 +28,6 @@ Where:
 ";
     public static LLMConfig GetConfig(string llmVersion)
     {
-        llmVersion = (llmVersion ?? string.Empty).Trim().ToLowerInvariant();
         return llmVersion switch
         {
             "func_2.4" => new LLMConfig
@@ -427,7 +426,7 @@ Reminder:
                 CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
                         new TokenBroadcasterQwen_3_5(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
             },
-            "minimax_2.5" or "minimax_2_5" or "minimax-2.5" => new LLMConfig
+            "minimax_2.5" or "minimax_2_5" => new LLMConfig
             {
                 UserReplace = "]~b]user\\\n",
                 FunctionReplace = "]~b]tool\\\n",
