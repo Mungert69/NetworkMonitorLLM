@@ -645,6 +645,13 @@ public class LLMProcessRunner : ILLMRunner
 
             }
         }
+        catch (Exception ex)
+        {
+            _isStateFailed = true;
+            await NotifyErrorToUser(serviceObj, ex);
+            _logger.LogError(ex, "TestLLM runner failed while processing input for sessionId {SessionId}", serviceObj.SessionId);
+            return;
+        }
         finally
         {
 
@@ -652,6 +659,36 @@ public class LLMProcessRunner : ILLMRunner
             _isStateReady = true;
             LoadChanged?.Invoke(-1, Type);
 
+        }
+    }
+
+    private async Task NotifyErrorToUser(LLMServiceObj serviceObj, Exception ex)
+    {
+        try
+        {
+            string detail = ex.Message ?? "Unknown error";
+            string message = $"I encountered an error in {Type}. Error detail: {detail}";
+
+            if (serviceObj.IsPrimaryLlm || serviceObj.IsSystemLlm)
+            {
+                var responseObj = new LLMServiceObj(serviceObj, fs => fs.SetAsResponseErrorComplete())
+                {
+                    LlmMessage = message
+                };
+                await _responseProcessor.ProcessLLMOutputError(responseObj);
+            }
+            else
+            {
+                var responseObj = new LLMServiceObj(serviceObj, fs => fs.SetAsResponseComplete())
+                {
+                    LlmMessage = message
+                };
+                await _responseProcessor.ProcessLLMOutput(responseObj);
+            }
+        }
+        catch (Exception notifyEx)
+        {
+            _logger.LogError(notifyEx, "Failed to send user-facing TestLLM error message.");
         }
     }
     
