@@ -94,6 +94,7 @@ public class LLMProcessRunner : ILLMRunner
     public void SetStartInfo(ProcessStartInfo startInfo, MLParams mlParams)
     {
         string promptPrefix = "";
+        string promptMode = EnsureContextShiftFlag(mlParams.LlmPromptMode ?? string.Empty);
         string suffixCore = _config.AssistantHeader ?? string.Empty;
         string suffixWithEot = string.IsNullOrEmpty(_config.EOTToken)
             ? suffixCore
@@ -127,12 +128,28 @@ public class LLMProcessRunner : ILLMRunner
         string reversePrompt = $"-r \"{_config.EOTToken}\" ";
         if (!string.IsNullOrEmpty(_config.EOMToken)) reversePrompt += $"-r \"{_config.EOMToken}\" ";
         startInfo.FileName = $"{mlParams.LlmModelPath}llama.cpp/llama-completion";
-        startInfo.Arguments = $" -c {mlParams.LlmCtxSize} -n {mlParams.LlmPromptTokens} -m \"{mlParams.LlmModelPath + mlParams.LlmModelFileName}\" --prompt-cache \"{mlParams.LlmModelPath + contextFileName}\" --prompt-cache-ro -f \"{mlParams.LlmModelPath + promptName}\" {mlParams.LlmPromptMode} {reversePrompt} {promptSuffix} --keep -1 --temp {mlParams.LlmTemp} -t {recommendedCpuCount} -tb {recommendedCpuCount} {promptPrefix}";
+        startInfo.Arguments = $" -c {mlParams.LlmCtxSize} -n {mlParams.LlmPromptTokens} -m \"{mlParams.LlmModelPath + mlParams.LlmModelFileName}\" --prompt-cache \"{mlParams.LlmModelPath + contextFileName}\" --prompt-cache-ro -f \"{mlParams.LlmModelPath + promptName}\" {promptMode} {reversePrompt} {promptSuffix} --keep -1 --temp {mlParams.LlmTemp} -t {recommendedCpuCount} -tb {recommendedCpuCount} {promptPrefix}";
         _logger.LogInformation($"Running command : {startInfo.FileName}{startInfo.Arguments}");
         startInfo.UseShellExecute = false;
         startInfo.RedirectStandardInput = true;
         startInfo.RedirectStandardOutput = true;
         startInfo.CreateNoWindow = true;
+    }
+
+    private static string EnsureContextShiftFlag(string promptMode)
+    {
+        if (string.IsNullOrWhiteSpace(promptMode))
+        {
+            return "--context-shift";
+        }
+
+        if (promptMode.Contains("--context-shift", StringComparison.OrdinalIgnoreCase)
+            || promptMode.Contains("--no-context-shift", StringComparison.OrdinalIgnoreCase))
+        {
+            return promptMode;
+        }
+
+        return $"{promptMode} --context-shift";
     }
     public async Task StartProcess(LLMServiceObj serviceObj)
     {
