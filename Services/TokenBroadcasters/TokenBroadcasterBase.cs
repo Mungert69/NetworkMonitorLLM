@@ -238,6 +238,25 @@ namespace NetworkMonitor.LLM.Services
                     int charRead;
                     if (_useHttpProcess) charRead = await process.ReadAsync(buffer, 0, buffer.Length, _cancellationTokenSource.Token);
                     else charRead = await process.StandardOutput.ReadAsync(buffer, 0, buffer.Length, _cancellationTokenSource.Token);
+
+                    if (charRead == 0)
+                    {
+                        if (_useHttpProcess)
+                        {
+                            // HTTP/SSE mode should end with [DONE]. A closed stream before that is an error.
+                            throw new InvalidOperationException("HTTP stream closed before [DONE] marker was received.");
+                        }
+
+                        // Local llama-completion mode: 0 bytes is EOF only when process/stream has ended.
+                        if (process.HasExited || process.StandardOutputEndOfStream)
+                        {
+                            throw new InvalidOperationException("LLM process stream ended before completion.");
+                        }
+
+                        await Task.Delay(200, _cancellationTokenSource.Token);
+                        continue;
+                    }
+
                     string textChunk = Encoding.UTF8.GetString(buffer, 0, charRead);
                     if (_useHttpProcess)
                     {
