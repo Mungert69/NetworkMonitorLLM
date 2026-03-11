@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
+using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
 using NetworkMonitor.Objects.ServiceMessage;
 using NetworkMonitor.Objects;
@@ -54,9 +55,10 @@ public class LLMProcessRunner : ILLMRunner
     public event Func<LLMServiceObj, Task> SendHistory;
     public event Func<string, LLMServiceObj, Task> RemoveSavedSession;
 #pragma warning restore CS0067 
-    private IAudioGenerator _audioGenerator;
     private ICpuUsageMonitor _cpuUsageMonitor;
     private readonly IQueryCoordinator _queryCoordinator;
+    private readonly AudioStreamProvider _audioStreamProvider;
+    private bool _createAudio = false;
 
     private ConcurrentDictionary<string, StringBuilder?> _assistantMessages = new ConcurrentDictionary<string, StringBuilder?>();
     private ConcurrentDictionary<string, StringBuilder?> _systemMessages = new ConcurrentDictionary<string, StringBuilder?>();
@@ -70,12 +72,12 @@ public class LLMProcessRunner : ILLMRunner
         _serviceID = systemParams.ServiceID!;
         if (processRunnerSemaphore == null) throw new Exception(" Processor Runner Semaphore is null");
         _processRunnerSemaphore = processRunnerSemaphore;
-        _audioGenerator = audioGenerator;
         _cpuUsageMonitor = cpuUsageMonitor;
         _idleCheckTimer = new Timer(async _ => await CheckAndTerminateIdleProcesses(), null, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
         _isEnabled = _mlParams.StartThisTestLLM;
         _queryCoordinator = queryCoordinator;
         _systemPromptWriter = systemPromptWriter;
+        _audioStreamProvider = new AudioStreamProvider(audioGenerator, _responseProcessor, _logger, Type);
     }
 
 
@@ -473,10 +475,17 @@ public class LLMProcessRunner : ILLMRunner
             _logger.LogInformation($" Sent history display names for serviceId {serviceObj.HistoryServiceId ?? "default"}");
             return;
         }
-        if (serviceObj.UserInput.Contains("<|START_AUDIO|>") || serviceObj.UserInput.Contains("<|STOP_AUDIO|>"))
+        if (serviceObj.UserInput == "<|STOP_AUDIO|>")
         {
-            throw new Exception($"Audio is not available for the TestLLM. Switch to another LLM if you need audio output.");
-
+            _createAudio = false;
+            _logger.LogInformation("Stopping Create Audio for TestLLM");
+            return;
+        }
+        if (serviceObj.UserInput == "<|START_AUDIO|>")
+        {
+            _createAudio = true;
+            _logger.LogInformation("Starting Create Audio for TestLLM");
+            return;
         }
         _isStateReady = false;
         int sendLlmLoad = 0;
@@ -633,6 +642,12 @@ public class LLMProcessRunner : ILLMRunner
                     if (tokenBroadcaster.SystemMessage != null) _systemMessages.TryAdd(serviceObj.MessageID, tokenBroadcaster.SystemMessage);
                     tokenBroadcaster.SystemMessage = null;
                 }
+
+                if (_createAudio && serviceObj.IsPrimaryLlm && tokenBroadcaster != null)
+                {
+                    string responseTextForAudio = ExtractAudioNarration(tokenBroadcaster.ResponseContent, userInput);
+                    _audioStreamProvider.QueueAudioStreamBestEffort(responseTextForAudio, serviceObj);
+                }
             }
             else
             {
@@ -660,6 +675,89 @@ public class LLMProcessRunner : ILLMRunner
             LoadChanged?.Invoke(-1, Type);
 
         }
+    }
+
+    private string ExtractAudioNarration(string rawResponse, string userInput)
+    {
+        if (string.IsNullOrWhiteSpace(rawResponse))
+        {
+            return string.Empty;
+        }
+
+        string text = rawResponse;
+        if (!string.IsNullOrEmpty(_config.AssistantHeader))
+        {
+            text = text.Replace(_config.AssistantHeader, string.Empty, StringComparison.Ordinal);
+        }
+        if (!string.IsNullOrEmpty(_config.UserReplace))
+        {
+            text = text.Replace(_config.UserReplace, string.Empty, StringComparison.Ordinal);
+        }
+        if (!string.IsNullOrEmpty(_config.FunctionReplace))
+        {
+            text = text.Replace(_config.FunctionReplace, string.Empty, StringComparison.Ordinal);
+        }
+        if (!string.IsNullOrEmpty(_config.EOTToken))
+        {
+            text = text.Replace(_config.EOTToken, string.Empty, StringComparison.Ordinal);
+        }
+        if (!string.IsNullOrEmpty(_config.EOMToken))
+        {
+            text = text.Replace(_config.EOMToken, string.Empty, StringComparison.Ordinal);
+        }
+        if (!string.IsNullOrEmpty(_config.ThinkBeginToken) && !string.IsNullOrEmpty(_config.ThinkEndToken))
+        {
+            string beginToken = Regex.Escape(_config.ThinkBeginToken);
+            string endToken = Regex.Escape(_config.ThinkEndToken);
+            text = Regex.Replace(text, $@"{beginToken}.*?{endToken}", string.Empty, RegexOptions.Singleline);
+        }
+        else
+        {
+            text = text.Replace("<think>", string.Empty, StringComparison.OrdinalIgnoreCase);
+            text = text.Replace("</think>", string.Empty, StringComparison.OrdinalIgnoreCase);
+        }
+
+        text = Regex.Replace(text, @"<\|[^>]+\|>", string.Empty);
+        text = text.Trim();
+
+        if (!string.IsNullOrWhiteSpace(userInput) &&
+            text.StartsWith(userInput, StringComparison.Ordinal))
+        {
+            text = text.Substring(userInput.Length).TrimStart();
+        }
+
+        if (LooksLikeFunctionCallPayload(text))
+        {
+            return string.Empty;
+        }
+
+        return text;
+    }
+
+    private static bool LooksLikeFunctionCallPayload(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return true;
+        }
+
+        string trimmed = text.Trim();
+        if (Regex.IsMatch(trimmed, @"<\s*tool_call\b|<\s*function_call\b|<\s*function=", RegexOptions.IgnoreCase))
+        {
+            return true;
+        }
+        if (trimmed.Contains("FUNCTION CALL:", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+        if (trimmed.StartsWith("{", StringComparison.Ordinal) &&
+            (trimmed.Contains("\"parameters\"", StringComparison.OrdinalIgnoreCase) ||
+             trimmed.Contains("\"arguments\"", StringComparison.OrdinalIgnoreCase)))
+        {
+            return true;
+        }
+
+        return false;
     }
 
     private async Task NotifyErrorToUser(LLMServiceObj serviceObj, Exception ex)

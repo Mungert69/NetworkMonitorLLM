@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -13,7 +14,9 @@ namespace NetworkMonitor.LLM.Services;
 
 public class LLMProcessRunnerTests
 {
-    private LLMProcessRunner CreateRunner(LLMServiceObj startServiceObj, MLParams mlParams)
+    private static (LLMProcessRunner Runner, Mock<ILLMResponseProcessor> ResponseProcessor) CreateRunner(
+        LLMServiceObj startServiceObj,
+        MLParams mlParams)
     {
         var logger = new Mock<ILogger<LLMProcessRunner>>();
         var responseProcessor = new Mock<ILLMResponseProcessor>();
@@ -28,21 +31,23 @@ public class LLMProcessRunnerTests
         var queryCoordinator = Mock.Of<IQueryCoordinator>();
         var systemPromptWriter = Mock.Of<ISystemPromptWriter>();
 
-        return new LLMProcessRunner(
-            logger.Object,
-            responseProcessor.Object,
-            systemParams,
-            mlParams,
-            startServiceObj,
-            new SemaphoreSlim(1, 1),
-            Mock.Of<IAudioGenerator>(),
-            cpuUsageMonitor.Object,
-            queryCoordinator,
-            systemPromptWriter);
+        var runner = new LLMProcessRunner(
+             logger.Object,
+             responseProcessor.Object,
+             systemParams,
+             mlParams,
+             startServiceObj,
+             new SemaphoreSlim(1, 1),
+             Mock.Of<IAudioGenerator>(),
+             cpuUsageMonitor.Object,
+             queryCoordinator,
+             systemPromptWriter);
+
+        return (runner, responseProcessor);
     }
 
     [Fact]
-    public async Task SendInputAndGetResponse_WhenStartAudio_Throws()
+    public async Task SendInputAndGetResponse_WhenAudioCommands_ToggleCreateAudio()
     {
         var mlParams = new MLParams
         {
@@ -54,19 +59,28 @@ public class LLMProcessRunnerTests
             SessionId = "session-1",
             UserInfo = new UserInfo { AccountType = "Default" }
         };
-        var runner = CreateRunner(startServiceObj, mlParams);
+        var (runner, responseProcessor) = CreateRunner(startServiceObj, mlParams);
 
-        var serviceObj = new LLMServiceObj(startServiceObj)
+        var startAudioObj = new LLMServiceObj(startServiceObj)
         {
             UserInput = "<|START_AUDIO|>"
         };
 
-        var ex = await Assert.ThrowsAsync<Exception>(() => runner.SendInputAndGetResponse(serviceObj));
-        Assert.Contains("Audio is not available", ex.Message);
+        await runner.SendInputAndGetResponse(startAudioObj);
+        Assert.True(GetCreateAudio(runner));
+
+        var stopAudioObj = new LLMServiceObj(startServiceObj)
+        {
+            UserInput = "<|STOP_AUDIO|>"
+        };
+
+        await runner.SendInputAndGetResponse(stopAudioObj);
+        Assert.False(GetCreateAudio(runner));
+        responseProcessor.Verify(r => r.ProcessLLMOutputError(It.IsAny<LLMServiceObj>()), Times.Never);
     }
 
     [Fact]
-    public async Task SendInputAndGetResponse_WhenSessionMissing_Throws()
+    public async Task SendInputAndGetResponse_WhenSessionMissing_SendsErrorAndDoesNotThrow()
     {
         var mlParams = new MLParams
         {
@@ -78,7 +92,10 @@ public class LLMProcessRunnerTests
             SessionId = "session-1",
             UserInfo = new UserInfo { AccountType = "Default" }
         };
-        var runner = CreateRunner(startServiceObj, mlParams);
+        var (runner, responseProcessor) = CreateRunner(startServiceObj, mlParams);
+        responseProcessor
+            .Setup(r => r.ProcessLLMOutputError(It.IsAny<LLMServiceObj>()))
+            .Returns(Task.CompletedTask);
 
         var serviceObj = new LLMServiceObj(startServiceObj)
         {
@@ -86,7 +103,18 @@ public class LLMProcessRunnerTests
             SessionId = "missing-session"
         };
 
-        var ex = await Assert.ThrowsAsync<Exception>(() => runner.SendInputAndGetResponse(serviceObj));
-        Assert.Contains("No Assistant found for sessionId", ex.Message);
+        await runner.SendInputAndGetResponse(serviceObj);
+
+        responseProcessor.Verify(
+            r => r.ProcessLLMOutputError(It.Is<LLMServiceObj>(m =>
+                m.LlmMessage.Contains("No Assistant found for sessionId", StringComparison.Ordinal))),
+            Times.Once);
+    }
+
+    private static bool GetCreateAudio(LLMProcessRunner runner)
+    {
+        var field = typeof(LLMProcessRunner).GetField("_createAudio", BindingFlags.NonPublic | BindingFlags.Instance);
+        Assert.NotNull(field);
+        return (bool)field!.GetValue(runner)!;
     }
 }
