@@ -22,10 +22,10 @@
 			"path": "../NetworkMonitorSearch"
 		},
 		{
-			"path": "../FreeNetworkMonitor"
+			"path": "../NetworkMonitorAlert"
 		},
 		{
-			"path": "../FreeNetworkMonitorBlog"
+			"path": "../NetworkMonitorScheduler"
 		}
 	],
 	"settings": {
