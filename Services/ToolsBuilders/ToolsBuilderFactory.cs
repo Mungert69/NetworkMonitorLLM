@@ -45,6 +45,12 @@ public sealed class ToolsBuilderFactory : IToolsBuilderFactory
         _mlParams = mlParams;
         _systemParams = systemParams;
         ExpertPromptComposer.SetExtraPrompt(_mlParams.ExpertExtraPrompt);
+        ExpertPromptComposer.SetCameraReferenceIdentity(
+            _mlParams.CameraReferenceIdentityName,
+            _mlParams.CameraReferenceIdentityImageUrl,
+            _mlParams.CameraReferenceIdentityInstructions,
+            _mlParams.LlmUseInlineImageData,
+            _mlParams.LlmUseCacheHttpImageUrls);
 
         _static = new(StringComparer.OrdinalIgnoreCase)
         {
