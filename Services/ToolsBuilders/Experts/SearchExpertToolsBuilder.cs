@@ -17,6 +17,10 @@ namespace NetworkMonitor.LLM.Services
         private readonly FunctionDefinition fn_run_search_web;
         private readonly FunctionDefinition fn_run_crawl_page;
         private readonly FunctionDefinition fn_execute_query;
+        private readonly FunctionDefinition fn_execute_query_faq;
+        private readonly FunctionDefinition fn_execute_query_mitre;
+        private readonly FunctionDefinition fn_execute_query_securitybooks;
+        private readonly FunctionDefinition fn_execute_query_quantumbooks;
 
         public SearchExpertToolsBuilder()
         {
@@ -25,13 +29,21 @@ namespace NetworkMonitor.LLM.Services
             fn_run_crawl_page = SearchTools.BuildCrawlPageFunction();
 
             fn_execute_query = QueryTools.BuildQueryFunction();
+            fn_execute_query_faq = QueryTools.BuildFaqQueryFunction();
+            fn_execute_query_mitre = QueryTools.BuildMitreQueryFunction();
+            fn_execute_query_securitybooks = QueryTools.BuildSecurityBooksQueryFunction();
+            fn_execute_query_quantumbooks = QueryTools.BuildQuantumBooksQueryFunction();
 
             // Define the tools list
             _tools = new List<ToolDefinition>()
             {
                     new ToolDefinition() { Function = fn_run_search_web, Type = "function" },
                     new ToolDefinition() { Function = fn_run_crawl_page, Type = "function" },
-                    new ToolDefinition() { Function = fn_execute_query, Type = "function" }
+                    new ToolDefinition() { Function = fn_execute_query, Type = "function" },
+                    new ToolDefinition() { Function = fn_execute_query_faq, Type = "function" },
+                    new ToolDefinition() { Function = fn_execute_query_mitre, Type = "function" },
+                    new ToolDefinition() { Function = fn_execute_query_securitybooks, Type = "function" },
+                    new ToolDefinition() { Function = fn_execute_query_quantumbooks, Type = "function" }
 
             };
         }
@@ -73,4 +85,3 @@ When responding to queries:
         }
     }
 }
-

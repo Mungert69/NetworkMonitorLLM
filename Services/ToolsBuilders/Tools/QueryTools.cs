@@ -150,4 +150,188 @@ This function does not use the public internet.
             }
         };
     }
+
+    public static FunctionDefinition BuildFaqQueryFunction()
+    {
+        return new FunctionDefinition
+        {
+            Name = "execute_query_faq",
+            Description = @"
+Search the local FAQ/help index only (documents).
+Use this for product help, usage guidance, and general support knowledge.
+This function does not use the public internet.
+",
+            Parameters = new PropertyDefinition
+            {
+                Type = "object",
+                Properties = new Dictionary<string, PropertyDefinition>
+                {
+                    ["query_text"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Natural-language query for FAQ/help content."
+                    },
+                    ["vector_search_mode"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Optional: content/question/summary. Default content."
+                    },
+                    ["top_k"] = new PropertyDefinition
+                    {
+                        Type = "number",
+                        Description = "Optional number of results to return."
+                    }
+                },
+                Required = new List<string> { "query_text", "vector_search_mode" }
+            }
+        };
+    }
+
+    public static FunctionDefinition BuildMitreQueryFunction()
+    {
+        return new FunctionDefinition
+        {
+            Name = "execute_query_mitre",
+            Description = @"
+Search the local MITRE ATT&CK index only (mitre).
+Use this for tactic/technique context, detection ideas, and mitigation references.
+This function does not use the public internet.
+",
+            Parameters = new PropertyDefinition
+            {
+                Type = "object",
+                Properties = new Dictionary<string, PropertyDefinition>
+                {
+                    ["query_text"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Natural-language query for MITRE ATT&CK content."
+                    },
+                    ["vector_search_mode"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Optional: content/question/summary. Default content."
+                    },
+                    ["top_k"] = new PropertyDefinition
+                    {
+                        Type = "number",
+                        Description = "Optional number of results to return."
+                    }
+                },
+                Required = new List<string> { "query_text", "vector_search_mode" }
+            }
+        };
+    }
+
+    public static FunctionDefinition BuildSecurityBooksQueryFunction()
+    {
+        return new FunctionDefinition
+        {
+            Name = "execute_query_securitybooks",
+            Description = @"
+Search the local Security Books index only (securitybooks).
+Use this for deep technical guidance. This lane supports chunk/doc metadata when available.
+This function does not use the public internet.
+",
+            Parameters = new PropertyDefinition
+            {
+                Type = "object",
+                Properties = new Dictionary<string, PropertyDefinition>
+                {
+                    ["query_text"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Natural-language query for security book content."
+                    },
+                    ["vector_search_mode"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Optional: content/question/summary. Default content."
+                    },
+                    ["top_k"] = new PropertyDefinition
+                    {
+                        Type = "number",
+                        Description = "Optional number of results to return."
+                    },
+                    ["include_metadata"] = new PropertyDefinition
+                    {
+                        Type = "boolean",
+                        Description = "Optional. Return locator metadata when available. Default true for this function."
+                    },
+                    ["anchor_doc_id"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Optional. Anchor follow-up retrieval to a specific doc id."
+                    },
+                    ["anchor_chunk_id"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Optional. Anchor follow-up retrieval to a specific chunk id."
+                    },
+                    ["neighbor_window"] = new PropertyDefinition
+                    {
+                        Type = "number",
+                        Description = "Optional. Number of neighboring chunks to fetch around the anchor."
+                    }
+                },
+                Required = new List<string> { "query_text", "vector_search_mode" }
+            }
+        };
+    }
+
+    public static FunctionDefinition BuildQuantumBooksQueryFunction()
+    {
+        return new FunctionDefinition
+        {
+            Name = "execute_query_quantumbooks",
+            Description = @"
+Search the local Quantum Books index only (quantumbooks).
+Use this for deep technical quantum-readiness guidance. This lane supports chunk/doc metadata when available.
+This function does not use the public internet.
+",
+            Parameters = new PropertyDefinition
+            {
+                Type = "object",
+                Properties = new Dictionary<string, PropertyDefinition>
+                {
+                    ["query_text"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Natural-language query for quantum book content."
+                    },
+                    ["vector_search_mode"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Optional: content/question/summary. Default content."
+                    },
+                    ["top_k"] = new PropertyDefinition
+                    {
+                        Type = "number",
+                        Description = "Optional number of results to return."
+                    },
+                    ["include_metadata"] = new PropertyDefinition
+                    {
+                        Type = "boolean",
+                        Description = "Optional. Return locator metadata when available. Default true for this function."
+                    },
+                    ["anchor_doc_id"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Optional. Anchor follow-up retrieval to a specific doc id."
+                    },
+                    ["anchor_chunk_id"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Optional. Anchor follow-up retrieval to a specific chunk id."
+                    },
+                    ["neighbor_window"] = new PropertyDefinition
+                    {
+                        Type = "number",
+                        Description = "Optional. Number of neighboring chunks to fetch around the anchor."
+                    }
+                },
+                Required = new List<string> { "query_text", "vector_search_mode" }
+            }
+        };
+    }
 }
