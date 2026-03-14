@@ -86,6 +86,66 @@ Use this function whenever you need information from the local knowledge base.
                     {
                         Type = "boolean",
                         Description = "Optional. For memory-style indices, include tool-call and tool-response turns. Defaults to false."
+                    },
+                    ["include_metadata"] = new PropertyDefinition
+                    {
+                        Type = "boolean",
+                        Description = "Optional. Return metadata and actionable locator fields in query_result_v2 payload."
+                    },
+                    ["anchor_doc_id"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Optional. Anchor follow-up retrieval to a specific document id."
+                    },
+                    ["anchor_chunk_id"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Optional. Anchor follow-up retrieval to a specific chunk id."
+                    },
+                    ["neighbor_window"] = new PropertyDefinition
+                    {
+                        Type = "number",
+                        Description = "Optional. Neighbor chunk window around the anchor chunk."
+                    },
+                    ["filter_doc_id"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Optional. Restrict retrieval to a specific doc_id."
+                    },
+                    ["filter_chunk_id"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Optional. Restrict retrieval to a specific chunk_id."
+                    },
+                    ["filter_source_file"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Optional. Restrict retrieval to a source_file."
+                    },
+                    ["filter_section_path"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Optional. Restrict retrieval to a section path (contains match)."
+                    },
+                    ["filter_page_start"] = new PropertyDefinition
+                    {
+                        Type = "number",
+                        Description = "Optional. Restrict retrieval to chunks overlapping pages >= this value."
+                    },
+                    ["filter_page_end"] = new PropertyDefinition
+                    {
+                        Type = "number",
+                        Description = "Optional. Restrict retrieval to chunks overlapping pages <= this value."
+                    },
+                    ["filter_chunk_index_min"] = new PropertyDefinition
+                    {
+                        Type = "number",
+                        Description = "Optional. Restrict retrieval to chunk_index >= this value."
+                    },
+                    ["filter_chunk_index_max"] = new PropertyDefinition
+                    {
+                        Type = "number",
+                        Description = "Optional. Restrict retrieval to chunk_index <= this value."
                     }
                 },
                 Required = new List<string> { "query_text", "index_name","vector_search_mode" }
@@ -231,6 +291,7 @@ This function does not use the public internet.
             Description = @"
 Search the local Security Books index only (securitybooks).
 Use this for deep technical guidance. This lane supports chunk/doc metadata when available.
+For follow-up retrieval, use anchor_doc_id/anchor_chunk_id/neighbor_window or filter_* fields from prior query_result_v2 actionable metadata.
 This function does not use the public internet.
 ",
             Parameters = new PropertyDefinition
@@ -272,6 +333,46 @@ This function does not use the public internet.
                     {
                         Type = "number",
                         Description = "Optional. Number of neighboring chunks to fetch around the anchor."
+                    },
+                    ["filter_doc_id"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Optional. Restrict retrieval to a specific doc_id."
+                    },
+                    ["filter_chunk_id"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Optional. Restrict retrieval to a specific chunk_id."
+                    },
+                    ["filter_source_file"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Optional. Restrict retrieval to a source_file."
+                    },
+                    ["filter_section_path"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Optional. Restrict retrieval to a section path (contains match)."
+                    },
+                    ["filter_page_start"] = new PropertyDefinition
+                    {
+                        Type = "number",
+                        Description = "Optional. Restrict retrieval to chunks overlapping pages >= this value."
+                    },
+                    ["filter_page_end"] = new PropertyDefinition
+                    {
+                        Type = "number",
+                        Description = "Optional. Restrict retrieval to chunks overlapping pages <= this value."
+                    },
+                    ["filter_chunk_index_min"] = new PropertyDefinition
+                    {
+                        Type = "number",
+                        Description = "Optional. Restrict retrieval to chunk_index >= this value."
+                    },
+                    ["filter_chunk_index_max"] = new PropertyDefinition
+                    {
+                        Type = "number",
+                        Description = "Optional. Restrict retrieval to chunk_index <= this value."
                     }
                 },
                 Required = new List<string> { "query_text", "vector_search_mode" }
@@ -287,6 +388,7 @@ This function does not use the public internet.
             Description = @"
 Search the local Quantum Books index only (quantumbooks).
 Use this for deep technical quantum-readiness guidance. This lane supports chunk/doc metadata when available.
+For follow-up retrieval, use anchor_doc_id/anchor_chunk_id/neighbor_window or filter_* fields from prior query_result_v2 actionable metadata.
 This function does not use the public internet.
 ",
             Parameters = new PropertyDefinition
@@ -328,6 +430,46 @@ This function does not use the public internet.
                     {
                         Type = "number",
                         Description = "Optional. Number of neighboring chunks to fetch around the anchor."
+                    },
+                    ["filter_doc_id"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Optional. Restrict retrieval to a specific doc_id."
+                    },
+                    ["filter_chunk_id"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Optional. Restrict retrieval to a specific chunk_id."
+                    },
+                    ["filter_source_file"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Optional. Restrict retrieval to a source_file."
+                    },
+                    ["filter_section_path"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Optional. Restrict retrieval to a section path (contains match)."
+                    },
+                    ["filter_page_start"] = new PropertyDefinition
+                    {
+                        Type = "number",
+                        Description = "Optional. Restrict retrieval to chunks overlapping pages >= this value."
+                    },
+                    ["filter_page_end"] = new PropertyDefinition
+                    {
+                        Type = "number",
+                        Description = "Optional. Restrict retrieval to chunks overlapping pages <= this value."
+                    },
+                    ["filter_chunk_index_min"] = new PropertyDefinition
+                    {
+                        Type = "number",
+                        Description = "Optional. Restrict retrieval to chunk_index >= this value."
+                    },
+                    ["filter_chunk_index_max"] = new PropertyDefinition
+                    {
+                        Type = "number",
+                        Description = "Optional. Restrict retrieval to chunk_index <= this value."
                     }
                 },
                 Required = new List<string> { "query_text", "vector_search_mode" }
