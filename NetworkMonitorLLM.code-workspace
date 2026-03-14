@@ -26,6 +26,9 @@
 		},
 		{
 			"path": "../NetworkMonitorScheduler"
+		},
+		{
+			"path": "../GGUFModelBuilder"
 		}
 	],
 	"settings": {

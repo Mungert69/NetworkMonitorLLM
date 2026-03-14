@@ -40,6 +40,10 @@ public class MonitorToolsBuilder : ToolsBuilderBase
     private readonly FunctionDefinition fn_call_cmd_processor_builder_flow;
 
     private readonly FunctionDefinition fn_execute_query;
+    private readonly FunctionDefinition fn_execute_query_faq;
+    private readonly FunctionDefinition fn_execute_query_mitre;
+    private readonly FunctionDefinition fn_execute_query_securitybooks;
+    private readonly FunctionDefinition fn_execute_query_quantumbooks;
 
     public MonitorToolsBuilder( bool enableAgentFlow = false)
     {
@@ -70,6 +74,10 @@ public class MonitorToolsBuilder : ToolsBuilderBase
         fn_call_cmd_processor_builder_flow = CmdProcessorBuilderAgent.BuildCmdProcessorBuilderAgent();
 
         fn_execute_query = QueryTools.BuildQueryFunction();
+        fn_execute_query_faq = QueryTools.BuildFaqQueryFunction();
+        fn_execute_query_mitre = QueryTools.BuildMitreQueryFunction();
+        fn_execute_query_securitybooks = QueryTools.BuildSecurityBooksQueryFunction();
+        fn_execute_query_quantumbooks = QueryTools.BuildQuantumBooksQueryFunction();
 
         fn_run_busybox = CommonTools.BuildRunBusyboxFunction();
         // Static tools list assignment
@@ -92,6 +100,10 @@ public class MonitorToolsBuilder : ToolsBuilderBase
             new ToolDefinition() { Function = fn_call_camera_expert, Type = "function" },
             new ToolDefinition() { Function = fn_call_memory_expert, Type = "function" },
             new ToolDefinition() { Function = fn_execute_query, Type = "function" },
+            new ToolDefinition() { Function = fn_execute_query_faq, Type = "function" },
+            new ToolDefinition() { Function = fn_execute_query_mitre, Type = "function" },
+            new ToolDefinition() { Function = fn_execute_query_securitybooks, Type = "function" },
+            new ToolDefinition() { Function = fn_execute_query_quantumbooks, Type = "function" },
             new ToolDefinition() { Function = fn_run_busybox, Type = "function" }
         };
         if (enableAgentFlow)
@@ -120,6 +132,7 @@ public class MonitorToolsBuilder : ToolsBuilderBase
         content += "Overview: monitoring tools manage hosts and run continuously; experts handle one-off specialized requests; cmd processors are run-once actions; connects are thin periodic endpoint checks and may call cmd processors for complex work; query/search tools are for FAQs/reference.";
         content += "Use monitoring tools (add_host/edit_host/get_host_data/get_host_list) for ongoing monitoring. Use experts or one-shot tools (call experts, run_busybox_command, cancel_functions, function_status_with_message_id) for immediate actions.";
         content += "Memory routing rule: for questions about prior conversation content (for example: 'what did I say before', 'do you remember', 'yesterday we discussed', 'recall if I mentioned X'), call call_memory_expert first.";
+        content += "For local RAG lookups, prefer typed query tools: execute_query_faq (documents), execute_query_mitre (mitre), execute_query_securitybooks (securitybooks), execute_query_quantumbooks (quantumbooks). Use execute_query only as a fallback when the index type is unclear.";
         var hasAgentLocation = !string.IsNullOrEmpty(serviceObj.ChatAgentLocation);
         var hasDeviceSummary = !string.IsNullOrEmpty(serviceObj.ChatDeviceContext);
         var deviceSummaryHasLocation = hasDeviceSummary
