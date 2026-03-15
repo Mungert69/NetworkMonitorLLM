@@ -135,7 +135,7 @@ public class MonitorToolsBuilder : ToolsBuilderBase
         content += "For local RAG lookups, prefer typed query tools: execute_query_faq (documents), execute_query_mitre (mitre), execute_query_securitybooks (securitybooks), execute_query_quantumbooks (quantumbooks). Use execute_query only as a fallback when the index type is unclear.";
         content += "RAG follow-up rule for securitybooks/quantumbooks: if query_result_v2 is returned, use the per-result actionable fields for next calls.";
         content += "Use anchor_doc_id + anchor_chunk_id + neighbor_window when the answer is partial and nearby context is needed.";
-        content += "Use filter_doc_id/filter_chunk_id/filter_source_file/filter_section_path/filter_page_start/filter_page_end/filter_chunk_index_min/filter_chunk_index_max for targeted narrowing.";
+        content += "Use filter_doc_id/filter_chunk_id/filter_source_file/filter_page_start/filter_page_end/filter_chunk_index_min/filter_chunk_index_max for targeted narrowing.";
         content += "Do not treat informational metadata as callable arguments. Only use supported follow-up parameters listed in query_result_v2.followup_parameters.";
         content += "Default to concise follow-up calls: keep top_k low (typically 1-3) when using anchors/filters to avoid flooding context.";
         var hasAgentLocation = !string.IsNullOrEmpty(serviceObj.ChatAgentLocation);
