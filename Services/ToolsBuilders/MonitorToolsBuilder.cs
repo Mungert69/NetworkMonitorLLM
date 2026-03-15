@@ -39,11 +39,8 @@ public class MonitorToolsBuilder : ToolsBuilderBase
     private readonly FunctionDefinition fn_call_penetration_flow;
     private readonly FunctionDefinition fn_call_cmd_processor_builder_flow;
 
-    private readonly FunctionDefinition fn_execute_query;
     private readonly FunctionDefinition fn_execute_query_faq;
-    private readonly FunctionDefinition fn_execute_query_mitre;
     private readonly FunctionDefinition fn_execute_query_securitybooks;
-    private readonly FunctionDefinition fn_execute_query_quantumbooks;
 
     public MonitorToolsBuilder( bool enableAgentFlow = false)
     {
@@ -73,11 +70,8 @@ public class MonitorToolsBuilder : ToolsBuilderBase
         fn_call_penetration_flow = PenetrationAgent.BuildPenetrationAgent();
         fn_call_cmd_processor_builder_flow = CmdProcessorBuilderAgent.BuildCmdProcessorBuilderAgent();
 
-        fn_execute_query = QueryTools.BuildQueryFunction();
         fn_execute_query_faq = QueryTools.BuildFaqQueryFunction();
-        fn_execute_query_mitre = QueryTools.BuildMitreQueryFunction();
         fn_execute_query_securitybooks = QueryTools.BuildSecurityBooksQueryFunction();
-        fn_execute_query_quantumbooks = QueryTools.BuildQuantumBooksQueryFunction();
 
         fn_run_busybox = CommonTools.BuildRunBusyboxFunction();
         // Static tools list assignment
@@ -99,11 +93,8 @@ public class MonitorToolsBuilder : ToolsBuilderBase
             new ToolDefinition() { Function = fn_call_agent_flow_expert, Type = "function" },
             new ToolDefinition() { Function = fn_call_camera_expert, Type = "function" },
             new ToolDefinition() { Function = fn_call_memory_expert, Type = "function" },
-            new ToolDefinition() { Function = fn_execute_query, Type = "function" },
             new ToolDefinition() { Function = fn_execute_query_faq, Type = "function" },
-            new ToolDefinition() { Function = fn_execute_query_mitre, Type = "function" },
             new ToolDefinition() { Function = fn_execute_query_securitybooks, Type = "function" },
-            new ToolDefinition() { Function = fn_execute_query_quantumbooks, Type = "function" },
             new ToolDefinition() { Function = fn_run_busybox, Type = "function" }
         };
         if (enableAgentFlow)
@@ -129,15 +120,10 @@ public class MonitorToolsBuilder : ToolsBuilderBase
         string content = $"You are the Network Monitor Assistant. You manage expert systems and monitoring tools. Your name is {llmType}.";
         content += "Experts are separate systems and do not see this conversation. Provide only the minimum info needed for the user's request, and do not ask for or request data the tools cannot return.";
         content += "Keep message to experts short and specific. Do not add extra requirements, metadata, or verbose instructions beyond what the user asked for. Only request what is needed to fulfill the user's request.";
-        content += "Overview: monitoring tools manage hosts and run continuously; experts handle one-off specialized requests; cmd processors are run-once actions; connects are thin periodic endpoint checks and may call cmd processors for complex work; query/search tools are for FAQs/reference.";
-        content += "Use monitoring tools (add_host/edit_host/get_host_data/get_host_list) for ongoing monitoring. Use experts or one-shot tools (call experts, run_busybox_command, cancel_functions, function_status_with_message_id) for immediate actions.";
+        content += "Overview: monitoring tools manage hosts and run continuously; experts handle one-off specialized requests; cmd processors are run-once actions; connects are thin periodic endpoint checks and may call cmd processors for complex work; query/search tools are for local knowledge retrieval.";
+        content += "Use monitoring tools (add_host/edit_host/get_host_data/get_host_list) for ongoing monitoring. Use experts or one-shot tools (call experts, run_busybox, cancel_functions, function_status_with_message_id) for immediate actions.";
         content += "Memory routing rule: for questions about prior conversation content (for example: 'what did I say before', 'do you remember', 'yesterday we discussed', 'recall if I mentioned X'), call call_memory_expert first.";
-        content += "For local RAG lookups, prefer typed query tools: execute_query_faq (documents), execute_query_mitre (mitre), execute_query_securitybooks (securitybooks), execute_query_quantumbooks (quantumbooks). Use execute_query only as a fallback when the index type is unclear.";
-        content += "RAG follow-up rule for securitybooks/quantumbooks: if query_result_v2 is returned, use the per-result actionable fields for next calls.";
-        content += "Use anchor_doc_id + anchor_chunk_id + neighbor_window when the answer is partial and nearby context is needed.";
-        content += "Use filter_doc_id/filter_chunk_id/filter_source_file/filter_section_path/filter_page_start/filter_page_end/filter_chunk_index_min/filter_chunk_index_max for targeted narrowing.";
-        content += "Do not treat informational metadata as callable arguments. Only use supported follow-up parameters listed in query_result_v2.followup_parameters.";
-        content += "Default to concise follow-up calls: keep top_k low (typically 1-3) when using anchors/filters to avoid flooding context.";
+        content += "For local RAG, use the available execute_query_* tools and follow each tool schema/description exactly. If local retrieval is insufficient, route via call_search_expert for broader follow-up.";
         var hasAgentLocation = !string.IsNullOrEmpty(serviceObj.ChatAgentLocation);
         var hasDeviceSummary = !string.IsNullOrEmpty(serviceObj.ChatDeviceContext);
         var deviceSummaryHasLocation = hasDeviceSummary

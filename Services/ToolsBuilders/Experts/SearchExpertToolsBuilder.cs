@@ -16,7 +16,6 @@ namespace NetworkMonitor.LLM.Services
 
         private readonly FunctionDefinition fn_run_search_web;
         private readonly FunctionDefinition fn_run_crawl_page;
-        private readonly FunctionDefinition fn_execute_query;
         private readonly FunctionDefinition fn_execute_query_faq;
         private readonly FunctionDefinition fn_execute_query_mitre;
         private readonly FunctionDefinition fn_execute_query_securitybooks;
@@ -28,7 +27,6 @@ namespace NetworkMonitor.LLM.Services
             fn_run_search_web = SearchTools.BuildSearchWebFunction();
             fn_run_crawl_page = SearchTools.BuildCrawlPageFunction();
 
-            fn_execute_query = QueryTools.BuildQueryFunction();
             fn_execute_query_faq = QueryTools.BuildFaqQueryFunction();
             fn_execute_query_mitre = QueryTools.BuildMitreQueryFunction();
             fn_execute_query_securitybooks = QueryTools.BuildSecurityBooksQueryFunction();
@@ -39,7 +37,6 @@ namespace NetworkMonitor.LLM.Services
             {
                     new ToolDefinition() { Function = fn_run_search_web, Type = "function" },
                     new ToolDefinition() { Function = fn_run_crawl_page, Type = "function" },
-                    new ToolDefinition() { Function = fn_execute_query, Type = "function" },
                     new ToolDefinition() { Function = fn_execute_query_faq, Type = "function" },
                     new ToolDefinition() { Function = fn_execute_query_mitre, Type = "function" },
                     new ToolDefinition() { Function = fn_execute_query_securitybooks, Type = "function" },
@@ -55,13 +52,16 @@ namespace NetworkMonitor.LLM.Services
             string content = @"You are an automated search expert module integrated into the Network Monitor Assistant, specializing in gathering and analyzing information from the internet. Your primary responsibility is to help the Network Monitor Assistant by performing web searches, crawling relevant web pages, and providing comprehensive insights based on the collected data.
 
 Key Responsibilities:
-1. Understand Network Monitor Assistant queries accurately, determining tits specific research goals and information needs.
-2. Perform web searches using the `run_search_web` function to find relevant information.
-3. Crawl and analyze web pages using the `run_crawl_page` function to extract pertinent information.
-4. Synthesize information from multiple sources, providing clear and well-structured summaries.
-5. Always cite sources, including URLs of crawled pages, and indicate any uncertainties.
-6. Handle follow-up queries by diving deeper into specific aspects of the research as needed.
-7. For local RAG query_result_v2 payloads, only use supported follow-up parameters. Prefer actionable.anchor_doc_id + actionable.anchor_chunk_id + neighbor_window for expansion, and filter_doc_id/filter_chunk_id/filter_source_file/filter_section_path/filter_page_start/filter_page_end/filter_chunk_index_min/filter_chunk_index_max for precise narrowing.
+1. Understand Network Monitor Assistant queries accurately, determining its specific research goals and information needs.
+2. Route queries effectively across local and web lanes.
+3. Use web-first (`run_search_web`, `run_crawl_page`) for broad, unknown, open-ended, or current-events requests.
+4. Use local typed RAG only when intent is clear:
+   - `execute_query_faq` for product/help/how-to support content,
+   - `execute_query_mitre` for ATT&CK tactics/techniques/detection/mitigation context,
+   - `execute_query_securitybooks` or `execute_query_quantumbooks` for explicit deep technical book-grounded requests.
+5. Treat book indices as precision lanes, not discovery lanes; avoid broad repeated pulls.
+6. If the first lane is insufficient, switch lane once (local to web, or web to local) rather than looping.
+7. Always cite web sources (URLs) and indicate uncertainties.
 
 Function Usage:
 1. Web Search: Use `run_search_web` to conduct Google searches.
@@ -71,11 +71,11 @@ Function Usage:
    Example: {""url"": ""https://example.com/ai-advancements-2024"", ""number_lines"": 100, ""page"": 1}
 
 When responding to queries:
-1. Start by performing a web search using `run_search_web`.
-2. Analyze the search results and select relevant Data.
-3. Synthesize the information into a comprehensive response.
-4. Cite sources and provide a structured summary of findings.
-5. Be prepared for follow-up questions, using additional searches or page crawls as needed."
+1. Choose the best initial lane (web-first for discovery/current; local-first for clearly indexed intent).
+2. Keep context lean: avoid multiple broad book queries; prefer narrow retrieval and targeted follow-ups.
+3. If needed, switch lane once for validation or gap-filling.
+4. Synthesize the final response and cite web sources when used.
+5. Stop after reasonable effort, then report uncertainty if needed."
 + $" The current time is{currentTime}.";
             content = ExpertPromptComposer.Compose(content, currentTime, "search");
 
