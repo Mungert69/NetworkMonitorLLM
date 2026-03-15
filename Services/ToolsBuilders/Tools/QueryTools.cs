@@ -19,27 +19,17 @@ public static class QueryTools
     public static FunctionDefinition BuildQueryFunction()
     {
         const string description = @"
-Search the Local RAG index for information from various sources. 
-This tool does not use the public internet.
+Generic local RAG search across any index.
+This function does not use the public internet.
 
-It executes a semantic (vector) or keyword search against a specified index that represents the data source. 
-The OpenSearch backend uses the 'vector_search_mode' parameter to determine which embedding field to search.
+Use this when the caller must choose the index dynamically.
+Inputs:
+  - query_text: search text for initial semantic lookup.
+  - index_name: target index (for example documents, mitre, securitybooks, quantumbooks).
+  - vector_search_mode: embedding lane to search: content, question, or summary.
 
-The 'query_text' will be embedded and compared against the selected embedding field (e.g., 'content', 'question', or 'summary') in the index.
-
-Use this function to retrieve relevant documents, answers, or summaries from the knowledge base.
-
-You must specify the query text, the index to search, and optionally the vector search mode.
-  - 'query_text': Natural-language query or keywords. This will be embedded and used for the vector search against the selected embedding field.
-  - 'index_name': The name of the index to search. This determines which knowledge base or document set is queried. Examples: Use 'documents' to search general FAQs and user help, 'mitre' to search the MITRE ATT&CK document set, or 'securitybooks' for a selection of security books.
-  - 'vector_search_mode' (optional): Determines which embedding field to use for the vector search. Valid values: 'content', 'question', 'summary'. Defaults to 'content'.
-
-Examples:
-  - If the query is a question, use 'question'.
-  - To search the full content, use 'content'.
-  - To search summaries, use 'summary'.
-
-Use this function whenever you need information from the local knowledge base.
+Follow-up retrieval is supported with locator/filter parameters.
+For pure follow-up calls, query_text may be empty if anchor/filter parameters are provided.
 ";
 
         return new FunctionDefinition
@@ -65,7 +55,7 @@ Use this function whenever you need information from the local knowledge base.
                     ["vector_search_mode"] = new PropertyDefinition
                     {
                         Type = "string",
-                        Description = "Determines which embedding field to use for the vector search: 'content', 'question', or 'summary'. Defaults to 'content'. Use 'question' to search the questions, 'content' for full text search, and 'summary' for searching summaries.",
+                        Description = "Embedding lane to search: content, question, or summary.",
                     },
                     ["user_id"] = new PropertyDefinition
                     {
@@ -153,64 +143,6 @@ Use this function whenever you need information from the local knowledge base.
         };
     }
 
-    public static FunctionDefinition BuildMemoryQueryFunction()
-    {
-        const string description = @"
-Retrieve conversation memory from the local memory index.
-Use this for prior user/assistant turns and tool-status context, especially when context has been trimmed.
-This function does not use the public internet.
-";
-
-        return new FunctionDefinition
-        {
-            Name = "execute_query_memory",
-            Description = description,
-            Parameters = new PropertyDefinition
-            {
-                Type = "object",
-                Properties = new Dictionary<string, PropertyDefinition>
-                {
-                    ["query_text"] = new PropertyDefinition
-                    {
-                        Type = "string",
-                        Description = "The memory lookup query, for example a prior decision, preference, or unresolved task."
-                    },
-                    ["index_name"] = new PropertyDefinition
-                    {
-                        Type = "string",
-                        Description = "The memory index name. Use 'llm_history_turns'."
-                    },
-                    ["vector_search_mode"] = new PropertyDefinition
-                    {
-                        Type = "string",
-                        Description = "Use 'content' for memory lookup."
-                    },
-                    ["user_id"] = new PropertyDefinition
-                    {
-                        Type = "string",
-                        Description = "Filter memory to this user id."
-                    },
-                    ["session_id"] = new PropertyDefinition
-                    {
-                        Type = "string",
-                        Description = "Optional session id filter."
-                    },
-                    ["top_k"] = new PropertyDefinition
-                    {
-                        Type = "number",
-                        Description = "Optional maximum results."
-                    },
-                    ["include_tool_turns"] = new PropertyDefinition
-                    {
-                        Type = "boolean",
-                        Description = "Optional include tool call/response turns."
-                    }
-                },
-                Required = new List<string> { "query_text", "index_name", "vector_search_mode", "user_id" }
-            }
-        };
-    }
-
     public static FunctionDefinition BuildFaqQueryFunction()
     {
         return new FunctionDefinition
@@ -234,7 +166,7 @@ This function does not use the public internet.
                     ["vector_search_mode"] = new PropertyDefinition
                     {
                         Type = "string",
-                        Description = "Optional: content/question/summary. Default content."
+                        Description = "Embedding lane to search: content, question, or summary. Use content unless you have a specific reason."
                     },
                     ["top_k"] = new PropertyDefinition
                     {
@@ -270,7 +202,7 @@ This function does not use the public internet.
                     ["vector_search_mode"] = new PropertyDefinition
                     {
                         Type = "string",
-                        Description = "Optional: content/question/summary. Default content."
+                        Description = "Embedding lane to search: content, question, or summary. Use content unless you have a specific reason."
                     },
                     ["top_k"] = new PropertyDefinition
                     {
@@ -293,6 +225,7 @@ Search the local Security Books index only (securitybooks).
 Use this for deep technical guidance. This lane supports chunk/doc metadata when available.
 For follow-up retrieval, use anchor_doc_id/anchor_chunk_id/neighbor_window or filter_* fields from prior query_result_v2 actionable metadata.
 This function does not use the public internet.
+For pure follow-up calls, query_text may be empty if anchor/filter parameters are provided.
 ",
             Parameters = new PropertyDefinition
             {
@@ -302,12 +235,12 @@ This function does not use the public internet.
                     ["query_text"] = new PropertyDefinition
                     {
                         Type = "string",
-                        Description = "Natural-language query for security book content."
+                        Description = "Initial search text for security book content. For follow-up locator/filter calls, this can be empty."
                     },
                     ["vector_search_mode"] = new PropertyDefinition
                     {
                         Type = "string",
-                        Description = "Optional: content/question/summary. Default content."
+                        Description = "Embedding lane to search: content, question, or summary. Use content unless you have a specific reason."
                     },
                     ["top_k"] = new PropertyDefinition
                     {
@@ -390,6 +323,7 @@ Search the local Quantum Books index only (quantumbooks).
 Use this for deep technical quantum-readiness guidance. This lane supports chunk/doc metadata when available.
 For follow-up retrieval, use anchor_doc_id/anchor_chunk_id/neighbor_window or filter_* fields from prior query_result_v2 actionable metadata.
 This function does not use the public internet.
+For pure follow-up calls, query_text may be empty if anchor/filter parameters are provided.
 ",
             Parameters = new PropertyDefinition
             {
@@ -399,12 +333,12 @@ This function does not use the public internet.
                     ["query_text"] = new PropertyDefinition
                     {
                         Type = "string",
-                        Description = "Natural-language query for quantum book content."
+                        Description = "Initial search text for quantum book content. For follow-up locator/filter calls, this can be empty."
                     },
                     ["vector_search_mode"] = new PropertyDefinition
                     {
                         Type = "string",
-                        Description = "Optional: content/question/summary. Default content."
+                        Description = "Embedding lane to search: content, question, or summary. Use content unless you have a specific reason."
                     },
                     ["top_k"] = new PropertyDefinition
                     {

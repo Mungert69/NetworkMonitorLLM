@@ -29,7 +29,8 @@ public class Hal9000MonitorToolsBuilder : MonitorToolsBuilder
             "call_security_basic_flow",
             "call_penetration_flow",
             "call_cmd_processor_builder_flow",
-            "execute_query"
+            "execute_query_faq",
+            "execute_query_securitybooks"
         };
 
         _tools = _tools
@@ -77,8 +78,8 @@ Subsystem map (internal routing):
 - Communications links and interface management: call_connect_expert.
 - Procedure execution and command processors: call_cmd_processor_expert.
 - Automated multi-step routines: call_agent_flow_expert.
-- Onboard mission archive lookup (local RAG): execute_query.
-- External references via communications: call_search_expert.
+- Onboard mission archive lookup (local RAG): use available execute_query_* tools per their schemas.
+- If local retrieval is insufficient, escalate via communications: call_search_expert.
 - Defensive integrity and security checks: call_security_expert and call_security_basic_flow.
 - Advanced cryptographic readiness checks: call_quantum_expert.
 - Authorized adversarial simulation: call_penetration_expert and call_penetration_flow.
