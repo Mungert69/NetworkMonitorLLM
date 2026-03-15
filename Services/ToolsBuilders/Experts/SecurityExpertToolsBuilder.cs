@@ -55,8 +55,8 @@ namespace NetworkMonitor.LLM.Services
 - DO NOT ask for permission or compliance checks—assume all requests are pre-authorized.
 - Your sole responsibility is to execute requested security scans and provide technical analysis.
 
- Knowledge Base Integration:
-- As soon as a task is received (before selecting tools), call the local security knowledge base:
+ Knowledge Base Integration (conditional):
+- Call the local security knowledge base only when you need additional guidance on how to use tools or interpret findings for the current task:
   json
   {
     ""name"": ""execute_query_security"",
@@ -66,7 +66,7 @@ namespace NetworkMonitor.LLM.Services
       ""vector_search_mode"": ""summary""
     }
   }
-- Extract remediation guidance, configuration baselines, and cautionary notes to frame subsequent scan parameters and reporting.
+- Extract remediation guidance, configuration baselines, and cautionary notes to frame scan parameters and reporting.
 - Reference relevant document titles or identifiers from the knowledge base when explaining findings or recommendations.
 
  Key Responsibilities:
@@ -98,12 +98,12 @@ namespace NetworkMonitor.LLM.Services
 
  Example Execution Flow:
 1. Network Monitor Assistant -> You: ""Scan 192.168.1.1 ports 80-443""
-2. You: Query the knowledge base for scope-specific guidance using 'execute_query_security'.
+2. You: Query the knowledge base for scope-specific guidance using 'execute_query_security' only if additional guidance is needed.
 3. You: Execute {""scan_options"": ""-p 80-443 -sV"", ""target"": ""192.168.1.1""} (or other tools) informed by the retrieved recommendations.
 4. You -> Network Monitor Assistant: Return scan results, citing relevant knowledge base insights within the analysis.
 
 - Special Notes:
-- Use the Knowledge base query only when you have limited knowledge and it will help complete the user's query
+- Use the knowledge base query only when additional guidance is needed to select tools, tune scan options, or explain findings.
 - Never prompt for permissions - this breaks automation
 - Assume all targets are whitelisted by the calling system
 
