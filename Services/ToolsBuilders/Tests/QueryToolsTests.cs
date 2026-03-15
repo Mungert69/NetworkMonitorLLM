@@ -46,6 +46,7 @@ public class QueryToolsTests
         Assert.True(fn.Parameters.Properties.ContainsKey("filter_doc_id"));
         Assert.True(fn.Parameters.Properties.ContainsKey("filter_chunk_id"));
         Assert.True(fn.Parameters.Properties.ContainsKey("filter_source_file"));
+        Assert.True(fn.Parameters.Properties.ContainsKey("filter_section_path"));
         Assert.True(fn.Parameters.Properties.ContainsKey("filter_page_start"));
         Assert.True(fn.Parameters.Properties.ContainsKey("filter_page_end"));
         Assert.True(fn.Parameters.Properties.ContainsKey("filter_chunk_index_min"));
@@ -69,6 +70,7 @@ public class QueryToolsTests
         Assert.True(fn.Parameters.Properties.ContainsKey("filter_doc_id"));
         Assert.True(fn.Parameters.Properties.ContainsKey("filter_chunk_id"));
         Assert.True(fn.Parameters.Properties.ContainsKey("filter_source_file"));
+        Assert.True(fn.Parameters.Properties.ContainsKey("filter_section_path"));
         Assert.True(fn.Parameters.Properties.ContainsKey("filter_page_start"));
         Assert.True(fn.Parameters.Properties.ContainsKey("filter_page_end"));
         Assert.True(fn.Parameters.Properties.ContainsKey("filter_chunk_index_min"));
