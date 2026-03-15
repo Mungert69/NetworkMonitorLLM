@@ -62,10 +62,12 @@ namespace NetworkMonitor.LLM.Services
     ""name"": ""execute_query_security"",
     ""arguments"": {
       ""query_text"": ""[SUMMARY_OF_USER_OBJECTIVES_AND_TARGET_CONTEXT]"",
-      ""index_name"": ""securitybooks"",
       ""vector_search_mode"": ""summary""
     }
   }
+- Build query_text with explicit tool terms and target context so retrieval matches scanning tasks.
+  Include terms like: nmap, openssl, tls, ssl, certificate, cipher, port scanning, service detection, vuln script.
+  Example query_text: ""nmap service detection ssl tls certificate ciphers openssl s_client remediation for [TARGET] [SERVICE/VERSION]"".
 - Extract remediation guidance, configuration baselines, and cautionary notes to frame scan parameters and reporting.
 - Reference relevant document titles or identifiers from the knowledge base when explaining findings or recommendations.
 

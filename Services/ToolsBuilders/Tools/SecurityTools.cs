@@ -152,20 +152,23 @@ This **specialized version** is for security workflows. It is intended to suppor
 
 You must specify:
   - 'query_text': The natural-language query or keywords. This will be embedded and used for the vector search against the selected embedding field.
-  - 'index_name': Must be 'securitybooks'. This determines which knowledge base is queried.
 Optionally:
-  - 'vector_search_mode': Which embedding field to use for the vector search. Valid values: 'content', 'question', 'summary'. Defaults to 'content'.
+  - 'vector_search_mode': Which embedding field to use for the vector search. Valid values: 'content', 'question', 'summary'.
+    Recommended for this tool:
+    - Start with 'summary' for fast remediation-oriented context.
+    - Use 'content' when you need exact command/flag/procedure details for nmap/openssl execution.
+    - Use 'question' for direct Q/A style lookups.
 
 Examples:
   - After parsing Nmap results (e.g., open port with outdated service), query: 
     'Recommended hardening steps for Apache HTTP server version 2.4' 
-    (index_name='securitybooks', vector_search_mode='content').
+    (vector_search_mode='content').
   - After OpenSSL analysis reveals weak cipher suites, query: 
     'Best practices for disabling vulnerable TLS cipher suites and enabling modern alternatives' 
-    (index_name='securitybooks', vector_search_mode='summary').
+    (vector_search_mode='summary').
   - For general remediation guidance: 
     'Mitigation strategies for SSLv3 and TLS 1.0 deprecation' 
-    (index_name='securitybooks', vector_search_mode='question' or 'summary').
+    (vector_search_mode='question' or 'summary').
 
 Use this function whenever you need information from the local security knowledge base to interpret or act upon results from the other security tools.
 ";
@@ -184,18 +187,13 @@ Use this function whenever you need information from the local security knowledg
                         Type = "string",
                         Description = "The search query or question. This will be embedded and used for the vector search against the selected embedding field."
                     },
-                    ["index_name"] = new PropertyDefinition
-                    {
-                        Type = "string",
-                        Description = "Must be 'securitybooks'. This index contains curated security books and references to support analysis and remediation of findings from tools like Nmap and OpenSSL."
-                    },
                     ["vector_search_mode"] = new PropertyDefinition
                     {
                         Type = "string",
-                        Description = "Optional. Determines which embedding field to use for the vector search: 'content', 'question', or 'summary'. Defaults to 'content'."
+                        Description = "Embedding lane to search: content, question, or summary. Recommended: start with summary; switch to content for exact command/procedure detail; use question for direct Q/A lookups."
                     }
                 },
-                Required = new List<string> { "query_text", "index_name","vector_search_mode" }
+                Required = new List<string> { "query_text", "vector_search_mode" }
             }
         };
     }

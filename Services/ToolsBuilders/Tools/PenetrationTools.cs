@@ -204,19 +204,22 @@ This **specialized version** is for penetration testing workflows and is intende
 
 You must specify the query text, the index to search, and optionally the vector search mode:
   - 'query_text': Natural-language query or keywords. This will be embedded and used for the vector search against the selected embedding field.
-  - 'index_name': Must be 'securitybooks'. This determines which knowledge base is queried.
-  - 'vector_search_mode' (optional): Which embedding field to use for the vector search. Valid values: 'content', 'question', 'summary'. Defaults to 'content'.
+  - 'vector_search_mode' (optional): Which embedding field to use for the vector search. Valid values: 'content', 'question', 'summary'.
+    Recommended for this tool:
+    - Start with 'summary' for exploit-selection strategy and mitigation context.
+    - Use 'content' when you need exact module/procedure detail for metasploit execution.
+    - Use 'question' for direct Q/A style lookups.
 
 Examples:
   - After finding a Metasploit module for CVE-2017-0144 (EternalBlue), query: 
     'Mitigation steps and detection strategies for EternalBlue (MS17-010)'
-    (index_name='securitybooks', vector_search_mode='summary').
+    (vector_search_mode='summary').
   - Before running an exploit, query:
     'Prerequisites and safe rollback procedures for exploiting Windows SMB vulnerabilities'
-    (index_name='securitybooks', vector_search_mode='question').
+    (vector_search_mode='question').
   - After successful exploitation, query:
     'Post-exploitation best practices and lateral movement prevention for Windows environments'
-    (index_name='securitybooks', vector_search_mode='content').
+    (vector_search_mode='content').
 
 Use this function whenever you need information from the local security knowledge base to interpret, justify, or act upon results from penetration testing tools.
 ";
@@ -235,18 +238,13 @@ Use this function whenever you need information from the local security knowledg
                         Type = "string",
                         Description = "The search query or question. This will be embedded and used for the vector search against the selected embedding field."
                     },
-                    ["index_name"] = new PropertyDefinition
-                    {
-                        Type = "string",
-                        Description = "Must be 'securitybooks'. This index contains curated security books and references to support penetration testing workflows and Metasploit usage."
-                    },
                     ["vector_search_mode"] = new PropertyDefinition
                     {
                         Type = "string",
-                        Description = "Optional. Determines which embedding field to use for the vector search: 'content', 'question', or 'summary'. Defaults to 'content'."
+                        Description = "Embedding lane to search: content, question, or summary. Recommended: start with summary; switch to content for exact module/procedure detail; use question for direct Q/A lookups."
                     }
                 },
-                Required = new List<string> { "query_text", "index_name","vector_search_mode" }
+                Required = new List<string> { "query_text", "vector_search_mode" }
             }
         };
     }
