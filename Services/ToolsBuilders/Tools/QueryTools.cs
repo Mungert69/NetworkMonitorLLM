@@ -122,11 +122,6 @@ Use this function whenever you need information from the local knowledge base.
                         Type = "string",
                         Description = "Optional. Restrict retrieval to a source_file."
                     },
-                    ["filter_section_path"] = new PropertyDefinition
-                    {
-                        Type = "string",
-                        Description = "Optional. Restrict retrieval to a section path (contains match)."
-                    },
                     ["filter_page_start"] = new PropertyDefinition
                     {
                         Type = "number",
@@ -349,11 +344,6 @@ This function does not use the public internet.
                         Type = "string",
                         Description = "Optional. Restrict retrieval to a source_file."
                     },
-                    ["filter_section_path"] = new PropertyDefinition
-                    {
-                        Type = "string",
-                        Description = "Optional. Restrict retrieval to a section path (contains match)."
-                    },
                     ["filter_page_start"] = new PropertyDefinition
                     {
                         Type = "number",
@@ -445,11 +435,6 @@ This function does not use the public internet.
                     {
                         Type = "string",
                         Description = "Optional. Restrict retrieval to a source_file."
-                    },
-                    ["filter_section_path"] = new PropertyDefinition
-                    {
-                        Type = "string",
-                        Description = "Optional. Restrict retrieval to a section path (contains match)."
                     },
                     ["filter_page_start"] = new PropertyDefinition
                     {
