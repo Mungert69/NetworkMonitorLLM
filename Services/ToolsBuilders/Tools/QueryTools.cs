@@ -16,6 +16,18 @@ namespace NetworkMonitor.LLM.Services;
 
 public static class QueryTools
 {
+    private static readonly List<string> VectorSearchModes = new() { "content", "question", "summary" };
+
+    private static PropertyDefinition BuildVectorSearchModeProperty(string description)
+    {
+        return new PropertyDefinition
+        {
+            Type = "string",
+            Enum = VectorSearchModes,
+            Description = description
+        };
+    }
+
     public static FunctionDefinition BuildQueryFunction()
     {
         const string description = @"
@@ -52,11 +64,8 @@ For pure follow-up calls, query_text may be empty if anchor/filter parameters ar
                         Description = "The name of the index to search. This determines which knowledge base or document set is queried. " +
                                       "Examples: Use 'documents' to search general FAQs and user help, 'securitybooks' for security related information, 'quantumbooks' for quantum ready and safety related information or 'mitre' to search the MITRE ATT&CK document set."
                     },
-                    ["vector_search_mode"] = new PropertyDefinition
-                    {
-                        Type = "string",
-                        Description = "Embedding lane to search: content, question, or summary.",
-                    },
+                    ["vector_search_mode"] = BuildVectorSearchModeProperty(
+                        "Embedding lane to search: content, question, or summary."),
                     ["user_id"] = new PropertyDefinition
                     {
                         Type = "string",
@@ -163,11 +172,8 @@ This function does not use the public internet.
                         Type = "string",
                         Description = "Natural-language query for FAQ/help content."
                     },
-                    ["vector_search_mode"] = new PropertyDefinition
-                    {
-                        Type = "string",
-                        Description = "Embedding lane to search: content, question, or summary. Use content unless you have a specific reason."
-                    },
+                    ["vector_search_mode"] = BuildVectorSearchModeProperty(
+                        "Embedding lane to search: content, question, or summary. Use content unless you have a specific reason."),
                     ["top_k"] = new PropertyDefinition
                     {
                         Type = "number",
@@ -199,11 +205,8 @@ This function does not use the public internet.
                         Type = "string",
                         Description = "Natural-language query for MITRE ATT&CK content."
                     },
-                    ["vector_search_mode"] = new PropertyDefinition
-                    {
-                        Type = "string",
-                        Description = "Embedding lane to search: content, question, or summary. Use content unless you have a specific reason."
-                    },
+                    ["vector_search_mode"] = BuildVectorSearchModeProperty(
+                        "Embedding lane to search: content, question, or summary. Use content unless you have a specific reason."),
                     ["top_k"] = new PropertyDefinition
                     {
                         Type = "number",
@@ -237,11 +240,8 @@ For pure follow-up calls, query_text may be empty if anchor/filter parameters ar
                         Type = "string",
                         Description = "Initial search text for security book content. For follow-up locator/filter calls, this can be empty."
                     },
-                    ["vector_search_mode"] = new PropertyDefinition
-                    {
-                        Type = "string",
-                        Description = "Embedding lane to search: content, question, or summary. Use content unless you have a specific reason."
-                    },
+                    ["vector_search_mode"] = BuildVectorSearchModeProperty(
+                        "Embedding lane to search: content, question, or summary. Use content unless you have a specific reason."),
                     ["top_k"] = new PropertyDefinition
                     {
                         Type = "number",
@@ -335,11 +335,8 @@ For pure follow-up calls, query_text may be empty if anchor/filter parameters ar
                         Type = "string",
                         Description = "Initial search text for quantum book content. For follow-up locator/filter calls, this can be empty."
                     },
-                    ["vector_search_mode"] = new PropertyDefinition
-                    {
-                        Type = "string",
-                        Description = "Embedding lane to search: content, question, or summary. Use content unless you have a specific reason."
-                    },
+                    ["vector_search_mode"] = BuildVectorSearchModeProperty(
+                        "Embedding lane to search: content, question, or summary. Use content unless you have a specific reason."),
                     ["top_k"] = new PropertyDefinition
                     {
                         Type = "number",
