@@ -471,8 +471,16 @@ public class LLMProcessRunner : ILLMRunner
             {
                 serviceObj.HistoryServiceId = requestedServiceId;
             }
-            if (SendHistory != null) await SendHistory.Invoke(serviceObj);
-            _logger.LogInformation($" Sent history display names for serviceId {serviceObj.HistoryServiceId ?? "default"}");
+            await _processRunnerSemaphore.WaitAsync();
+            try
+            {
+                if (SendHistory != null) await SendHistory.Invoke(serviceObj);
+                _logger.LogInformation($" Sent history display names for serviceId {serviceObj.HistoryServiceId ?? "default"}");
+            }
+            finally
+            {
+                _processRunnerSemaphore.Release();
+            }
             return;
         }
         if (serviceObj.UserInput == "<|STOP_AUDIO|>")

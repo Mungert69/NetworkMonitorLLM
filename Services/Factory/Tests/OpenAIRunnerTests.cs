@@ -263,6 +263,102 @@ public class OpenAIRunnerTests
         Assert.Contains(capturedMessages, msg => msg.Contains(expectedFragment));
     }
 
+    [Fact]
+    public async Task ReplayHistory_HoldsRunnerLockWhileSendingHistoryDisplay()
+    {
+        var logger = new Mock<ILogger<OpenAIRunner>>();
+        var responseProcessor = new Mock<ILLMResponseProcessor>();
+        responseProcessor.SetupGet(r => r.RabbitRepo).Returns(Mock.Of<NetworkMonitor.Objects.Repository.IRabbitRepo>());
+        responseProcessor.Setup(r => r.ProcessLLMOutput(It.IsAny<LLMServiceObj>())).Returns(Task.CompletedTask);
+        responseProcessor.Setup(r => r.ProcessLLMOutputError(It.IsAny<LLMServiceObj>())).Returns(Task.CompletedTask);
+        responseProcessor.Setup(r => r.UpdateTokensUsed(It.IsAny<LLMServiceObj>())).Returns(Task.CompletedTask);
+
+        var toolsFactory = new Mock<IToolsBuilderFactory>();
+        toolsFactory.Setup(t => t.Create(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<string>()))
+            .Returns(new FakeToolsBuilder());
+
+        var mlParams = new MLParams
+        {
+            LlmProvider = "OpenAI",
+            LlmOpenAICtxSize = 4096,
+            LlmCtxRatio = 4,
+            MaxFunctionCallsInARow = 3
+        };
+        var systemParams = new SystemParams
+        {
+            ServiceID = "monitor",
+            ServiceAuthKey = "auth"
+        };
+
+        var history = new List<ChatMessage>
+        {
+            ChatMessage.FromSystem("sys"),
+            ChatMessage.FromAssistant("old reply")
+        };
+
+        var serviceObj = new LLMServiceObj
+        {
+            UserInput = "<|REPLAY_HISTORY|>",
+            SessionId = "session-1",
+            RequestSessionId = "req-1",
+            LLMRunnerType = "TurboLLM",
+            IsSystemLlm = false,
+            SourceLlm = "monitor",
+            DestinationLlm = "expert",
+            UserInfo = new UserInfo { AccountType = "Default" }
+        };
+
+        var runner = new OpenAIRunner(
+            logger.Object,
+            responseProcessor.Object,
+            null!,
+            systemParams,
+            mlParams,
+            serviceObj,
+            null,
+            Mock.Of<IAudioGenerator>(),
+            false,
+            history,
+            Mock.Of<IQueryCoordinator>(),
+            toolsFactory.Object);
+
+        var llmApiField = typeof(OpenAIRunner).GetField("_llmApi", BindingFlags.NonPublic | BindingFlags.Instance);
+        Assert.NotNull(llmApiField);
+        llmApiField!.SetValue(runner, new FakeLlmApi());
+
+        var sendHistoryStarted = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var releaseSendHistory = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        runner.SendHistory += async _ =>
+        {
+            sendHistoryStarted.TrySetResult(true);
+            await releaseSendHistory.Task;
+        };
+
+        var replayTask = runner.SendInputAndGetResponse(serviceObj);
+        await sendHistoryStarted.Task;
+
+        var normalMessage = new LLMServiceObj
+        {
+            UserInput = "hello",
+            SessionId = "session-1",
+            RequestSessionId = "req-1",
+            LLMRunnerType = "TurboLLM",
+            IsSystemLlm = false,
+            SourceLlm = "monitor",
+            DestinationLlm = "expert",
+            UserInfo = new UserInfo { AccountType = "Default" }
+        };
+
+        var normalTask = runner.SendInputAndGetResponse(normalMessage);
+        await Task.Delay(100);
+        Assert.False(normalTask.IsCompleted, "Normal input should wait while history display send is in progress.");
+
+        releaseSendHistory.TrySetResult(true);
+        await replayTask;
+        await normalTask;
+    }
+
     private sealed class FailingLlmApi : ILLMApi
     {
         public LLMConfig Config { get; } = new();
