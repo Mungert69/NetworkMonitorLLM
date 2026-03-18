@@ -259,9 +259,17 @@ public class OpenAIRunner : ILLMRunner
         }
         if (serviceObj.UserInput == "<|REPLAY_HISTORY|>")
         {
-            await ReplayHistory(serviceObj.SessionId);
-            if (SendHistory != null) await SendHistory.Invoke(serviceObj);
-            _logger.LogInformation($" Replayed history for sessionId {serviceObj.SessionId}");
+            await _openAIRunnerSemaphore.WaitAsync();
+            try
+            {
+                await ReplayHistoryUnsafe(serviceObj.SessionId);
+                if (SendHistory != null) await SendHistory.Invoke(serviceObj);
+                _logger.LogInformation($" Replayed history for sessionId {serviceObj.SessionId}");
+            }
+            finally
+            {
+                _openAIRunnerSemaphore.Release();
+            }
             return;
         }
         if (serviceObj.UserInput.StartsWith("<|GET_HISTORY_DISPLAY|>", StringComparison.Ordinal))
@@ -273,8 +281,16 @@ public class OpenAIRunner : ILLMRunner
             {
                 serviceObj.HistoryServiceId = requestedServiceId;
             }
-            if (SendHistory != null) await SendHistory.Invoke(serviceObj);
-            _logger.LogInformation($" Sent history display names for serviceId {serviceObj.HistoryServiceId ?? "default"}");
+            await _openAIRunnerSemaphore.WaitAsync();
+            try
+            {
+                if (SendHistory != null) await SendHistory.Invoke(serviceObj);
+                _logger.LogInformation($" Sent history display names for serviceId {serviceObj.HistoryServiceId ?? "default"}");
+            }
+            finally
+            {
+                _openAIRunnerSemaphore.Release();
+            }
             return;
         }
         if (serviceObj.UserInput == "<|STOP_AUDIO|>")
@@ -1590,63 +1606,11 @@ public class OpenAIRunner : ILLMRunner
 
     public async Task ReplayHistory(string sessionId)
     {
-
-
         _isStateReady = false;
-
         try
         {
             await _openAIRunnerSemaphore.WaitAsync();
-
-            // Iterate through the history and replay each message
-            foreach (var message in _history.Skip(_llmApi.SystemPromptCount))
-            {
-                var responseServiceObj = new LLMServiceObj
-                {
-                    SessionId = sessionId,
-                    LlmMessage = "",
-                    TokensUsed = 0
-                };
-
-                switch (message.Role)
-                {
-                    case "user":
-                        responseServiceObj.LlmMessage = "<User:> " + message.Content + "\n\n";
-                        await _responseProcessor.ProcessLLMOutput(responseServiceObj);
-                        break;
-
-                    case "assistant":
-                        if (message.ToolCalls != null && message.ToolCalls.Any())
-                        {
-                            // Handle tool calls
-                            foreach (var toolCall in message.ToolCalls)
-                            {
-                                if (toolCall.FunctionCall != null)
-                                {
-                                    responseServiceObj.LlmMessage = $"<Function Call:> {toolCall.FunctionCall.Name} {toolCall.FunctionCall.Arguments}\n";
-                                    await _responseProcessor.ProcessLLMOutput(responseServiceObj);
-                                }
-                            }
-                        }
-                        else
-                        {
-                            // Handle assistant response
-                            responseServiceObj.LlmMessage = "<Assistant:> " + message.Content + "\n";
-                            await _responseProcessor.ProcessLLMOutput(responseServiceObj);
-                        }
-                        break;
-
-                    case "tool":
-                        // Handle tool responses
-                        responseServiceObj.LlmMessage = $"<Function Response:> {message.Content}\n\n";
-                        await _responseProcessor.ProcessLLMOutput(responseServiceObj);
-                        break;
-
-                    default:
-                        _logger.LogWarning($"Unsupported message role: {message.Role}");
-                        break;
-                }
-            }
+            await ReplayHistoryUnsafe(sessionId);
         }
         catch (Exception ex)
         {
@@ -1656,6 +1620,60 @@ public class OpenAIRunner : ILLMRunner
         {
             _openAIRunnerSemaphore.Release();
             _isStateReady = true;
+        }
+    }
+
+    private async Task ReplayHistoryUnsafe(string sessionId)
+    {
+        // Iterate through the history and replay each message.
+        // Caller is responsible for holding _openAIRunnerSemaphore.
+        foreach (var message in _history.Skip(_llmApi.SystemPromptCount))
+        {
+            var responseServiceObj = new LLMServiceObj
+            {
+                SessionId = sessionId,
+                LlmMessage = "",
+                TokensUsed = 0
+            };
+
+            switch (message.Role)
+            {
+                case "user":
+                    responseServiceObj.LlmMessage = "<User:> " + message.Content + "\n\n";
+                    await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+                    break;
+
+                case "assistant":
+                    if (message.ToolCalls != null && message.ToolCalls.Any())
+                    {
+                        // Handle tool calls
+                        foreach (var toolCall in message.ToolCalls)
+                        {
+                            if (toolCall.FunctionCall != null)
+                            {
+                                responseServiceObj.LlmMessage = $"<Function Call:> {toolCall.FunctionCall.Name} {toolCall.FunctionCall.Arguments}\n";
+                                await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // Handle assistant response
+                        responseServiceObj.LlmMessage = "<Assistant:> " + message.Content + "\n";
+                        await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+                    }
+                    break;
+
+                case "tool":
+                    // Handle tool responses
+                    responseServiceObj.LlmMessage = $"<Function Response:> {message.Content}\n\n";
+                    await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+                    break;
+
+                default:
+                    _logger.LogWarning($"Unsupported message role: {message.Role}");
+                    break;
+            }
         }
     }
 
