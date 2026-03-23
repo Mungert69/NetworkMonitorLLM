@@ -16,9 +16,6 @@
 			"path": "../NetworkMonitorProcessorAgent"
 		},
 		{
-			"path": "../QuantumSecure"
-		},
-		{
 			"path": "../NetworkMonitorSearch"
 		},
 		{
@@ -29,6 +26,9 @@
 		},
 		{
 			"path": "../GGUFModelBuilder"
+		},
+		{
+			"path": "../NetworkMonitorDataInjest"
 		}
 	],
 	"settings": {
