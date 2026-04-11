@@ -1,0 +1,39 @@
+diff --git a/src/llama-kv-cache.cpp b/src/llama-kv-cache.cpp
+index 09102f549..041deaead 100644
+--- a/src/llama-kv-cache.cpp
++++ b/src/llama-kv-cache.cpp
+@@ -513,7 +513,10 @@ void llama_kv_cache::seq_keep(llama_seq_id seq_id) {
+ 
+ void llama_kv_cache::seq_add(llama_seq_id seq_id, llama_pos p0, llama_pos p1, llama_pos shift) {
+     GGML_ASSERT(seq_id >= 0 && (size_t) seq_id < seq_to_stream.size());
+-    GGML_ASSERT(hparams.n_pos_per_embd() == 1 && "seq_add() is only supported for n_pos_per_embd() == 1");
++    GGML_ASSERT((hparams.n_pos_per_embd() == 1 ||
++                 model.arch == LLM_ARCH_QWEN35 ||
++                 model.arch == LLM_ARCH_QWEN35MOE) &&
++                "seq_add() currently supports n_pos_per_embd() == 1, plus QWEN35/QWEN35MOE");
+ 
+     auto & cells = v_cells[seq_to_stream[seq_id]];
+     auto & head  = v_heads[seq_to_stream[seq_id]];
+@@ -558,7 +561,10 @@ void llama_kv_cache::seq_add(llama_seq_id seq_id, llama_pos p0, llama_pos p1, ll
+ 
+ void llama_kv_cache::seq_div(llama_seq_id seq_id, llama_pos p0, llama_pos p1, int d) {
+     GGML_ASSERT(seq_id >= 0 && (size_t) seq_id < seq_to_stream.size());
+-    GGML_ASSERT(hparams.n_pos_per_embd() == 1 && "seq_div() is only supported for n_pos_per_embd() == 1");
++    GGML_ASSERT((hparams.n_pos_per_embd() == 1 ||
++                 model.arch == LLM_ARCH_QWEN35 ||
++                 model.arch == LLM_ARCH_QWEN35MOE) &&
++                "seq_div() currently supports n_pos_per_embd() == 1, plus QWEN35/QWEN35MOE");
+ 
+     auto & cells = v_cells[seq_to_stream[seq_id]];
+ 
+@@ -1091,7 +1097,9 @@ bool llama_kv_cache::get_can_shift() const {
+     if (model.arch == LLM_ARCH_STEP35) {
+         return false;
+     }
+-    if (hparams.n_pos_per_embd() > 1) {
++    if (hparams.n_pos_per_embd() > 1 &&
++        model.arch != LLM_ARCH_QWEN35 &&
++        model.arch != LLM_ARCH_QWEN35MOE) {
+         return false;
+     }
+     return true;
