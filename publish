@@ -43,6 +43,7 @@ fi
 if ! getent group 1654 >/dev/null; then
     echo "Creating group nmgroup (gid=1654)"
     sudo groupadd --gid 1654 nmgroup
+    sudo usermod -aG nmgroup mahadeva
 else
     echo "Group nmgroup already exists"
 fi
@@ -59,7 +60,6 @@ fi
 echo "Ensuring world traverse on parent directories ..."
 sudo chmod o+x /home/mahadeva
 sudo chmod o+x /home/mahadeva/code
-sudo chown -R mahadeva:nmgroup /home/mahadeva/code/services
 
 "$DOTNET_CMD" test
 "$DOTNET_CMD" test ../NetworkMonitorLib/NetworkMonitor.csproj
