@@ -327,7 +327,7 @@ public class LLMFactory : ILLMFactory
         }
         else if (llmType == "HugLLM")
         {
-            _openAIRunnerFactory.LoadCount += delta;
+            _hfRunnerFactory.LoadCount += delta;
         }
         else if (llmType == "TestLLM")
         {
