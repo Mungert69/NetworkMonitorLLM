@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 using Betalgo.Ranul.OpenAI.ObjectModels.RequestModels;
 using Microsoft.Extensions.Logging;
@@ -140,6 +141,26 @@ public class LLMFactoryTests
         var field = typeof(LLMFactory).GetField("_openAIRunnerFactory", BindingFlags.NonPublic | BindingFlags.Instance)!;
         var factory = (LLMRunnerFactoryBase)field.GetValue(_factory)!;
         Assert.Equal(0, factory.LoadCount);
+    }
+
+    [Fact]
+    public void SemaphoreConfiguration_UsesExpectedConcurrencyLimits()
+    {
+        var processSemaphoreField = typeof(LLMFactory).GetField("_processRunnerSemaphore", BindingFlags.NonPublic | BindingFlags.Instance);
+        var openAiSemaphoreField = typeof(LLMFactory).GetField("_openAiRunnerSemaphore", BindingFlags.NonPublic | BindingFlags.Instance);
+        var hfSemaphoreField = typeof(LLMFactory).GetField("_hfRunnerSemaphore", BindingFlags.NonPublic | BindingFlags.Instance);
+
+        Assert.NotNull(processSemaphoreField);
+        Assert.NotNull(openAiSemaphoreField);
+        Assert.NotNull(hfSemaphoreField);
+
+        var processSemaphore = (SemaphoreSlim)processSemaphoreField!.GetValue(_factory)!;
+        var openAiSemaphore = (SemaphoreSlim)openAiSemaphoreField!.GetValue(_factory)!;
+        var hfSemaphore = (SemaphoreSlim)hfSemaphoreField!.GetValue(_factory)!;
+
+        Assert.Equal(1, processSemaphore.CurrentCount);
+        Assert.Equal(8, openAiSemaphore.CurrentCount);
+        Assert.Equal(4, hfSemaphore.CurrentCount);
     }
 
     private sealed class StubRunner : ILLMRunner

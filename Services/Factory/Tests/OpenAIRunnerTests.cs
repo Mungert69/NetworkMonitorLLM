@@ -263,6 +263,119 @@ public class OpenAIRunnerTests
         Assert.Contains(capturedMessages, msg => msg.Contains(expectedFragment));
     }
 
+    [Fact]
+    public void TruncateTokens_PreservesHead_RespectsBudget_AndRemovesOrphans()
+    {
+        var logger = new Mock<ILogger<OpenAIRunner>>();
+        var responseProcessor = new Mock<ILLMResponseProcessor>();
+        responseProcessor.SetupGet(r => r.RabbitRepo).Returns(Mock.Of<NetworkMonitor.Objects.Repository.IRabbitRepo>());
+
+        var toolsFactory = new Mock<IToolsBuilderFactory>();
+        toolsFactory.Setup(t => t.Create(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<string>()))
+            .Returns(new FakeToolsBuilder());
+
+        var mlParams = new MLParams
+        {
+            LlmProvider = "OpenAI",
+            LlmOpenAICtxSize = 4096,
+            LlmCtxRatio = 4,
+            MaxFunctionCallsInARow = 3
+        };
+        var systemParams = new SystemParams
+        {
+            ServiceID = "monitor",
+            ServiceAuthKey = "auth"
+        };
+
+        var serviceObj = new LLMServiceObj
+        {
+            UserInput = "hello",
+            SessionId = "session-truncate-1",
+            RequestSessionId = "req-truncate-1",
+            LLMRunnerType = "TurboLLM",
+            IsSystemLlm = false,
+            SourceLlm = "monitor",
+            DestinationLlm = "expert",
+            UserInfo = new UserInfo { AccountType = "Default" }
+        };
+
+        var runner = new OpenAIRunner(
+            logger.Object,
+            responseProcessor.Object,
+            null!,
+            systemParams,
+            mlParams,
+            serviceObj,
+            null,
+            Mock.Of<IAudioGenerator>(),
+            false,
+            new List<ChatMessage>(),
+            Mock.Of<IQueryCoordinator>(),
+            toolsFactory.Object);
+
+        var llmApiField = typeof(OpenAIRunner).GetField("_llmApi", BindingFlags.NonPublic | BindingFlags.Instance);
+        Assert.NotNull(llmApiField);
+        llmApiField!.SetValue(runner, new TwoHeadLlmApi());
+
+        var promptTokensField = typeof(OpenAIRunner).GetField("_promptTokens", BindingFlags.NonPublic | BindingFlags.Instance);
+        Assert.NotNull(promptTokensField);
+        promptTokensField!.SetValue(runner, 12);
+
+        var history = new List<ChatMessage>
+        {
+            ChatMessage.FromSystem("system head keep"),
+            ChatMessage.FromSystem("n-shot head keep"),
+            ChatMessage.FromUser("old user message one one one one one one one one one"),
+            new ChatMessage
+            {
+                Role = "assistant",
+                Content = "assistant calling tool for old context",
+                ToolCalls = new List<ToolCall>
+                {
+                    new ToolCall
+                    {
+                        Id = "call-1",
+                        Type = "function",
+                        FunctionCall = new FunctionCall
+                        {
+                            Name = "lookup",
+                            Arguments = "{\"key\":\"value\"}"
+                        }
+                    }
+                }
+            },
+            new ChatMessage
+            {
+                Role = "tool",
+                ToolCallId = "call-1",
+                Content = "tool response payload payload payload payload payload"
+            },
+            ChatMessage.FromUser("old user message two two two two two two two"),
+            new ChatMessage
+            {
+                Role = "tool",
+                ToolCallId = "orphan-call",
+                Content = "orphan tool payload must be removed"
+            },
+            ChatMessage.FromAssistant("latest assistant message kept when possible")
+        };
+
+        var truncateMethod = typeof(OpenAIRunner).GetMethod("TruncateTokens", BindingFlags.NonPublic | BindingFlags.Instance);
+        Assert.NotNull(truncateMethod);
+        truncateMethod!.Invoke(runner, new object[] { history, serviceObj });
+
+        Assert.True(history.Count >= 2);
+        Assert.Equal("system", history[0].Role);
+        Assert.Equal("system", history[1].Role);
+
+        Assert.DoesNotContain(history, m => m.Role == "tool" && m.ToolCallId == "orphan-call");
+
+        var calculateMethod = typeof(OpenAIRunner).GetMethod("CalculateTokens", BindingFlags.NonPublic | BindingFlags.Instance);
+        Assert.NotNull(calculateMethod);
+        var totalTokens = (int)calculateMethod!.Invoke(runner, new object[] { history })!;
+        Assert.True(totalTokens <= 12);
+    }
+
     private sealed class FailingLlmApi : ILLMApi
     {
         public LLMConfig Config { get; } = new();
@@ -277,6 +390,37 @@ public class OpenAIRunnerTests
             {
                 Success = false,
                 Response = new ChatCompletionCreateResponse()
+            });
+        }
+
+        public List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, bool noThink = false) =>
+            new() { ChatMessage.FromSystem("") };
+
+        public List<ChatMessage> GetResumeSystemPrompt(string currentTime, LLMServiceObj serviceObj) =>
+            new() { ChatMessage.FromSystem("") };
+
+        public string GetFunctionNamesAsString(string separator = ", ") => string.Empty;
+
+        public string WrapFunctionResponse(string name, string funcStr) => funcStr;
+    }
+
+    private sealed class TwoHeadLlmApi : ILLMApi
+    {
+        public LLMConfig Config { get; } = new();
+        public int SystemPromptCount { get; } = 2;
+
+        public Task<ChatCompletionCreateResponseSuccess> CreateCompletionAsync(
+            List<ChatMessage> messages,
+            int maxTokens,
+            LLMServiceObj serviceObj)
+        {
+            return Task.FromResult(new ChatCompletionCreateResponseSuccess
+            {
+                Success = true,
+                Response = new ChatCompletionCreateResponse
+                {
+                    Choices = new List<ChatChoiceResponse>()
+                }
             });
         }
 

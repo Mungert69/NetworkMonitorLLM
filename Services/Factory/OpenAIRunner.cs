@@ -124,7 +124,7 @@ public class OpenAIRunner : ILLMRunner
         _logger = logger;
         _responseProcessor = responseProcessor;
         _openAiService = openAiService;
-        _openAIRunnerSemaphore = new SemaphoreSlim(1);
+        _openAIRunnerSemaphore = openAIRunnerSemaphore ?? new SemaphoreSlim(1, 1);
         _serviceID = systemParams.ServiceID!;
         _serviceAuthKey = ServiceAuthKeyHydrator.Resolve(systemParams, _logger, nameof(OpenAIRunner));
         _mlParams = mlParams;
@@ -300,7 +300,7 @@ public class OpenAIRunner : ILLMRunner
             return;
         }*/
 
-        _logger.LogInformation($"\nFrom FunctionState : {serviceObj.GetFunctionStateString()}\n\nReceived INPUT -> \n\n {serviceObj.UserInput} \n\n");
+        _logger.LogDebug($"\nFrom FunctionState : {serviceObj.GetFunctionStateString()}\n\nReceived INPUT -> \n\n {serviceObj.UserInput} \n\n");
 
 
         try
@@ -1345,39 +1345,46 @@ public class OpenAIRunner : ILLMRunner
         int tailTokens = CalculateTokens(tail);
         if (tailTokens <= tailBudget) return;
 
-        // 5) Trim from the OLDEST tail messages forward
-        //    while keeping tool-call integrity
-        //    (Remove in blocks and re-check token count each step)
+        // 5) Trim from the OLDEST tail messages forward while keeping tool-call integrity.
+        //    Keep an incremental token tally to avoid repeatedly re-tokenizing the whole tail.
         while (tail.Count > 0 && tailTokens > tailBudget)
         {
+            int removedTokens = 0;
+
             // If the oldest is an assistant tool-call message, remove it + its tool responses
             var first = tail[0];
             if (first.ToolCalls != null && first.ToolCalls.Any())
             {
                 // remove matching tool responses in the tail
                 var toolIds = first.ToolCalls.Where(tc => tc.Id != null).Select(tc => tc.Id!).ToHashSet();
+
                 tail.RemoveAt(0);
-                tail.RemoveAll(m => m.Role == "tool" && m.ToolCallId != null && toolIds.Contains(m.ToolCallId));
+                removedTokens += CountTokensForMessage(first);
+
+                for (int i = tail.Count - 1; i >= 0; i--)
+                {
+                    var candidate = tail[i];
+                    if (candidate.Role == "tool" &&
+                        candidate.ToolCallId != null &&
+                        toolIds.Contains(candidate.ToolCallId))
+                    {
+                        removedTokens += CountTokensForMessage(candidate);
+                        tail.RemoveAt(i);
+                    }
+                }
             }
             else
             {
                 // If it's a tool message but its assistant caller isn't in tail/head anymore,
                 // just drop it (orphan cleanup)
-                if (first.Role == "tool")
-                {
-                    tail.RemoveAt(0);
-                }
-                else
-                {
-                    // Otherwise drop a single message (oldest)
-                    tail.RemoveAt(0);
-                }
+                removedTokens += CountTokensForMessage(first);
+                tail.RemoveAt(0);
             }
 
             // Also clean up any remaining orphan tool responses
-            RemoveOrphanToolResponses(serviceObj.SessionId, tail);
+            removedTokens += RemoveOrphanToolResponsesWithTokenTally(serviceObj.SessionId, tail);
 
-            tailTokens = CalculateTokens(tail);
+            tailTokens = Math.Max(0, tailTokens - removedTokens);
         }
 
         // 6) Rebuild history: head + trimmed tail
@@ -1392,11 +1399,20 @@ public class OpenAIRunner : ILLMRunner
 
         foreach (var message in messages)
         {
-            //_logger.LogInformation($"History: {message.Content}");
-            if (!String.IsNullOrEmpty(message.Content)) tokenCount += TokenizerGpt3.TokenCount(message.Content);
+            tokenCount += CountTokensForMessage(message);
         }
 
         return tokenCount;
+    }
+
+    private static int CountTokensForMessage(ChatMessage message)
+    {
+        if (string.IsNullOrEmpty(message.Content))
+        {
+            return 0;
+        }
+
+        return TokenizerGpt3.TokenCount(message.Content);
     }
     private async Task HandleOpenAIError(LLMServiceObj serviceObj, string errorMessage, List<ChatMessage> localHistory, List<ChatMessage> sessionHistory)
     {
@@ -1543,13 +1559,18 @@ public class OpenAIRunner : ILLMRunner
     /// </summary>
     private void RemoveOrphanToolResponses(string sessionId, List<ChatMessage> sessionHistory)
     {
+        _ = RemoveOrphanToolResponsesWithTokenTally(sessionId, sessionHistory);
+    }
+
+    private int RemoveOrphanToolResponsesWithTokenTally(string sessionId, List<ChatMessage> sessionHistory)
+    {
         // If using a HuggingFace model, skip because we do not use tool calls there.
-        if (_useHF) return;
+        if (_useHF) return 0;
 
         if (sessionHistory == null || sessionHistory.Count == 0)
         {
             _logger.LogWarning($"No history found for session {sessionId} to remove orphaned tool responses.");
-            return;
+            return 0;
         }
 
         // Gather all tool-call IDs that exist in assistant messages
@@ -1567,11 +1588,13 @@ public class OpenAIRunner : ILLMRunner
             .ToList();
 
         if (!orphanToolResponses.Any())
-            return;
+            return 0;
 
         // Remove the orphaned tool messages
+        int removedTokens = 0;
         foreach (var orphanToolMsg in orphanToolResponses)
         {
+            removedTokens += CountTokensForMessage(orphanToolMsg);
             sessionHistory.Remove(orphanToolMsg);
             _logger.LogWarning(
                 $"Removed orphaned tool response: ToolCallId='{orphanToolMsg.ToolCallId}', Content='{orphanToolMsg.Content}'");
@@ -1580,6 +1603,7 @@ public class OpenAIRunner : ILLMRunner
         // Optionally log the updated chat messages after removal
         //ChatMessageLogger.LogChatMessages(_logger, sessionHistory, 
         //    "Updated Chat Message History After Removing Orphaned Tool Responses");
+        return removedTokens;
     }
 
     public Task StopRequest(string sessionId)
