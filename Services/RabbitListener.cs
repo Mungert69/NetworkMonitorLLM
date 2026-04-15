@@ -144,109 +144,53 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
                       switch (rabbitMQObj.FuncName)
                       {
                           case "llmStartSession":
-                              await rabbitMQObj.ConnectChannel.BasicQosAsync(prefetchSize: 0, prefetchCount: 1, global: false);
-                              rabbitMQObj.Consumer.ReceivedAsync += async (model, ea) =>
-                            {
-                                try
-                                {
-                                    _ = StartSession(ConvertToObject<LLMServiceObj>(model, ea));
-                                    await rabbitMQObj.ConnectChannel.BasicAckAsync(ea.DeliveryTag, false);
-                                }
-                                catch (Exception ex)
-                                {
-                                    _logger.LogError(" Error : RabbitListener.DeclareConsumers.llmStartSession " + ex.Message);
-                                }
-                            };
+                              await RegisterConsumerHandlerAsync(rabbitMQObj, 1, "llmStartSession", (model, ea) =>
+                              {
+                                  _ = StartSession(ConvertToObject<LLMServiceObj>(model, ea));
+                                  return Task.CompletedTask;
+                              });
                               break;
                           case "llmStopRequest":
-                              await rabbitMQObj.ConnectChannel.BasicQosAsync(prefetchSize: 0, prefetchCount: 1, global: false);
-                              rabbitMQObj.Consumer.ReceivedAsync += async (model, ea) =>
-                            {
-                                try
-                                {
-                                    _ = StopRequest(ConvertToObject<LLMServiceObj>(model, ea));
-                                    await rabbitMQObj.ConnectChannel.BasicAckAsync(ea.DeliveryTag, false);
-                                }
-                                catch (Exception ex)
-                                {
-                                    _logger.LogError(" Error : RabbitListener.DeclareConsumers.llmStopRequest " + ex.Message);
-                                }
-                            };
+                              await RegisterConsumerHandlerAsync(rabbitMQObj, 1, "llmStopRequest", (model, ea) =>
+                              {
+                                  _ = StopRequest(ConvertToObject<LLMServiceObj>(model, ea));
+                                  return Task.CompletedTask;
+                              });
                               break;
                           case "llmRemoveSession":
-                              await rabbitMQObj.ConnectChannel.BasicQosAsync(prefetchSize: 0, prefetchCount: 1, global: false);
-                              rabbitMQObj.Consumer.ReceivedAsync += async (model, ea) =>
-                            {
-                                try
-                                {
-                                    _ = RemoveSession(ConvertToObject<LLMServiceObj>(model, ea));
-                                    await rabbitMQObj.ConnectChannel.BasicAckAsync(ea.DeliveryTag, false);
-                                }
-                                catch (Exception ex)
-                                {
-                                    _logger.LogError(" Error : RabbitListener.DeclareConsumers.llmRemoveSession " + ex.Message);
-                                }
-                            };
+                              await RegisterConsumerHandlerAsync(rabbitMQObj, 1, "llmRemoveSession", (model, ea) =>
+                              {
+                                  _ = RemoveSession(ConvertToObject<LLMServiceObj>(model, ea));
+                                  return Task.CompletedTask;
+                              });
                               break;
                           case "llmUserInput":
-                              await rabbitMQObj.ConnectChannel.BasicQosAsync(prefetchSize: 0, prefetchCount: 1, global: false);
-                              rabbitMQObj.Consumer.ReceivedAsync += async (model, ea) =>
-                            {
-                                try
-                                {
-                                    _ = UserInput(ConvertToObject<LLMServiceObj>(model, ea));
-                                    await rabbitMQObj.ConnectChannel.BasicAckAsync(ea.DeliveryTag, false);
-                                }
-                                catch (Exception ex)
-                                {
-                                    _logger.LogError(" Error : RabbitListener.DeclareConsumers.llmUserInput " + ex.Message);
-                                }
-                            };
+                              await RegisterConsumerHandlerAsync(rabbitMQObj, 1, "llmUserInput", (model, ea) =>
+                              {
+                                  _ = UserInput(ConvertToObject<LLMServiceObj>(model, ea));
+                                  return Task.CompletedTask;
+                              });
                               break;
                           case "queryIndexResult":
-                              await rabbitMQObj.ConnectChannel.BasicQosAsync(prefetchSize: 0, prefetchCount: 1, global: false);
-                              rabbitMQObj.Consumer.ReceivedAsync += async (model, ea) =>
-                                {
-                                    try
-                                    {
-                                        QueryIndexResult(ConvertToObject<QueryIndexRequest>(model, ea));
-                                        await rabbitMQObj.ConnectChannel.BasicAckAsync(ea.DeliveryTag, false);
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        _logger.LogError(" Error : RabbitListener.DeclareConsumers.queryIndexResult " + ex.Message);
-                                    }
-                                };
+                              await RegisterConsumerHandlerAsync(rabbitMQObj, 1, "queryIndexResult", (model, ea) =>
+                              {
+                                  QueryIndexResult(ConvertToObject<QueryIndexRequest>(model, ea));
+                                  return Task.CompletedTask;
+                              });
                               break;
                           case "getFunctionRegistry":
-                              await rabbitMQObj.ConnectChannel.BasicQosAsync(prefetchSize: 0, prefetchCount: 1, global: false);
-                              rabbitMQObj.Consumer.ReceivedAsync += async (model, ea) =>
-                                {
-                                    try
-                                    {
-                                        GetFunctionRegistry();
-                                        await rabbitMQObj.ConnectChannel.BasicAckAsync(ea.DeliveryTag, false);
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        _logger.LogError(" Error : RabbitListener.DeclareConsumers.getFunctionRegistry " + ex.Message);
-                                    }
-                                };
+                              await RegisterConsumerHandlerAsync(rabbitMQObj, 1, "getFunctionRegistry", (_, _) =>
+                              {
+                                  GetFunctionRegistry();
+                                  return Task.CompletedTask;
+                              });
                               break;
                           case "getFunctionRegistryFiltered":
-                              await rabbitMQObj.ConnectChannel.BasicQosAsync(prefetchSize: 0, prefetchCount: 1, global: false);
-                              rabbitMQObj.Consumer.ReceivedAsync += async (model, ea) =>
-                                {
-                                    try
-                                    {
-                                        GetFunctionRegistry(true);
-                                        await rabbitMQObj.ConnectChannel.BasicAckAsync(ea.DeliveryTag, false);
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        _logger.LogError(" Error : RabbitListener.DeclareConsumers.getFilteredFunctionRegistry " + ex.Message);
-                                    }
-                                };
+                              await RegisterConsumerHandlerAsync(rabbitMQObj, 1, "getFilteredFunctionRegistry", (_, _) =>
+                              {
+                                  GetFunctionRegistry(true);
+                                  return Task.CompletedTask;
+                              });
                               break;
                       }
                   }
