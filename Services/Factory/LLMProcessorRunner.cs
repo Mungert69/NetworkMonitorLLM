@@ -625,7 +625,7 @@ public class LLMProcessRunner : ILLMRunner
             await tokenBroadcaster.SetUp(serviceObj, _sendOutput, sendLlmLoad);
             await process.StandardInput.WriteLineAsync(llmInput);
             await process.StandardInput.FlushAsync();
-            _logger.LogInformation($" LLM INPUT -> {llmInput}");
+            _logger.LogDebug($" LLM INPUT -> {llmInput}");
             // Wait for a response or a timeout
             Task broadcastTask = tokenBroadcaster.BroadcastAsync(process, serviceObj, userInput);
             if (await Task.WhenAny(broadcastTask, Task.Delay(Timeout.Infinite, cts.Token)) == broadcastTask)

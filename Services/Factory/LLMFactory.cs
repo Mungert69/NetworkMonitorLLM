@@ -43,6 +43,8 @@ public class LLMFactory : ILLMFactory
     private readonly ILogger _logger;
     private readonly IServiceProvider _serviceProvider;
     private readonly SemaphoreSlim _processRunnerSemaphore = new SemaphoreSlim(1, 1);
+    private readonly SemaphoreSlim _openAiRunnerSemaphore = new SemaphoreSlim(8, 8);
+    private readonly SemaphoreSlim _hfRunnerSemaphore = new SemaphoreSlim(4, 4);
     private readonly ILLMResponseProcessor _responseProcessor;
     private ConcurrentDictionary<string, Session> _sessions = new();
     public ConcurrentDictionary<string, Session> Sessions { set => _sessions = value; }
@@ -293,8 +295,8 @@ public class LLMFactory : ILLMFactory
 
         ILLMRunner runner = runnerType switch
         {
-            "TurboLLM" => _openAIRunnerFactory.CreateRunner(_serviceProvider, serviceObj, null, history, _cpuUsageMonitor),
-            "HugLLM" => _hfRunnerFactory.CreateRunner(_serviceProvider, serviceObj, null, history, _cpuUsageMonitor),
+            "TurboLLM" => _openAIRunnerFactory.CreateRunner(_serviceProvider, serviceObj, _openAiRunnerSemaphore, history, _cpuUsageMonitor),
+            "HugLLM" => _hfRunnerFactory.CreateRunner(_serviceProvider, serviceObj, _hfRunnerSemaphore, history, _cpuUsageMonitor),
             "TestLLM" => _processRunnerFactory.CreateRunner(_serviceProvider, serviceObj, _processRunnerSemaphore, history, _cpuUsageMonitor),
             _ => throw new ArgumentException($"Invalid runner type: {runnerType}")
         };
