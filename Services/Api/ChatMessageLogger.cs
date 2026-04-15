@@ -29,7 +29,8 @@ namespace NetworkMonitor.LLM.Services
             
             foreach (var message in messages)
             {
-                string label = message.Role switch
+                var role = message.Role?.ToString() ?? string.Empty;
+                string label = role switch
                 {
                     "user" => "User:",
                     "assistant" => "Assistant:",

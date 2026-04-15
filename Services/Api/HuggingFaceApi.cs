@@ -293,9 +293,9 @@ public class HuggingFaceApi : ILLMApi
             model = _modelID,
             messages = messages.Select(m => new
             {
-                role = (!_mlParams.LlmUseToolRoleForFunctionResponses && string.Equals(m.Role, "tool", StringComparison.OrdinalIgnoreCase))
+                role = (!_mlParams.LlmUseToolRoleForFunctionResponses && string.Equals(m.Role?.ToString(), "tool", StringComparison.OrdinalIgnoreCase))
                     ? "user"
-                    : m.Role,
+                    : m.Role?.ToString(),
                 content = FlattenContentForTextOnly(m)
             }).ToList(),
             max_tokens = maxTokens,
