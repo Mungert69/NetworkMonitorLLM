@@ -7,6 +7,7 @@ using Betalgo.Ranul.OpenAI.ObjectModels.RequestModels;
 using Betalgo.Ranul.OpenAI.Tokenizer.GPT3;
 using Betalgo.Ranul.OpenAI.ObjectModels.SharedModels;
 using Betalgo.Ranul.OpenAI.ObjectModels.ResponseModels;
+using NetworkMonitor.LLM.Services;
 public static class JsonToolsBuilder
 {
     public static object? BuildOpenAIToolsPayload(List<ToolDefinition> tools)
@@ -22,7 +23,7 @@ public static class JsonToolsBuilder
                 {
                     name = tool!.Function!.Name,
                     description = tool.Function.Description,
-                    parameters = tool.Function.Parameters
+                    parameters = OpenAIWireFormat.NormalizeToolParameters(tool.Function.Parameters)
                 }
             })
             .ToList();
@@ -47,7 +48,7 @@ public static class JsonToolsBuilder
                         param => param.Key,
                         param => new
                         {
-                            type = param.Value.Type,
+                            type = param.Value.Type?.ToString(),
                             description = param.Value.Description
                         }
                     )

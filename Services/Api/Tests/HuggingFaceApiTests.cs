@@ -1,10 +1,13 @@
 using System.Collections.Generic;
+using System.Reflection;
 using Betalgo.Ranul.OpenAI.ObjectModels.RequestModels;
 using Betalgo.Ranul.OpenAI.ObjectModels.SharedModels;
 using Microsoft.Extensions.Logging;
 using Moq;
 using NetworkMonitor.Objects;
 using NetworkMonitor.Objects.ServiceMessage;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 using Xunit;
 
 namespace NetworkMonitor.LLM.Services;
@@ -98,5 +101,61 @@ public class HuggingFaceApiTests
 
         Assert.Equal("f,g", names);
         _toolsBuilder.Verify(t => t.GetFunctionNamesAsString(It.IsAny<string>()), Times.Once());
+    }
+
+    [Fact]
+    public void BuildPayload_SerializesBetalgoValueTypesAsOpenAIPrimitives()
+    {
+        _mlParams.LlmHfSupportsFunctionCalling = true;
+        var api = CreateApi();
+        var messages = new List<ChatMessage>
+        {
+            ChatMessage.FromUser("hello"),
+            new ChatMessage
+            {
+                Role = "assistant",
+                Content = string.Empty,
+                ToolCalls = new List<ToolCall>
+                {
+                    new()
+                    {
+                        Id = "call_1",
+                        Type = "function",
+                        FunctionCall = new FunctionCall
+                        {
+                            Name = "add_host",
+                            Arguments = "{\"detail_response\":false}"
+                        }
+                    }
+                }
+            },
+            ChatMessage.FromTool("{}", "call_1"),
+            new("user", new List<MessageContent>
+            {
+                MessageContent.TextContent("look at this"),
+                MessageContent.ImageUrlContent("https://example.com/image.jpg", "high")
+            }, null, null, null)
+        };
+
+        var convert = typeof(HuggingFaceApi).GetMethod("ConvertMessagesForOpenAIToolMode", BindingFlags.NonPublic | BindingFlags.Instance)!;
+        var structuredMessages = (List<Dictionary<string, object?>>)convert.Invoke(api, new object[] { messages })!;
+
+        var buildPayload = typeof(HuggingFaceApi).GetMethod("BuildPayload", BindingFlags.NonPublic | BindingFlags.Instance)!;
+        var payload = buildPayload.Invoke(api, new object?[] { messages, 128, null, structuredMessages })!;
+
+        var json = JsonConvert.SerializeObject(payload, Formatting.None, new JsonSerializerSettings
+        {
+            ContractResolver = new CamelCasePropertyNamesContractResolver(),
+            NullValueHandling = NullValueHandling.Ignore
+        });
+
+        Assert.Contains("\"role\":\"user\"", json);
+        Assert.Contains("\"role\":\"assistant\"", json);
+        Assert.Contains("\"role\":\"tool\"", json);
+        Assert.Contains("\"type\":\"function\"", json);
+        Assert.Contains("\"detail\":\"high\"", json);
+        Assert.DoesNotContain("\"role\":{\"value\"", json);
+        Assert.DoesNotContain("\"type\":{\"value\"", json);
+        Assert.DoesNotContain("\"detail\":{\"value\"", json);
     }
 }

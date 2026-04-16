@@ -344,10 +344,10 @@ public class HuggingFaceApi : ILLMApi
         {
             var entry = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
             {
-                ["role"] = message.Role
+                ["role"] = OpenAIWireFormat.Role(message)
             };
 
-            if (!string.IsNullOrEmpty(message.Name) && string.Equals(message.Role, "tool", StringComparison.OrdinalIgnoreCase))
+            if (!string.IsNullOrEmpty(message.Name) && OpenAIWireFormat.IsRole(message, "tool"))
             {
                 entry["name"] = message.Name;
             }
@@ -360,12 +360,12 @@ public class HuggingFaceApi : ILLMApi
             var toolCalls = message.ToolCalls ?? new List<ToolCall>();
             if (toolCalls.Any())
             {
-                entry["content"] = BuildStructuredContent(message);
+                entry["content"] = OpenAIWireFormat.BuildStructuredContent(message);
                 entry["tool_calls"] = toolCalls.Select(tc =>
                     new Dictionary<string, object?>
                     {
                         ["id"] = tc.Id,
-                        ["type"] = string.IsNullOrWhiteSpace(tc.Type) ? "function" : tc.Type,
+                        ["type"] = OpenAIWireFormat.ToolCallType(tc),
                         ["function"] = tc.FunctionCall == null
                             ? null
                             : new Dictionary<string, object?>
@@ -377,7 +377,7 @@ public class HuggingFaceApi : ILLMApi
             }
             else
             {
-                entry["content"] = BuildStructuredContent(message);
+                entry["content"] = OpenAIWireFormat.BuildStructuredContent(message);
             }
 
             formatted.Add(entry);
@@ -386,50 +386,9 @@ public class HuggingFaceApi : ILLMApi
         return formatted;
     }
 
-    private static object BuildStructuredContent(ChatMessage message)
-    {
-        var messageContents = ExtractMessageContents(message);
-        if (messageContents.Count > 0)
-        {
-            return messageContents.Select(part =>
-            {
-                if (string.Equals(part.Type, "image_url", StringComparison.OrdinalIgnoreCase))
-                {
-                    return new Dictionary<string, object?>
-                    {
-                        ["type"] = "image_url",
-                        ["image_url"] = new Dictionary<string, object?>
-                        {
-                            ["url"] = part.ImageUrl?.Url ?? string.Empty,
-                            ["detail"] = string.IsNullOrWhiteSpace(part.ImageUrl?.Detail) ? "auto" : part.ImageUrl.Detail
-                        }
-                    };
-                }
-
-                return new Dictionary<string, object?>
-                {
-                    ["type"] = "text",
-                    ["text"] = part.Text ?? string.Empty
-                };
-            }).ToList();
-        }
-
-        return message.Content ?? string.Empty;
-    }
-
     private static List<MessageContent> ExtractMessageContents(ChatMessage message)
     {
-        if (message.ContentCalculated is IList<MessageContent> typedList)
-        {
-            return typedList.ToList();
-        }
-
-        if (message.ContentCalculated is IEnumerable<MessageContent> typedEnumerable)
-        {
-            return typedEnumerable.ToList();
-        }
-
-        return new List<MessageContent>();
+        return OpenAIWireFormat.ExtractMessageContents(message);
     }
 
     private static (int multimodalCount, int imagePartCount) GetContentShapeStats(IEnumerable<ChatMessage> messages)
