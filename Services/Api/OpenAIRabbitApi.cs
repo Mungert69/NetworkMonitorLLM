@@ -247,11 +247,11 @@ namespace NetworkMonitor.LLM.Services
             {
                 var entry = new Dictionary<string, object?>
                 {
-                    ["role"] = m.Role
+                    ["role"] = OpenAIWireFormat.Role(m)
                 };
 
                 if (!string.IsNullOrWhiteSpace(m.Name) &&
-                    string.Equals(m.Role, "tool", StringComparison.OrdinalIgnoreCase))
+                    OpenAIWireFormat.IsRole(m, "tool"))
                 {
                     entry["name"] = m.Name;
                 }
@@ -266,7 +266,7 @@ namespace NetworkMonitor.LLM.Services
                     entry["tool_calls"] = m.ToolCalls.Select(tc => new Dictionary<string, object?>
                     {
                         ["id"] = tc.Id,
-                        ["type"] = string.IsNullOrWhiteSpace(tc.Type) ? "function" : tc.Type,
+                        ["type"] = OpenAIWireFormat.ToolCallType(tc),
                         ["function"] = tc.FunctionCall == null
                             ? null
                             : new Dictionary<string, object?>
@@ -277,7 +277,7 @@ namespace NetworkMonitor.LLM.Services
                     }).ToList();
                 }
 
-                entry["content"] = BuildStructuredContent(m);
+                entry["content"] = OpenAIWireFormat.BuildStructuredContent(m);
                 return entry;
             }).ToList();
 
@@ -291,7 +291,7 @@ namespace NetworkMonitor.LLM.Services
                     {
                         name = t.Function?.Name,
                         description = t.Function?.Description,
-                        parameters = t.Function?.Parameters
+                        parameters = OpenAIWireFormat.NormalizeToolParameters(t.Function?.Parameters)
                     }
                 }).ToList();
             }
@@ -310,50 +310,9 @@ namespace NetworkMonitor.LLM.Services
             };
         }
 
-        private static object BuildStructuredContent(ChatMessage message)
-        {
-            var parts = ExtractMessageContents(message);
-            if (parts.Count > 0)
-            {
-                return parts.Select(part =>
-                {
-                    if (string.Equals(part.Type, "image_url", StringComparison.OrdinalIgnoreCase))
-                    {
-                        return new Dictionary<string, object?>
-                        {
-                            ["type"] = "image_url",
-                            ["image_url"] = new Dictionary<string, object?>
-                            {
-                                ["url"] = part.ImageUrl?.Url ?? string.Empty,
-                                ["detail"] = string.IsNullOrWhiteSpace(part.ImageUrl?.Detail) ? "auto" : part.ImageUrl.Detail
-                            }
-                        };
-                    }
-
-                    return new Dictionary<string, object?>
-                    {
-                        ["type"] = "text",
-                        ["text"] = part.Text ?? string.Empty
-                    };
-                }).ToList();
-            }
-
-            return message.Content ?? string.Empty;
-        }
-
         private static List<MessageContent> ExtractMessageContents(ChatMessage message)
         {
-            if (message.ContentCalculated is IList<MessageContent> list)
-            {
-                return list.ToList();
-            }
-
-            if (message.ContentCalculated is IEnumerable<MessageContent> enumerable)
-            {
-                return enumerable.ToList();
-            }
-
-            return new List<MessageContent>();
+            return OpenAIWireFormat.ExtractMessageContents(message);
         }
 
         private static (int multimodalCount, int imagePartCount) GetContentShapeStats(IEnumerable<ChatMessage> messages)
