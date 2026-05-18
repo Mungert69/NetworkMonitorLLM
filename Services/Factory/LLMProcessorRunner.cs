@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
+using Betalgo.Ranul.OpenAI.ObjectModels.RequestModels;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
 using NetworkMonitor.Objects.ServiceMessage;
@@ -41,6 +42,8 @@ public class LLMProcessRunner : ILLMRunner
     private LLMConfig _config;
     private LLMServiceObj _startServiceoObj;
     private readonly ISystemPromptWriter _systemPromptWriter;
+    private readonly List<ChatMessage> _history;
+    private readonly object _historyLock = new();
 
     public bool IsStateReady { get => _isStateReady; }
     public bool IsStateStarting { get => _isStateStarting; }
@@ -63,7 +66,7 @@ public class LLMProcessRunner : ILLMRunner
     private ConcurrentDictionary<string, StringBuilder?> _assistantMessages = new ConcurrentDictionary<string, StringBuilder?>();
     private ConcurrentDictionary<string, StringBuilder?> _systemMessages = new ConcurrentDictionary<string, StringBuilder?>();
 
-    public LLMProcessRunner(ILogger<LLMProcessRunner> logger, ILLMResponseProcessor responseProcessor,   SystemParams systemParams,  MLParams mlParams, LLMServiceObj startServiceObj, SemaphoreSlim? processRunnerSemaphore, IAudioGenerator audioGenerator, ICpuUsageMonitor cpuUsageMonitor, IQueryCoordinator queryCoordinator, ISystemPromptWriter systemPromptWriter)
+    public LLMProcessRunner(ILogger<LLMProcessRunner> logger, ILLMResponseProcessor responseProcessor,   SystemParams systemParams,  MLParams mlParams, LLMServiceObj startServiceObj, SemaphoreSlim? processRunnerSemaphore, IAudioGenerator audioGenerator, ICpuUsageMonitor cpuUsageMonitor, IQueryCoordinator queryCoordinator, ISystemPromptWriter systemPromptWriter, List<ChatMessage> history)
     {
         _logger = logger;
         _responseProcessor = responseProcessor;
@@ -77,6 +80,8 @@ public class LLMProcessRunner : ILLMRunner
         _isEnabled = _mlParams.StartThisTestLLM;
         _queryCoordinator = queryCoordinator;
         _systemPromptWriter = systemPromptWriter;
+        _history = history;
+        _history.Clear();
         _audioStreamProvider = new AudioStreamProvider(audioGenerator, _responseProcessor, _logger, Type);
     }
 
@@ -263,6 +268,7 @@ public class LLMProcessRunner : ILLMRunner
     public Task RemoveProcess(string sessionId)
     {
         _isStateReady = false;
+        ClearHistory();
 
         if (!_processes.TryGetValue(sessionId, out var process))
         {
@@ -436,6 +442,95 @@ public class LLMProcessRunner : ILLMRunner
         return string.Format(_config.FunctionResponseTemplate, pendingServiceObj.FunctionName, userInput);
     }
 
+    private bool ShouldRecordHistory(LLMServiceObj serviceObj)
+    {
+        return _sendOutput
+            && serviceObj.IsPrimaryLlm
+            && !serviceObj.IsFunctionCall
+            && !serviceObj.IsFunctionCallResponse
+            && !serviceObj.IsFunctionCallStatus
+            && !serviceObj.IsFunctionStillRunning
+            && !serviceObj.UserInput.StartsWith("<|", StringComparison.Ordinal);
+    }
+
+    private void AddUserHistoryMessage(string userInput)
+    {
+        if (string.IsNullOrWhiteSpace(userInput))
+        {
+            return;
+        }
+
+        lock (_historyLock)
+        {
+            _history.Add(ChatMessage.FromUser(userInput));
+        }
+    }
+
+    private void AddAssistantHistoryMessage(string responseContent)
+    {
+        var assistantContent = CleanAssistantHistoryContent(responseContent);
+        if (string.IsNullOrWhiteSpace(assistantContent))
+        {
+            return;
+        }
+
+        lock (_historyLock)
+        {
+            _history.Add(ChatMessage.FromAssistant(assistantContent));
+        }
+    }
+
+    private string CleanAssistantHistoryContent(string responseContent)
+    {
+        var content = responseContent;
+        if (string.IsNullOrWhiteSpace(content))
+        {
+            return string.Empty;
+        }
+
+        foreach (var token in new[] { _config.AssistantHeader, _config.EOTToken, _config.EOMToken })
+        {
+            if (!string.IsNullOrEmpty(token))
+            {
+                content = content.Replace(token, string.Empty);
+            }
+        }
+
+        return content.Trim();
+    }
+
+    private void ClearHistory()
+    {
+        lock (_historyLock)
+        {
+            _history.Clear();
+        }
+    }
+
+    private async Task ReplayHistory(string sessionId)
+    {
+        List<ChatMessage> historySnapshot;
+        lock (_historyLock)
+        {
+            historySnapshot = _history
+                .Where(message => message.Role == "user" || message.Role == "assistant")
+                .ToList();
+        }
+
+        foreach (var message in historySnapshot)
+        {
+            var responseServiceObj = new LLMServiceObj
+            {
+                SessionId = sessionId,
+                LlmMessage = message.Role == "user"
+                    ? $"<User:> {message.Content}\n\n"
+                    : $"<Assistant:> {message.Content}\n"
+            };
+
+            await _responseProcessor.ProcessLLMOutput(responseServiceObj);
+        }
+    }
+
 
     public async Task SendInputAndGetResponse(LLMServiceObj serviceObj)
     {
@@ -457,9 +552,8 @@ public class LLMProcessRunner : ILLMRunner
         }
         if (serviceObj.UserInput == "<|REPLAY_HISTORY|>")
         {
-            // TODO implement a caching mech for getting previoud contexts
-            //await ReplayHistory(serviceObj.SessionId);
-            _logger.LogInformation($" Replay history  not yet implemented for sessionId {serviceObj.SessionId}");
+            await ReplayHistory(serviceObj.SessionId);
+            _logger.LogInformation($" Replayed TestLLM history for sessionId {serviceObj.SessionId}");
             return;
         }
         if (serviceObj.UserInput.StartsWith("<|GET_HISTORY_DISPLAY|>", StringComparison.Ordinal))
@@ -559,6 +653,13 @@ public class LLMProcessRunner : ILLMRunner
                 tokenBroadcaster.Init(_config);
 
             }
+            bool shouldRecordHistory = ShouldRecordHistory(serviceObj);
+            if (shouldRecordHistory)
+            {
+                AddUserHistoryMessage(serviceObj.UserInput);
+            }
+            int responseContentStartLength = tokenBroadcaster.ResponseContent.Length;
+
             string userInput = serviceObj.UserInput;
             var preAssistantMessage = "";
             var preSystemMessage = "";
@@ -641,6 +742,14 @@ public class LLMProcessRunner : ILLMRunner
                 {
                     if (tokenBroadcaster.SystemMessage != null) _systemMessages.TryAdd(serviceObj.MessageID, tokenBroadcaster.SystemMessage);
                     tokenBroadcaster.SystemMessage = null;
+                }
+
+                if (shouldRecordHistory && tokenBroadcaster != null)
+                {
+                    var responseContent = tokenBroadcaster.ResponseContent.Length > responseContentStartLength
+                        ? tokenBroadcaster.ResponseContent.Substring(responseContentStartLength)
+                        : string.Empty;
+                    AddAssistantHistoryMessage(responseContent);
                 }
 
                 if (_createAudio && serviceObj.IsPrimaryLlm && tokenBroadcaster != null)

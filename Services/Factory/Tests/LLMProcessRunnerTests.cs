@@ -1,7 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using Betalgo.Ranul.OpenAI.ObjectModels.RequestModels;
 using Microsoft.Extensions.Logging;
 using Moq;
 using NetworkMonitor.Coordinator;
@@ -41,7 +43,8 @@ public class LLMProcessRunnerTests
              Mock.Of<IAudioGenerator>(),
              cpuUsageMonitor.Object,
              queryCoordinator,
-             systemPromptWriter);
+             systemPromptWriter,
+             new List<ChatMessage>());
 
         return (runner, responseProcessor);
     }
