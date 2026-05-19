@@ -30,7 +30,9 @@ public class Hal9000MonitorToolsBuilder : MonitorToolsBuilder
             "call_penetration_flow",
             "call_cmd_processor_builder_flow",
             "execute_query_faq",
-            "execute_query_securitybooks"
+            "execute_query_securitybooks",
+            "run_busybox"
+      
         };
 
         _tools = _tools
