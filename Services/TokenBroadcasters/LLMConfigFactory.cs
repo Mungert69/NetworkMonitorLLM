@@ -26,6 +26,20 @@ Where:
     Each parameter from the function definition becomes an XML element inside <parameters>.
     Treat all parameter values as strings for simplicity, placing them inside the XML elements.
 ";
+    private static readonly string _miniCpmPromptFooter = @"If you choose to call a function, ONLY reply in the following format with NO suffix:
+
+<function name=""function-name"">
+<param name=""param-name"">param-value</param>
+</function>
+
+Reminder:
+- Function calls MUST follow the specified format
+- Required parameters MUST be specified
+- You may provide optional reasoning for your function call in natural language BEFORE the function call, but NOT after
+- If a parameter value contains <, & or newline characters, wrap it in a CDATA block:
+  <param name=""param-name""><![CDATA[...multi-line value...]]></param>
+- If there is no function call available, answer the question like normal with your current knowledge and do not tell the user about function calls
+";
     public static LLMConfig GetConfig(string llmVersion)
     {
         return llmVersion switch
@@ -425,6 +439,32 @@ Reminder:
 - If there is no function call available, answer the question like normal with your current knowledge and do not tell the user about function calls",
                 CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
                         new TokenBroadcasterQwen_3_5(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
+            },
+            "minicpm_5" or "minicpm-5" => new LLMConfig
+            {
+                UserReplace = "<|im_start|>user\\\n",
+                FunctionReplace = "<|im_start|>user\\\n<tool_response>",
+                AssistantHeader = "<|im_start|>assistant\n",
+                UserInputTemplate = "<|im_start|>user\\\n{0}",
+                AssistantMessageTemplate = "<|im_start|>assistant\\\n{0}<|im_end|>",
+                SystemMessageTemplate = "<|im_start|>system\\\n{0}<|im_end|>",
+                EOTToken = "<|im_end|>",
+                FunctionResponseTemplate = "<|im_start|>user\\\n<tool_response>\\\n{1}\\\n</tool_response>",
+                NoThinkToken = "/no_think",
+                ThinkBeginToken = "<think>",
+                ThinkEndToken = "</think>",
+                FunctionBuilder = "<function name=\"{{function_name}}\">\n{{param_elements}}\n</function>",
+                FunctionResponse = "<tool_response>\n{1}\n</tool_response>",
+                FunctionDefsWrap = @"# Tools
+
+You are provided with function signatures within <tools></tools> XML tags:
+<tools>
+{0}
+</tools>",
+                XmlPromptFooter = _miniCpmPromptFooter,
+                PromptFooter = _miniCpmPromptFooter,
+                CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
+                        new TokenBroadcasterMiniCPM_5(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
             },
             "minimax_2.5" or "minimax_2_5" => new LLMConfig
             {

@@ -54,6 +54,7 @@ public static class PromptRenderer
         string args = string.IsNullOrWhiteSpace(argumentsJson) ? "{}" : argumentsJson.Trim();
         string fullJson = $"{{\"name\": \"{functionName}\", \"arguments\": {args}}}";
         string xmlParameters = BuildXmlParameterBlock(args);
+        string paramElements = BuildParamElementBlock(args);
         string argKeyValueXml = BuildArgKeyValueBlock(args);
         string invokeParameters = BuildInvokeParameterBlock(args);
 
@@ -63,7 +64,7 @@ public static class PromptRenderer
         }
 
         string builder = config.FunctionBuilder;
-        if (!TryRenderNamedTemplate(builder, functionName, args, fullJson, xmlParameters, argKeyValueXml, invokeParameters, out var rendered))
+        if (!TryRenderNamedTemplate(builder, functionName, args, fullJson, xmlParameters, paramElements, argKeyValueXml, invokeParameters, out var rendered))
         {
             return fullJson;
         }
@@ -77,6 +78,7 @@ public static class PromptRenderer
         string args,
         string fullJson,
         string xmlParameters,
+        string paramElements,
         string argKeyValueXml,
         string invokeParameters,
         out string rendered)
@@ -88,6 +90,7 @@ public static class PromptRenderer
             ["{{arguments_json}}"] = args,
             ["{{tool_call_json}}"] = fullJson,
             ["{{xml_parameters}}"] = xmlParameters,
+            ["{{param_elements}}"] = paramElements,
             ["{{arg_key_values}}"] = argKeyValueXml,
             ["{{invoke_parameters}}"] = invokeParameters
         };
@@ -141,6 +144,43 @@ public static class PromptRenderer
         catch (JsonException)
         {
             return $"<parameter name=\"arguments\">\n{argsJson}\n</parameter>";
+        }
+    }
+
+    private static string BuildParamElementBlock(string argsJson)
+    {
+        if (string.IsNullOrWhiteSpace(argsJson))
+        {
+            return string.Empty;
+        }
+
+        try
+        {
+            using var document = JsonDocument.Parse(argsJson);
+            if (document.RootElement.ValueKind != JsonValueKind.Object)
+            {
+                return $"<param name=\"arguments\">\n{argsJson}\n</param>";
+            }
+
+            var builder = new StringBuilder();
+            foreach (var property in document.RootElement.EnumerateObject())
+            {
+                string value = property.Value.ValueKind == JsonValueKind.String
+                    ? property.Value.GetString() ?? string.Empty
+                    : property.Value.GetRawText();
+
+                builder.Append("<param name=\"")
+                    .Append(property.Name)
+                    .Append("\">\n")
+                    .Append(value)
+                    .Append("\n</param>\n");
+            }
+
+            return builder.ToString().TrimEnd();
+        }
+        catch (JsonException)
+        {
+            return $"<param name=\"arguments\">\n{argsJson}\n</param>";
         }
     }
 

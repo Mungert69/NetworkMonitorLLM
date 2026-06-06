@@ -36,6 +36,22 @@ public class PromptRendererTests
     }
 
     [Fact]
+    public void BuildToolCallText_RendersParamElements()
+    {
+        var config = new LLMConfig
+        {
+            FunctionBuilder = "<function name=\"{{function_name}}\">{{param_elements}}</function>"
+        };
+
+        string rendered = PromptRenderer.BuildToolCallText(config, "run_nmap", "{\"target\":\"127.0.0.1\",\"scan_options\":\"-sS -T4\"}");
+
+        Assert.Contains("<function name=\"run_nmap\">", rendered);
+        Assert.Contains("<param name=\"target\">", rendered);
+        Assert.Contains("<param name=\"scan_options\">", rendered);
+        Assert.DoesNotContain("{{param_elements}}", rendered);
+    }
+
+    [Fact]
     public void BuildToolCallText_BuilderWithoutNamedTokens_FallsBackToFullJson()
     {
         var config = new LLMConfig
