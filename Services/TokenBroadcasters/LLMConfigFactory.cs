@@ -354,6 +354,45 @@ Reminder:
                         new TokenBroadcasterQwen_2_5(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
             },
 
+            // mellium_2 follows the same chat/tool template as qwen_3.
+            "mellium_2" => new LLMConfig
+            {
+                UserReplace = "<|im_start|>user\\\n",
+                FunctionReplace = "<|im_start|>user\\\n<tool_response>",
+                AssistantHeader = "<|im_start|>assistant\n",
+                UserInputTemplate = "<|im_start|>user\\\n{0}",
+                AssistantMessageTemplate = "<|im_start|>assistant\\\n{0}<|im_end|>",
+                SystemMessageTemplate = "<|im_start|>system\\\n{0}<|im_end|>",
+                EOTToken = "<|im_end|>",
+                NoThinkToken = "/no_think",
+                ThinkBeginToken = "<think>",
+                ThinkEndToken = "</think>",
+                FunctionResponseTemplate = "<|im_start|>user\\\n<tool_response>\\\n{1}\\\n</tool_response>",
+                FunctionBuilder = "<tool_call>\n{{tool_call_json}}\n</tool_call>",
+                FunctionResponse = "<tool_response>\n{1}\n</tool_response>",
+                FunctionDefsWrap = @"# Tools
+
+You may call one or more functions to assist with the user query.
+
+You are provided with function signatures within <tools></tools> XML tags:
+<tools>
+{0}
+</tools>",
+                XmlPromptFooter = _xmlPromptFooter,
+                PromptFooter = @"For each function call, return a json object with function name and arguments within <tool_call></tool_call> XML tags:
+<tool_call>
+{""name"": <function-name>, ""arguments"": <args-json-object>}
+</tool_call>
+Reminder:
+- Function calls MUST follow the specified format : <tool_call> {""name"": <function-name>, ""arguments"": <args-json-object>} </tool_call>
+- The function call repsonses are between tags <tool_response> and </tool_response> 
+- Required parameters MUST be specified
+- Only call one function at a time
+- Important: You will call functions only when necessary. Checking with the user before calling more functions.
+",
+                CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
+                        new TokenBroadcasterQwen_3(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
+            },
             "qwen_3" => new LLMConfig
             {
                 UserReplace = "<|im_start|>user\\\n",
