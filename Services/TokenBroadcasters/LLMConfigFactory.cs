@@ -354,8 +354,8 @@ Reminder:
                         new TokenBroadcasterQwen_2_5(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
             },
 
-            // mellium_2 follows the same chat/tool template as qwen_3.
-            "mellium_2" => new LLMConfig
+            // mellum_2 follows the same chat/tool template as qwen_3.
+            "mellum_2" => new LLMConfig
             {
                 UserReplace = "<|im_start|>user\\\n",
                 FunctionReplace = "<|im_start|>user\\\n<tool_response>",
