@@ -483,7 +483,7 @@ public sealed class SystemPromptWriter : ISystemPromptWriter
         string modelPath = _mlParams.LlmModelPath + _mlParams.LlmModelFileName;
         string tempValue = "0";
         int threads = Math.Max(1, _mlParams.LlmThreads);
-        var args = $"{promptMode} {reversePrompt} -c {_mlParams.LlmCtxSize} -m \"{modelPath}\" --prompt-cache \"{contextPath}\" --prompt-cache-all -f \"{basePromptPath}\" --temp {tempValue} -n 1 --keep -1 -t {threads} -tb {threads}";
+        var args = $"{promptMode} {reversePrompt} -c {_mlParams.LlmCtxSize} -m \"{modelPath}\" --prompt-cache \"{contextPath}\" -f \"{basePromptPath}\" --temp {tempValue} -n 1 --keep -1 -t {threads} -tb {threads}";
 
         return new ProcessStartInfo
         {
