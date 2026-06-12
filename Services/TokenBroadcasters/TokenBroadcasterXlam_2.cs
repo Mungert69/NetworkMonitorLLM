@@ -13,7 +13,7 @@ using System.Text.RegularExpressions;
 
 namespace NetworkMonitor.LLM.Services
 {
-    public class TokenBroadcasterXlam2 : TokenBroadcasterBase
+    public class TokenBroadcasterXlam_2 : TokenBroadcasterBase
     {
         public TokenBroadcasterXlam2(
             ILLMResponseProcessor responseProcessor,
