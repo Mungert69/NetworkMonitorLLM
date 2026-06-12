@@ -23,7 +23,7 @@ public class TokenBroadcasterMellum_2 : TokenBroadcasterBase
         @"<parameter=(?<name>[^>\r\n]+)>\s*(?<value>.*?)\s*</parameter>",
         RegexOptions.Singleline | RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-    public TokenBroadcasterMellum2(
+    public TokenBroadcasterMellum_2(
         ILLMResponseProcessor responseProcessor,
         ILogger logger,
         bool xmlFunctionParsing,
