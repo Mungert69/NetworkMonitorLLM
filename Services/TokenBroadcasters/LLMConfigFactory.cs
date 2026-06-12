@@ -354,7 +354,7 @@ Reminder:
                         new TokenBroadcasterQwen_2_5(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
             },
 
-            // mellum_2 follows the same chat/tool template as qwen_3.
+            // mellum_2 follows the same chat/tool template as qwen_3.5
             "mellum_2" => new LLMConfig
             {
                 UserReplace = "<|im_start|>user\\\n",
@@ -364,32 +364,42 @@ Reminder:
                 AssistantMessageTemplate = "<|im_start|>assistant\\\n{0}<|im_end|>",
                 SystemMessageTemplate = "<|im_start|>system\\\n{0}<|im_end|>",
                 EOTToken = "<|im_end|>",
+                FunctionResponseTemplate = "<|im_start|>user\\\n<tool_response>\\\n{1}\\\n</tool_response>",
                 NoThinkToken = "/no_think",
                 ThinkBeginToken = "<think>",
                 ThinkEndToken = "</think>",
-                FunctionResponseTemplate = "<|im_start|>user\\\n<tool_response>\\\n{1}\\\n</tool_response>",
-                FunctionBuilder = "<tool_call>\n{{tool_call_json}}\n</tool_call>",
+                // Note: {2} is the XML parameter block rendered by PromptRenderer (JSON args -> <parameter=...>...</parameter>).
+                // Use this for models/templates that require XML tool calls with explicit <parameter> tags (e.g., Qwen 3.5).
+                FunctionBuilder = "<tool_call>\n<function={{function_name}}>\n{{xml_parameters}}\n</function>\n</tool_call>",
                 FunctionResponse = "<tool_response>\n{1}\n</tool_response>",
                 FunctionDefsWrap = @"# Tools
 
-You may call one or more functions to assist with the user query.
+You have access to the following functions:
 
-You are provided with function signatures within <tools></tools> XML tags:
 <tools>
 {0}
 </tools>",
                 XmlPromptFooter = _xmlPromptFooter,
-                PromptFooter = @"For each function call, return a json object with function name and arguments within <tool_call></tool_call> XML tags:
+                PromptFooter = @"If you choose to call a function ONLY reply in the following format with NO suffix:
+
 <tool_call>
-{""name"": <function-name>, ""arguments"": <args-json-object>}
+<function=example_function_name>
+<parameter=example_parameter_1>
+value_1
+</parameter>
+<parameter=example_parameter_2>
+This is the value for the second parameter
+that can span
+multiple lines
+</parameter>
+</function>
 </tool_call>
+
 Reminder:
-- Function calls MUST follow the specified format : <tool_call> {""name"": <function-name>, ""arguments"": <args-json-object>} </tool_call>
-- The function call repsonses are between tags <tool_response> and </tool_response> 
+- Function calls MUST follow the specified format: an inner <function=...></function> block must be nested within <tool_call></tool_call> XML tags
 - Required parameters MUST be specified
-- Only call one function at a time
-- Important: You will call functions only when necessary. Checking with the user before calling more functions.
-",
+- You may provide optional reasoning for your function call in natural language BEFORE the function call, but NOT after
+- If there is no function call available, answer the question like normal with your current knowledge and do not tell the user about function calls",
                 CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
                         new TokenBroadcasterMellum2(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
             },
@@ -429,7 +439,7 @@ Reminder:
 - Important: You will call functions only when necessary. Checking with the user before calling more functions.
 ",
                 CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
-                        new TokenBroadcasterMellum2(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
+                        new TokenBroadcasterQwen3(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
             },
             "qwen_3.5" or "qwen_3_5" => new LLMConfig
             {
@@ -635,7 +645,7 @@ For tool call returns, you MUST use the following format:
                 PromptFooter = "",
                 AppendEotToSuffix = false,
                 CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
-                        new TokenBroadcasterMellum2(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
+                        new TokenBroadcasterQwen3(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
             },
 
 
