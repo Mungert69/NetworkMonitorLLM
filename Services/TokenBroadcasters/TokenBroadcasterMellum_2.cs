@@ -8,7 +8,7 @@ using NetworkMonitor.Objects.ServiceMessage;
 
 namespace NetworkMonitor.LLM.Services;
 
-public class TokenBroadcasterMellum2 : TokenBroadcasterBase
+public class TokenBroadcasterMellum_2 : TokenBroadcasterBase
 {
     // Matches an opening <tool_call> tag and captures everything until the next closing tag of any known element (e.g., </function>)
     private static readonly Regex ToolCallSectionRegex = new(
