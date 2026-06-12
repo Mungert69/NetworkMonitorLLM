@@ -86,6 +86,20 @@ public class TokenBroadcasterMellum2Tests
     }
 
     [Fact]
+    public void ParseInputForJson_HandlesImEndToken()
+    {
+        var broadcaster = CreateBroadcaster();
+        var input = "<tool_call>\n  <function=get_host_list>\n  <parameter=detail_response>\n  true\n  </parameter>\n  </function><|im_end|>";
+
+        var result = broadcaster.ParseInputForJson(input);
+
+        Assert.Single(result);
+        Assert.Equal("get_host_list", result[0].functionName);
+        using var doc = JsonDocument.Parse(result[0].json);
+        Assert.Equal("true", doc.RootElement.GetProperty("detail_response").GetString());
+    }
+
+    [Fact]
     public void ParseInputForJson_ParsesJsonParameterValue()
     {
         var broadcaster = CreateBroadcaster();
