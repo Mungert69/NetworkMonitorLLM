@@ -391,7 +391,7 @@ Reminder:
 - Important: You will call functions only when necessary. Checking with the user before calling more functions.
 ",
                 CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
-                        new TokenBroadcasterQwen_3(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
+                        new TokenBroadcasterMellum2(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
             },
             "qwen_3" => new LLMConfig
             {
@@ -429,7 +429,7 @@ Reminder:
 - Important: You will call functions only when necessary. Checking with the user before calling more functions.
 ",
                 CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
-                        new TokenBroadcasterQwen_3(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
+                        new TokenBroadcasterMellum2(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
             },
             "qwen_3.5" or "qwen_3_5" => new LLMConfig
             {
@@ -635,7 +635,7 @@ For tool call returns, you MUST use the following format:
                 PromptFooter = "",
                 AppendEotToSuffix = false,
                 CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
-                        new TokenBroadcasterQwen_3(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
+                        new TokenBroadcasterMellum2(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
             },
 
 
