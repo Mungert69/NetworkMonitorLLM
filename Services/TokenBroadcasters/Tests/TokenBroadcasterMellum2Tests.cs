@@ -14,7 +14,7 @@ public class TokenBroadcasterMellum2Tests
     private readonly Mock<ILogger> _logger = new();
     private readonly HashSet<string> _ignoreParameters = new();
 
-    private TokenBroadcasterMellum2 CreateBroadcaster(bool xmlFunctionParsing = false)
+    private TokenBroadcasterMellum_2 CreateBroadcaster(bool xmlFunctionParsing = false)
         => new TokenBroadcasterMellum_2(
             _responseProcessor.Object,
             _logger.Object,
