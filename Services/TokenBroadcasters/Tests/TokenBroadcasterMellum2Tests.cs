@@ -37,6 +37,21 @@ public class TokenBroadcasterMellum2Tests
     }
 
     [Fact]
+    public void ParseInputForJson_HandlesWhitespaceAndClosingTag()
+    {
+        var broadcaster = CreateBroadcaster();
+        var input = "<tool_call> <function=get_host_list> <parameter=page_number> 1 </parameter> <parameter=page_size> 4 </parameter> </function></tool_call>";
+
+        var result = broadcaster.ParseInputForJson(input);
+
+        Assert.Single(result);
+        Assert.Equal("get_host_list", result[0].functionName);
+        using var doc = JsonDocument.Parse(result[0].json);
+        Assert.Equal("1", doc.RootElement.GetProperty("page_number").GetString());
+        Assert.Equal("4", doc.RootElement.GetProperty("page_size").GetString());
+    }
+
+    [Fact]
     public void ParseInputForJson_ParsesMultipleToolCalls()
     {
         var broadcaster = CreateBroadcaster();
@@ -53,6 +68,21 @@ public class TokenBroadcasterMellum2Tests
         using var doc1 = JsonDocument.Parse(result[1].json);
         Assert.Equal("10.0.0.1", doc0.RootElement.GetProperty("target").GetString());
         Assert.Equal("10.0.0.2", doc1.RootElement.GetProperty("target").GetString());
+    }
+
+    [Fact]
+    public void ParseInputForJson_HandlesNewlinesBetweenTags()
+    {
+        var broadcaster = CreateBroadcaster();
+        var input = "<tool_call>\n<function=get_host_list>\n<parameter=page_number>\n1\n</parameter>\n<parameter=page_size>\n4\n</parameter>\n</function>\n</tool_call>";
+
+        var result = broadcaster.ParseInputForJson(input);
+
+        Assert.Single(result);
+        Assert.Equal("get_host_list", result[0].functionName);
+        using var doc = JsonDocument.Parse(result[0].json);
+        Assert.Equal("1", doc.RootElement.GetProperty("page_number").GetString());
+        Assert.Equal("4", doc.RootElement.GetProperty("page_size").GetString());
     }
 
     [Fact]
