@@ -12,11 +12,11 @@ public class TokenBroadcasterMellum2 : TokenBroadcasterBase
 {
     // Matches an opening <tool_call> tag and captures everything until the next closing tag of any known element (e.g., </function>)
     private static readonly Regex ToolCallSectionRegex = new(
-        @"<tool_call>\s*(?<inner>.*?)(?=(<tool_call>)|$)",
+        @"<tool_call>\s*(?<inner>.*?)(?=(<tool_call>)|</tool_call>|$)",
         RegexOptions.Singleline | RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     private static readonly Regex FunctionRegex = new(
-        @"<function=(?<name>[^>\r\n]+)>\s*(?<body>.*?)\s*</function>",
+        @"\s*<function=(?<name>[^>\r\n]+)>\s*(?<body>.*?)\s*</function>",
         RegexOptions.Singleline | RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     private static readonly Regex ParameterRegex = new(
