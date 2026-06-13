@@ -30,12 +30,12 @@ public class QuantumTools
                     ["target"] = new PropertyDefinition
                     {
                         Type = "string",
-                        Description = "The target server IP or hostname, required. Example: 'example.com' or '192.168.1.1'."
+                        Description = "Required. The target server IP or hostname. Example: 'example.com' or '192.168.1.1'."
                     },
                     ["port"] = new PropertyDefinition
                     {
                         Type = "integer",
-                        Description = "The TLS port to test, optional. Default is 443."
+                        Description = "Optional. The TLS port to test. Default is 443."
                     },
                     ["algorithms"] = new PropertyDefinition
                     {
@@ -43,13 +43,13 @@ public class QuantumTools
                         Items = new PropertyDefinition
                         {
                             Type = "string",
-                            Description = "The list of quantum-safe algorithms to test, optional. If not provided, all enabled algorithms will be tested."
+                            Description = "Optional. Only include if you want to test against a know list of algorithums. It is recommened to Leave out this parameter to test all algorithums ."
                         }
                     },
                     ["timeout"] = new PropertyDefinition
                     {
                         Type = "integer",
-                        Description = "The maximum time (in milliseconds) to wait for the test to complete, optional. Default is 59000ms."
+                        Description = "Optional. The maximum time (in milliseconds) to wait for the test to complete. Default is 59000ms."
                     },
                     ["agent_location"] = new PropertyDefinition
                     {
@@ -77,7 +77,7 @@ public class QuantumTools
                     ["target"] = new PropertyDefinition
                     {
                         Type = "string",
-                        Description = "The target server IP or hostname, required. Example: 'example.com' or '192.168.1.1'."
+                        Description = "Required. The target server IP or hostname. Example: 'example.com' or '192.168.1.1'."
                     },
                     ["ports"] = new PropertyDefinition
                     {
@@ -85,7 +85,7 @@ public class QuantumTools
                         Items = new PropertyDefinition
                         {
                             Type = "integer",
-                            Description = "The list of ports to scan, optional. If not provided, Nmap will be used to discover open ports."
+                            Description = "Optional. The list of ports to scan. If not provided, Nmap will be used to discover all open ports."
                         }
                     },
                     ["algorithms"] = new PropertyDefinition
@@ -94,18 +94,18 @@ public class QuantumTools
                         Items = new PropertyDefinition
                         {
                             Type = "string",
-                            Description = "The list of quantum-safe algorithms to test, optional. If not provided, all enabled algorithms will be tested."
+                            Description = "Optional. Only include if you want to test against a know list of algorithums. It is recommened to Leave out this parameter to test all algorithums ."
                         }
                     },
                     ["timeout"] = new PropertyDefinition
                     {
                         Type = "integer",
-                        Description = "Per-port scan timeout in milliseconds. Also used for nmap discovery timeout; overall scan timeout is derived from per-port timeout and parallelism. Optional. Default is 59000ms."
+                        Description = "Optional. Per-port scan timeout in milliseconds. Also used for nmap discovery timeout; overall scan timeout is derived from per-port timeout and parallelism. Default is 59000ms."
                     },
                     ["nmap_options"] = new PropertyDefinition
                     {
                         Type = "string",
-                        Description = "Custom Nmap options for port scanning, optional. Default is '-T4 --open --max-retries 2 --host-timeout 30s --initial-rtt-timeout 200ms --max-rtt-timeout 1s'."
+                        Description = "Optional. Custom Nmap options for port scanning. Default is '-T4 --open --max-retries 2 --host-timeout 30s --initial-rtt-timeout 200ms --max-rtt-timeout 1s'."
                     },
                     ["agent_location"] = new PropertyDefinition
                     {
@@ -133,7 +133,7 @@ public class QuantumTools
                 ["algorithm_name"] = new PropertyDefinition
                 {
                     Type = "string",
-                    Description = "Quantum-safe algorithm name (canonical form), required. Examples: 'mlkem768', 'mldsa44', 'falcon512', 'slhdsa128s', 'x25519_mlkem768'."
+                    Description = "Required. Quantum-safe algorithm name. Examples: 'mlkem768', 'mldsa44', 'falcon512', 'slhdsa128s', 'x25519_mlkem768'."
                 },
                 ["agent_location"] = new PropertyDefinition
                 {
@@ -159,7 +159,7 @@ public class QuantumTools
                     ["target"] = new PropertyDefinition
                     {
                         Type = "string",
-                        Description = "The target server IP or hostname, required. Example: 'example.com' or '192.168.1.1'."
+                        Description = "Required. The target server IP or hostname. Example: 'example.com' or '192.168.1.1'."
                     },
                     ["port"] = new PropertyDefinition
                     {
