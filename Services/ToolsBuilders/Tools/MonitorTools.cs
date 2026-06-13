@@ -36,44 +36,44 @@ public class MonitorTools
                     ["address"] = new PropertyDefinition
                     {
                         Type = "string",
-                        Description = "[REQUIRED] The host address to be monitored. This is a required field."
+                        Description = "Required. The host address to be monitored."
                     },
                     ["endpoint"] = BuildEndpointPropertyDefinition(),
 
                     ["port"] = new PropertyDefinition
                     {
                         Type = "number",
-                        Description = "The port of the service being monitored. Optional field. If not specified, it defaults to the standard port for the endpoint type. For example, the standard port for HTTPS is 443."
+                        Description = "Optional. The port of the service being monitored. If not specified, it defaults to the standard port for the endpoint type. For example, the standard port for HTTPS is 443."
                     },
                     ["username"] = new PropertyDefinition
                     {
                         Type = "string",
-                        Description = "Optional credentials or identifier for the endpoint. Commonly used for authentication, but some endpoints use it for other purposes."
+                        Description = "Optional. Credentials or identifier for the endpoint. Commonly used for authentication, but some endpoints use it for other purposes."
                     },
                     ["password"] = new PropertyDefinition
                     {
                         Type = "string",
-                        Description = "Optional credential or secret for the endpoint. Often used for authentication, but some endpoints use it for other purposes (e.g., keys or tokens)."
+                        Description = "Optional. Credential or secret for the endpoint. Often used for authentication, but some endpoints use it for other purposes (e.g., keys or tokens)."
                     },
                     ["args"] = new PropertyDefinition
                     {
                         Type = "string",
-                        Description = "Optional extra arguments for command-style endpoint monitors. Use this to pass additional command-line style flags."
+                        Description = "Optional. Extra arguments for command-style endpoint monitors. Use this to pass additional command-line style flags."
                     },
                     ["timeout"] = new PropertyDefinition
                     {
                         Type = "number",
-                        Description = "The time to wait for a timeout in milliseconds. Optional field. The default is 59000 milliseconds."
+                        Description = "Optional. The time to wait for a timeout in milliseconds. Optional field. The default is 59000 milliseconds."
                     },
                     ["email"] = new PropertyDefinition
                     {
                         Type = "string",
-                        Description = "The user's email address. Do not use this field if the user is logged in; their login email will be used and this field will be ignored. If the user is not logged in, then ask for an email. Alerts are sent to the user's email."
+                        Description = "Optional. The user's email address. Do not use this field if the user is logged in; their login email will be used and this field will be ignored. If the user is not logged in, then ask for an email. Alerts are sent to the user's email."
                     },
                     ["agent_location"] = new PropertyDefinition
                     {
                         Type = "string",
-                        Description = "The location of the agent monitoring this host. Optional field. If left blank, an agent location will be assigned automatically."
+                        Description = "Optional. The location of the agent monitoring this host. Optional field. If left blank, an agent location will be assigned automatically."
                     }
                 },
                 Required = new List<string> { "address" }
@@ -95,64 +95,64 @@ public class MonitorTools
                     ["detail_response"] = new PropertyDefinition
                     {
                         Type = "boolean",
-                        Description = "Set to true if you want the function to echo all the values set. The default is false."
+                        Description = "Optional. Set to true if you want the function to echo all the values set. The default is false."
                     },
                     ["auth_key"] = new PropertyDefinition
                     {
                         Type = "string",
-                        Description = "An authentication key used to authorize the edit action for a user who is not logged in. This key is returned when adding a host for the first time. It should be stored and sent with subsequent edit requests. Optional if the user is logged in."
+                        Description = "Optional if the user is logged in. An authentication key used to authorize the edit action for a user who is not logged in. This key is returned when adding a host for the first time. It should be stored and sent with subsequent edit requests."
                     },
                     ["id"] = new PropertyDefinition
                     {
                         Type = "number",
-                        Description = "The host ID used for identifying the host. Optional field. It is obtained when adding a host."
+                        Description = "Optional. The host ID used for identifying the host. It is obtained when adding a host."
                     },
                     ["enabled"] = new PropertyDefinition
                     {
                         Type = "boolean",
-                        Description = "Whether the host is enabled for monitoring. Optional field."
+                        Description = "Optional. Whether the host is enabled for monitoring."
                     },
                     ["address"] = new PropertyDefinition
                     {
                         Type = "string",
-                        Description = "The host address. Optional field."
+                        Description = "Optional. The host address."
                     },
                     ["endpoint"] = BuildEndpointPropertyDefinition(),
 
                     ["port"] = new PropertyDefinition
                     {
                         Type = "number",
-                        Description = "The port of the service being monitored. Optional field."
+                        Description = "Optional. The port of the service being monitored."
                     },
                     ["username"] = new PropertyDefinition
                     {
                         Type = "string",
-                        Description = "Optional credentials or identifier for the endpoint. Commonly used for authentication, but some endpoints use it for other purposes."
+                        Description = "Optional. Credentials or identifier for the endpoint. Commonly used for authentication, but some endpoints use it for other purposes."
                     },
                     ["password"] = new PropertyDefinition
                     {
                         Type = "string",
-                        Description = "Optional credential or secret for the endpoint. Often used for authentication, but some endpoints use it for other purposes (e.g., keys or tokens)."
+                        Description = "Optional. Credential or secret for the endpoint. Often used for authentication, but some endpoints use it for other purposes (e.g., keys or tokens)."
                     },
                     ["args"] = new PropertyDefinition
                     {
                         Type = "string",
-                        Description = "Optional extra arguments for command-style endpoint monitors. Use this to pass additional command-line style flags."
+                        Description = "Optional. xtra arguments for command-style endpoint monitors. Use this to pass additional command-line style flags."
                     },
                     ["timeout"] = new PropertyDefinition
                     {
                         Type = "number",
-                        Description = "The timeout in milliseconds for the request. Optional field."
+                        Description = "Optional. The timeout in milliseconds for the request."
                     },
                     ["hidden"] = new PropertyDefinition
                     {
                         Type = "boolean",
-                        Description = "Delete a host by setting to true. Optional field."
+                        Description = "Optional. Delete a host by setting to true."
                     },
                     ["agent_location"] = new PropertyDefinition
                     {
                         Type = "string",
-                        Description = "The location of the agent monitoring this host. Optional field."
+                        Description = "Optional. The location of the agent monitoring this host."
                     }
                 }
             }
