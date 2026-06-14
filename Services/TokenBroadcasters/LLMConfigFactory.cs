@@ -756,6 +756,40 @@ If no tool is suitable, state that explicitly. If the user's input lacks require
                         new TokenBroadcasterGemma_3(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
             },
 
+            // Configuration for gemma_4
+            "gemma_4" or "gemma-4" => new LLMConfig
+            {
+                UserReplace = "<|turn>user\\\n",
+                FunctionReplace = "<|tool_response>",
+                AssistantHeader = "<|turn>model\n",
+                UserInputTemplate = "<|turn>user\\\n{0}",
+                AssistantMessageTemplate = "<|turn>model\\\n{0}<turn|>\n",
+                SystemMessageTemplate = "<|turn>system\\\n{0}<turn|>\n",
+                EOTToken = "<turn|>",
+                FunctionResponseTemplate = "<|tool_response>response:{0}{{{1}}}<tool_response|>",
+                BosToken = "<bos>",
+
+                FunctionBuilder = "<|tool_call>call:{{function_name}}{{arguments_json}}<tool_call|>",
+                FunctionResponse = "response:{0}{{{1}}}",
+                FunctionDefsWrap = @"# Tools
+
+You have access to the following functions:
+
+<tools>
+{0}
+</tools>",
+                PromptFooter = @"When calling a tool, use the following format:
+<|tool_call>call:function_name{arg1:<|""|>value1<|""|>,arg2:<|""|>value2<|""|>}<tool_call|>
+
+Reminder:
+- Tool calls MUST follow the specified format
+- Required parameters MUST be specified
+- Use <|""|> delimiters for string values
+- Only call one tool at a time",
+                CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
+                        new TokenBroadcasterGemma_4(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
+            },
+
             "gpt" => new LLMConfig
             {
                 UserReplace = "",
