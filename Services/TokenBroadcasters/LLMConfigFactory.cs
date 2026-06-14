@@ -766,6 +766,7 @@ If no tool is suitable, state that explicitly. If the user's input lacks require
                 AssistantMessageTemplate = "<|turn>model\\\n{0}<turn|>\n",
                 SystemMessageTemplate = "<|turn>system\\\n{0}<turn|>\n",
                 EOTToken = "<turn|>",
+                EOMToken = "<eos>",
                 FunctionResponseTemplate = "<|tool_response>response:{0}{{{1}}}<tool_response|>",
                 FunctionBuilder = "<|tool_call>call:{{function_name}}{{arguments_json}}<tool_call|>",
                 FunctionResponse = "response:{0}{{{1}}}",
