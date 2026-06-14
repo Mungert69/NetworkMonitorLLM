@@ -106,6 +106,9 @@ public sealed class SystemPromptWriter : ISystemPromptWriter
             promptFooter ?? string.Empty,
             suffixPrompt ?? string.Empty);
 
+        // Log the fully assembled system prompt for debugging/traceability.
+        _logger.LogInformation("SystemPromptWriter built system prompt: {Prompt}", systemMessages[0].Content);
+
         var promptMessages = new List<ChatMessage>();
         promptMessages.AddRange(systemMessages);
 

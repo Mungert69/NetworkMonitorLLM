@@ -767,8 +767,6 @@ If no tool is suitable, state that explicitly. If the user's input lacks require
                 SystemMessageTemplate = "<|turn>system\\\n{0}<turn|>\n",
                 EOTToken = "<turn|>",
                 FunctionResponseTemplate = "<|tool_response>response:{0}{{{1}}}<tool_response|>",
-                BosToken = "<bos>",
-
                 FunctionBuilder = "<|tool_call>call:{{function_name}}{{arguments_json}}<tool_call|>",
                 FunctionResponse = "response:{0}{{{1}}}",
                 FunctionDefsWrap = @"# Tools
