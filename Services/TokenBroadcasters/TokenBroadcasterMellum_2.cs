@@ -108,8 +108,8 @@ public class TokenBroadcasterMellum_2 : TokenBroadcasterBase
 
     private static string RenderJsonValue(string rawValue)
     {
-        if (TryNormalizeJson(rawValue, out var normalized))
-            return normalized;
+        // Always treat parameter values as strings to preserve their original form
+        // This ensures values like "1", "true", etc. remain as strings in the JSON
         return JsonSerializer.Serialize(rawValue);
     }
 
