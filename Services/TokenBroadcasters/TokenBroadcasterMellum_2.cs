@@ -108,8 +108,20 @@ public class TokenBroadcasterMellum_2 : TokenBroadcasterBase
 
     private static string RenderJsonValue(string rawValue)
     {
-        // Always treat parameter values as strings to preserve their original form
-        // This ensures values like "1", "true", etc. remain as strings in the JSON
+        // Try to parse as JSON first (for objects/arrays like {"ports":[80,443],"aggressive":true})
+        // If that fails, treat as a string value
+        if (!string.IsNullOrWhiteSpace(rawValue))
+        {
+            try
+            {
+                using var doc = JsonDocument.Parse(rawValue);
+                return doc.RootElement.GetRawText();
+            }
+            catch (JsonException)
+            {
+                // Not valid JSON, treat as string
+            }
+        }
         return JsonSerializer.Serialize(rawValue);
     }
 
