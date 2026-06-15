@@ -444,25 +444,31 @@ public class LLMProcessRunner : ILLMRunner
 
     private bool ShouldRecordHistory(LLMServiceObj serviceObj)
     {
-        return _sendOutput
+        var shouldRecord = _sendOutput
             && serviceObj.IsPrimaryLlm
             && !serviceObj.IsFunctionCall
             && !serviceObj.IsFunctionCallResponse
             && !serviceObj.IsFunctionCallStatus
             && !serviceObj.IsFunctionStillRunning
             && !serviceObj.UserInput.StartsWith("<|", StringComparison.Ordinal);
+        
+        _logger.LogInformation($" [History] ShouldRecordHistory: shouldRecord={shouldRecord}, _sendOutput={_sendOutput}, IsPrimaryLlm={serviceObj.IsPrimaryLlm}, IsFunctionCall={serviceObj.IsFunctionCall}, IsFunctionCallResponse={serviceObj.IsFunctionCallResponse}, IsFunctionCallStatus={serviceObj.IsFunctionCallStatus}, IsFunctionStillRunning={serviceObj.IsFunctionStillRunning}, UserInputStarts=<|={serviceObj.UserInput.StartsWith("<|", StringComparison.Ordinal)}");
+        
+        return shouldRecord;
     }
 
     private void AddUserHistoryMessage(string userInput)
     {
         if (string.IsNullOrWhiteSpace(userInput))
         {
+            _logger.LogInformation($" [History] AddUserHistoryMessage: SKIPPED - userInput is empty or whitespace");
             return;
         }
 
         lock (_historyLock)
         {
             _history.Add(ChatMessage.FromUser(userInput));
+            _logger.LogInformation($" [History] AddUserHistoryMessage: ADDED user message, length={userInput.Length}, total history count={_history.Count}");
         }
     }
 
@@ -471,12 +477,14 @@ public class LLMProcessRunner : ILLMRunner
         var assistantContent = CleanAssistantHistoryContent(responseContent);
         if (string.IsNullOrWhiteSpace(assistantContent))
         {
+            _logger.LogInformation($" [History] AddAssistantHistoryMessage: SKIPPED - assistantContent is empty or whitespace after cleaning, original length={responseContent?.Length ?? 0}");
             return;
         }
 
         lock (_historyLock)
         {
             _history.Add(ChatMessage.FromAssistant(assistantContent));
+            _logger.LogInformation($" [History] AddAssistantHistoryMessage: ADDED assistant message, cleaned length={assistantContent.Length}, original length={responseContent?.Length ?? 0}, total history count={_history.Count}");
         }
     }
 
@@ -485,25 +493,39 @@ public class LLMProcessRunner : ILLMRunner
         var content = responseContent;
         if (string.IsNullOrWhiteSpace(content))
         {
+            _logger.LogInformation($" [History] CleanAssistantHistoryContent: SKIPPED - content is empty or whitespace");
             return string.Empty;
         }
+
+        _logger.LogInformation($" [History] CleanAssistantHistoryContent: STARTING - original length={content.Length}, AssistantHeader='{_config.AssistantHeader}', EOTToken='{_config.EOTToken}', EOMToken='{_config.EOMToken}'");
 
         foreach (var token in new[] { _config.AssistantHeader, _config.EOTToken, _config.EOMToken })
         {
             if (!string.IsNullOrEmpty(token))
             {
+                var beforeLength = content.Length;
                 content = content.Replace(token, string.Empty);
+                var removedCount = beforeLength - content.Length;
+                if (removedCount > 0)
+                {
+                    _logger.LogInformation($" [History] CleanAssistantHistoryContent: REMOVED token '{token}', removed {removedCount} characters");
+                }
             }
         }
 
-        return content.Trim();
+        var trimmedContent = content.Trim();
+        _logger.LogInformation($" [History] CleanAssistantHistoryContent: FINISHED - final length={trimmedContent.Length}, trimmed={(content.Length - trimmedContent.Length)} characters");
+
+        return trimmedContent;
     }
 
     private void ClearHistory()
     {
         lock (_historyLock)
         {
+            _logger.LogInformation($" [History] ClearHistory: CLEARING - history count before clear={_history.Count}");
             _history.Clear();
+            _logger.LogInformation($" [History] ClearHistory: CLEARED - history count after clear={_history.Count}");
         }
     }
 
@@ -517,8 +539,18 @@ public class LLMProcessRunner : ILLMRunner
                 .ToList();
         }
 
+        _logger.LogInformation($" [History] ReplayHistory: STARTING - sessionId={sessionId}, total history count={_history.Count}, filtered count for replay={historySnapshot.Count}");
+        
+        int userCount = 0;
+        int assistantCount = 0;
+        
         foreach (var message in historySnapshot)
         {
+            if (message.Role == "user") userCount++;
+            else if (message.Role == "assistant") assistantCount++;
+            
+            _logger.LogInformation($" [History] ReplayHistory: REPLAYING message - Role={message.Role}, ContentLength={message.Content?.Length ?? 0}, ContentPreview={(message.Content?.Length > 50 ? message.Content.Substring(0, 50) + "..." : message.Content)}");
+            
             var responseServiceObj = new LLMServiceObj
             {
                 SessionId = sessionId,
@@ -529,6 +561,8 @@ public class LLMProcessRunner : ILLMRunner
 
             await _responseProcessor.ProcessLLMOutput(responseServiceObj);
         }
+        
+        _logger.LogInformation($" [History] ReplayHistory: COMPLETED - replayed {historySnapshot.Count} messages (user={userCount}, assistant={assistantCount})");
     }
 
 
@@ -552,8 +586,9 @@ public class LLMProcessRunner : ILLMRunner
         }
         if (serviceObj.UserInput == "<|REPLAY_HISTORY|>")
         {
+            _logger.LogInformation($" [History] REPLAY_HISTORY command received for sessionId={serviceObj.SessionId}, current history count before replay={_history.Count}");
             await ReplayHistory(serviceObj.SessionId);
-            _logger.LogInformation($" Replayed TestLLM history for sessionId {serviceObj.SessionId}");
+            _logger.LogInformation($" [History] Replayed TestLLM history for sessionId {serviceObj.SessionId}");
             return;
         }
         if (serviceObj.UserInput.StartsWith("<|GET_HISTORY_DISPLAY|>", StringComparison.Ordinal))
@@ -749,7 +784,14 @@ public class LLMProcessRunner : ILLMRunner
                     var responseContent = tokenBroadcaster.ResponseContent.Length > responseContentStartLength
                         ? tokenBroadcaster.ResponseContent.Substring(responseContentStartLength)
                         : string.Empty;
+                    
+                    _logger.LogInformation($" [History] About to add assistant message to history - shouldRecordHistory={shouldRecordHistory}, responseContent length={responseContent.Length}, tokenBroadcaster.ResponseContent total length={tokenBroadcaster.ResponseContent.Length}, responseContentStartLength={responseContentStartLength}");
                     AddAssistantHistoryMessage(responseContent);
+                    _logger.LogInformation($" [History] After adding assistant message - current history count={_history.Count}");
+                }
+                else
+                {
+                    _logger.LogInformation($" [History] NOT adding assistant message to history - shouldRecordHistory={shouldRecordHistory}, tokenBroadcaster is null={tokenBroadcaster == null}");
                 }
 
                 if (_createAudio && serviceObj.IsPrimaryLlm && tokenBroadcaster != null)
