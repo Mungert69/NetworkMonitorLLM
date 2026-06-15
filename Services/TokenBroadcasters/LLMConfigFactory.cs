@@ -458,34 +458,12 @@ Reminder:
                 // Use this for models/templates that require XML tool calls with explicit <parameter> tags (e.g., Qwen 3.5).
                 FunctionBuilder = "<tool_call>\n<function={{function_name}}>\n{{xml_parameters}}\n</function>\n</tool_call>",
                 FunctionResponse = "<tool_response>\n{1}\n</tool_response>",
-                FunctionDefsWrap = @"# Tools
-
-You have access to the following functions:
-
+                FunctionDefsWrap = @"
 <tools>
 {0}
 </tools>",
                 XmlPromptFooter = _xmlPromptFooter,
-                PromptFooter = @"If you choose to call a function ONLY reply in the following format with NO suffix:
-
-<tool_call>
-<function=example_function_name>
-<parameter=example_parameter_1>
-value_1
-</parameter>
-<parameter=example_parameter_2>
-This is the value for the second parameter
-that can span
-multiple lines
-</parameter>
-</function>
-</tool_call>
-
-Reminder:
-- Function calls MUST follow the specified format: an inner <function=...></function> block must be nested within <tool_call></tool_call> XML tags
-- Required parameters MUST be specified
-- You may provide optional reasoning for your function call in natural language BEFORE the function call, but NOT after
-- If there is no function call available, answer the question like normal with your current knowledge and do not tell the user about function calls",
+                PromptFooter = "\n\nIf you choose to call a function ONLY reply in the following format with NO suffix:\n\n<tool_call>\n<function=example_function_name>\n<parameter=example_parameter_1>\nvalue_1\n</parameter>\n<parameter=example_parameter_2>\nThis is the value for the second parameter\nthat can span\nmultiple lines\n</parameter>\n</function>\n</tool_call>\n\n<IMPORTANT>\nReminder:\n- Function calls MUST follow the specified format: an inner <function=...></function> block must be nested within <tool_call></tool_call> XML tags\n- Required parameters MUST be specified\n- You may provide optional reasoning for your function call in natural language BEFORE the function call, but NOT after\n- If there is no function call available, answer the question like normal with your current knowledge and do not tell the user about function calls\n</IMPORTANT>"
                 CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
                         new TokenBroadcasterQwen_3_5(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
             },
@@ -770,21 +748,11 @@ If no tool is suitable, state that explicitly. If the user's input lacks require
                 FunctionResponseTemplate = "<|tool_response>response:{0}{{{1}}}<tool_response|>",
                 FunctionBuilder = "<|tool_call>call:{{function_name}}{{arguments_json}}<tool_call|>",
                 FunctionResponse = "response:{0}{{{1}}}",
-                FunctionDefsWrap = @"# Tools
-
-You have access to the following functions:
-
-<tools>
+                FunctionDefsWrap = @"
+<|tool>
 {0}
-</tools>",
-                PromptFooter = @"When calling a tool, use the following format:
-<|tool_call>call:function_name{arg1:<|""|>value1<|""|>,arg2:<|""|>value2<|""|>}<tool_call|>
-
-Reminder:
-- Tool calls MUST follow the specified format
-- Required parameters MUST be specified
-- Use <|""|> delimiters for string values
-- Only call one tool at a time",
+<tool|>",
+                PromptFooter = @"",
                 CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
                         new TokenBroadcasterGemma_4(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
             },
