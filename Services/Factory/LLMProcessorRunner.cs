@@ -783,7 +783,7 @@ public class LLMProcessRunner : ILLMRunner
                 {
                     var responseContent = tokenBroadcaster.ResponseContent.Length > responseContentStartLength
                         ? tokenBroadcaster.ResponseContent.Substring(responseContentStartLength)
-                        : string.Empty;
+                        : tokenBroadcaster.ResponseContent;
                     
                     _logger.LogInformation($" [History] About to add assistant message to history - shouldRecordHistory={shouldRecordHistory}, responseContent length={responseContent.Length}, tokenBroadcaster.ResponseContent total length={tokenBroadcaster.ResponseContent.Length}, responseContentStartLength={responseContentStartLength}");
                     AddAssistantHistoryMessage(responseContent);
