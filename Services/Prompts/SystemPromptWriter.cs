@@ -100,9 +100,9 @@ public sealed class SystemPromptWriter : ISystemPromptWriter
         string suffixPrompt = LoadOptionalPrompt($"system_prompt_suffix_{_mlParams.LlmVersion}");
         string noThinkDirective = BuildNoThinkDirective(_mlParams.LlmNoThink, config.NoThinkToken);
         systemMessages[0].Content = JoinSections(
-            systemMessages[0].Content ?? string.Empty,
             noThinkDirective,
             functionDefs ?? string.Empty,
+            systemMessages[0].Content ?? string.Empty,
             promptFooter ?? string.Empty,
             suffixPrompt ?? string.Empty);
 
@@ -176,7 +176,7 @@ public sealed class SystemPromptWriter : ISystemPromptWriter
             return string.Empty;
         }
 
-        return noThinkToken;
+        return noThinkToken+"\n";
     }
 
     private static string BuildToolsJsonForPrompt(List<ToolDefinition> tools)
