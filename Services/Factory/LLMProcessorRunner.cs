@@ -445,13 +445,8 @@ public class LLMProcessRunner : ILLMRunner
     private bool ShouldRecordHistory(LLMServiceObj serviceObj)
     {
         var shouldRecord = _sendOutput
-            && serviceObj.IsPrimaryLlm
-            && !serviceObj.IsFunctionCall
-            && !serviceObj.IsFunctionCallResponse
-            && !serviceObj.IsFunctionCallStatus
-            && !serviceObj.IsFunctionStillRunning
-            && !serviceObj.UserInput.StartsWith("<|", StringComparison.Ordinal);
-        
+            && serviceObj.IsPrimaryLlm;
+           
         _logger.LogInformation($" [History] ShouldRecordHistory: shouldRecord={shouldRecord}, _sendOutput={_sendOutput}, IsPrimaryLlm={serviceObj.IsPrimaryLlm}, IsFunctionCall={serviceObj.IsFunctionCall}, IsFunctionCallResponse={serviceObj.IsFunctionCallResponse}, IsFunctionCallStatus={serviceObj.IsFunctionCallStatus}, IsFunctionStillRunning={serviceObj.IsFunctionStillRunning}, UserInputStarts=<|={serviceObj.UserInput.StartsWith("<|", StringComparison.Ordinal)}");
         
         return shouldRecord;
