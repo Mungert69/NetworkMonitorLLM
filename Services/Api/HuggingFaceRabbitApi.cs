@@ -314,7 +314,8 @@ namespace NetworkMonitor.LLM.Services
                 max_tokens = maxTokens,
                 stream = true,
                 tools,
-                tool_choice = tools is null ? "none" : "auto"
+                tool_choice = tools is null ? "none" : "auto",
+                reasoning_effort = mlParams?.LlmThinking ?? null
             };
         }
 

@@ -88,6 +88,7 @@ public class OpenAIRunner : ILLMRunner
     private bool _useHF = false;
     private bool _createAudio = false;
     private bool _noThink = false;
+    private string _thinking = "";
 
     private HashSet<string> _ignoreParameters => LLMConfigFactory.IgnoreParameters;
 
@@ -130,6 +131,7 @@ public class OpenAIRunner : ILLMRunner
         _mlParams = mlParams;
         bool enableAgentFlow = _mlParams.EnableAgentFlow;
         _noThink = _mlParams.LlmNoThink;
+        _thinking = _mlParams.LlmThinking;
         _history = history;
         _queryCoordinator = queryCoordinator;
         _toolsBuilderFactory = toolsBuilderFactory;

@@ -275,6 +275,11 @@ public class HuggingFaceApi : ILLMApi
                 ["response_format"] = new { type = "text" }
             };
 
+            if (!string.IsNullOrEmpty(_mlParams.LlmThinking))
+            {
+                payloadDict["reasoning_effort"] = _mlParams.LlmThinking;
+            }
+
             if (toolsPayload is System.Collections.IEnumerable enumerable && enumerable.Cast<object?>().Any())
             {
                 payloadDict["tools"] = toolsPayload;
@@ -301,7 +306,8 @@ public class HuggingFaceApi : ILLMApi
             max_tokens = maxTokens,
             stream = _isStream,
             temperature = _temperature,
-            response_format = new { type = "text" }
+            response_format = new { type = "text" },
+            reasoning_effort = (string?)null
         };
     }
 
