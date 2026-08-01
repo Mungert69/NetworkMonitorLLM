@@ -9,7 +9,7 @@
     <Nullable>enable</Nullable>
     <ContainerBaseImage>mcr.microsoft.com/dotnet/runtime:10.0</ContainerBaseImage>
     <ContainerRepository>mungert/networkmonitorllm</ContainerRepository>
-    <ContainerImageTag>2.3.2</ContainerImageTag>
+    <ContainerImageTag>2.4.0</ContainerImageTag>
     <StartupObject>NetworkMonitor.LLM.Program</StartupObject>
     <NoWarn>CS8618</NoWarn>
   </PropertyGroup>
