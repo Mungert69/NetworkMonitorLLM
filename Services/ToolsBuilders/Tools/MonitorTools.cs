@@ -65,6 +65,11 @@ public class MonitorTools
                         Type = "number",
                         Description = "Optional. The time to wait for a timeout in milliseconds. Optional field. The default is 59000 milliseconds."
                     },
+                    ["skip_cycles"] = new PropertyDefinition
+                    {
+                        Type = "number",
+                        Description = "Optional. Number of processor cycles to skip after each check. Set 0 to check every cycle; omit to use the endpoint-type default."
+                    },
                     ["email"] = new PropertyDefinition
                     {
                         Type = "string",
@@ -143,6 +148,11 @@ public class MonitorTools
                     {
                         Type = "number",
                         Description = "Optional. The timeout in milliseconds for the request."
+                    },
+                    ["skip_cycles"] = new PropertyDefinition
+                    {
+                        Type = "number",
+                        Description = "Optional. Number of processor cycles to skip after each check. Set 0 to check every cycle; omit to use the endpoint-type default."
                     },
                     ["hidden"] = new PropertyDefinition
                     {
