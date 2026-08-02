@@ -18,6 +18,7 @@ namespace NetworkMonitor.LLM.Services;
 public class LLMFactoryTests
 {
     private readonly Mock<IHistoryStorage> _historyStorage = new();
+    private readonly Mock<ILocalLlmSessionStore> _localLlmSessionStore = new();
     private readonly Mock<ILLMResponseProcessor> _responseProcessor = new();
     private readonly Mock<ICpuUsageMonitor> _cpuUsage = new();
     private readonly Mock<IQueryCoordinator> _queryCoordinator = new();
@@ -32,7 +33,7 @@ public class LLMFactoryTests
             ServiceID = "monitor",
             UserFacingServiceId = "monitor"
         };
-        _factory = new LLMFactory(logger, services.Object, _historyStorage.Object, _responseProcessor.Object, _cpuUsage.Object, _queryCoordinator.Object, systemParams);
+        _factory = new LLMFactory(logger, services.Object, _historyStorage.Object, _localLlmSessionStore.Object, _responseProcessor.Object, _cpuUsage.Object, _queryCoordinator.Object, systemParams);
     }
 
     [Fact]
@@ -123,6 +124,57 @@ public class LLMFactoryTests
 
         Assert.NotNull(saved);
         Assert.Equal(historyList, saved!.History);
+    }
+
+    [Fact]
+    public async Task SaveHistoryForSessionAsync_TestLlmWritesOnlyToLocalSessionStore()
+    {
+        var historyList = new List<ChatMessage> { ChatMessage.FromUser("hello") };
+        var sessionId = "sess_user1_test";
+        var sessions = new ConcurrentDictionary<string, Session>();
+        sessions[sessionId] = new Session
+        {
+            HistoryDisplayName = new HistoryDisplayName { SessionId = sessionId, LlmType = "TestLLM" }
+        };
+        _factory.Sessions = sessions;
+
+        var historiesField = typeof(LLMFactory).GetField("_sessionHistories", BindingFlags.NonPublic | BindingFlags.Instance)!;
+        var histories = new ConcurrentDictionary<string, List<ChatMessage>> { [sessionId] = historyList };
+        historiesField.SetValue(_factory, histories);
+
+        _localLlmSessionStore.Setup(s => s.SaveAsync(It.IsAny<HistoryDisplayName>())).Returns(Task.CompletedTask);
+
+        await _factory.SaveHistoryForSessionAsync(sessionId);
+
+        _localLlmSessionStore.Verify(s => s.SaveAsync(It.Is<HistoryDisplayName>(h => h.SessionId == sessionId)), Times.Once);
+        _historyStorage.Verify(s => s.SaveHistoryAsync(It.IsAny<HistoryDisplayName>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task LoadAllSessionsAsync_UsesDataForTestLlmAndRedisForOtherRunners()
+    {
+        var redisSessions = new ConcurrentDictionary<string, Session>();
+        redisSessions["legacy_test"] = new Session
+        {
+            HistoryDisplayName = new HistoryDisplayName { SessionId = "legacy_test", LlmType = "TestLLM" }
+        };
+        redisSessions["turbo"] = new Session
+        {
+            HistoryDisplayName = new HistoryDisplayName { SessionId = "turbo", LlmType = "TurboLLM" }
+        };
+        var localSessions = new ConcurrentDictionary<string, Session>();
+        localSessions["local_test"] = new Session
+        {
+            HistoryDisplayName = new HistoryDisplayName { SessionId = "local_test", LlmType = "TestLLM" }
+        };
+        _historyStorage.Setup(s => s.LoadAllSessionsAsync()).ReturnsAsync(redisSessions);
+        _localLlmSessionStore.Setup(s => s.LoadAllSessionsAsync()).ReturnsAsync(localSessions);
+
+        var sessions = await _factory.LoadAllSessionsAsync();
+
+        Assert.DoesNotContain("legacy_test", sessions.Keys);
+        Assert.Contains("turbo", sessions.Keys);
+        Assert.Contains("local_test", sessions.Keys);
     }
 
     [Fact]

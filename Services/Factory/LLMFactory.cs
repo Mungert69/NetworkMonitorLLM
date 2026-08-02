@@ -46,6 +46,7 @@ public class LLMFactory : ILLMFactory
     private readonly ILLMRunnerFactory _openAIRunnerFactory;
     private readonly ILLMRunnerFactory _hfRunnerFactory;
     private readonly IHistoryStorage _historyStorage;
+    private readonly ILocalLlmSessionStore _localLlmSessionStore;
     private readonly ILogger _logger;
     private readonly IServiceProvider _serviceProvider;
     private readonly SemaphoreSlim _processRunnerSemaphore = new SemaphoreSlim(1, 1);
@@ -62,11 +63,12 @@ public class LLMFactory : ILLMFactory
 
     private readonly ConcurrentDictionary<string, List<ChatMessage>> _sessionHistories = new();
 
-    public LLMFactory(ILogger<LLMFactory> logger, IServiceProvider serviceProvider, IHistoryStorage historyStorage, ILLMResponseProcessor responseProcessor, ICpuUsageMonitor cpuUsageMonitor, IQueryCoordinator queryCoordinator, SystemParams systemParams)
+    public LLMFactory(ILogger<LLMFactory> logger, IServiceProvider serviceProvider, IHistoryStorage historyStorage, ILocalLlmSessionStore localLlmSessionStore, ILLMResponseProcessor responseProcessor, ICpuUsageMonitor cpuUsageMonitor, IQueryCoordinator queryCoordinator, SystemParams systemParams)
     {
         _logger = logger;
         _serviceProvider = serviceProvider;
         _historyStorage = historyStorage;
+        _localLlmSessionStore = localLlmSessionStore;
         _cpuUsageMonitor = cpuUsageMonitor;
         _processRunnerFactory = new LLMProcessRunnerFactory();
         _openAIRunnerFactory = new OpenAIRunnerFactory();
@@ -80,9 +82,19 @@ public class LLMFactory : ILLMFactory
 
     }
 
-    public Task<ConcurrentDictionary<string, Session>> LoadAllSessionsAsync()
+    public async Task<ConcurrentDictionary<string, Session>> LoadAllSessionsAsync()
     {
-        return _historyStorage.LoadAllSessionsAsync();
+        var redisSessions = await _historyStorage.LoadAllSessionsAsync();
+        // TestLLM sessions are owned by the persistent /data store. Do not revive
+        // a legacy Redis copy during startup, otherwise Redis and /data can diverge.
+        var sessions = new ConcurrentDictionary<string, Session>(
+            redisSessions.Where(session => !IsLocalTestLlmSession(session.Value)));
+        var localSessions = await _localLlmSessionStore.LoadAllSessionsAsync();
+        foreach (var localSession in localSessions)
+        {
+            sessions[localSession.Key] = localSession.Value;
+        }
+        return sessions;
     }
     public List<HistoryDisplayName> GetHistoriesForUser(string sessionId)
     {
@@ -204,8 +216,14 @@ public class LLMFactory : ILLMFactory
                 // Update the History property of the HistoryDisplayName object
                 session.HistoryDisplayName!.History = _sessionHistories[sessionId];
 
-                // Save the updated HistoryDisplayName object
-                await _historyStorage.SaveHistoryAsync(session.HistoryDisplayName);
+                if (IsLocalTestLlmSession(session))
+                {
+                    await _localLlmSessionStore.SaveAsync(session.HistoryDisplayName);
+                }
+                else
+                {
+                    await _historyStorage.SaveHistoryAsync(session.HistoryDisplayName);
+                }
             }
         }
         catch (Exception e)
@@ -219,7 +237,14 @@ public class LLMFactory : ILLMFactory
     {
         try
         {
-            await _historyStorage.DeleteHistoryAsync(fullSessionId);
+            if (_sessions.TryGetValue(fullSessionId, out var session) && IsLocalTestLlmSession(session))
+            {
+                await _localLlmSessionStore.DeleteAsync(fullSessionId);
+            }
+            else
+            {
+                await _historyStorage.DeleteHistoryAsync(fullSessionId);
+            }
             _sessions.TryRemove(fullSessionId, out _);
             _sessionHistories.TryRemove(fullSessionId, out _);
             await SendHistoryDisplayNames(serviceObj);
@@ -294,10 +319,12 @@ public class LLMFactory : ILLMFactory
                 localLlmContext = existingSession.HistoryDisplayName?.LocalLlmContext ?? string.Empty;
             }
             var historyDisplayNames = new List<HistoryDisplayName>();
-            // If the history is empty, attempt to load it from storage asynchronously
+            // If the history is empty, load it from the runner's own durable store.
             if (history.Count == 0)
             {
-                var historyDisplayName = await _historyStorage.LoadHistoryAsync(serviceObj.SessionId);
+                var historyDisplayName = string.Equals(runnerType, "TestLLM", StringComparison.Ordinal)
+                    ? await _localLlmSessionStore.LoadAsync(serviceObj.SessionId)
+                    : await _historyStorage.LoadHistoryAsync(serviceObj.SessionId);
                 if (historyDisplayName != null)
                 {
                     history.AddRange(historyDisplayName.History);
@@ -340,6 +367,11 @@ public class LLMFactory : ILLMFactory
        };
 
         return runner;
+    }
+
+    private static bool IsLocalTestLlmSession(Session session)
+    {
+        return string.Equals(session.HistoryDisplayName?.LlmType, "TestLLM", StringComparison.OrdinalIgnoreCase);
     }
 
     public void OnRunnerLoadChanged(int delta, string llmType)

@@ -135,6 +135,7 @@ namespace NetworkMonitor.LLM
             services.AddSingleton<ILLMService, LLMService>();
             services.AddSingleton<ILLMFactory, LLMFactory>();
             services.AddSingleton<IHistoryStorage, RedisHistoryStorage>();
+            services.AddSingleton<ILocalLlmSessionStore, LocalLlmSessionStore>();
             services.AddSingleton(_cancellationTokenSource);
             services.Configure<HostOptions>(s => s.ShutdownTimeout = TimeSpan.FromSeconds(30));
             services.AddSingleton<ICpuUsageMonitor, CpuUsageMonitor>();
