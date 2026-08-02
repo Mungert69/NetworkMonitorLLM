@@ -113,9 +113,9 @@ public class OpenAIApi : ILLMApi
                 Model = _gptModel,
                 Tools = _stableTools
             };
-            if (!string.IsNullOrEmpty(_mlParams.LlmThinking))
+            if (!string.IsNullOrEmpty(_mlParams.LlmOpenAIThinking))
             {
-                chatCompletionCreateRequest.ReasoningEffort = _mlParams.LlmThinking;
+                chatCompletionCreateRequest.ReasoningEffort = _mlParams.LlmOpenAIThinking;
             }
             var chatResponse = await _openAiService.ChatCompletion.CreateCompletion(chatCompletionCreateRequest);
             if (_isXml)

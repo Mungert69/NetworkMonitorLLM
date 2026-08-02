@@ -54,6 +54,7 @@ Key settings:
   "LlmUseHF": false,
   "LlmProvider": "OpenAI",
   "LlmGptModel": "gpt-5-mini",
+  "LlmOpenAIThinking": "none",
   "GptModelVersion": "gpt",
   "OpenAIApiKey": ".env",
   "LlmOpenAIUrl": ""
@@ -64,6 +65,9 @@ Notes:
 
 - If `LlmOpenAIUrl` is empty, the OpenAI SDK uses the default OpenAI base domain.
 - If `LlmOpenAIUrl` is set, only its **base domain** is used (the path is ignored).
+- `LlmOpenAIThinking` is sent as `reasoning_effort` on OpenAI-compatible
+  chat-completions requests. Keep it at `none` for GPT Luna 5.6 when tool
+  calling; use `LlmThinking` only for HugLLM/HuggingFace endpoints.
 
 ## HugLLM (HF JSON schema)
 

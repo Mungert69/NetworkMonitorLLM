@@ -131,7 +131,7 @@ public class OpenAIRunner : ILLMRunner
         _mlParams = mlParams;
         bool enableAgentFlow = _mlParams.EnableAgentFlow;
         _noThink = _mlParams.LlmNoThink;
-        _thinking = _mlParams.LlmThinking;
+        _thinking = useHF ? _mlParams.LlmThinking : _mlParams.LlmOpenAIThinking;
         _history = history;
         _queryCoordinator = queryCoordinator;
         _toolsBuilderFactory = toolsBuilderFactory;

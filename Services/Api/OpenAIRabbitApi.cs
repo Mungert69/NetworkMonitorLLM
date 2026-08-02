@@ -306,7 +306,7 @@ namespace NetworkMonitor.LLM.Services
                 stream = true,
                 tools,
                 tool_choice = tools is null ? "none" : "auto",
-                reasoning_effort = mlParams?.LlmThinking ?? null
+                reasoning_effort = mlParams?.LlmOpenAIThinking ?? null
             };
         }
 
