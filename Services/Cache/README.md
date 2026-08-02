@@ -130,6 +130,13 @@ context-{prompt-hash}.gguf
 
 This ensures that identical prompts always generate the same cache key, enabling efficient sharing across containers.
 
+The hashed input is the stable, static cache prompt. Per-session data such as
+agent location and device context is deliberately excluded from it, then
+injected at runtime by the runner. This prevents otherwise identical sessions
+from uploading duplicate GGUF files while preserving the model's per-session
+context. Conversation history and local TestLLM recovery state are not cache
+objects; they are stored separately by the history/session stores.
+
 ## Performance Benefits
 
 ### Before Cache Implementation

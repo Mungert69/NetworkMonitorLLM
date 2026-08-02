@@ -249,6 +249,36 @@ To request history display names for another service without changing the fronte
 
 If no service ID is provided, the server uses `UserFacingServiceId`.
 
+## History Persistence and TestLLM Affinity
+
+History storage depends on the runner type:
+
+- **TurboLLM and HugLLM** use Redis. Their saved conversation can be read by
+  another service because those runners send their chat history to an API on
+  each request.
+- **TestLLM** uses the Hugging Face Space storage bucket at
+  `/data/networkmonitor/sessions` (override with `LOCAL_LLM_SESSION_PATH`).
+  Each saved record contains both the frontend display history and the exact
+  local llama.cpp conversation context required to restore the session after a
+  process or container restart. TestLLM records are deliberately not read from
+  or written to Redis.
+
+The normal history-list, replay, and delete controls work for TestLLM through
+the same session-management flow as the API runners. A TestLLM session must,
+however, be resumed and deleted through the **same Space/server** that created
+it: another TestLLM server has a different `/data` bucket and therefore cannot
+restore its local context. Cross-service history requests are Redis-based and
+are consequently for TurboLLM/HugLLM histories, not another Space's TestLLM
+sessions.
+
+## Static Context Cache
+
+The remote CacheHttp service stores only the static GGUF prompt-cache files.
+Its key is derived from stable system-prompt content; per-session agent
+location and device context are excluded so equivalent sessions reuse one
+cache object. The actual agent/device information is still injected at runtime
+for the local runner and remains part of the live conversation context.
+
 ---
 
 # Agent Location in Prompts
