@@ -15,6 +15,11 @@ namespace NetworkMonitor.LLM.Services
         [JsonProperty("history")]
         public List<ChatMessage> History { get; set; } = new();
 
+        // Exact local llama.cpp context after the shared GGUF prompt cache.
+        // This is separate from History, which is used to replay the UI transcript.
+        [JsonProperty("localLlmContext")]
+        public string LocalLlmContext { get; set; } = string.Empty;
+
         [JsonProperty("startUnixTime")]
         public long StartUnixTime { get; set; }
 

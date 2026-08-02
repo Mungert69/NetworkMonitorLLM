@@ -33,6 +33,12 @@ public interface ILLMFactory
     Task SendHistoryDisplayNames(LLMServiceObj serviceObj);
     Task<ConcurrentDictionary<string, Session>> LoadAllSessionsAsync();
 }
+
+public interface ILocalLlmContextProvider
+{
+    string LocalLlmContext { get; }
+}
+
 public class LLMFactory : ILLMFactory
 {
 
@@ -249,6 +255,10 @@ public class LLMFactory : ILLMFactory
             if (_sessions.TryGetValue(sessionId, out var session))
             {
                 var historyDisplayName = session.HistoryDisplayName!;
+                if (session.Runner is ILocalLlmContextProvider localLlmContextProvider)
+                {
+                    historyDisplayName.LocalLlmContext = localLlmContextProvider.LocalLlmContext;
+                }
                 // Update the History property with the chat history from _sessionHistories
                 if (_sessionHistories.TryGetValue(sessionId, out var history))
                 {
@@ -275,15 +285,24 @@ public class LLMFactory : ILLMFactory
     public async Task<ILLMRunner> CreateRunner(string runnerType, LLMServiceObj serviceObj)
     {
         var history = new List<ChatMessage>();
+        string localLlmContext = string.Empty;
         try
         {
             history = _sessionHistories.GetOrAdd(serviceObj.SessionId, _ => new List<ChatMessage>());
+            if (_sessions.TryGetValue(serviceObj.SessionId, out var existingSession))
+            {
+                localLlmContext = existingSession.HistoryDisplayName?.LocalLlmContext ?? string.Empty;
+            }
             var historyDisplayNames = new List<HistoryDisplayName>();
             // If the history is empty, attempt to load it from storage asynchronously
             if (history.Count == 0)
             {
                 var historyDisplayName = await _historyStorage.LoadHistoryAsync(serviceObj.SessionId);
-                if (historyDisplayName != null) history.AddRange(historyDisplayName.History);
+                if (historyDisplayName != null)
+                {
+                    history.AddRange(historyDisplayName.History);
+                    localLlmContext = historyDisplayName.LocalLlmContext;
+                }
 
             }
             //await SendHistoryDisplayNames(serviceObj);
@@ -300,6 +319,11 @@ public class LLMFactory : ILLMFactory
             "TestLLM" => _processRunnerFactory.CreateRunner(_serviceProvider, serviceObj, _processRunnerSemaphore, history, _cpuUsageMonitor),
             _ => throw new ArgumentException($"Invalid runner type: {runnerType}")
         };
+
+        if (runner is LLMProcessRunner localRunner)
+        {
+            localRunner.SetLocalLlmContext(localLlmContext);
+        }
 
         runner.LoadChanged += OnRunnerLoadChanged;
         runner.OnUserMessage += async (sessionId, serviceObj) =>

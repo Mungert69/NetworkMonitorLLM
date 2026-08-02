@@ -18,7 +18,8 @@ public class LLMProcessRunnerTests
 {
     private static (LLMProcessRunner Runner, Mock<ILLMResponseProcessor> ResponseProcessor) CreateRunner(
         LLMServiceObj startServiceObj,
-        MLParams mlParams)
+        MLParams mlParams,
+        List<ChatMessage>? history = null)
     {
         var logger = new Mock<ILogger<LLMProcessRunner>>();
         var responseProcessor = new Mock<ILLMResponseProcessor>();
@@ -44,7 +45,7 @@ public class LLMProcessRunnerTests
              cpuUsageMonitor.Object,
              queryCoordinator,
              systemPromptWriter,
-             new List<ChatMessage>());
+             history ?? new List<ChatMessage>());
 
         return (runner, responseProcessor);
     }
@@ -112,6 +113,40 @@ public class LLMProcessRunnerTests
             r => r.ProcessLLMOutputError(It.Is<LLMServiceObj>(m =>
                 m.LlmMessage.Contains("No Assistant found for sessionId", StringComparison.Ordinal))),
             Times.Once);
+    }
+
+    [Fact]
+    public void Constructor_PreservesLoadedHistory()
+    {
+        var history = new List<ChatMessage> { ChatMessage.FromUser("saved user message") };
+        var startServiceObj = new LLMServiceObj
+        {
+            SessionId = "session-1",
+            UserInfo = new UserInfo { AccountType = "Default" }
+        };
+
+        _ = CreateRunner(startServiceObj, new MLParams(), history);
+
+        Assert.Single(history);
+        Assert.Equal("saved user message", history[0].Content);
+    }
+
+    [Fact]
+    public void SetLocalLlmContext_MarksExistingContextForOneTimeRestore()
+    {
+        var startServiceObj = new LLMServiceObj
+        {
+            SessionId = "session-1",
+            UserInfo = new UserInfo { AccountType = "Default" }
+        };
+        var (runner, _) = CreateRunner(startServiceObj, new MLParams());
+
+        runner.SetLocalLlmContext("<|user|>prior question<|assistant|>prior answer");
+
+        Assert.Equal("<|user|>prior question<|assistant|>prior answer", runner.LocalLlmContext);
+        var restoreField = typeof(LLMProcessRunner).GetField("_restoreLocalLlmContext", BindingFlags.NonPublic | BindingFlags.Instance);
+        Assert.NotNull(restoreField);
+        Assert.True((bool)restoreField!.GetValue(runner)!);
     }
 
     private static bool GetCreateAudio(LLMProcessRunner runner)

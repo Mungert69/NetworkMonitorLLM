@@ -19,7 +19,7 @@ using NetworkMonitor.Coordinator;
 using System.Security.Cryptography.X509Certificates;
 namespace NetworkMonitor.LLM.Services;
 // LLMProcessRunner.cs
-public class LLMProcessRunner : ILLMRunner
+public class LLMProcessRunner : ILLMRunner, ILocalLlmContextProvider
 {
     //private ProcessWrapper _llamaProcess;
     private readonly ConcurrentDictionary<string, ProcessWrapper> _processes = new ConcurrentDictionary<string, ProcessWrapper>();
@@ -44,12 +44,15 @@ public class LLMProcessRunner : ILLMRunner
     private readonly ISystemPromptWriter _systemPromptWriter;
     private readonly List<ChatMessage> _history;
     private readonly object _historyLock = new();
+    private string _localLlmContext = string.Empty;
+    private bool _restoreLocalLlmContext;
 
     public bool IsStateReady { get => _isStateReady; }
     public bool IsStateStarting { get => _isStateStarting; }
     public bool IsStateFailed { get => _isStateFailed; }
     public bool IsEnabled { get => _isEnabled; }
     public int LlmLoad { get => _llmLoad; set => _llmLoad = value; }
+    public string LocalLlmContext => _localLlmContext;
 
     public event Action<int, string> LoadChanged;
 #pragma warning disable CS0067
@@ -66,6 +69,12 @@ public class LLMProcessRunner : ILLMRunner
     private ConcurrentDictionary<string, StringBuilder?> _assistantMessages = new ConcurrentDictionary<string, StringBuilder?>();
     private ConcurrentDictionary<string, StringBuilder?> _systemMessages = new ConcurrentDictionary<string, StringBuilder?>();
 
+    internal void SetLocalLlmContext(string? localLlmContext)
+    {
+        _localLlmContext = localLlmContext ?? string.Empty;
+        _restoreLocalLlmContext = !string.IsNullOrEmpty(_localLlmContext);
+    }
+
     public LLMProcessRunner(ILogger<LLMProcessRunner> logger, ILLMResponseProcessor responseProcessor,   SystemParams systemParams,  MLParams mlParams, LLMServiceObj startServiceObj, SemaphoreSlim? processRunnerSemaphore, IAudioGenerator audioGenerator, ICpuUsageMonitor cpuUsageMonitor, IQueryCoordinator queryCoordinator, ISystemPromptWriter systemPromptWriter, List<ChatMessage> history)
     {
         _logger = logger;
@@ -81,7 +90,6 @@ public class LLMProcessRunner : ILLMRunner
         _queryCoordinator = queryCoordinator;
         _systemPromptWriter = systemPromptWriter;
         _history = history;
-        _history.Clear();
         _audioStreamProvider = new AudioStreamProvider(audioGenerator, _responseProcessor, _logger, Type);
     }
 
@@ -268,7 +276,6 @@ public class LLMProcessRunner : ILLMRunner
     public Task RemoveProcess(string sessionId)
     {
         _isStateReady = false;
-        ClearHistory();
 
         if (!_processes.TryGetValue(sessionId, out var process))
         {
@@ -514,16 +521,6 @@ public class LLMProcessRunner : ILLMRunner
         return trimmedContent;
     }
 
-    private void ClearHistory()
-    {
-        lock (_historyLock)
-        {
-            _logger.LogInformation($" [History] ClearHistory: CLEARING - history count before clear={_history.Count}");
-            _history.Clear();
-            _logger.LogInformation($" [History] ClearHistory: CLEARED - history count after clear={_history.Count}");
-        }
-    }
-
     private async Task ReplayHistory(string sessionId)
     {
         List<ChatMessage> historySnapshot;
@@ -753,10 +750,21 @@ public class LLMProcessRunner : ILLMRunner
                 _logger.LogWarning(" Warning : LLM Input is empty");
                 return;
             }
+            string inputToWrite = llmInput;
+            if (_sendOutput && _restoreLocalLlmContext)
+            {
+                inputToWrite = _localLlmContext + llmInput;
+                _restoreLocalLlmContext = false;
+                _logger.LogInformation(
+                    "Restoring local llama context. SessionId={SessionId} ContextCharacters={ContextCharacters}",
+                    serviceObj.SessionId,
+                    _localLlmContext.Length);
+            }
+
             await tokenBroadcaster.SetUp(serviceObj, _sendOutput, sendLlmLoad);
-            await process.StandardInput.WriteLineAsync(llmInput);
+            await process.StandardInput.WriteLineAsync(inputToWrite);
             await process.StandardInput.FlushAsync();
-            _logger.LogDebug($" LLM INPUT -> {llmInput}");
+            _logger.LogDebug($" LLM INPUT -> {inputToWrite}");
             // Wait for a response or a timeout
             Task broadcastTask = tokenBroadcaster.BroadcastAsync(process, serviceObj, userInput);
             if (await Task.WhenAny(broadcastTask, Task.Delay(Timeout.Infinite, cts.Token)) == broadcastTask)
@@ -779,10 +787,22 @@ public class LLMProcessRunner : ILLMRunner
                     var responseContent = tokenBroadcaster.ResponseContent.Length > responseContentStartLength
                         ? tokenBroadcaster.ResponseContent.Substring(responseContentStartLength)
                         : tokenBroadcaster.ResponseContent;
+
+                    _localLlmContext += llmInput + responseContent;
                     
                     _logger.LogInformation($" [History] About to add assistant message to history - shouldRecordHistory={shouldRecordHistory}, responseContent length={responseContent.Length}, tokenBroadcaster.ResponseContent total length={tokenBroadcaster.ResponseContent.Length}, responseContentStartLength={responseContentStartLength}");
                     AddAssistantHistoryMessage(responseContent);
                     _logger.LogInformation($" [History] After adding assistant message - current history count={_history.Count}");
+
+                    // Persist the completed turn after both sides have been added to the
+                    // transcript. This mirrors the remote-runner history lifecycle and
+                    // ensures a timeout or restart does not discard the final response.
+                    if (OnUserMessage != null)
+                    {
+                        int wordLimit = 5;
+                        string historyTitle = string.Join(" ", serviceObj.UserInput.Split(' ').Take(wordLimit));
+                        await OnUserMessage.Invoke(historyTitle, serviceObj);
+                    }
                 }
                 else
                 {
