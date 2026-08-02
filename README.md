@@ -75,7 +75,7 @@ Key settings:
 {
   "LlmUseHF": true,
   "LlmHFModelID": "mistralai/devstral-2512:free",
-  "LlmHFKey": "sk-or-…",
+  "LlmHFKey": ".env:OPENROUTER_API_KEY",
   "LlmHFUrl": "https://openrouter.ai/api/v1/chat/completions",
   "LlmHFModelVersion": "llama_3.2"
 }
@@ -85,6 +85,9 @@ Notes:
 
 - `LlmHFUrl` is used to derive the **base domain** for the HTTP client.
 - `LlmHFModelID` must be a model ID accepted by the HF/OpenRouter endpoint.
+- Set `LlmHFKey` to `.env:VARIABLE_NAME` to read any named secret from the
+  configured `.env` file or process environment. `.env` remains supported and
+  reads an environment variable named `LlmHFKey` for backwards compatibility.
 
 ## Provider Routing
 

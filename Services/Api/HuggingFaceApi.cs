@@ -444,12 +444,38 @@ public class HuggingFaceApi : ILLMApi
         {
             try
             {
-                var content = new StringContent(payloadJson, Encoding.UTF8, "application/json");
+                var payloadBytes = Encoding.UTF8.GetBytes(payloadJson);
+                using var content = new ByteArrayContent(payloadBytes);
+                // Salad's OpenAI-compatible endpoint is sensitive to the exact media type.
+                // Do not use StringContent here: it appends a charset parameter.
+                content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+                using var request = new HttpRequestMessage(HttpMethod.Post, _apiUrl)
+                {
+                    Content = content
+                };
+
+                var requestHeaders = string.Join(", ", request.Headers
+                    .Where(header => !string.Equals(header.Key, "Authorization", StringComparison.OrdinalIgnoreCase))
+                    .Select(header => $"{header.Key}: {string.Join(", ", header.Value)}"));
+                var defaultHeaders = string.Join(", ", _httpClient.DefaultRequestHeaders
+                    .Where(header => !string.Equals(header.Key, "Authorization", StringComparison.OrdinalIgnoreCase))
+                    .Select(header => $"{header.Key}: {string.Join(", ", header.Value)}"));
+                var contentHeaders = string.Join(", ", content.Headers
+                    .Select(header => $"{header.Key}: {string.Join(", ", header.Value)}"));
+                _logger.LogInformation(
+                    "HugLLM outbound request: Method={Method}, Url={Url}, DefaultHeaders={DefaultHeaders}, RequestHeaders={RequestHeaders}, ContentHeaders={ContentHeaders}, PayloadBytes={PayloadBytes}, AuthorizationScheme={AuthorizationScheme}",
+                    request.Method,
+                    request.RequestUri,
+                    string.IsNullOrEmpty(defaultHeaders) ? "<none>" : defaultHeaders,
+                    string.IsNullOrEmpty(requestHeaders) ? "<none>" : requestHeaders,
+                    string.IsNullOrEmpty(contentHeaders) ? "<none>" : contentHeaders,
+                    payloadBytes.Length,
+                    _httpClient.DefaultRequestHeaders.Authorization?.Scheme ?? "<none>");
                 _logger.LogInformation($"Attempt {attempt}: Sending request to Hugging Face API...");
 
                 using (var cts = new CancellationTokenSource(timeout))
                 {
-                    var response = await _httpClient.PostAsync(_apiUrl, content, cts.Token);
+                    var response = await _httpClient.SendAsync(request, cts.Token);
 
                     if (!response.IsSuccessStatusCode)
                     {
