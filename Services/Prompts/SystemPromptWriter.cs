@@ -84,7 +84,12 @@ public sealed class SystemPromptWriter : ISystemPromptWriter
             : config.PromptFooter ?? string.Empty;
 
         string currentTime = serviceObj.GetClientStartTime().ToString("yyyy-MM-ddTHH:mm:ss");
-        var systemMessages = toolsBuilder.GetSystemPrompt(currentTime, serviceObj, serviceObj.LLMRunnerType)
+        // Prompt-cache GGUFs are shared between sessions. Agent and device context is
+        // supplied by LLMProcessRunner as a runtime system message, so exclude it from
+        // the cache seed while retaining all other session data needed to select tools.
+        var cachePromptServiceObj = CreateCachePromptServiceObj(serviceObj);
+
+        var systemMessages = toolsBuilder.GetSystemPrompt(currentTime, cachePromptServiceObj, serviceObj.LLMRunnerType)
             ?? new List<ChatMessage> { ChatMessage.FromSystem("") };
 
         if (systemMessages.Count == 0)
@@ -119,7 +124,7 @@ public sealed class SystemPromptWriter : ISystemPromptWriter
             renderedPrompt = config.BosToken + renderedPrompt;
         }
         string cacheTail = BuildDefaultCacheTail(config);
-        string staticShots = BuildStaticNShots(config, currentTime, serviceObj, toolsId) ?? string.Empty;
+        string staticShots = BuildStaticNShots(config, currentTime, cachePromptServiceObj, toolsId) ?? string.Empty;
         string basePrompt = EnsureTrailingNewline(JoinSections(
             RemoveTrailingToken(renderedPrompt, config),
             JoinStaticShotsAndTail(staticShots, cacheTail, config)));
@@ -135,6 +140,15 @@ public sealed class SystemPromptWriter : ISystemPromptWriter
         WritePromptFile(runPromptPath, runPrompt);
 
         EnsurePromptCache(basePromptPath, basePrompt, basePromptName, config);
+    }
+
+    internal static LLMServiceObj CreateCachePromptServiceObj(LLMServiceObj serviceObj)
+    {
+        return new LLMServiceObj(serviceObj)
+        {
+            ChatAgentLocation = string.Empty,
+            ChatDeviceContext = string.Empty
+        };
     }
 
     private string LoadBasePrompt(string toolsId)
