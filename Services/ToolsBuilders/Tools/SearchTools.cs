@@ -34,7 +34,7 @@ public class SearchTools
                     },
                     ["return_only_urls"] = new PropertyDefinition
                     {
-                        Type = "string",
+                        Type = "boolean",
                         Description = "Should the function call return only a list of urls that match the search term. The default is false ie return the full content of all pages found."
                     },
                     ["agent_location"] = new PropertyDefinition

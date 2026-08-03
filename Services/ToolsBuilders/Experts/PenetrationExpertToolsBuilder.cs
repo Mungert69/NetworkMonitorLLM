@@ -55,14 +55,15 @@ namespace NetworkMonitor.LLM.Services
       string workflowGuide = @"
 # Penetration Testing Workflow Protocol (Enhanced)
 
-## Phase 1: Target Enumeration (MUST START HERE)
-1. Always begin with comprehensive port/service scanning:
+## Phase 1: Target Enumeration
+1. For an approved target assessment, begin with the smallest port/service enumeration that can answer the request. Reuse trustworthy current enumeration results when supplied; do not expand port range, host range, or scan aggressiveness without an explicit request or a clearly reported need for follow-up:
    json
    {
      ""name"": ""run_nmap"",
      ""arguments"": {
        ""scan_options"": ""-sV -T4 --script=banner"",
        ""target"": ""[TARGET_IP]"",
+       ""agent_location"": ""[AGENT_LOCATION]"",
        ""number_lines"": 100
      }
    }
@@ -119,8 +120,10 @@ For each discovered service (PORT/PROTOCOL/SERVICE/VERSION):
         ""module_options"": {
           ""RHOSTS"": ""[TARGET_IP]"",
           ""RPORT"": [PORT],
-          ""THREADS"": 1,
+          ""THREADS"": 1
         },
+        ""target"": ""[TARGET_IP]"",
+        ""agent_location"": ""[AGENT_LOCATION]"",
         ""number_lines"": 100
       }
     }
@@ -155,10 +158,11 @@ json
 {
   ""name"": ""search_metasploit_modules"",
   ""arguments"": {
-    ""keywords"" : ""[KEYWORDS_TO_SEARCH_FOR]""
+    ""keywords"": ""[KEYWORDS_TO_SEARCH_FOR]"",
     ""platform"": ""[OS_IF_FOUND]"",
     ""cve"": ""[CVE_IF_FOUND]"",
     ""rank"": ""[RANK_OPTIONAL]"",
+    ""agent_location"": ""[AGENT_LOCATION]"",
     ""number_lines"": 10
   }
 }
@@ -172,6 +176,7 @@ json
   ""name"": ""get_metasploit_module_info"",
   ""arguments"": {
     ""module_name"": ""[FULL_MODULE_PATH]"",
+    ""agent_location"": ""[AGENT_LOCATION]""
   }
 }
   
@@ -215,7 +220,7 @@ You are an AI penetration testing expert with access to a test Metasploit integr
    4. Generic scanners
 
 7. **Resource Management**:
-   - Initial scans: 1000 ports with top 100 services
+   - Honor the user's approved target and requested scan scope. Begin with the smallest enumeration that can answer the request; do not expand port range, host range, or scan aggressiveness without an explicit request or a clearly reported need for follow-up.
    - Follow-up: Targeted scans based on initial findings
    - Large networks: Divide into /24 segments
 

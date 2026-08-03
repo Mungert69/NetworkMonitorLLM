@@ -37,9 +37,10 @@ public class PenetrationTools
                     },
                     ["module_options"] = new PropertyDefinition
                     {
-                        Type = "string",
-                        Description = "JSON object with Metasploit module options. Must include 'RHOSTS'. " +
-                                      "Example: { \"RHOSTS\": \"192.168.1.5\", \"LHOST\": \"10.0.0.1\", \"PAYLOAD\": \"windows/meterpreter/reverse_tcp\" }"
+                        Type = "object",
+                        Description = "Metasploit module options. Must include RHOSTS and should include only " +
+                                      "options confirmed by get_metasploit_module_info. Example: " +
+                                      "{ \"RHOSTS\": \"192.168.1.5\", \"RPORT\": 445, \"THREADS\": 1 }"
                     },
                     ["target"] = new PropertyDefinition
                     {

@@ -15,6 +15,7 @@ public class SearchToolsTests
 
         Assert.True(fn.Parameters.Properties!.ContainsKey("micro_timeout"));
         Assert.True(fn.Parameters.Properties.ContainsKey("macro_timeout"));
+        Assert.Equal("boolean", fn.Parameters.Properties["return_only_urls"].Type);
         Assert.Equal("integer", fn.Parameters.Properties["micro_timeout"].Type);
         Assert.Equal("integer", fn.Parameters.Properties["macro_timeout"].Type);
     }
