@@ -85,10 +85,10 @@ public class LLMFactory : ILLMFactory
     public async Task<ConcurrentDictionary<string, Session>> LoadAllSessionsAsync()
     {
         var redisSessions = await _historyStorage.LoadAllSessionsAsync();
-        // TestLLM sessions are owned by the persistent /data store. Do not revive
-        // a legacy Redis copy during startup, otherwise Redis and /data can diverge.
+        // Local-context sessions are owned by the mounted store. Do not revive
+        // a legacy shared-history copy during startup, otherwise stores diverge.
         var sessions = new ConcurrentDictionary<string, Session>(
-            redisSessions.Where(session => !IsLocalTestLlmSession(session.Value)));
+            redisSessions.Where(session => !UsesLocalPersistentContext(session.Value.HistoryDisplayName?.LlmType)));
         var localSessions = await _localLlmSessionStore.LoadAllSessionsAsync();
         foreach (var localSession in localSessions)
         {
@@ -148,20 +148,23 @@ public class LLMFactory : ILLMFactory
         if (!serviceObj.IsPrimaryLlm) return;
         try
         {
-            var isLocalTestLlm = string.Equals(serviceObj.LLMRunnerType, "TestLLM", StringComparison.OrdinalIgnoreCase)
-                || (_sessions.TryGetValue(serviceObj.SessionId, out var currentSession)
-                    && IsLocalTestLlmSession(currentSession));
+            var runnerType = serviceObj.LLMRunnerType;
+            if (string.IsNullOrWhiteSpace(runnerType)
+                && _sessions.TryGetValue(serviceObj.SessionId, out var currentSession))
+            {
+                runnerType = currentSession.HistoryDisplayName?.LlmType;
+            }
+            var usesLocalPersistentContext = UsesLocalPersistentContext(runnerType);
             var historyServiceId = string.IsNullOrWhiteSpace(serviceObj.HistoryServiceId)
                 ? _userFacingServiceId
                 : serviceObj.HistoryServiceId;
             var historyDisplayNames = GetHistoriesForUser(serviceObj.SessionId);
-            if (isLocalTestLlm)
+            if (usesLocalPersistentContext)
             {
-                // TestLLM recovery state is local to this Space. Do not let a
-                // stale cross-service selection replace its /data history list
-                // with Redis histories from an API-backed runner.
+                // Local recovery state belongs to this host. Do not let a stale
+                // cross-service selection replace it with shared histories.
                 historyDisplayNames = historyDisplayNames
-                    .Where(history => string.Equals(history.LlmType, "TestLLM", StringComparison.OrdinalIgnoreCase))
+                    .Where(history => UsesLocalPersistentContext(history.LlmType))
                     .ToList();
             }
             else if (!string.Equals(historyServiceId, _serviceId, StringComparison.OrdinalIgnoreCase))
@@ -228,7 +231,7 @@ public class LLMFactory : ILLMFactory
                 // Update the History property of the HistoryDisplayName object
                 session.HistoryDisplayName!.History = _sessionHistories[sessionId];
 
-                if (IsLocalTestLlmSession(session))
+                if (UsesLocalPersistentContext(session.HistoryDisplayName?.LlmType))
                 {
                     await _localLlmSessionStore.SaveAsync(session.HistoryDisplayName);
                 }
@@ -249,7 +252,8 @@ public class LLMFactory : ILLMFactory
     {
         try
         {
-            if (_sessions.TryGetValue(fullSessionId, out var session) && IsLocalTestLlmSession(session))
+            if (_sessions.TryGetValue(fullSessionId, out var session)
+                && UsesLocalPersistentContext(session.HistoryDisplayName?.LlmType))
             {
                 await _localLlmSessionStore.DeleteAsync(fullSessionId);
             }
@@ -334,7 +338,7 @@ public class LLMFactory : ILLMFactory
             // If the history is empty, load it from the runner's own durable store.
             if (history.Count == 0)
             {
-                var historyDisplayName = string.Equals(runnerType, "TestLLM", StringComparison.Ordinal)
+                var historyDisplayName = UsesLocalPersistentContext(runnerType)
                     ? await _localLlmSessionStore.LoadAsync(serviceObj.SessionId)
                     : await _historyStorage.LoadHistoryAsync(serviceObj.SessionId);
                 if (historyDisplayName != null)
@@ -381,9 +385,9 @@ public class LLMFactory : ILLMFactory
         return runner;
     }
 
-    private static bool IsLocalTestLlmSession(Session session)
+    private static bool UsesLocalPersistentContext(string? runnerType)
     {
-        return string.Equals(session.HistoryDisplayName?.LlmType, "TestLLM", StringComparison.OrdinalIgnoreCase);
+        return RunnerSessionProfiles.For(runnerType).UsesLocalPersistentContext;
     }
 
     public void OnRunnerLoadChanged(int delta, string llmType)
