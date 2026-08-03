@@ -21,6 +21,9 @@ public class RedisHistoryStorageTests
         Assert.Equal("secret", options.Password);
         Assert.True(options.Ssl);
         Assert.Equal("admin", options.User);
+        Assert.Equal(5000, options.ConnectTimeout);
+        Assert.Equal(30000, options.SyncTimeout);
+        Assert.Equal(30000, options.AsyncTimeout);
     }
 
     [Fact]
