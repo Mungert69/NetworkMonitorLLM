@@ -54,7 +54,8 @@ namespace NetworkMonitor.LLM.Services
 
                 // Connection tuning
                 ConnectTimeout = 5000,
-                SyncTimeout = 5000,
+                SyncTimeout = 30000,
+                AsyncTimeout = 30000,
                 AbortOnConnectFail = false
             };
 
