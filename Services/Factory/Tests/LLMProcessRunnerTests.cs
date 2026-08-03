@@ -149,6 +149,35 @@ public class LLMProcessRunnerTests
         Assert.True((bool)restoreField!.GetValue(runner)!);
     }
 
+    [Fact]
+    public async Task SendInputAndGetResponse_WhenReplayingHistory_RequestsHistoryDisplayRefresh()
+    {
+        var startServiceObj = new LLMServiceObj
+        {
+            SessionId = "session-1",
+            UserInfo = new UserInfo { AccountType = "Default" }
+        };
+        var (runner, responseProcessor) = CreateRunner(
+            startServiceObj,
+            new MLParams(),
+            new List<ChatMessage> { ChatMessage.FromUser("saved message") });
+        responseProcessor.Setup(processor => processor.ProcessLLMOutput(It.IsAny<LLMServiceObj>()))
+            .Returns(Task.CompletedTask);
+        var historyRefreshes = 0;
+        runner.SendHistory += _ =>
+        {
+            historyRefreshes++;
+            return Task.CompletedTask;
+        };
+
+        await runner.SendInputAndGetResponse(new LLMServiceObj(startServiceObj)
+        {
+            UserInput = "<|REPLAY_HISTORY|>"
+        });
+
+        Assert.Equal(1, historyRefreshes);
+    }
+
     private static bool GetCreateAudio(LLMProcessRunner runner)
     {
         var field = typeof(LLMProcessRunner).GetField("_createAudio", BindingFlags.NonPublic | BindingFlags.Instance);

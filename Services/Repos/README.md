@@ -25,3 +25,5 @@ record to avoid a partially-written session file.
 
 Because the local context belongs to the Space's mounted `/data`, a TestLLM
 session must be resumed or deleted on the same TestLLM server that created it.
+The resume caller must use the normal `StartProcess` request before sending the
+`<|REPLAY_HISTORY|>` control message; input delivery does not start runners.

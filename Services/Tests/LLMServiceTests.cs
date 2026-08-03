@@ -59,6 +59,54 @@ public class LLMServiceTests
     }
 
     [Fact]
+    public async Task StartProcess_RecreatesRunnerForPersistedTestLlmSession()
+    {
+        var (service, _, factory, _) = CreateConfiguredService();
+        await service.Init();
+        var sessionId = "saved_user_TestLLM";
+        var history = new HistoryDisplayName
+        {
+            SessionId = sessionId,
+            Name = "Saved local conversation",
+            LlmType = "TestLLM"
+        };
+        GetSessions(service)[sessionId] = new Session
+        {
+            FullSessionId = sessionId,
+            HistoryDisplayName = history
+        };
+        var runner = new StubRunner { Type = "TestLLM" };
+        factory.Setup(f => f.CreateRunner("TestLLM", It.IsAny<LLMServiceObj>())).ReturnsAsync(runner);
+
+        await service.StartProcess(new LLMServiceObj
+        {
+            RequestSessionId = "saved_user",
+            LLMRunnerType = "TestLLM"
+        });
+
+        var resumedSession = GetSessions(service)[sessionId];
+        Assert.Same(runner, resumedSession.Runner);
+        Assert.Same(history, resumedSession.HistoryDisplayName);
+        Assert.True(runner.StartProcessCalled);
+    }
+
+    [Fact]
+    public async Task StartProcess_DuplicateStartsForSameSession_CreateOnlyOneRunner()
+    {
+        var (service, _, factory, _) = CreateConfiguredService();
+        await service.Init();
+        var runner = new StubRunner { Type = "TestLLM" };
+        factory.Setup(f => f.CreateRunner("TestLLM", It.IsAny<LLMServiceObj>())).ReturnsAsync(runner);
+
+        await Task.WhenAll(
+            service.StartProcess(new LLMServiceObj { RequestSessionId = "same", LLMRunnerType = "TestLLM" }),
+            service.StartProcess(new LLMServiceObj { RequestSessionId = "same", LLMRunnerType = "TestLLM" }));
+
+        factory.Verify(f => f.CreateRunner("TestLLM", It.IsAny<LLMServiceObj>()), Times.Once);
+        Assert.Same(runner, GetSessions(service)["same_TestLLM"].Runner);
+    }
+
+    [Fact]
     public async Task StopRequest_ReturnsErrorWhenSessionMissing()
     {
         var (service, rabbit, _, _) = CreateConfiguredService();
@@ -114,35 +162,6 @@ public class LLMServiceTests
         Assert.False(result.Success);
         Assert.Contains("starting", result.Message, StringComparison.OrdinalIgnoreCase);
         rabbit.Verify(r => r.PublishAsync<LLMServiceObj>("llmServiceMessage", It.IsAny<LLMServiceObj>(), It.IsAny<string>()), Times.Once);
-    }
-
-    [Fact]
-    public async Task SendInputAndGetResponse_RestartsSavedTestLlmSessionBeforeReplay()
-    {
-        var (service, _, factory, _) = CreateConfiguredService();
-        await service.Init();
-        var runner = new StubRunner { Type = "TestLLM" };
-        factory.Setup(f => f.CreateRunner("TestLLM", It.IsAny<LLMServiceObj>())).ReturnsAsync(runner);
-        var sessionId = "saved_user_TestLLM";
-        GetSessions(service)[sessionId] = new Session
-        {
-            FullSessionId = sessionId,
-            HistoryDisplayName = new HistoryDisplayName { SessionId = sessionId, LlmType = "TestLLM" }
-        };
-        var message = new LLMServiceObj
-        {
-            SessionId = sessionId,
-            LLMRunnerType = "TestLLM",
-            UserInput = "<|REPLAY_HISTORY|>"
-        };
-
-        var result = await service.SendInputAndGetResponse(message);
-
-        Assert.True(result.Success);
-        Assert.True(runner.StartProcessCalled);
-        Assert.Same(runner, GetSessions(service)[sessionId].Runner);
-        Assert.Same(message, runner.LastSendInput);
-        Assert.Equal("saved_user", message.RequestSessionId);
     }
 
     [Fact]

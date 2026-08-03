@@ -263,13 +263,15 @@ History storage depends on the runner type:
   process or container restart. TestLLM records are deliberately not read from
   or written to Redis.
 
-The normal history-list, replay, and delete controls work for TestLLM through
-the same session-management flow as the API runners. A TestLLM session must,
-however, be resumed and deleted through the **same Space/server** that created
-it: another TestLLM server has a different `/data` bucket and therefore cannot
-restore its local context. Cross-service history requests are Redis-based and
-are consequently for TurboLLM/HugLLM histories, not another Space's TestLLM
-sessions.
+The normal history-list and delete controls work for TestLLM through the same
+session-management flow as the API runners. To resume a saved TestLLM session,
+the frontend must first send its normal `StartProcess` request using the saved
+request-session ID, then send `<|REPLAY_HISTORY|>` after the runner has
+started. A TestLLM session must, however, be resumed and deleted through the
+**same Space/server** that created it: another TestLLM server has a different
+`/data` bucket and therefore cannot restore its local context. Cross-service
+history requests are Redis-based and are consequently for TurboLLM/HugLLM
+histories, not another Space's TestLLM sessions.
 
 ## Static Context Cache
 

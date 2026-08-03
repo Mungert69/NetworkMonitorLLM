@@ -49,6 +49,7 @@ public class LLMService : ILLMService
     private string _serviceID;
     private bool _ready = false;
     private ConcurrentDictionary<string, Session> _sessions = new ConcurrentDictionary<string, Session>();
+    private readonly ConcurrentDictionary<string, SemaphoreSlim> _sessionStartLocks = new();
 
     public LLMService(ILogger<LLMService> logger, IRabbitRepo rabbitRepo, SystemParams systemParams, MLParams mlParams,IServiceProvider serviceProvider, ILLMFactory llmFactory)
     {
@@ -78,28 +79,32 @@ public class LLMService : ILLMService
     public async Task<LLMServiceObj> StartProcess(LLMServiceObj llmServiceObj)
     {
         llmServiceObj.SessionId = llmServiceObj.RequestSessionId + "_" + llmServiceObj.LLMRunnerType;
+        var sessionStartLock = _sessionStartLocks.GetOrAdd(llmServiceObj.SessionId, _ => new SemaphoreSlim(1, 1));
+        await sessionStartLock.WaitAsync();
         try
         {
-            if (!_ready)
+            try
             {
-                if (_serviceID == "monitor")
-                    await SetResultMessageAsync(llmServiceObj, $"Waiting for history to be ready", true, "llmServiceMessage", true);
-
-                // Wait asynchronously for _ready to be true, with timeout (e.g., 10 sec)
-                var waitTimeout = TimeSpan.FromSeconds(120);
-                var waitInterval = TimeSpan.FromSeconds(10);
-                var sw = Stopwatch.StartNew();
-                while (!_ready && sw.Elapsed < waitTimeout)
-                {
-                    await Task.Delay(waitInterval);
-                }
-                // Optionally, handle timeout
                 if (!_ready)
                 {
-                    if (_serviceID == "monitor") await SetResultMessageAsync(llmServiceObj, "Timed out waiting for initialization.", false, "llmServiceMessage", true);
-                    return llmServiceObj;
+                    if (_serviceID == "monitor")
+                        await SetResultMessageAsync(llmServiceObj, $"Waiting for history to be ready", true, "llmServiceMessage", true);
+
+                    // Wait asynchronously for _ready to be true, with timeout (e.g., 10 sec)
+                    var waitTimeout = TimeSpan.FromSeconds(120);
+                    var waitInterval = TimeSpan.FromSeconds(10);
+                    var sw = Stopwatch.StartNew();
+                    while (!_ready && sw.Elapsed < waitTimeout)
+                    {
+                        await Task.Delay(waitInterval);
+                    }
+                    // Optionally, handle timeout
+                    if (!_ready)
+                    {
+                        if (_serviceID == "monitor") await SetResultMessageAsync(llmServiceObj, "Timed out waiting for initialization.", false, "llmServiceMessage", true);
+                        return llmServiceObj;
+                    }
                 }
-            }
 
 
             bool exists = _sessions.TryGetValue(llmServiceObj.SessionId, out var checkSession);
@@ -167,20 +172,25 @@ public class LLMService : ILLMService
             }
 
             await PublishToRabbitMQAsync("llmServiceStarted", llmServiceObj, false);
-        }
-        catch (Exception e)
-        {
-            string message = $"Error: Could not start {llmServiceObj.LlmChainStartName} Assistant. Exception: {e.Message}";
-            _logger.LogError(e, message);
-            await SetResultMessageAsync(
-                llmServiceObj,
-                message,
-                false,
-                "llmServiceMessage"
-            );
-        }
+            }
+            catch (Exception e)
+            {
+                string message = $"Error: Could not start {llmServiceObj.LlmChainStartName} Assistant. Exception: {e.Message}";
+                _logger.LogError(e, message);
+                await SetResultMessageAsync(
+                    llmServiceObj,
+                    message,
+                    false,
+                    "llmServiceMessage"
+                );
+            }
 
-        return llmServiceObj;
+            return llmServiceObj;
+        }
+        finally
+        {
+            sessionStartLock.Release();
+        }
 
     }
 
@@ -346,33 +356,12 @@ public class LLMService : ILLMService
             // Check if Runner is null
             if (session.Runner == null)
             {
-                if (IsSavedTestLlmSession(session, llmServiceObj))
-                {
-                    // Sessions restored from /data intentionally have no live
-                    // process after a Space restart. Recreate it on demand so
-                    // replay and the next user input can restore local context.
-                    llmServiceObj.LLMRunnerType = "TestLLM";
-                    llmServiceObj.RequestSessionId = GetRequestSessionId(llmServiceObj.SessionId, "TestLLM");
-                    await StartProcess(llmServiceObj);
-                    if (!_sessions.TryGetValue(llmServiceObj.SessionId, out session) || session.Runner == null)
-                    {
-                        return await SetResultMessageAsync(
-                            llmServiceObj,
-                            $"Error: SessionId {llmServiceObj.SessionId} could not restart its local TestLLM process.",
-                            false,
-                            "llmServiceMessage"
-                        );
-                    }
-                }
-                else
-                {
-                    return await SetResultMessageAsync(
-                        llmServiceObj,
-                        $"Error: SessionId {llmServiceObj.SessionId} has no running process. Try starting a new chat.",
-                        false,
-                        "llmServiceMessage"
-                    );
-                }
+                return await SetResultMessageAsync(
+                    llmServiceObj,
+                    $"Error: SessionId {llmServiceObj.SessionId} has no running process. Try starting a new chat.",
+                    false,
+                    "llmServiceMessage"
+                );
             }
 
             // Check if Runner is in starting state
@@ -416,19 +405,6 @@ public class LLMService : ILLMService
                 "llmServiceMessage"
             );
         }
-    }
-
-    private static bool IsSavedTestLlmSession(Session session, LLMServiceObj serviceObj)
-    {
-        return string.Equals(session.HistoryDisplayName?.LlmType, "TestLLM", StringComparison.OrdinalIgnoreCase);
-    }
-
-    private static string GetRequestSessionId(string fullSessionId, string runnerType)
-    {
-        var suffix = "_" + runnerType;
-        return fullSessionId.EndsWith(suffix, StringComparison.OrdinalIgnoreCase)
-            ? fullSessionId[..^suffix.Length]
-            : fullSessionId;
     }
 
     private async Task PublishToRabbitMQAsync(string queue, LLMServiceObj obj, bool checkSystem)

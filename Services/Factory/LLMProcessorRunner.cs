@@ -580,6 +580,7 @@ public class LLMProcessRunner : ILLMRunner, ILocalLlmContextProvider
         {
             _logger.LogInformation($" [History] REPLAY_HISTORY command received for sessionId={serviceObj.SessionId}, current history count before replay={_history.Count}");
             await ReplayHistory(serviceObj.SessionId);
+            if (SendHistory != null) await SendHistory.Invoke(serviceObj);
             _logger.LogInformation($" [History] Replayed TestLLM history for sessionId {serviceObj.SessionId}");
             return;
         }
