@@ -117,6 +117,35 @@ public class LLMServiceTests
     }
 
     [Fact]
+    public async Task SendInputAndGetResponse_RestartsSavedTestLlmSessionBeforeReplay()
+    {
+        var (service, _, factory, _) = CreateConfiguredService();
+        await service.Init();
+        var runner = new StubRunner { Type = "TestLLM" };
+        factory.Setup(f => f.CreateRunner("TestLLM", It.IsAny<LLMServiceObj>())).ReturnsAsync(runner);
+        var sessionId = "saved_user_TestLLM";
+        GetSessions(service)[sessionId] = new Session
+        {
+            FullSessionId = sessionId,
+            HistoryDisplayName = new HistoryDisplayName { SessionId = sessionId, LlmType = "TestLLM" }
+        };
+        var message = new LLMServiceObj
+        {
+            SessionId = sessionId,
+            LLMRunnerType = "TestLLM",
+            UserInput = "<|REPLAY_HISTORY|>"
+        };
+
+        var result = await service.SendInputAndGetResponse(message);
+
+        Assert.True(result.Success);
+        Assert.True(runner.StartProcessCalled);
+        Assert.Same(runner, GetSessions(service)[sessionId].Runner);
+        Assert.Same(message, runner.LastSendInput);
+        Assert.Equal("saved_user", message.RequestSessionId);
+    }
+
+    [Fact]
     public async Task RemoveAllSessionIdProcesses_SavesHistoryAndStopsRunners()
     {
         var (service, rabbit, factory, _) = CreateConfiguredService();

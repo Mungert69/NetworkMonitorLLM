@@ -346,12 +346,33 @@ public class LLMService : ILLMService
             // Check if Runner is null
             if (session.Runner == null)
             {
-                return await SetResultMessageAsync(
-                    llmServiceObj,
-                    $"Error: SessionId {llmServiceObj.SessionId} has no running process. Try starting a new chat.",
-                    false,
-                    "llmServiceMessage"
-                );
+                if (IsSavedTestLlmSession(session, llmServiceObj))
+                {
+                    // Sessions restored from /data intentionally have no live
+                    // process after a Space restart. Recreate it on demand so
+                    // replay and the next user input can restore local context.
+                    llmServiceObj.LLMRunnerType = "TestLLM";
+                    llmServiceObj.RequestSessionId = GetRequestSessionId(llmServiceObj.SessionId, "TestLLM");
+                    await StartProcess(llmServiceObj);
+                    if (!_sessions.TryGetValue(llmServiceObj.SessionId, out session) || session.Runner == null)
+                    {
+                        return await SetResultMessageAsync(
+                            llmServiceObj,
+                            $"Error: SessionId {llmServiceObj.SessionId} could not restart its local TestLLM process.",
+                            false,
+                            "llmServiceMessage"
+                        );
+                    }
+                }
+                else
+                {
+                    return await SetResultMessageAsync(
+                        llmServiceObj,
+                        $"Error: SessionId {llmServiceObj.SessionId} has no running process. Try starting a new chat.",
+                        false,
+                        "llmServiceMessage"
+                    );
+                }
             }
 
             // Check if Runner is in starting state
@@ -395,6 +416,19 @@ public class LLMService : ILLMService
                 "llmServiceMessage"
             );
         }
+    }
+
+    private static bool IsSavedTestLlmSession(Session session, LLMServiceObj serviceObj)
+    {
+        return string.Equals(session.HistoryDisplayName?.LlmType, "TestLLM", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string GetRequestSessionId(string fullSessionId, string runnerType)
+    {
+        var suffix = "_" + runnerType;
+        return fullSessionId.EndsWith(suffix, StringComparison.OrdinalIgnoreCase)
+            ? fullSessionId[..^suffix.Length]
+            : fullSessionId;
     }
 
     private async Task PublishToRabbitMQAsync(string queue, LLMServiceObj obj, bool checkSystem)

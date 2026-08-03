@@ -178,6 +178,48 @@ public class LLMFactoryTests
     }
 
     [Fact]
+    public async Task SendHistoryDisplayNames_TestLlmUsesOnlyLocalTestLlmSessions()
+    {
+        var testSession = new HistoryDisplayName
+        {
+            SessionId = "sess_user1_TestLLM",
+            Name = "Local test history",
+            LlmType = "TestLLM",
+            UserId = "user1"
+        };
+        var sessions = new ConcurrentDictionary<string, Session>
+        {
+            [testSession.SessionId] = new Session { HistoryDisplayName = testSession },
+            ["sess_user1_TurboLLM"] = new Session
+            {
+                HistoryDisplayName = new HistoryDisplayName
+                {
+                    SessionId = "sess_user1_TurboLLM", Name = "Redis history", LlmType = "TurboLLM", UserId = "user1"
+                }
+            }
+        };
+        _factory.Sessions = sessions;
+        var messages = new List<string>();
+        _responseProcessor.Setup(r => r.ProcessLLMOutput(It.IsAny<LLMServiceObj>()))
+            .Returns(Task.CompletedTask)
+            .Callback<LLMServiceObj>(message => messages.Add(message.LlmMessage));
+
+        await _factory.SendHistoryDisplayNames(new LLMServiceObj
+        {
+            SessionId = testSession.SessionId,
+            LLMRunnerType = "TestLLM",
+            HistoryServiceId = "some-other-service",
+            SourceLlm = "TestLLM",
+            DestinationLlm = "TestLLM"
+        });
+
+        var historyPayload = Assert.Single(messages);
+        Assert.Contains("Local test history", historyPayload);
+        Assert.DoesNotContain("Redis history", historyPayload);
+        _historyStorage.Verify(storage => storage.GetHistoryDisplayNamesAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
     public void OnRunnerLoadChanged_UpdatesLoadAndRunner()
     {
         var runner = new StubRunner("TurboLLM");

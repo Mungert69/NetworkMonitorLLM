@@ -148,11 +148,23 @@ public class LLMFactory : ILLMFactory
         if (!serviceObj.IsPrimaryLlm) return;
         try
         {
+            var isLocalTestLlm = string.Equals(serviceObj.LLMRunnerType, "TestLLM", StringComparison.OrdinalIgnoreCase)
+                || (_sessions.TryGetValue(serviceObj.SessionId, out var currentSession)
+                    && IsLocalTestLlmSession(currentSession));
             var historyServiceId = string.IsNullOrWhiteSpace(serviceObj.HistoryServiceId)
                 ? _userFacingServiceId
                 : serviceObj.HistoryServiceId;
             var historyDisplayNames = GetHistoriesForUser(serviceObj.SessionId);
-            if (!string.Equals(historyServiceId, _serviceId, StringComparison.OrdinalIgnoreCase))
+            if (isLocalTestLlm)
+            {
+                // TestLLM recovery state is local to this Space. Do not let a
+                // stale cross-service selection replace its /data history list
+                // with Redis histories from an API-backed runner.
+                historyDisplayNames = historyDisplayNames
+                    .Where(history => string.Equals(history.LlmType, "TestLLM", StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+            }
+            else if (!string.Equals(historyServiceId, _serviceId, StringComparison.OrdinalIgnoreCase))
             {
                 var userId = ExtractUserIdFromSessionId(serviceObj.SessionId);
                 if (!string.IsNullOrWhiteSpace(userId))
