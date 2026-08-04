@@ -117,7 +117,7 @@ public static class AgentFlowTools
                     ["arguments"] = new PropertyDefinition
                     {
                         Type = "object",
-                        Description = "Optional key/value arguments passed into the flow."
+                        Description = "Optional key/value arguments passed into the flow. Include every key declared by the flow's runtimeInputs."
                     },
                     ["agent_location"] = new PropertyDefinition
                     {

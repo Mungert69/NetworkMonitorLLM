@@ -2,6 +2,7 @@ using NetworkMonitor.Objects.ServiceMessage;
 using Betalgo.Ranul.OpenAI.ObjectModels.RequestModels;
 using System.Collections.Generic;
 using System;
+using System.IO;
 using System.Text;
 
 namespace NetworkMonitor.LLM.Services
@@ -9,127 +10,8 @@ namespace NetworkMonitor.LLM.Services
     public class AgentFlowExpertToolsBuilder : ToolsBuilderBase
     {
         private readonly string _prompt;
-        private const string PromptHeader = @"
-### Agenic-Flow Graph JSON Schema
-
-```json
-{
-  ""$schema"": ""https://json-schema.org/draft/2020-12/schema"",
-  ""$id"": ""https://example.com/agent-graph.schema.json"",
-  ""title"": ""Agenic-Flow Graph"",
-  ""type"": ""object"",
-  ""required"": [""version"", ""startNode"", ""nodes"", ""toolSpecs""],
-  ""additionalProperties"": false,
-  ""properties"": {
-    ""version"": { ""type"": ""integer"", ""const"": 1 },
-    ""startNode"": { ""type"": ""string"", ""minLength"": 1 },
-    ""initState"": { ""type"": ""object"", ""additionalProperties"": true },
-    ""nodes"": {
-      ""type"": ""array"",
-      ""minItems"": 1,
-      ""items"": { ""$ref"": ""#/$defs/NodeConfig"" }
-    },
-    ""toolSpecs"": {
-      ""type"": ""array"",
-      ""minItems"": 1,
-      ""items"": {
-        ""oneOf"": [
-          { ""$ref"": ""#/$defs/ToolBuilderSpec"" },
-          {
-            ""type"": ""object"",
-            ""required"": [""$ref""],
-            ""additionalProperties"": false,
-            ""properties"": { ""$ref"": { ""type"": ""string"", ""minLength"": 1 } }
-          }
-        ]
-      }
-    }
-  },
-  ""$defs"": {
-    ""NodeConfig"": {
-      ""type"": ""object"",
-      ""required"": [""id"", ""type"", ""toolSpecId"", ""promptTemplate""],
-      ""additionalProperties"": false,
-      ""properties"": {
-        ""id"": { ""type"": ""string"", ""minLength"": 1 },
-        ""type"": { ""type"": ""string"", ""enum"": [""template-llm"", ""branch-llm""] },
-        ""toolSpecId"": { ""type"": ""string"", ""minLength"": 1 },
-        ""promptTemplate"": { ""type"": ""string"", ""minLength"": 1 },
-        ""next"": { ""type"": [""string"", ""null""] },
-        ""outputs"": {
-          ""type"": ""array"",
-          ""description"": ""Saved to state (template-llm only)"",
-          ""items"": { ""type"": ""string"", ""minLength"": 1 },
-          ""uniqueItems"": true
-        },
-        ""constants"": { ""type"": ""object"", ""additionalProperties"": { ""type"": ""string"" } },
-        ""defaults"": { ""type"": ""object"", ""additionalProperties"": { ""type"": ""string"" } },
-        ""requires"": {
-          ""type"": ""array"",
-          ""items"": { ""type"": ""string"", ""minLength"": 1 },
-          ""uniqueItems"": true
-        },
-        ""timeoutSec"": { ""type"": ""integer"", ""minimum"": 1 },
-        ""branches"": {
-          ""type"": ""object"",
-          ""description"": ""Status -> next-node map (branch-llm only)"",
-          ""additionalProperties"": { ""type"": [""string"", ""null""] }
-        }
-      },
-      ""oneOf"": [
-        { ""properties"": { ""type"": { ""const"": ""template-llm"" } } },
-        {
-          ""properties"": { ""type"": { ""const"": ""branch-llm"" } },
-          ""not"": { ""required"": [""outputs""] }
-        }
-      ]
-    },
-    ""ToolBuilderSpec"": {
-      ""type"": ""object"",
-      ""required"": [""id"", ""systemPrompt""],
-      ""additionalProperties"": false,
-      ""properties"": {
-        ""id"": { ""type"": ""string"", ""minLength"": 1 },
-        ""systemPrompt"": { ""type"": ""string"", ""minLength"": 1 },
-        ""functions"": {
-          ""type"": ""array"",
-          ""items"": { ""type"": ""string"", ""minLength"": 1 },
-          ""uniqueItems"": true
-        },
-        ""cmdProcessorFunctions"": {
-          ""type"": ""array"",
-          ""items"": { ""$ref"": ""#/$defs/CmdProcessorFunctionSpec"" }
-        }
-      }
-    },
-    ""CmdProcessorFunctionSpec"": {
-      ""type"": ""object"",
-      ""required"": [""name"", ""parameters""],
-      ""additionalProperties"": false,
-      ""properties"": {
-        ""name"": { ""type"": ""string"", ""minLength"": 1 },
-        ""description"": { ""type"": ""string"" },
-        ""parameters"": {
-          ""type"": ""array"",
-          ""minItems"": 1,
-          ""items"": { ""$ref"": ""#/$defs/CmdProcessorFunctionParameter"" }
-        }
-      }
-    },
-    ""CmdProcessorFunctionParameter"": {
-      ""type"": ""object"",
-      ""required"": [""name"", ""type""],
-      ""additionalProperties"": false,
-      ""properties"": {
-        ""name"": { ""type"": ""string"", ""minLength"": 1 },
-        ""type"": { ""type"": ""string"", ""minLength"": 1 },
-        ""description"": { ""type"": ""string"" }
-      }
-    }
-  }
-}
-```
-
+        private static readonly Lazy<string> AgentGraphSchema = new(LoadAgentGraphSchema);
+        private const string PromptInstructions = @"
 When creating or editing an agent flow follow these rules.
 
 1. TOP-LEVEL RULES
@@ -138,6 +20,7 @@ When creating or editing an agent flow follow these rules.
 1.3 initState is optional. Add {""RetryLimit"": 2} when you want automatic retries.
 1.4 Every toolSpecId referenced by a node must have a matching entry in toolSpecs.
 1.5 All strings are plain UTF-8. Never emit markdown fences, back-ticks, or comments.
+1.6 Declare each value that the caller must supply to run_agent_flow in runtimeInputs. A runtimeInputs key must not also appear in initState; use initState only for flow-provided defaults. Runtime arguments are checked before the flow starts.
 
 2. NODE DESIGN
 template-llm nodes
@@ -158,6 +41,12 @@ branch-llm nodes
 - Each toolSpecs entry must include: id, systemPrompt.
 - functions is subset of available functions actually used by that node.
 - cmdProcessorFunctions only if the node will call dynamically created cmd processor functions.
+
+3.1 PENETRATION FLOW REQUIREMENTS
+- Put knowledge-base reconnaissance immediately after service enumeration and before Metasploit module selection.
+- The knowledge-base node must expose execute_query_penetration, call it with query_text and vector_search_mode, and save its result as an output for later nodes.
+- Later module-selection and module-information nodes must require and use that saved guidance.
+- Keep reconnaissance flows non-executing unless the user explicitly asks for a separate execution phase.
 
 7. EXECUTION AND STORAGE
 - After you create a flow JSON, you MUST call add_agent_flow to save it.
@@ -205,7 +94,7 @@ How you operate:
 - Only show the flow JSON if the user explicitly asks to see it.
 
 Running guidance:
-- Before running a flow, call get_agent_flow and inspect initState, node requires, and promptTemplate placeholders.
+- Before running a flow, call get_agent_flow and inspect runtimeInputs, initState, node requires, and promptTemplate placeholders.
 - Build the arguments object to supply only the required keys the flow expects.
 - If required inputs are missing or unclear, ask the user for the minimal missing values before calling run_agent_flow.
 
@@ -254,10 +143,25 @@ Template (minimal scan flow):
             sb.AppendLine(functionsJson);
             sb.AppendLine("```");
             sb.AppendLine();
-            sb.Append(PromptHeader);
+            sb.AppendLine("### Agenic-Flow Graph JSON Schema");
+            sb.AppendLine("```json");
+            sb.AppendLine(AgentGraphSchema.Value);
+            sb.AppendLine("```");
+            sb.Append(PromptInstructions);
             sb.AppendLine();
             sb.Append(PromptRules);
             return sb.ToString();
+        }
+
+        private static string LoadAgentGraphSchema()
+        {
+            var schemaPath = Path.Combine(AppContext.BaseDirectory, "Schemas", "agent_schema.json");
+            if (!File.Exists(schemaPath))
+            {
+                throw new FileNotFoundException("Agent graph schema was not deployed with NetworkMonitorLLM.", schemaPath);
+            }
+
+            return File.ReadAllText(schemaPath).Trim();
         }
     }
 }
