@@ -902,6 +902,70 @@ namespace NetworkMonitor.Connection
                 "I created the flow and saved it. It calls get_host_list to build a space-separated targets string, then runs run_nmap with explicit scan_options."
             ));
 
+            const string parameterizedFlowJson = "{\"version\":1,\"startNode\":\"scan_target\",\"runtimeInputs\":[\"target\"],\"initState\":{\"agent_location\":\"Scanner - EU\",\"objective\":\"Defensive service discovery and hardening guidance\"},\"nodes\":[{\"id\":\"scan_target\",\"type\":\"template-llm\",\"toolSpecId\":\"scan-tools\",\"promptTemplate\":\"For the authorized target {{target}}, call run_nmap with target={{target}}, scan_options='-sT -sV --open --top-ports 100', and agent_location={{agent_location}}. Return open_services as a JSON array.\",\"outputs\":[\"open_services\"],\"requires\":[\"target\",\"agent_location\"],\"next\":\"find_guidance\",\"timeoutSec\":600},{\"id\":\"find_guidance\",\"type\":\"template-llm\",\"toolSpecId\":\"guidance-tools\",\"promptTemplate\":\"Call execute_query_security with query_text containing target {{target}}, objective {{objective}}, and discovered services {{open_services}}; set index_name='securitybooks' and vector_search_mode='summary'. Return hardening_guidance.\",\"outputs\":[\"hardening_guidance\"],\"requires\":[\"target\",\"objective\",\"open_services\"],\"next\":\"build_report\",\"timeoutSec\":180},{\"id\":\"build_report\",\"type\":\"template-llm\",\"toolSpecId\":\"report-tools\",\"promptTemplate\":\"Create security_report for {{target}} using discovered services {{open_services}} and guidance {{hardening_guidance}}.\",\"outputs\":[\"security_report\"],\"requires\":[\"target\",\"open_services\",\"hardening_guidance\"],\"next\":null,\"timeoutSec\":120}],\"toolSpecs\":[{\"id\":\"scan-tools\",\"systemPrompt\":\"Perform authorized defensive service discovery only.\",\"functions\":[\"run_nmap\"]},{\"id\":\"guidance-tools\",\"systemPrompt\":\"Use the security knowledge base to provide defensive hardening guidance.\",\"functions\":[\"execute_query_security\"]},{\"id\":\"report-tools\",\"systemPrompt\":\"Produce a concise defensive security report.\",\"functions\":[]}]}";
+            var parameterizedArguments = JsonSerializer.Serialize(new Dictionary<string, object?>
+            {
+                ["flow_name"] = "target-security-recon",
+                ["json"] = parameterizedFlowJson,
+                ["overwrite"] = true
+            });
+
+            AddAssistantMessageWithToolCall(
+                messages,
+                "Create a reusable defensive reconnaissance flow. I will supply the target each time I run it; use Scanner - EU as its default location.",
+                "",
+                "{\"message\":\"Flow saved.\",\"success\":true}",
+                "add_agent_flow",
+                parameterizedArguments
+            );
+
+            messages.Add(ChatMessage.FromAssistant(
+                "I saved the reusable flow. It requires target at run time, while agent_location and objective are flow defaults."
+            ));
+
+            var runArguments = JsonSerializer.Serialize(new Dictionary<string, object?>
+            {
+                ["flow_name"] = "target-security-recon",
+                ["arguments"] = new Dictionary<string, object?>
+                {
+                    ["target"] = "example.com"
+                }
+            });
+
+            AddAssistantMessageWithToolCall(
+                messages,
+                "Run target-security-recon against example.com.",
+                "",
+                "{\"message\":\"Flow completed.\",\"success\":true}",
+                "run_agent_flow",
+                runArguments
+            );
+
+            messages.Add(ChatMessage.FromAssistant(
+                "The flow completed for example.com and returned its security report."
+            ));
+
+            const string retryFlowJson = "{\"version\":1,\"startNode\":\"scan_target\",\"runtimeInputs\":[\"target\"],\"initState\":{\"agent_location\":\"Scanner - EU\",\"RetryLimit\":2},\"nodes\":[{\"id\":\"scan_target\",\"type\":\"template-llm\",\"toolSpecId\":\"scan-tools\",\"promptTemplate\":\"For authorized target {{target}}, call run_nmap with target={{target}}, scan_options='-sT -sV --open', and agent_location={{agent_location}}. Return scan_result with the raw result and any error details.\",\"outputs\":[\"scan_result\"],\"requires\":[\"target\",\"agent_location\"],\"next\":\"assess_scan\",\"timeoutSec\":300},{\"id\":\"assess_scan\",\"type\":\"branch-llm\",\"toolSpecId\":\"assessment-tools\",\"promptTemplate\":\"Assess scan_result {{scan_result}}. Return status retry when the scan failed transiently, fail when it cannot be completed safely, or success when usable results were returned. Include a reason.\",\"branches\":{\"success\":\"build_report\",\"retry\":\"scan_target\",\"fail\":\"build_report\"},\"requires\":[\"scan_result\"],\"timeoutSec\":60},{\"id\":\"build_report\",\"type\":\"template-llm\",\"toolSpecId\":\"report-tools\",\"promptTemplate\":\"Create security_report for {{target}} from {{scan_result}}, including any scan failure reason when present.\",\"outputs\":[\"security_report\"],\"requires\":[\"target\",\"scan_result\"],\"next\":null,\"timeoutSec\":120}],\"toolSpecs\":[{\"id\":\"scan-tools\",\"systemPrompt\":\"Perform authorized defensive scanning only.\",\"functions\":[\"run_nmap\"]},{\"id\":\"assessment-tools\",\"systemPrompt\":\"Choose only success, retry, or fail and explain the decision.\",\"functions\":[]},{\"id\":\"report-tools\",\"systemPrompt\":\"Produce a concise security report.\",\"functions\":[]}]}";
+            var retryArguments = JsonSerializer.Serialize(new Dictionary<string, object?>
+            {
+                ["flow_name"] = "retrying-target-scan",
+                ["json"] = retryFlowJson,
+                ["overwrite"] = true
+            });
+
+            AddAssistantMessageWithToolCall(
+                messages,
+                "Create a target scan flow that retries a transient scan failure at most twice, then reports the result.",
+                "",
+                "{\"message\":\"Flow saved.\",\"success\":true}",
+                "add_agent_flow",
+                retryArguments
+            );
+
+            messages.Add(ChatMessage.FromAssistant(
+                "I saved the flow. Its branch node uses only success, retry, and fail; RetryLimit controls how often the scan can repeat."
+            ));
+
             return messages;
         }
 

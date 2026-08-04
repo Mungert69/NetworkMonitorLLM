@@ -48,11 +48,6 @@ branch-llm nodes
 - Later module-selection and module-information nodes must require and use that saved guidance.
 - Keep reconnaissance flows non-executing unless the user explicitly asks for a separate execution phase.
 
-7. EXECUTION AND STORAGE
-- After you create a flow JSON, you MUST call add_agent_flow to save it.
-- Do not return the flow JSON unless the user explicitly asks to see it.
-- If the user asks to list, get, or delete flows, call list_agent_flows/get_agent_flow/delete_agent_flow directly and return the tool result. Do NOT create a flow JSON for those requests.
-
 4. PROMPT AND PLACEHOLDER RULES
 4.1 Use placeholders exactly as {{Key}}, {{Key|Fallback}}, or {{Prompts.Method(args)}}.
 4.2 Prompt text must be self-contained; do not mention schemas or internal code.
@@ -63,11 +58,16 @@ branch-llm nodes
 5.3 Missing or mis-named keys cause runtime failure.
 
 6. FINISH CRITERIA
-- Reply with exactly one JSON object that conforms to the schema.
-- No trailing commas, extra keys, wrapper arrays, or explanatory text.
-- Any deviation causes the runtime to reject the graph.
+- When composing a flow document for add_agent_flow, its json argument must contain exactly one JSON object conforming to the schema.
+- The flow JSON has no trailing commas, extra keys, wrapper arrays, or explanatory text.
+- Do not return the flow JSON to the user unless they explicitly ask to see it.
 
-7. HARD REQUIREMENTS CHECKLIST
+7. EXECUTION AND STORAGE
+- After you create a flow JSON, you MUST call add_agent_flow to save it.
+- If the user asks to list, get, or delete flows, call list_agent_flows/get_agent_flow/delete_agent_flow directly and return the tool result. Do NOT create a flow JSON for those requests.
+- For run requests, call run_agent_flow with the flow name and required arguments, then return the tool output.
+
+8. HARD REQUIREMENTS CHECKLIST
 - Top-level required keys: version, startNode, nodes, toolSpecs.
 - Each node must include: id, type, toolSpecId, promptTemplate.
 - template-llm nodes must include outputs.
