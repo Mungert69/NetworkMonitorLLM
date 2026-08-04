@@ -41,6 +41,9 @@ namespace NetworkMonitor.LLM.Services
 
         internal static ConfigurationOptions BuildConfiguration(string redisUrl, string redisSecret)
         {
+            const int connectTimeoutSeconds = 10;
+            const int operationTimeoutSeconds = 120;
+
             var config = new ConfigurationOptions
             {
                 // Basic connection
@@ -53,9 +56,10 @@ namespace NetworkMonitor.LLM.Services
                 SslProtocols = System.Security.Authentication.SslProtocols.Tls13,
 
                 // Connection tuning
-                ConnectTimeout = 5000,
-                SyncTimeout = 30000,
-                AsyncTimeout = 30000,
+                // StackExchange.Redis stores these settings in milliseconds.
+                ConnectTimeout = (int)TimeSpan.FromSeconds(connectTimeoutSeconds).TotalMilliseconds,
+                SyncTimeout = (int)TimeSpan.FromSeconds(operationTimeoutSeconds).TotalMilliseconds,
+                AsyncTimeout = (int)TimeSpan.FromSeconds(operationTimeoutSeconds).TotalMilliseconds,
                 AbortOnConnectFail = false
             };
 

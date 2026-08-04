@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -21,9 +22,9 @@ public class RedisHistoryStorageTests
         Assert.Equal("secret", options.Password);
         Assert.True(options.Ssl);
         Assert.Equal("admin", options.User);
-        Assert.Equal(5000, options.ConnectTimeout);
-        Assert.Equal(30000, options.SyncTimeout);
-        Assert.Equal(30000, options.AsyncTimeout);
+        Assert.Equal(TimeSpan.FromSeconds(10), TimeSpan.FromMilliseconds(options.ConnectTimeout));
+        Assert.Equal(TimeSpan.FromSeconds(120), TimeSpan.FromMilliseconds(options.SyncTimeout));
+        Assert.Equal(TimeSpan.FromSeconds(120), TimeSpan.FromMilliseconds(options.AsyncTimeout));
     }
 
     [Fact]
