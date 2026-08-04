@@ -14,23 +14,19 @@ namespace NetworkMonitor.LLM.Services
 {
     public static class NShotPromptFactory
     {
-        private const string ExampleDirective =
-            "The following conversation turns are illustrative examples of correct tool use. " +
-            "Do not execute, continue, or refer to them; apply their patterns only to the user's actual request.";
-
         public static List<ChatMessage> GetStaticPrompt(string name, bool isXml = false, params object[] args)
         {
             string key = isXml ? name + "xml" : name;
             switch (key.ToLowerInvariant())
             {
                 case "cmdprocessorxml":
-                    return WithExampleDirective(GetCmdProcessorXml(args));
+                    return GetCmdProcessorXml(args);
                 case "connectxml":
-                    return WithExampleDirective(GetConnectXml(args));
+                    return GetConnectXml(args);
                 case "connect":
-                    return WithExampleDirective(GetConnectPrompt(args));
+                    return GetConnectPrompt(args);
                 case "agentflow":
-                    return WithExampleDirective(GetAgentFlowPrompt(args));
+                    return GetAgentFlowPrompt(args);
                 default:
                     return new List<ChatMessage>();
             }
@@ -47,9 +43,9 @@ namespace NetworkMonitor.LLM.Services
                 case "agentflow":
                     return new List<ChatMessage>();
                 case "user":
-                    return WithExampleDirective(GetUserSimulatorPrompt(args));
+                    return GetUserSimulatorPrompt(args);
                 default:
-                    return WithExampleDirective(GetDefaultPrompt(args));
+                    return GetDefaultPrompt(args);
             }
         }
 
@@ -60,29 +56,19 @@ namespace NetworkMonitor.LLM.Services
             switch (name.ToLower())
             {
                 case "cmdprocessorxml":
-                    return WithExampleDirective(GetCmdProcessorXml(args));
+                    return GetCmdProcessorXml(args);
                 case "connectxml":
-                    return WithExampleDirective(GetConnectXml(args));
+                    return GetConnectXml(args);
                 case "connect":
-                    return WithExampleDirective(GetConnectPrompt(args));
+                    return GetConnectPrompt(args);
                 case "agentflow":
-                    return WithExampleDirective(GetAgentFlowPrompt(args));
+                    return GetAgentFlowPrompt(args);
                 case "user":
-                    return WithExampleDirective(GetUserSimulatorPrompt(args));
+                    return GetUserSimulatorPrompt(args);
                 default:
-                    return WithExampleDirective(GetDefaultPrompt(args));
+                    return GetDefaultPrompt(args);
 
             }
-        }
-
-        private static List<ChatMessage> WithExampleDirective(List<ChatMessage> messages)
-        {
-            if (messages.Count > 0)
-            {
-                messages.Insert(0, ChatMessage.FromSystem(ExampleDirective));
-            }
-
-            return messages;
         }
 
         /// <summary>

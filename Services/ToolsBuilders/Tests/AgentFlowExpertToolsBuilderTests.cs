@@ -35,8 +35,6 @@ public class AgentFlowExpertToolsBuilderTests
     public void AgentFlowNShot_ContainsAValidFlowCreationToolCall()
     {
         var messages = NShotPromptFactory.GetStaticPrompt("agentflow");
-        Assert.Equal("system", messages[0].Role);
-        Assert.Contains("illustrative examples", messages[0].Content);
         var addCalls = messages
             .SelectMany(message => message.ToolCalls ?? [])
             .Where(toolCall => toolCall.FunctionCall?.Name == "add_agent_flow")
