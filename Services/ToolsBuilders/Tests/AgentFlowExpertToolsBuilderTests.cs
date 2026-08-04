@@ -105,5 +105,14 @@ public class AgentFlowExpertToolsBuilderTests
             .OrderBy(name => name)
             .ToArray();
         Assert.Equal(new[] { "fail", "retry", "success" }, branchNames);
+
+        var deletedFlowNames = messages
+            .SelectMany(message => message.ToolCalls ?? [])
+            .Where(toolCall => toolCall.FunctionCall?.Name == "delete_agent_flow")
+            .Select(toolCall => JsonDocument.Parse(toolCall.FunctionCall!.Arguments!).RootElement
+                .GetProperty("flow_name").GetString())
+            .OrderBy(flowName => flowName)
+            .ToArray();
+        Assert.Equal(new[] { "quick-scan", "retrying-target-scan", "target-security-recon" }, deletedFlowNames);
     }
 }

@@ -966,6 +966,29 @@ namespace NetworkMonitor.Connection
                 "I saved the flow. Its branch node uses only success, retry, and fail; RetryLimit controls how often the scan can repeat."
             ));
 
+            // Clean up every flow created above. N-shot tool calls are presented as a
+            // coherent conversation, so leave the simulated saved-flow state empty.
+            foreach (var flowName in new[] { "quick-scan", "target-security-recon", "retrying-target-scan" })
+            {
+                var deleteArguments = JsonSerializer.Serialize(new Dictionary<string, object?>
+                {
+                    ["flow_name"] = flowName
+                });
+
+                AddAssistantMessageWithToolCall(
+                    messages,
+                    $"Delete the {flowName} agent flow.",
+                    "",
+                    "{\"message\":\"Flow deleted.\",\"success\":true}",
+                    "delete_agent_flow",
+                    deleteArguments
+                );
+
+                messages.Add(ChatMessage.FromAssistant(
+                    $"The {flowName} agent flow has been deleted."
+                ));
+            }
+
             return messages;
         }
 
