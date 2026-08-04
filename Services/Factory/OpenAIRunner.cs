@@ -360,6 +360,7 @@ public class OpenAIRunner : ILLMRunner
             TruncateTokens(_history, serviceObj);
             var currentHistory = new List<ChatMessage>(_history.Concat(localHistory));
             SanitizeMessagesForCompletion(currentHistory);
+            NormalizeSystemMessagesForCompletion(currentHistory);
 
             var completionSuccessResult = await _llmApi.CreateCompletionAsync(currentHistory, _responseTokens, serviceObj);
             var completionResult = completionSuccessResult.Response;
@@ -1472,6 +1473,43 @@ public class OpenAIRunner : ILLMRunner
             }
         }
     }
+
+    private void NormalizeSystemMessagesForCompletion(List<ChatMessage> messages)
+    {
+        if (_mlParams.LlmAllowSystemMessagesAfterFirst || messages.Count == 0)
+        {
+            return;
+        }
+
+        // Some chat templates, including Qwen's, only accept system messages as a
+        // contiguous prefix. Runtime guidance (RAG, session resume, and loop
+        // detection) can otherwise leave a system message later in the conversation.
+        bool passedSystemPrefix = false;
+        int normalizedCount = 0;
+        foreach (var message in messages)
+        {
+            if (string.Equals(message.Role, "system", StringComparison.OrdinalIgnoreCase) && !passedSystemPrefix)
+            {
+                continue;
+            }
+
+            passedSystemPrefix = true;
+            if (string.Equals(message.Role, "system", StringComparison.OrdinalIgnoreCase))
+            {
+                message.Role = "user";
+                message.Content = "[Runtime guidance]\n" + (message.Content ?? string.Empty);
+                normalizedCount++;
+            }
+        }
+
+        if (normalizedCount > 0)
+        {
+            _logger.LogDebug(
+                "Converted {Count} non-leading system message(s) to user messages for this model's chat template.",
+                normalizedCount);
+        }
+    }
+
     private void RemoveUnansweredToolCalls(string sessionId, List<ChatMessage> sessionHistory)
     {
         // HF model does not use tool calls so they can be left in the history as they are.

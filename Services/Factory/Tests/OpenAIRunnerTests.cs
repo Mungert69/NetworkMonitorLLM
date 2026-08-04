@@ -194,6 +194,55 @@ public class OpenAIRunnerTests
         responseProcessor.Verify(r => r.ProcessLLMOutputError(It.IsAny<LLMServiceObj>()), Times.Once);
     }
 
+    [Fact]
+    public void NormalizeSystemMessagesForCompletion_WhenLaterSystemMessagesAreDisabled_ConvertsOnlyLaterMessages()
+    {
+        var runner = CreateRunner(new MLParams { LlmAllowSystemMessagesAfterFirst = false });
+        var messages = new List<ChatMessage>
+        {
+            ChatMessage.FromSystem("primary prompt"),
+            ChatMessage.FromSystem("second primary prompt"),
+            ChatMessage.FromUser("hello"),
+            ChatMessage.FromSystem("RAG result"),
+            ChatMessage.FromAssistant("answer"),
+            ChatMessage.FromSystem("resume context")
+        };
+
+        var normalizeMethod = typeof(OpenAIRunner).GetMethod(
+            "NormalizeSystemMessagesForCompletion",
+            BindingFlags.NonPublic | BindingFlags.Instance);
+        Assert.NotNull(normalizeMethod);
+        normalizeMethod!.Invoke(runner, new object[] { messages });
+
+        Assert.Equal("system", messages[0].Role);
+        Assert.Equal("system", messages[1].Role);
+        Assert.Equal("user", messages[3].Role);
+        Assert.Equal("[Runtime guidance]\nRAG result", messages[3].Content);
+        Assert.Equal("user", messages[5].Role);
+        Assert.Equal("[Runtime guidance]\nresume context", messages[5].Content);
+    }
+
+    [Fact]
+    public void NormalizeSystemMessagesForCompletion_WhenLaterSystemMessagesAreAllowed_LeavesHistoryUnchanged()
+    {
+        var runner = CreateRunner(new MLParams { LlmAllowSystemMessagesAfterFirst = true });
+        var messages = new List<ChatMessage>
+        {
+            ChatMessage.FromSystem("primary prompt"),
+            ChatMessage.FromUser("hello"),
+            ChatMessage.FromSystem("RAG result")
+        };
+
+        var normalizeMethod = typeof(OpenAIRunner).GetMethod(
+            "NormalizeSystemMessagesForCompletion",
+            BindingFlags.NonPublic | BindingFlags.Instance);
+        Assert.NotNull(normalizeMethod);
+        normalizeMethod!.Invoke(runner, new object[] { messages });
+
+        Assert.Equal("system", messages[2].Role);
+        Assert.Equal("RAG result", messages[2].Content);
+    }
+
     [Theory]
     [InlineData("length", "truncated")]
     [InlineData("content_filter", "blocked")]
@@ -374,6 +423,47 @@ public class OpenAIRunnerTests
         Assert.NotNull(calculateMethod);
         var totalTokens = (int)calculateMethod!.Invoke(runner, new object[] { history })!;
         Assert.True(totalTokens <= 12);
+    }
+
+    private static OpenAIRunner CreateRunner(MLParams mlParams)
+    {
+        mlParams.LlmProvider = "OpenAI";
+        mlParams.LlmOpenAICtxSize = 4096;
+        mlParams.LlmCtxRatio = 4;
+
+        var logger = new Mock<ILogger<OpenAIRunner>>();
+        var responseProcessor = new Mock<ILLMResponseProcessor>();
+        responseProcessor.SetupGet(r => r.RabbitRepo)
+            .Returns(Mock.Of<NetworkMonitor.Objects.Repository.IRabbitRepo>());
+
+        var toolsFactory = new Mock<IToolsBuilderFactory>();
+        toolsFactory.Setup(t => t.Create(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<string>()))
+            .Returns(new FakeToolsBuilder());
+
+        var serviceObj = new LLMServiceObj
+        {
+            UserInput = "hello",
+            SessionId = "session-normalize-1",
+            RequestSessionId = "req-normalize-1",
+            LLMRunnerType = "TurboLLM",
+            SourceLlm = "monitor",
+            DestinationLlm = "expert",
+            UserInfo = new UserInfo { AccountType = "Default" }
+        };
+
+        return new OpenAIRunner(
+            logger.Object,
+            responseProcessor.Object,
+            null!,
+            new SystemParams { ServiceID = "monitor", ServiceAuthKey = "auth" },
+            mlParams,
+            serviceObj,
+            null,
+            Mock.Of<IAudioGenerator>(),
+            false,
+            new List<ChatMessage>(),
+            Mock.Of<IQueryCoordinator>(),
+            toolsFactory.Object);
     }
 
     private sealed class FailingLlmApi : ILLMApi
