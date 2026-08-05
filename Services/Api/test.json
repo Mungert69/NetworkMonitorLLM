@@ -76,7 +76,7 @@
                         "id": "call_Z963smNdHv0zFtlnUv4ASUGCKW",
                         "type": "function",
                         "function": {
-                            "name": "get_function_result",
+                            "name": "async_function_completion_notification",
                             "arguments": "{{\u0022message_id\u0022: \u0022wKh2GnEaIr7f\u0022, \u0022function_name\u0022: \u0022get_host_list\u0022}}"
                         }
                     }
@@ -129,7 +129,7 @@
                         "id": "call_mDTD6vZgQlYA5M2mxxk3zQzNwu",
                         "type": "function",
                         "function": {
-                            "name": "get_function_result",
+                            "name": "async_function_completion_notification",
                             "arguments": "{{\u0022message_id\u0022: \u0022vBf0Yg-PRIJm\u0022, \u0022function_name\u0022: \u0022get_host_data\u0022}}"
                         }
                     }

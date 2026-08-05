@@ -28,6 +28,10 @@ namespace NetworkMonitor.LLM.Services;
 
 public class OpenAIRunner : ILLMRunner
 {
+    private const string AsyncCompletionNotificationToolName = "async_function_completion_notification";
+    private const string AsyncCompletionNotificationGuidance =
+        "Async function calls first return a running acknowledgement. When the result arrives, the system creates async_function_completion_notification only to attach that result to the conversation history. It is not a callable tool: do not invoke it or repeat the original function call; wait for the automatic result.";
+
     private ILogger _logger;
     private ILLMResponseProcessor _responseProcessor;
     private OpenAIService _openAiService; // Interface to interact with OpenAI
@@ -732,6 +736,8 @@ public class OpenAIRunner : ILLMRunner
         bool usePlaceHolder = true;
 
         if (choiceMessage == null) return;
+        if (TryHandleInternalHistoryToolCall(choiceMessage, localHistory)) return;
+
         // Create a deep copy of the choiceMessage to avoid modifying the original
         // Map original tool_call_id -> copied tool_call_id
         var toolCallIdMap = new Dictionary<string, string>(StringComparer.Ordinal);
@@ -743,7 +749,7 @@ public class OpenAIRunner : ILLMRunner
                 var name = tc.FunctionCall?.Name;
                 return name == "function_status_with_message_id"
                     || name == "cancel_functions"
-                    || name == "get_function_result";
+                    || name == AsyncCompletionNotificationToolName;
             }))
         {
             usePlaceHolder = false;
@@ -764,22 +770,7 @@ public class OpenAIRunner : ILLMRunner
                         toolCallIdMap[oldId] = newId;
                     }
 
-                    return new ToolCall
-                    {
-                        Id = newId,
-                        Type = tc.Type,
-                        FunctionCall = tc.FunctionCall != null
-                            ? new FunctionCall
-                            {
-                                Name = "get_function_result",
-                                Arguments = JsonSerializer.Serialize(new
-                                {
-                                    message_id = serviceObj.MessageID,
-                                    function_name = tc.FunctionCall.Name
-                                })
-                            }
-                            : null
-                    };
+                    return CreateAsyncCompletionHistoryToolCall(tc, serviceObj.MessageID, newId);
                 }).ToList()
             };
             usePlaceHolder = true;
@@ -893,6 +884,51 @@ public class OpenAIRunner : ILLMRunner
             _funcsInARow = 0;
         }
         return;
+    }
+
+    private bool TryHandleInternalHistoryToolCall(ChatMessage choiceMessage, List<ChatMessage> localHistory)
+    {
+        var toolCall = choiceMessage.ToolCalls?.Count == 1 ? choiceMessage.ToolCalls[0] : null;
+        if (!string.Equals(
+                toolCall?.FunctionCall?.Name,
+                AsyncCompletionNotificationToolName,
+                StringComparison.Ordinal) ||
+            string.IsNullOrWhiteSpace(toolCall.Id))
+        {
+            return false;
+        }
+
+        _logger.LogWarning("Model attempted to call {ToolName}.", AsyncCompletionNotificationToolName);
+        localHistory.Add(choiceMessage);
+        localHistory.Add(BuildFunctionHistoryResponseMessage(
+            AsyncCompletionNotificationToolName,
+            JsonSerializer.Serialize(new { message = AsyncCompletionNotificationGuidance }),
+            toolCall.Id));
+        localHistory.Add(BuildRuntimeGuidanceMessage(AsyncCompletionNotificationGuidance));
+        return true;
+    }
+
+    private static ToolCall CreateAsyncCompletionHistoryToolCall(
+        ToolCall sourceToolCall,
+        string messageId,
+        string toolCallId)
+    {
+        return new ToolCall
+        {
+            Id = toolCallId,
+            Type = sourceToolCall.Type,
+            FunctionCall = sourceToolCall.FunctionCall != null
+                ? new FunctionCall
+                {
+                    Name = AsyncCompletionNotificationToolName,
+                    Arguments = JsonSerializer.Serialize(new
+                    {
+                        message_id = messageId,
+                        function_name = sourceToolCall.FunctionCall.Name
+                    })
+                }
+                : null
+        };
     }
 
     private ChatMessage BuildRuntimeGuidanceMessage(string message)

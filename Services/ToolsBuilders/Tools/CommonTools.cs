@@ -90,34 +90,6 @@ public class CommonTools
         };
     }
 
- public static FunctionDefinition BuildGetFunctionResult()
-    {
-        return new FunctionDefinition
-        {
-            Name = "get_function_result",
-            Description = "Get the result of a single function call with a given message_id and function_name.",
-            Parameters = new PropertyDefinition
-            {
-                Type = "object",
-                Properties = new Dictionary<string, PropertyDefinition>
-                {
-                    ["message_id"] = new PropertyDefinition
-                    {
-                        Type = "string",
-                        Description = "The message_id that is associated with the function calls"
-                    },
-                    ["function_name"] = new PropertyDefinition
-                    {
-                        Type = "string",
-                        Description = "The the name of the function you want the result for"
-                    }
-                },
-                Required = new List<string> { "message_id","function_name" }
-            }
-        };
-    }
-    
-
     public static FunctionDefinition BuildGetAgentsFunction()
     {
         return new FunctionDefinition
