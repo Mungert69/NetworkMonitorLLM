@@ -13,7 +13,7 @@ public class TokenBroadcasterLlama_3_1 : TokenBroadcasterBase
     private const string EotToken = "<|eot_id|>";
     private const string EomToken = "<|eom_id|>";
 
-    public TokenBroadcasterFunc_3_1(
+    public TokenBroadcasterLlama_3_1(
         ILLMResponseProcessor responseProcessor,
         ILogger logger,
         bool xmlFunctionParsing,
