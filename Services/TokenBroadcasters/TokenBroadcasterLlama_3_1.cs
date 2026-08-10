@@ -10,16 +10,19 @@ namespace NetworkMonitor.LLM.Services;
 
 public class TokenBroadcasterLlama_3_1 : TokenBroadcasterBase
 {
-    private const string PythonTag = "<|python_tag|>";
-    private const string EomToken = "<|eom_id|>";
     private const string EotToken = "<|eot_id|>";
+    private const string EomToken = "<|eom_id|>";
 
-    public TokenBroadcasterLlama_3_1(
+    public TokenBroadcasterFunc_3_1(
         ILLMResponseProcessor responseProcessor,
         ILogger logger,
         bool xmlFunctionParsing,
         HashSet<string> ignoreParameters)
-        : base(responseProcessor, logger, xmlFunctionParsing, ignoreParameters)
+        : base(
+            responseProcessor,
+            logger,
+            xmlFunctionParsing,
+            ignoreParameters)
     {
     }
 
@@ -33,70 +36,60 @@ public class TokenBroadcasterLlama_3_1 : TokenBroadcasterBase
             return functionCalls;
         }
 
-        /*
-         * Preferred Llama 3.1 tool output:
-         *
-         * <|python_tag|>{"name":"function_name","parameters":{...}}<|eom_id|>
-         *
-         * Strip the Llama control tokens before parsing the JSON.
-         *
-         * We deliberately do not require <|python_tag|> to be present because
-         * the model may occasionally emit the bare JSON function call despite
-         * being prompted to use the native Llama 3.1 wrapper.
-         */
-        input = NormalizeLlama31ToolOutput(input);
+        input = NormalizeLlama31Output(input);
 
-        /*
-         * Llama 3.1 may occasionally produce the more native-looking form:
-         *
-         * {
-         *   "type": "function",
-         *   "name": "...",
-         *   "parameters": {...}
-         * }
-         *
-         * Our application does not need the "type" property, so remove it when
-         * it occurs at the beginning of a top-level function call.
-         */
-        input = Regex.Replace(
-            input,
-            @"^\s*{\s*""type""\s*:\s*""function""\s*,?\s*",
-            "{");
-
-        // Normalize pretty-printed JSON so "{" immediately precedes "name".
-        input = Regex.Replace(
-            input,
-            @"{\s*(?=""name"")",
-            "{");
-
-        foreach (var candidate in ExtractJsonObjects(input))
+        foreach (var functionCall in ExtractFunctionCalls(input))
         {
-            if (!LooksLikeFunctionCallCandidate(candidate))
-            {
-                continue;
-            }
-
             try
             {
-                var repairedJson = JsonSanitizer.RepairJson(
-                    candidate,
-                    _ignoreParameters);
+                var functionName = functionCall.functionName.Trim();
+                var argumentsJson = functionCall.argumentsJson.Trim();
 
-                using var document = JsonDocument.Parse(repairedJson);
-                var root = document.RootElement;
-
-                if (!TryExtractFunctionCall(
-                    root,
-                    out var functionName,
-                    out var parametersJson))
+                if (string.IsNullOrWhiteSpace(functionName))
                 {
                     continue;
                 }
 
-                var sanitizedJson =
+                if (string.IsNullOrWhiteSpace(argumentsJson))
+                {
+                    argumentsJson = "{}";
+                }
+
+                /*
+                 * Repair the argument JSON rather than the complete
+                 * <function=...> wrapper.
+                 */
+                var repairedJson =
                     JsonSanitizer.RepairJson(
-                        parametersJson,
+                        argumentsJson,
                         _ignoreParameters) ?? "";
+
+                /*
+                 * Ensure the repaired value is actually valid JSON.
+                 *
+                 * Function arguments should normally be a JSON object,
+                 * but validation here primarily protects the downstream
+                 * function execution from malformed model output.
+                 */
+                using var document = JsonDocument.Parse(repairedJson);
+
+                if (document.RootElement.ValueKind != JsonValueKind.Object)
+                {
+                    _logger.LogWarning(
+                        "Ignoring Llama 3.1 function call {FunctionName} because parameters are not a JSON object: {Parameters}",
+                        functionName,
+                        repairedJson);
+
+                    continue;
+                }
+
+                /*
+                 * Use the normalized JSON emitted by JsonDocument so the
+                 * duplicate check is not affected by insignificant
+                 * whitespace differences.
+                 */
+                var sanitizedJson =
+                    document.RootElement.GetRawText();
 
                 var key = $"{functionName}\n{sanitizedJson}";
 
@@ -115,212 +108,76 @@ public class TokenBroadcasterLlama_3_1 : TokenBroadcasterBase
             {
                 _logger.LogError(
                     ex,
-                    "Failed to parse or repair Llama 3.1 JSON block: {JsonBlock}",
-                    candidate);
+                    "Failed to parse Llama 3.1 function call {FunctionName} with arguments: {Arguments}",
+                    functionCall.functionName,
+                    functionCall.argumentsJson);
             }
         }
 
         return functionCalls;
     }
 
-    private static string NormalizeLlama31ToolOutput(string input)
+    private static string NormalizeLlama31Output(string input)
     {
         /*
-         * Remove the tool-call opening marker.
+         * Function-tag custom calls normally finish with <|eot_id|>.
          *
-         * Do this globally rather than only at position zero because some
-         * models may emit whitespace or other harmless text before it.
-         */
-        input = input.Replace(PythonTag, "");
-
-        /*
-         * <|eom_id|> means the assistant has yielded control to the tool
-         * execution environment. It is not part of the JSON payload.
-         */
-        input = input.Replace(EomToken, "");
-
-        /*
-         * Also tolerate <|eot_id|>. It is technically not the preferred
-         * terminator for an intermediate Llama 3.1 tool invocation, but some
-         * models/quantisations may produce it anyway.
+         * Remove model control tokens because they are not part of the
+         * function name or parameter JSON.
+         *
+         * <|eom_id|> is tolerated as well in case a particular model or
+         * quantization emits it.
          */
         input = input.Replace(EotToken, "");
+        input = input.Replace(EomToken, "");
 
         return input.Trim();
     }
 
-    private static bool LooksLikeFunctionCallCandidate(string json)
+    private static IEnumerable<(string functionName, string argumentsJson)>
+        ExtractFunctionCalls(string input)
     {
-        if (string.IsNullOrWhiteSpace(json))
+        /*
+         * Expected format:
+         *
+         * <function=run_nmap>{"target":"example.com"}</function>
+         *
+         * Function names are deliberately restricted to the normal set of
+         * characters used by function/tool names. This prevents accidental
+         * matching of unrelated model output.
+         *
+         * Singleline allows pretty-printed JSON between the tags even though
+         * the prompt asks the model to place the entire call on one line.
+         */
+        var pattern =
+            @"<function\s*=\s*(?<name>[A-Za-z0-9_.:-]+)\s*>\s*(?<arguments>.*?)\s*</function>";
+
+        var matches = Regex.Matches(
+            input,
+            pattern,
+            RegexOptions.Singleline | RegexOptions.IgnoreCase);
+
+        foreach (Match match in matches)
         {
-            return false;
-        }
-
-        return json.Contains("\"name\"")
-               && (json.Contains("\"parameters\"")
-                   || json.Contains("\"arguments\"")
-                   || json.Contains("\"function\""));
-    }
-
-    private static IEnumerable<string> ExtractJsonObjects(string input)
-    {
-        var stack = new Stack<int>();
-        var inString = false;
-        var escape = false;
-
-        for (var i = 0; i < input.Length; i++)
-        {
-            var c = input[i];
-
-            if (inString)
+            if (!match.Success)
             {
-                if (escape)
-                {
-                    escape = false;
-                    continue;
-                }
-
-                if (c == '\\')
-                {
-                    escape = true;
-                    continue;
-                }
-
-                if (c == '"')
-                {
-                    inString = false;
-                }
-
                 continue;
             }
 
-            if (c == '"')
+            var functionName =
+                match.Groups["name"].Value;
+
+            var argumentsJson =
+                match.Groups["arguments"].Value;
+
+            if (string.IsNullOrWhiteSpace(functionName))
             {
-                inString = true;
                 continue;
             }
 
-            if (c == '{')
-            {
-                stack.Push(i);
-                continue;
-            }
-
-            if (c == '}')
-            {
-                if (stack.Count > 0)
-                {
-                    var start = stack.Pop();
-
-                    yield return input.Substring(
-                        start,
-                        i - start + 1);
-                }
-            }
+            yield return (
+                functionName,
+                argumentsJson);
         }
-    }
-
-    private static bool TryExtractFunctionCall(
-        JsonElement element,
-        out string functionName,
-        out string parametersJson)
-    {
-        functionName = "";
-        parametersJson = "";
-
-        if (element.ValueKind != JsonValueKind.Object)
-        {
-            return false;
-        }
-
-        return TryExtractFromObject(
-            element,
-            out functionName,
-            out parametersJson);
-    }
-
-    private static bool TryExtractFromObject(
-        JsonElement element,
-        out string functionName,
-        out string parametersJson)
-    {
-        functionName = "";
-        parametersJson = "";
-
-        /*
-         * Your application's preferred format:
-         *
-         * {
-         *   "name": "function_name",
-         *   "parameters": {...}
-         * }
-         *
-         * Also accept "arguments" because models sometimes use the
-         * OpenAI-style naming despite the prompt.
-         */
-        if (element.TryGetProperty("name", out var nameElement)
-            && nameElement.ValueKind == JsonValueKind.String)
-        {
-            if (element.TryGetProperty(
-                    "parameters",
-                    out var parametersElement)
-                || element.TryGetProperty(
-                    "arguments",
-                    out parametersElement))
-            {
-                functionName =
-                    nameElement.GetString() ?? "";
-
-                parametersJson =
-                    ExtractParametersJson(parametersElement);
-
-                return !string.IsNullOrEmpty(functionName);
-            }
-        }
-
-        /*
-         * Also tolerate:
-         *
-         * {
-         *   "function": {
-         *      "name": "...",
-         *      "arguments": {...}
-         *   }
-         * }
-         */
-        if (element.TryGetProperty(
-                "function",
-                out var functionElement)
-            && functionElement.ValueKind == JsonValueKind.Object)
-        {
-            return TryExtractFromObject(
-                functionElement,
-                out functionName,
-                out parametersJson);
-        }
-
-        return false;
-    }
-
-    private static string ExtractParametersJson(
-        JsonElement parametersElement)
-    {
-        /*
-         * Some models serialize arguments twice:
-         *
-         * "arguments": "{\"target\":\"example.com\"}"
-         *
-         * while others correctly return:
-         *
-         * "arguments": {"target":"example.com"}
-         *
-         * Support both.
-         */
-        if (parametersElement.ValueKind == JsonValueKind.String)
-        {
-            return parametersElement.GetString() ?? "";
-        }
-
-        return parametersElement.GetRawText();
     }
 }

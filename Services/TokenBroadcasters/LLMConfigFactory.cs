@@ -79,64 +79,70 @@ Reminder:
                        new TokenBroadcasterFunc_2_5(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
 
             },
-	    "llama_3.1" => new LLMConfig
+"llama_3.1" => new LLMConfig
 {
-UserReplace = "<|start_header_id|>user<|end_header_id|>\\n\\n",
-FunctionReplace = "<|start_header_id|>ipython<|end_header_id|>\\n\\n",
-AssistantHeader = "<|start_header_id|>assistant<|end_header_id|>\n\n",
-UserInputTemplate = "<|start_header_id|>user<|end_header_id|>\\\n\\\n{0}",
-AssistantMessageTemplate = "<|start_header_id|>assistant<|end_header_id|>\\\n\\\n{0}<|eot_id|>",
-SystemMessageTemplate = "<|start_header_id|>system<|end_header_id|>\\\n\\\n{0}<|eot_id|>",
-EOTToken = "<|eot_id|>",
-EOMToken = "<|eom_id|>",
-FunctionResponseTemplate = "<|start_header_id|>ipython<|end_header_id|>\\\n\\\n{1}<|eot_id|>",
-FunctionBuilder = "<|python_tag|>{\"name\":\"{{function_name}}\", \"parameters\":{{arguments_json}}}<|eom_id|>",
-FunctionResponse = "{1}",
-FunctionDefsWrap = @"
-Ensure that any function calls you use align with the user's request. Use only the functions necessary for the task. For failed function calls, provide feedback about the issue before retrying or switching functions.
+    UserReplace = "<|start_header_id|>user<|end_header_id|>\\\n\\\n",
+    FunctionReplace = "<|start_header_id|>ipython<|end_header_id|>\\\n\\\n",
+    AssistantHeader = "<|start_header_id|>assistant<|end_header_id|>\n\n",
 
-Here is a list of functions in JSON format that you can invoke:
+    UserInputTemplate = "<|start_header_id|>user<|end_header_id|>\\\n\\\n{0}",
 
-{0}",
-XmlPromptFooter = _xmlPromptFooter,
-PromptFooter = @"Think very carefully before calling functions.
+    AssistantMessageTemplate =
+        "<|start_header_id|>assistant<|end_header_id|>\\\n\\\n{0}<|eot_id|>",
+
+    SystemMessageTemplate =
+        "<|start_header_id|>system<|end_header_id|>\\\n\\\n{0}<|eot_id|>",
+
+    EOTToken = "<|eot_id|>",
+    EOMToken = "<|eom_id|>",
+
+    FunctionResponseTemplate =
+        "<|start_header_id|>ipython<|end_header_id|>\\\n\\\n{1}<|eot_id|>",
+
+    FunctionBuilder =
+        "<function={{function_name}}>{{arguments_json}}</function>",
+
+    FunctionResponse = "{1}",
+
+    FunctionDefsWrap = "{0}",
+
+    PromptFooter = @"
+Think very carefully before calling functions.
+
 If you choose to call a function, ONLY reply in the following format:
 
-<|python_tag|>{""name"": ""function_name"", ""parameters"": {parameters}}<|eom_id|>
+<function={function_name}>{parameters}</function>
 
 Where:
 
-function_name: The name of the function being called.
-parameters: A JSON object where the argument names (keys) are taken from the function definition, and the argument values (values) must be in the correct data types (such as strings, numbers, booleans, etc.) as specified in the function's definition.
+function_name: The exact name of the function being called.
 
-Notes:
-The function call between <|python_tag|> and <|eom_id|> must contain valid JSON only.
+parameters: A JSON object where each key is a function argument name and each value is the corresponding argument value.
 
-For example:
-Numbers remain numbers (e.g., 123, 59.5)
-Booleans are true or false without quotes around them
-Strings are enclosed in quotes (e.g., ""escaped json string""). The string must be valid JSON.
+Example:
 
-Refer to the function definitions to ensure all parameters use the correct types.
+<function=example_function_name>{""example_name"":""example_value""}</function>
 
-Do not include explanatory text before or after a function call.
+Rules:
 
-Important: You will call functions only when necessary. Check with the user before calling more functions when appropriate.
-
-You will only output JSON when you intend to call a function.
-
-VERY IMPORTANT: Only call functions using this format:
-
-<|python_tag|>{""name"": ""function_name"", ""parameters"": {parameters}}<|eom_id|>
+- Function calls MUST start with <function= and end with </function>.
+- The parameters MUST be valid JSON.
+- Required parameters MUST be specified.
+- Parameter values MUST use the data types specified by the function definition.
+- Do not invent parameter names.
+- Only call one function at a time.
+- Put the entire function call on one line.
+- Do not include explanatory text before or after a function call.
+- Only use this function-call format when actually calling a function.
 ",
-CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
-    new TokenBroadcasterLlama_3_1(
-        responseProcessor,
-        logger,
-        xmlFunctionParsing,
-        IgnoreParameters)
-},
 
+    CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
+        new TokenBroadcasterFunc_3_1(
+            responseProcessor,
+            logger,
+            xmlFunctionParsing,
+            IgnoreParameters)
+},
             "func_3.1" => new LLMConfig
             {
                 UserReplace = "<|start_header_id|>user<|end_header_id|>\\\n\\\n",
@@ -171,7 +177,7 @@ Reminder:
 ",
 
                 CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
-                       new TokenBroadcasterFunc_3_1(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
+                       new TokenBroadcasterLlama_3_1(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
             },
 
             // Configuration for func_3.2
