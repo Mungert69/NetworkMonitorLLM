@@ -272,24 +272,11 @@ public sealed class SystemPromptWriter : ISystemPromptWriter
         {
             _logger.LogInformation("Prompt cache already exists locally: {ContextFile}", contextPath);
 
-            // If remote cache is enabled, ensure it's uploaded
+            // Remote cache syncing is best effort. A remote outage must not delay
+            // starting an LLM when the local context file is already available.
             if (_cacheConfig.Enabled && _cacheConfig.Type == "Http")
             {
-                try
-                {
-                    var remoteCache = _remoteCacheFactory.CreateService();
-                    if (!remoteCache.HasContextFileAsync(baseContextFileName, promptHash).GetAwaiter().GetResult())
-                    {
-                        _logger.LogInformation("Remote cache missing; uploading local context file: {ContextFileName}", baseContextFileName);
-                        byte[] fileData = File.ReadAllBytes(contextPath);
-                        remoteCache.UploadContextFileAsync(baseContextFileName, promptHash, fileData).GetAwaiter().GetResult();
-                        _logger.LogInformation("Successfully uploaded local context file to remote cache: {ContextFileName}", baseContextFileName);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Error syncing local context file to remote cache");
-                }
+                QueueRemoteCacheSync(contextPath, baseContextFileName, promptHash);
             }
 
             return;
@@ -338,23 +325,48 @@ public sealed class SystemPromptWriter : ISystemPromptWriter
         
         bool buildSuccess = RunPromptCacheCommand(startInfo, contextPath);
         
-        // Upload to cache after successful build
+        // Uploading is a cache optimization only. Do not block LLM startup on a
+        // large upload or let a remote-cache failure prevent use of the local GGUF.
         if (buildSuccess && _cacheConfig.Enabled && _cacheConfig.Type == "Http")
+        {
+            QueueRemoteCacheSync(contextPath, baseContextFileName, promptHash);
+        }
+    }
+
+    private void QueueRemoteCacheSync(string contextPath, string contextFileName, string promptHash)
+    {
+        _logger.LogInformation(
+            "Queueing best-effort remote cache sync for context file: {ContextFileName}",
+            contextFileName);
+
+        _ = Task.Run(async () =>
         {
             try
             {
-                _logger.LogInformation("Uploading context file to remote cache...");
-                byte[] fileData = File.ReadAllBytes(contextPath);
-                
                 var remoteCache = _remoteCacheFactory.CreateService();
-                remoteCache.UploadContextFileAsync(baseContextFileName, promptHash, fileData).GetAwaiter().GetResult();
-                _logger.LogInformation("Successfully uploaded context file to remote cache: {ContextFileName}", baseContextFileName);
+                if (await remoteCache.HasContextFileAsync(contextFileName, promptHash))
+                {
+                    _logger.LogInformation(
+                        "Context file already exists in remote cache: {ContextFileName}",
+                        contextFileName);
+                    return;
+                }
+
+                _logger.LogInformation("Remote cache missing context file; uploading: {ContextFileName}", contextFileName);
+                byte[] fileData = await File.ReadAllBytesAsync(contextPath);
+                await remoteCache.UploadContextFileAsync(contextFileName, promptHash, fileData);
+                _logger.LogInformation(
+                    "Successfully uploaded context file to remote cache: {ContextFileName}",
+                    contextFileName);
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Error uploading to remote cache");
+                _logger.LogWarning(
+                    ex,
+                    "Remote cache sync failed for {ContextFileName}; continuing with the local context file",
+                    contextFileName);
             }
-        }
+        });
     }
 
     private bool RunPromptCacheCommand(ProcessStartInfo startInfo, string contextPath)
