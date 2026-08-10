@@ -79,6 +79,64 @@ Reminder:
                        new TokenBroadcasterFunc_2_5(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
 
             },
+	    "llama_3.1" => new LLMConfig
+{
+UserReplace = "<|start_header_id|>user<|end_header_id|>\\n\\n",
+FunctionReplace = "<|start_header_id|>ipython<|end_header_id|>\\n\\n",
+AssistantHeader = "<|start_header_id|>assistant<|end_header_id|>\n\n",
+UserInputTemplate = "<|start_header_id|>user<|end_header_id|>\\\n\\\n{0}",
+AssistantMessageTemplate = "<|start_header_id|>assistant<|end_header_id|>\\\n\\\n{0}<|eot_id|>",
+SystemMessageTemplate = "<|start_header_id|>system<|end_header_id|>\\\n\\\n{0}<|eot_id|>",
+EOTToken = "<|eot_id|>",
+EOMToken = "<|eom_id|>",
+FunctionResponseTemplate = "<|start_header_id|>ipython<|end_header_id|>\\\n\\\n{1}<|eot_id|>",
+FunctionBuilder = "<|python_tag|>{\"name\":\"{{function_name}}\", \"parameters\":{{arguments_json}}}<|eom_id|>",
+FunctionResponse = "{1}",
+FunctionDefsWrap = @"
+Ensure that any function calls you use align with the user's request. Use only the functions necessary for the task. For failed function calls, provide feedback about the issue before retrying or switching functions.
+
+Here is a list of functions in JSON format that you can invoke:
+
+{0}",
+XmlPromptFooter = _xmlPromptFooter,
+PromptFooter = @"Think very carefully before calling functions.
+If you choose to call a function, ONLY reply in the following format:
+
+<|python_tag|>{""name"": ""function_name"", ""parameters"": {parameters}}<|eom_id|>
+
+Where:
+
+function_name: The name of the function being called.
+parameters: A JSON object where the argument names (keys) are taken from the function definition, and the argument values (values) must be in the correct data types (such as strings, numbers, booleans, etc.) as specified in the function's definition.
+
+Notes:
+The function call between <|python_tag|> and <|eom_id|> must contain valid JSON only.
+
+For example:
+Numbers remain numbers (e.g., 123, 59.5)
+Booleans are true or false without quotes around them
+Strings are enclosed in quotes (e.g., ""escaped json string""). The string must be valid JSON.
+
+Refer to the function definitions to ensure all parameters use the correct types.
+
+Do not include explanatory text before or after a function call.
+
+Important: You will call functions only when necessary. Check with the user before calling more functions when appropriate.
+
+You will only output JSON when you intend to call a function.
+
+VERY IMPORTANT: Only call functions using this format:
+
+<|python_tag|>{""name"": ""function_name"", ""parameters"": {parameters}}<|eom_id|>
+",
+CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
+    new TokenBroadcasterLlama_3_1(
+        responseProcessor,
+        logger,
+        xmlFunctionParsing,
+        IgnoreParameters)
+},
+
             "func_3.1" => new LLMConfig
             {
                 UserReplace = "<|start_header_id|>user<|end_header_id|>\\\n\\\n",
