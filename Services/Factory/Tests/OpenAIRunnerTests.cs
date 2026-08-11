@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Betalgo.Ranul.OpenAI.ObjectModels.RequestModels;
 using Betalgo.Ranul.OpenAI.ObjectModels.ResponseModels;
 using Betalgo.Ranul.OpenAI.ObjectModels.SharedModels;
+using Betalgo.Ranul.OpenAI.Tokenizer.GPT3;
 using Microsoft.Extensions.Logging;
 using Moq;
 using NetworkMonitor.Coordinator;
@@ -17,6 +18,37 @@ namespace NetworkMonitor.LLM.Services;
 
 public class OpenAIRunnerTests
 {
+    [Fact]
+    public void CountTokensForMessage_CountsToolCallArgumentsButNotToolName()
+    {
+        const string arguments = "{\"host\":\"example.net\",\"port\":443}";
+        var message = new ChatMessage
+        {
+            Role = "assistant",
+            ToolCalls = new List<ToolCall>
+            {
+                new()
+                {
+                    Type = "function",
+                    FunctionCall = new FunctionCall
+                    {
+                        Name = "a_tool_name_that_must_not_affect_the_budget",
+                        Arguments = arguments
+                    }
+                }
+            }
+        };
+
+        var method = typeof(OpenAIRunner).GetMethod(
+            "CountTokensForMessage",
+            BindingFlags.NonPublic | BindingFlags.Static);
+
+        Assert.NotNull(method);
+        var tokenCount = Assert.IsType<int>(method!.Invoke(null, new object[] { message }));
+
+        Assert.Equal(TokenizerGpt3.TokenCount(arguments), tokenCount);
+    }
+
     private sealed class FakeToolsBuilder : IToolsBuilder
     {
         public List<ToolDefinition> Tools { get; } = new();

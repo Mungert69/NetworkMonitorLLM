@@ -15,6 +15,14 @@ namespace NetworkMonitor.LLM.Services
         [JsonProperty("history")]
         public List<ChatMessage> History { get; set; } = new();
 
+        // Position-aligned, immutable sequence values for History. They let the
+        // memory index retain a message identity when the active history is trimmed.
+        [JsonProperty("historySequences")]
+        public List<long> HistorySequences { get; set; } = new();
+
+        [JsonProperty("nextHistorySequence")]
+        public long NextHistorySequence { get; set; }
+
         // Exact local llama.cpp context after the shared GGUF prompt cache.
         // This is separate from History, which is used to replay the UI transcript.
         [JsonProperty("localLlmContext")]

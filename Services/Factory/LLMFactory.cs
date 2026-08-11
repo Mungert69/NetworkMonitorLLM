@@ -62,6 +62,7 @@ public class LLMFactory : ILLMFactory
 
 
     private readonly ConcurrentDictionary<string, List<ChatMessage>> _sessionHistories = new();
+    private readonly ConcurrentDictionary<string, HistorySequenceState> _sessionHistorySequences = new();
 
     public LLMFactory(ILogger<LLMFactory> logger, IServiceProvider serviceProvider, IHistoryStorage historyStorage, ILocalLlmSessionStore localLlmSessionStore, ILLMResponseProcessor responseProcessor, ICpuUsageMonitor cpuUsageMonitor, IQueryCoordinator queryCoordinator, SystemParams systemParams)
     {
@@ -230,6 +231,11 @@ public class LLMFactory : ILLMFactory
             {
                 // Update the History property of the HistoryDisplayName object
                 session.HistoryDisplayName!.History = _sessionHistories[sessionId];
+                if (_sessionHistorySequences.TryGetValue(sessionId, out var sequenceState))
+                {
+                    session.HistoryDisplayName.HistorySequences = sequenceState.Sequences.ToList();
+                    session.HistoryDisplayName.NextHistorySequence = sequenceState.NextSequence;
+                }
 
                 if (UsesLocalPersistentContext(session.HistoryDisplayName?.LlmType))
                 {
@@ -263,8 +269,8 @@ public class LLMFactory : ILLMFactory
             }
             _sessions.TryRemove(fullSessionId, out _);
             _sessionHistories.TryRemove(fullSessionId, out _);
+            _sessionHistorySequences.TryRemove(fullSessionId, out _);
             await SendHistoryDisplayNames(serviceObj);
-            _sessionHistories.TryRemove(fullSessionId, out _);
         }
         catch (Exception e)
         {
@@ -305,6 +311,11 @@ public class LLMFactory : ILLMFactory
                 {
                     historyDisplayName.History = history;
                 }
+                if (_sessionHistorySequences.TryGetValue(sessionId, out var sequenceState))
+                {
+                    historyDisplayName.HistorySequences = sequenceState.Sequences.ToList();
+                    historyDisplayName.NextHistorySequence = sequenceState.NextSequence;
+                }
 
                 // Update the Name property if it is empty
                 if (string.IsNullOrEmpty(historyDisplayName.Name))
@@ -326,6 +337,7 @@ public class LLMFactory : ILLMFactory
     public async Task<ILLMRunner> CreateRunner(string runnerType, LLMServiceObj serviceObj)
     {
         var history = new List<ChatMessage>();
+        var historySequences = _sessionHistorySequences.GetOrAdd(serviceObj.SessionId, _ => new HistorySequenceState());
         string localLlmContext = string.Empty;
         try
         {
@@ -345,8 +357,19 @@ public class LLMFactory : ILLMFactory
                 {
                     history.AddRange(historyDisplayName.History);
                     localLlmContext = historyDisplayName.LocalLlmContext;
+                    historySequences.Initialize(
+                        historyDisplayName.HistorySequences,
+                        historyDisplayName.NextHistorySequence,
+                        history.Count);
                 }
 
+            }
+            else if (_sessions.TryGetValue(serviceObj.SessionId, out var sessionWithHistory))
+            {
+                historySequences.Initialize(
+                    sessionWithHistory.HistoryDisplayName.HistorySequences,
+                    sessionWithHistory.HistoryDisplayName.NextHistorySequence,
+                    history.Count);
             }
             //await SendHistoryDisplayNames(serviceObj);
         }
@@ -366,6 +389,10 @@ public class LLMFactory : ILLMFactory
         if (runner is LLMProcessRunner localRunner)
         {
             localRunner.SetLocalLlmContext(localLlmContext);
+        }
+        if (runner is IHistorySequenceAwareRunner sequenceAwareRunner)
+        {
+            sequenceAwareRunner.SetHistorySequenceState(historySequences);
         }
 
         runner.LoadChanged += OnRunnerLoadChanged;

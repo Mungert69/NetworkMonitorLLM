@@ -26,7 +26,7 @@ using NetworkMonitor.LLM.Services.Objects;
 
 namespace NetworkMonitor.LLM.Services;
 
-public class OpenAIRunner : ILLMRunner
+public class OpenAIRunner : ILLMRunner, IHistorySequenceAwareRunner
 {
     private const string AsyncCompletionNotificationToolName = "async_function_completion_notification";
     private const string AsyncCompletionNotificationGuidance =
@@ -38,6 +38,7 @@ public class OpenAIRunner : ILLMRunner
 
     private SemaphoreSlim _openAIRunnerSemaphore;
     private List<ChatMessage> _history;
+    private HistorySequenceState _historySequences = new();
     private ConcurrentDictionary<string, ChatMessage> _pendingFunctionCalls = new ConcurrentDictionary<string, ChatMessage>();
     private ConcurrentDictionary<string, ChatMessage> _pendingFunctionResponses = new ConcurrentDictionary<string, ChatMessage>();
     // Add these private fields to your OpenAIRunner class
@@ -137,6 +138,7 @@ public class OpenAIRunner : ILLMRunner
         _noThink = _mlParams.LlmNoThink;
         _thinking = useHF ? _mlParams.LlmThinking : _mlParams.LlmOpenAIThinking;
         _history = history;
+        _historySequences.EnsureAligned(_history.Count);
         _queryCoordinator = queryCoordinator;
         _toolsBuilderFactory = toolsBuilderFactory;
 
@@ -177,6 +179,12 @@ public class OpenAIRunner : ILLMRunner
 
 
     }
+
+    public void SetHistorySequenceState(HistorySequenceState state)
+    {
+        _historySequences = state ?? throw new ArgumentNullException(nameof(state));
+        _historySequences.EnsureAligned(_history.Count);
+    }
 #pragma warning restore CS8618 
     public Task StartProcess(LLMServiceObj serviceObj)
     {
@@ -204,7 +212,7 @@ public class OpenAIRunner : ILLMRunner
         _systemPromptTokens = CalculateTokens(systemPrompt);
         if (_history.Count == 0)
         {
-            _history.AddRange(systemPrompt);
+            AddHistoryMessages(systemPrompt);
         }
         else
         {
@@ -217,7 +225,7 @@ public class OpenAIRunner : ILLMRunner
              // Insert the new system prompt at the beginning
              _history.InsertRange(0, resumeSystemPrompt);*/
             //Now we just add a system prompt with resume information
-            _history.AddRange(resumeSystemPrompt);
+            AddHistoryMessages(resumeSystemPrompt);
         }
         _logger.LogInformation($"Started {_type} {_serviceID} Assistant with session id {serviceObj.SessionId} at {serviceObj.GetClientStartTime()}. with CTX size {_maxTokens} and Response tokens {_responseTokens}");
 
@@ -364,7 +372,7 @@ public class OpenAIRunner : ILLMRunner
             // Old sessions may contain an empty assistant completion created before
             // the guard in ProcessAssistantMessageAsync.  It is invalid for several
             // OpenAI-compatible providers unless it carries tool calls.
-            RemoveInvalidEmptyAssistantMessages(_history);
+            RemoveInvalidEmptyAssistantMessages(_history, _historySequences);
             TruncateTokens(_history, serviceObj);
             var currentHistory = new List<ChatMessage>(_history.Concat(localHistory));
             SanitizeMessagesForCompletion(currentHistory);
@@ -387,7 +395,7 @@ public class OpenAIRunner : ILLMRunner
             {
                 if (_mlParams.AddSystemRag) _queryCoordinator.RemoveSystemRag(localHistory);
 
-                _history.AddRange(localHistory);
+                AddHistoryMessages(localHistory);
                 await _responseProcessor.UpdateTokensUsed(responseServiceObj);
                 int wordLimit = 5;
                 string truncatedUserInput = string.Join(" ", serviceObj.UserInput.Split(' ').Take(wordLimit));
@@ -1384,21 +1392,25 @@ public class OpenAIRunner : ILLMRunner
     {
         if (history == null || history.Count == 0) return;
 
+        _historySequences.EnsureAligned(history.Count);
+
         // 1) How many head messages to keep intact?
         int headCount = Math.Max(1, _llmApi.SystemPromptCount); // includes system + n-shot
         if (history.Count <= headCount) return;
 
         // 2) Split head and tail
-        var head = history.Take(headCount).ToList();          // pinned, stable
-        var tail = history.Skip(headCount).ToList();          // prune from here
+        var head = Enumerable.Range(0, headCount)
+            .Select(i => new HistoryEntry(history[i], _historySequences.At(i))).ToList();
+        var tail = Enumerable.Range(headCount, history.Count - headCount)
+            .Select(i => new HistoryEntry(history[i], _historySequences.At(i))).ToList();
 
         // 3) Compute budgets
-        int headTokens = CalculateTokens(head);
+        int headTokens = CalculateTokens(head.Select(entry => entry.Message));
         int maxPrompt = _promptTokens;                        // full budget available to messages
         int tailBudget = Math.Max(0, maxPrompt - headTokens); // how many tokens we can spend on tail
 
         // 4) If tail already fits, early-out
-        int tailTokens = CalculateTokens(tail);
+        int tailTokens = CalculateTokens(tail.Select(entry => entry.Message));
         if (tailTokens <= tailBudget) return;
 
         // 5) Trim from the OLDEST tail messages forward while keeping tool-call integrity.
@@ -1409,22 +1421,22 @@ public class OpenAIRunner : ILLMRunner
 
             // If the oldest is an assistant tool-call message, remove it + its tool responses
             var first = tail[0];
-            if (first.ToolCalls != null && first.ToolCalls.Any())
+            if (first.Message.ToolCalls != null && first.Message.ToolCalls.Any())
             {
                 // remove matching tool responses in the tail
-                var toolIds = first.ToolCalls.Where(tc => tc.Id != null).Select(tc => tc.Id!).ToHashSet();
+                var toolIds = first.Message.ToolCalls.Where(tc => tc.Id != null).Select(tc => tc.Id!).ToHashSet();
 
                 tail.RemoveAt(0);
-                removedTokens += CountTokensForMessage(first);
+                removedTokens += CountTokensForMessage(first.Message);
 
                 for (int i = tail.Count - 1; i >= 0; i--)
                 {
                     var candidate = tail[i];
-                    if (candidate.Role == "tool" &&
-                        candidate.ToolCallId != null &&
-                        toolIds.Contains(candidate.ToolCallId))
+                    if (candidate.Message.Role == "tool" &&
+                        candidate.Message.ToolCallId != null &&
+                        toolIds.Contains(candidate.Message.ToolCallId))
                     {
-                        removedTokens += CountTokensForMessage(candidate);
+                        removedTokens += CountTokensForMessage(candidate.Message);
                         tail.RemoveAt(i);
                     }
                 }
@@ -1433,20 +1445,32 @@ public class OpenAIRunner : ILLMRunner
             {
                 // If it's a tool message but its assistant caller isn't in tail/head anymore,
                 // just drop it (orphan cleanup)
-                removedTokens += CountTokensForMessage(first);
+                removedTokens += CountTokensForMessage(first.Message);
                 tail.RemoveAt(0);
             }
 
             // Also clean up any remaining orphan tool responses
-            removedTokens += RemoveOrphanToolResponsesWithTokenTally(serviceObj.SessionId, tail);
+            var tailMessages = tail.Select(entry => entry.Message).ToList();
+            removedTokens += RemoveOrphanToolResponsesWithTokenTally(serviceObj.SessionId, tailMessages);
+            tail.RemoveAll(entry => !tailMessages.Contains(entry.Message));
 
             tailTokens = Math.Max(0, tailTokens - removedTokens);
         }
 
         // 6) Rebuild history: head + trimmed tail
+        var retained = head.Concat(tail).ToList();
         history.Clear();
-        history.AddRange(head);
-        history.AddRange(tail);
+        history.AddRange(retained.Select(entry => entry.Message));
+        _historySequences.Replace(retained.Select(entry => entry.Sequence));
+    }
+
+    private sealed record HistoryEntry(ChatMessage Message, long Sequence);
+
+    private void AddHistoryMessages(IEnumerable<ChatMessage> messages)
+    {
+        var materialized = messages.ToList();
+        _history.AddRange(materialized);
+        _historySequences.Append(materialized.Count);
     }
 
     private int CalculateTokens(IEnumerable<ChatMessage> messages)
@@ -1463,12 +1487,28 @@ public class OpenAIRunner : ILLMRunner
 
     private static int CountTokensForMessage(ChatMessage message)
     {
-        if (string.IsNullOrEmpty(message.Content))
+        int tokenCount = 0;
+        if (!string.IsNullOrEmpty(message.Content))
         {
-            return 0;
+            tokenCount += TokenizerGpt3.TokenCount(message.Content);
         }
 
-        return TokenizerGpt3.TokenCount(message.Content);
+        // Tool call arguments are persisted separately from Content, but are sent
+        // back to the model on later turns.  Include only that JSON payload in the
+        // history budget; tool names and the tool schema are intentionally excluded.
+        if (message.ToolCalls != null)
+        {
+            foreach (var toolCall in message.ToolCalls)
+            {
+                var arguments = toolCall.FunctionCall?.Arguments;
+                if (!string.IsNullOrEmpty(arguments))
+                {
+                    tokenCount += TokenizerGpt3.TokenCount(arguments);
+                }
+            }
+        }
+
+        return tokenCount;
     }
     private async Task HandleOpenAIError(LLMServiceObj serviceObj, string errorMessage, List<ChatMessage> localHistory, List<ChatMessage> sessionHistory)
     {
@@ -1529,13 +1569,33 @@ public class OpenAIRunner : ILLMRunner
         RemoveInvalidEmptyAssistantMessages(messages);
     }
 
-    private void RemoveInvalidEmptyAssistantMessages(List<ChatMessage> messages)
+    private void RemoveInvalidEmptyAssistantMessages(List<ChatMessage> messages, HistorySequenceState? sequenceState = null)
     {
-        var removed = messages.RemoveAll(message =>
-            string.Equals(message.Role, "assistant", StringComparison.OrdinalIgnoreCase) &&
-            string.IsNullOrWhiteSpace(message.Content) &&
-            !(message.ToolCalls?.Any() ?? false) &&
-            !HasMeaningfulStructuredContent(message));
+        var removeIndexes = Enumerable.Range(0, messages.Count)
+            .Where(index =>
+            {
+                var message = messages[index];
+                return string.Equals(message.Role, "assistant", StringComparison.OrdinalIgnoreCase) &&
+                       string.IsNullOrWhiteSpace(message.Content) &&
+                       !(message.ToolCalls?.Any() ?? false) &&
+                       !HasMeaningfulStructuredContent(message);
+            })
+            .ToList();
+
+        var removed = removeIndexes.Count;
+        for (var i = removeIndexes.Count - 1; i >= 0; i--)
+        {
+            messages.RemoveAt(removeIndexes[i]);
+        }
+
+        if (sequenceState != null && removed > 0)
+        {
+            var retainedSequences = Enumerable.Range(0, sequenceState.Sequences.Count)
+                .Where(index => !removeIndexes.Contains(index))
+                .Select(sequenceState.At)
+                .ToList();
+            sequenceState.Replace(retainedSequences);
+        }
 
         if (removed > 0)
         {
