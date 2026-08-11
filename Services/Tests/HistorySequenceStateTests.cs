@@ -28,4 +28,21 @@ public class HistorySequenceStateTests
         Assert.Equal(new long[] { 0, 1, 2 }, state.Sequences);
         Assert.Equal(3, state.NextSequence);
     }
+
+    [Fact]
+    public void GetArchivedRanges_CoalescesGapsAndLimitsRenderedRanges()
+    {
+        var state = new HistorySequenceState();
+        state.Initialize(new List<long> { 1, 3, 5, 7, 9 }, 10, 5);
+
+        var archive = state.GetArchivedRanges(3);
+
+        Assert.Equal(new[]
+        {
+            new HistorySequenceRange(0, 0),
+            new HistorySequenceRange(2, 2),
+            new HistorySequenceRange(4, 4)
+        }, archive.Ranges);
+        Assert.True(archive.HasAdditionalRanges);
+    }
 }

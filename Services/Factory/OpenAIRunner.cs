@@ -31,6 +31,7 @@ public class OpenAIRunner : ILLMRunner, IHistorySequenceAwareRunner
     private const string AsyncCompletionNotificationToolName = "async_function_completion_notification";
     private const string AsyncCompletionNotificationGuidance =
         "Async function calls first return a running acknowledgement. When the result arrives, the system creates async_function_completion_notification only to attach that result to the conversation history. It is not a callable tool: do not invoke it or repeat the original function call; wait for the automatic result.";
+    private const int MaximumArchiveReferenceRanges = 12;
 
     private ILogger _logger;
     private ILLMResponseProcessor _responseProcessor;
@@ -375,6 +376,7 @@ public class OpenAIRunner : ILLMRunner, IHistorySequenceAwareRunner
             RemoveInvalidEmptyAssistantMessages(_history, _historySequences);
             TruncateTokens(_history, serviceObj);
             var currentHistory = new List<ChatMessage>(_history.Concat(localHistory));
+            AppendArchiveReferenceToOutboundSystemMessage(currentHistory, serviceObj);
             SanitizeMessagesForCompletion(currentHistory);
             NormalizeSystemMessagesForCompletion(currentHistory);
 
@@ -1613,6 +1615,61 @@ public class OpenAIRunner : ILLMRunner, IHistorySequenceAwareRunner
             (string.Equals(part.Type, "image_url", StringComparison.OrdinalIgnoreCase) &&
              !string.IsNullOrWhiteSpace(part.ImageUrl?.Url)));
     }
+
+    private void AppendArchiveReferenceToOutboundSystemMessage(
+        List<ChatMessage> messages,
+        LLMServiceObj serviceObj)
+    {
+        if (!serviceObj.IsPrimaryLlm)
+        {
+            return;
+        }
+
+        var archive = _historySequences.GetArchivedRanges(MaximumArchiveReferenceRanges);
+        if (archive.Ranges.Count == 0)
+        {
+            return;
+        }
+
+        var firstSystemIndex = messages.FindIndex(message =>
+            string.Equals(message.Role, "system", StringComparison.OrdinalIgnoreCase));
+        if (firstSystemIndex < 0)
+        {
+            return;
+        }
+
+        var reference = BuildArchiveReference(serviceObj.SessionId, archive);
+        var original = messages[firstSystemIndex];
+        messages[firstSystemIndex] = new ChatMessage
+        {
+            Role = original.Role,
+            Content = string.IsNullOrWhiteSpace(original.Content)
+                ? reference
+                : $"{original.Content.TrimEnd()}\n\n{reference}"
+        };
+    }
+
+    private static string BuildArchiveReference(string sessionId, HistoryArchiveSummary archive)
+    {
+        var ranges = string.Join(", ", archive.Ranges.Select(FormatArchiveRange));
+        if (archive.HasAdditionalRanges)
+        {
+            ranges += ", with further archived ranges";
+        }
+
+        return $"""
+Conversation archive reference:
+Some earlier turns are outside the active context window, but remain available through conversation memory.
+
+Session: {sessionId}
+Archived turn sequences: {ranges}
+
+If those turns are relevant, call call_memory_expert with a focused request that includes this session and the applicable sequence range. Do not assume archived details without retrieving them.
+""";
+    }
+
+    private static string FormatArchiveRange(HistorySequenceRange range) =>
+        range.Start == range.End ? range.Start.ToString() : $"{range.Start}\u2013{range.End}";
 
     private void NormalizeSystemMessagesForCompletion(List<ChatMessage> messages)
     {

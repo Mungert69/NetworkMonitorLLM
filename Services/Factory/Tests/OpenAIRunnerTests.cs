@@ -322,6 +322,42 @@ public class OpenAIRunnerTests
         Assert.Equal("RAG result", messages[2].Content);
     }
 
+    [Fact]
+    public void AppendArchiveReferenceToOutboundSystemMessage_AppendsOnlyToOutboundFirstSystemMessage()
+    {
+        var runner = CreateRunner(new MLParams());
+        var sequenceState = new HistorySequenceState();
+        sequenceState.Initialize(new long[] { 4, 5 }, 6, 2);
+        var sequenceField = typeof(OpenAIRunner).GetField(
+            "_historySequences",
+            BindingFlags.NonPublic | BindingFlags.Instance);
+        Assert.NotNull(sequenceField);
+        sequenceField!.SetValue(runner, sequenceState);
+
+        var serviceObj = CreateServiceObject("hello");
+        serviceObj.DestinationLlm = serviceObj.SourceLlm;
+        var messages = new List<ChatMessage>
+        {
+            ChatMessage.FromSystem("primary prompt"),
+            ChatMessage.FromSystem("second system prompt"),
+            ChatMessage.FromUser("hello")
+        };
+        var storedFirstSystemMessage = messages[0];
+
+        var appendMethod = typeof(OpenAIRunner).GetMethod(
+            "AppendArchiveReferenceToOutboundSystemMessage",
+            BindingFlags.NonPublic | BindingFlags.Instance);
+        Assert.NotNull(appendMethod);
+        appendMethod!.Invoke(runner, new object[] { messages, serviceObj });
+
+        Assert.NotSame(storedFirstSystemMessage, messages[0]);
+        Assert.Equal("primary prompt", storedFirstSystemMessage.Content);
+        Assert.Contains("Conversation archive reference:", messages[0].Content);
+        Assert.Contains("Session: session-normalize-1", messages[0].Content);
+        Assert.Contains("Archived turn sequences: 0–3", messages[0].Content);
+        Assert.Equal("second system prompt", messages[1].Content);
+    }
+
     [Theory]
     [InlineData("length", "truncated")]
     [InlineData("content_filter", "blocked")]
