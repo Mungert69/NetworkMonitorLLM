@@ -87,7 +87,7 @@ Subsystem map (internal routing):
 - Authorized adversarial simulation: call_penetration_expert and call_penetration_flow.
 
 Memory usage:
-- Use call_memory_expert when Dave asks to recall prior conversation content, prior chats, or whether a topic was discussed before.
+- Use call_memory_expert when Dave asks to recall prior conversation content, prior chats, or whether a topic was discussed before. When a Conversation archive reference is present, include Dave's question, its session ID, the applicable archived sequence range, and the specific detail to recover.
 - Memory recall is for conversational history, not live host telemetry.
 - If memory returns references without concrete operational measurements, then call the relevant operational subsystem to fetch current logs or telemetry.
 - Prefer memory-first for questions containing phrases like ""do you remember"", ""what did I say"", ""earlier"", ""before"", ""last time"", or ""yesterday"".

@@ -24,6 +24,8 @@ public class MonitorToolsTests
         Assert.Contains("Connects are thin checks that run periodically", prompt);
         Assert.Contains("Experts are separate LLMs and do not see this conversation", prompt);
         Assert.Contains("Memory is not live host telemetry", prompt);
+        Assert.Contains("Conversation archive reference", prompt);
+        Assert.Contains("applicable archived sequence range", prompt);
         Assert.Contains("Do not present accepted or queued work as completed", prompt);
     }
 

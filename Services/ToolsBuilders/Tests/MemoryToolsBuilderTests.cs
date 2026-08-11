@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using NetworkMonitor.Objects;
 using NetworkMonitor.Objects.Repository;
+using NetworkMonitor.Objects.ServiceMessage;
 using Xunit;
 
 namespace NetworkMonitor.LLM.Services;
@@ -39,6 +40,21 @@ public class MemoryToolsBuilderTests
     }
 
     [Fact]
+    public void BuildMemoryTurnRangeFunction_HasInclusiveRangeAndContinuationParameters()
+    {
+        var fn = MemoryQueryTools.BuildMemoryTurnRangeFunction();
+
+        Assert.Equal("get_memory_turn_range", fn.Name);
+        Assert.NotNull(fn.Parameters);
+        var parameters = fn.Parameters!;
+        Assert.Contains("session_id", parameters.Required!);
+        Assert.Contains("start_turn_index", parameters.Required);
+        Assert.Contains("end_turn_index", parameters.Required);
+        Assert.True(parameters.Properties!.ContainsKey("offset"));
+        Assert.Contains("20", fn.Description);
+    }
+
+    [Fact]
     public void ToolsBuilderFactory_CreateMemory_ReturnsMemoryExpertToolsBuilder()
     {
         var logger = new Mock<ILogger<ToolsBuilderFactory>>();
@@ -57,5 +73,19 @@ public class MemoryToolsBuilderTests
         Assert.IsType<MemoryExpertToolsBuilder>(builder);
         Assert.Contains(builder.Tools, t => t.Function?.Name == "execute_query_memory");
         Assert.Contains(builder.Tools, t => t.Function?.Name == "get_memory_turn_window");
+        Assert.Contains(builder.Tools, t => t.Function?.Name == "get_memory_turn_range");
+    }
+
+    [Fact]
+    public void GetSystemPrompt_SeparatesSemanticAndArchiveRangeRetrieval()
+    {
+        var prompt = Assert.Single(new MemoryExpertToolsBuilder().GetSystemPrompt(
+            "2026-08-11T19:00:00Z", new LLMServiceObj(), "TestLLM")).Content;
+
+        Assert.Contains("ordinary, focused semantic recall", prompt);
+        Assert.Contains("get_memory_turn_range", prompt);
+        Assert.Contains("at most 20 turns", prompt);
+        Assert.Contains("concise, faithful factual summary", prompt);
+        Assert.Contains("do not replay a large raw transcript", prompt);
     }
 }

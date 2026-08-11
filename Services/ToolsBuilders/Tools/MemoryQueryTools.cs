@@ -85,4 +85,47 @@ This is a deterministic lookup by session_id and turn_index (no embedding call).
             }
         };
     }
+
+    public static FunctionDefinition BuildMemoryTurnRangeFunction()
+    {
+        const string description = @"
+Fetch an exact, ordered range of archived conversation turns from one session.
+Use this when an archive reference supplies a session_id and sequence range, rather than using semantic search.
+The backend returns at most 20 turns per call. Use offset from continuation metadata to request the next page when needed.
+";
+
+        return new FunctionDefinition
+        {
+            Name = "get_memory_turn_range",
+            Description = description,
+            Parameters = new PropertyDefinition
+            {
+                Type = "object",
+                Properties = new Dictionary<string, PropertyDefinition>
+                {
+                    ["session_id"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Session identifier from the archive reference."
+                    },
+                    ["start_turn_index"] = new PropertyDefinition
+                    {
+                        Type = "integer",
+                        Description = "Inclusive first archived turn sequence to retrieve."
+                    },
+                    ["end_turn_index"] = new PropertyDefinition
+                    {
+                        Type = "integer",
+                        Description = "Inclusive last archived turn sequence to retrieve."
+                    },
+                    ["offset"] = new PropertyDefinition
+                    {
+                        Type = "integer",
+                        Description = "Optional zero-based offset supplied by continuation metadata from a prior range response."
+                    }
+                },
+                Required = new List<string> { "session_id", "start_turn_index", "end_turn_index" }
+            }
+        };
+    }
 }

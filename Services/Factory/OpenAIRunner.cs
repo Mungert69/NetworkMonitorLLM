@@ -114,6 +114,7 @@ public class OpenAIRunner : ILLMRunner, IHistorySequenceAwareRunner
     private readonly IQueryCoordinator _queryCoordinator;
     private readonly IToolsBuilderFactory _toolsBuilderFactory;
     private readonly AudioStreamProvider _audioStreamProvider;
+    private readonly bool _hasMemoryExpertTool;
 
     private sealed class MediaArtifact
     {
@@ -152,6 +153,11 @@ public class OpenAIRunner : ILLMRunner, IHistorySequenceAwareRunner
     enableAgentFlow,
     serviceObj.LLMRunnerType
 );
+        _hasMemoryExpertTool = toolsBuilder.Tools.Any(tool =>
+            string.Equals(
+                tool.Function?.Name,
+                "call_memory_expert",
+                StringComparison.OrdinalIgnoreCase));
 
         _useHF = useHF;
         _type = _useHF ? "HugLLM" : "TurboLLM";
@@ -1625,6 +1631,11 @@ public class OpenAIRunner : ILLMRunner, IHistorySequenceAwareRunner
             return;
         }
 
+        if (!_hasMemoryExpertTool)
+        {
+            return;
+        }
+
         var archive = _historySequences.GetArchivedRanges(MaximumArchiveReferenceRanges);
         if (archive.Ranges.Count == 0)
         {
@@ -1664,7 +1675,7 @@ Some earlier turns are outside the active context window, but remain available t
 Session: {sessionId}
 Archived turn sequences: {ranges}
 
-If those turns are relevant, call call_memory_expert with a focused request that includes this session and the applicable sequence range. Do not assume archived details without retrieving them.
+If those turns are relevant, call call_memory_expert. In its request include the current user question, this session ID, the applicable sequence range, and the specific detail to recover. The memory expert will retrieve the relevant archived records and return a concise, evidence-based summary. Do not assume archived details without retrieving them.
 """;
     }
 

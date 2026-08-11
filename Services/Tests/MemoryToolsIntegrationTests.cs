@@ -39,6 +39,20 @@ public class MemoryToolsIntegrationTests
     }
 
     [Fact]
+    public void MemoryQueryTools_BuildMemoryTurnRangeFunction_ExposesPagedRangeParameters()
+    {
+        var fn = MemoryQueryTools.BuildMemoryTurnRangeFunction();
+
+        Assert.Equal("get_memory_turn_range", fn.Name);
+        Assert.NotNull(fn.Parameters);
+        Assert.Contains("session_id", fn.Parameters.Required);
+        Assert.Contains("start_turn_index", fn.Parameters.Required);
+        Assert.Contains("end_turn_index", fn.Parameters.Required);
+        Assert.True(fn.Parameters.Properties.ContainsKey("offset"));
+        Assert.Contains("20", fn.Description);
+    }
+
+    [Fact]
     public void MonitorBuilders_IncludeMemoryExpertFunction()
     {
         var monitor = new MonitorToolsBuilder();
@@ -73,5 +87,6 @@ public class MemoryToolsIntegrationTests
         Assert.IsType<MemoryExpertToolsBuilder>(builder);
         Assert.True(factory.AvailableIds().Any(id => id.Equals("memory", StringComparison.OrdinalIgnoreCase)));
         Assert.Contains("execute_query_memory", builder.Tools.Select(t => t.Function?.Name));
+        Assert.Contains("get_memory_turn_range", builder.Tools.Select(t => t.Function?.Name));
     }
 }

@@ -51,6 +51,18 @@ public class OpenAIRunnerTests
 
     private sealed class FakeToolsBuilder : IToolsBuilder
     {
+        public FakeToolsBuilder(bool includesMemoryExpert = true)
+        {
+            if (includesMemoryExpert)
+            {
+                Tools.Add(new ToolDefinition
+                {
+                    Type = "function",
+                    Function = new FunctionDefinition { Name = "call_memory_expert" }
+                });
+            }
+        }
+
         public List<ToolDefinition> Tools { get; } = new();
 
         public List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType) =>
@@ -355,7 +367,36 @@ public class OpenAIRunnerTests
         Assert.Contains("Conversation archive reference:", messages[0].Content);
         Assert.Contains("Session: session-normalize-1", messages[0].Content);
         Assert.Contains("Archived turn sequences: 0–3", messages[0].Content);
+        Assert.Contains("current user question", messages[0].Content);
+        Assert.Contains("concise, evidence-based summary", messages[0].Content);
         Assert.Equal("second system prompt", messages[1].Content);
+    }
+
+    [Fact]
+    public void AppendArchiveReferenceToOutboundSystemMessage_WithoutMemoryExpertTool_LeavesMessagesUnchanged()
+    {
+        var runner = CreateRunner(new MLParams(), new FakeToolsBuilder(includesMemoryExpert: false));
+        var sequenceState = new HistorySequenceState();
+        sequenceState.Initialize(new long[] { 4, 5 }, 6, 2);
+        var sequenceField = typeof(OpenAIRunner).GetField(
+            "_historySequences",
+            BindingFlags.NonPublic | BindingFlags.Instance);
+        Assert.NotNull(sequenceField);
+        sequenceField!.SetValue(runner, sequenceState);
+
+        var serviceObj = CreateServiceObject("hello");
+        serviceObj.DestinationLlm = serviceObj.SourceLlm;
+        var messages = new List<ChatMessage> { ChatMessage.FromSystem("primary prompt") };
+        var storedSystemMessage = messages[0];
+
+        var appendMethod = typeof(OpenAIRunner).GetMethod(
+            "AppendArchiveReferenceToOutboundSystemMessage",
+            BindingFlags.NonPublic | BindingFlags.Instance);
+        Assert.NotNull(appendMethod);
+        appendMethod!.Invoke(runner, new object[] { messages, serviceObj });
+
+        Assert.Same(storedSystemMessage, messages[0]);
+        Assert.DoesNotContain("Conversation archive reference:", messages[0].Content);
     }
 
     [Theory]
@@ -540,7 +581,7 @@ public class OpenAIRunnerTests
         Assert.True(totalTokens <= 12);
     }
 
-    private static OpenAIRunner CreateRunner(MLParams mlParams)
+    private static OpenAIRunner CreateRunner(MLParams mlParams, IToolsBuilder? toolsBuilder = null)
     {
         mlParams.LlmProvider = "OpenAI";
         mlParams.LlmOpenAICtxSize = 4096;
@@ -553,7 +594,7 @@ public class OpenAIRunnerTests
 
         var toolsFactory = new Mock<IToolsBuilderFactory>();
         toolsFactory.Setup(t => t.Create(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<string>()))
-            .Returns(new FakeToolsBuilder());
+            .Returns(toolsBuilder ?? new FakeToolsBuilder());
 
         var serviceObj = CreateServiceObject("hello");
 
