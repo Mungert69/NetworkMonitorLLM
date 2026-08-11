@@ -361,6 +361,10 @@ public class OpenAIRunner : ILLMRunner
                 isFuncMessage = false;
             }
 
+            // Old sessions may contain an empty assistant completion created before
+            // the guard in ProcessAssistantMessageAsync.  It is invalid for several
+            // OpenAI-compatible providers unless it carries tool calls.
+            RemoveInvalidEmptyAssistantMessages(_history);
             TruncateTokens(_history, serviceObj);
             var currentHistory = new List<ChatMessage>(_history.Concat(localHistory));
             SanitizeMessagesForCompletion(currentHistory);
@@ -1329,7 +1333,20 @@ public class OpenAIRunner : ILLMRunner
                 if (!_isStream) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
             }
 
-            localHistory.Add(assistantChatMessage);
+            // A provider can legally return a stop completion with no text.  Do not
+            // persist that as a normal assistant turn: OpenAI-compatible providers
+            // such as Cohere reject assistant messages that have neither content
+            // nor tool calls on a later request.
+            if (!string.IsNullOrWhiteSpace(assistantChatMessage.Content))
+            {
+                localHistory.Add(assistantChatMessage);
+            }
+            else
+            {
+                _logger.LogWarning(
+                    "Ignoring empty assistant completion for MessageID {MessageID}; it has no tool calls.",
+                    serviceObj.MessageID);
+            }
 
         }
         else if (choice.FinishReason == "length" || choice.FinishReason == "content_filter")
@@ -1493,7 +1510,7 @@ public class OpenAIRunner : ILLMRunner
         _logger.LogError(" {ServiceId} {ErrorText}", _serviceID, errorText);
     }
 
-    private static void SanitizeMessagesForCompletion(List<ChatMessage> messages)
+    private void SanitizeMessagesForCompletion(List<ChatMessage> messages)
     {
         foreach (var message in messages)
         {
@@ -1508,6 +1525,33 @@ public class OpenAIRunner : ILLMRunner
                 }
             }
         }
+
+        RemoveInvalidEmptyAssistantMessages(messages);
+    }
+
+    private void RemoveInvalidEmptyAssistantMessages(List<ChatMessage> messages)
+    {
+        var removed = messages.RemoveAll(message =>
+            string.Equals(message.Role, "assistant", StringComparison.OrdinalIgnoreCase) &&
+            string.IsNullOrWhiteSpace(message.Content) &&
+            !(message.ToolCalls?.Any() ?? false) &&
+            !HasMeaningfulStructuredContent(message));
+
+        if (removed > 0)
+        {
+            _logger.LogWarning(
+                "Removed {Count} invalid empty assistant message(s) without tool calls from completion history.",
+                removed);
+        }
+    }
+
+    private static bool HasMeaningfulStructuredContent(ChatMessage message)
+    {
+        return OpenAIWireFormat.ExtractMessageContents(message).Any(part =>
+            (string.Equals(part.Type, "text", StringComparison.OrdinalIgnoreCase) &&
+             !string.IsNullOrWhiteSpace(part.Text)) ||
+            (string.Equals(part.Type, "image_url", StringComparison.OrdinalIgnoreCase) &&
+             !string.IsNullOrWhiteSpace(part.ImageUrl?.Url)));
     }
 
     private void NormalizeSystemMessagesForCompletion(List<ChatMessage> messages)

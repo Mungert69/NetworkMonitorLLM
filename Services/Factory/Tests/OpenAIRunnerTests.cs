@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Betalgo.Ranul.OpenAI.ObjectModels.RequestModels;
@@ -192,6 +193,52 @@ public class OpenAIRunnerTests
         await runner.SendInputAndGetResponse(serviceObj);
 
         responseProcessor.Verify(r => r.ProcessLLMOutputError(It.IsAny<LLMServiceObj>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task SendInputAndGetResponse_WhenStopCompletionIsEmpty_DoesNotPersistBlankAssistantMessage()
+    {
+        var history = new List<ChatMessage>();
+        var runner = CreateRunner(new MLParams());
+        var llmApiField = typeof(OpenAIRunner).GetField("_llmApi", BindingFlags.NonPublic | BindingFlags.Instance);
+        Assert.NotNull(llmApiField);
+        llmApiField!.SetValue(runner, new FinishReasonLlmApi("stop"));
+
+        var historyField = typeof(OpenAIRunner).GetField("_history", BindingFlags.NonPublic | BindingFlags.Instance);
+        Assert.NotNull(historyField);
+        historyField!.SetValue(runner, history);
+
+        await runner.SendInputAndGetResponse(CreateServiceObject("hello"));
+
+        Assert.DoesNotContain(history, message =>
+            message.Role == "assistant" &&
+            string.IsNullOrWhiteSpace(message.Content) &&
+            !(message.ToolCalls?.Any() ?? false));
+    }
+
+    [Fact]
+    public void SanitizeMessagesForCompletion_RemovesOnlyEmptyAssistantMessagesWithoutToolCalls()
+    {
+        var runner = CreateRunner(new MLParams());
+        var messages = new List<ChatMessage>
+        {
+            ChatMessage.FromAssistant(""),
+            new ChatMessage
+            {
+                Role = "assistant",
+                Content = "",
+                ToolCalls = new List<ToolCall> { new() { Id = "call-1", Type = "function" } }
+            }
+        };
+
+        var sanitizeMethod = typeof(OpenAIRunner).GetMethod(
+            "SanitizeMessagesForCompletion",
+            BindingFlags.NonPublic | BindingFlags.Instance);
+        Assert.NotNull(sanitizeMethod);
+        sanitizeMethod!.Invoke(runner, new object[] { messages });
+
+        Assert.Single(messages);
+        Assert.Equal("call-1", messages[0].ToolCalls![0].Id);
     }
 
     [Fact]
@@ -440,16 +487,7 @@ public class OpenAIRunnerTests
         toolsFactory.Setup(t => t.Create(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<string>()))
             .Returns(new FakeToolsBuilder());
 
-        var serviceObj = new LLMServiceObj
-        {
-            UserInput = "hello",
-            SessionId = "session-normalize-1",
-            RequestSessionId = "req-normalize-1",
-            LLMRunnerType = "TurboLLM",
-            SourceLlm = "monitor",
-            DestinationLlm = "expert",
-            UserInfo = new UserInfo { AccountType = "Default" }
-        };
+        var serviceObj = CreateServiceObject("hello");
 
         return new OpenAIRunner(
             logger.Object,
@@ -464,6 +502,20 @@ public class OpenAIRunnerTests
             new List<ChatMessage>(),
             Mock.Of<IQueryCoordinator>(),
             toolsFactory.Object);
+    }
+
+    private static LLMServiceObj CreateServiceObject(string userInput)
+    {
+        return new LLMServiceObj
+        {
+            UserInput = userInput,
+            SessionId = "session-normalize-1",
+            RequestSessionId = "req-normalize-1",
+            LLMRunnerType = "TurboLLM",
+            SourceLlm = "monitor",
+            DestinationLlm = "expert",
+            UserInfo = new UserInfo { AccountType = "Default" }
+        };
     }
 
     private sealed class FailingLlmApi : ILLMApi
