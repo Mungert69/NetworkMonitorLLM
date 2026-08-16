@@ -43,7 +43,10 @@ public class CommonTools
         return new FunctionDefinition
         {
             Name = "function_status_with_message_id",
-            Description = "Check status of all functions called with a given message_id.",
+            Description = "Check asynchronous function status once for a message_id. Do not poll or repeatedly call this function. " +
+                          "If a check reports that work is still running, wait because the final result will be delivered automatically. " +
+                          "Only check the same message_id again when the user explicitly requests a fresh status check. " +
+                          "Use auto_check_interval_seconds of 60 or more only when the user explicitly requests periodic updates.",
             Parameters = new PropertyDefinition
             {
                 Type = "object",
@@ -57,7 +60,9 @@ public class CommonTools
                     ["auto_check_interval_seconds"] = new PropertyDefinition
                     {
                         Type = "integer",
-                        Description = "Set this to zero; Unless the user has requested an auto check. " +
+                        Description = "Set this to zero for a single status check; do not use repeated zero-value calls to poll. " +
+                                      "If the result is still running, wait for the automatic final result. " +
+                                      "Unless the user has requested an auto check, do not enable one. " +
                                       "If they request an auto check then set to 60 seconds or above to setup periodic auto-checks " +
                                       "on the functions status. Warning auto check will use a lot of tokens, only use if requested " +
                                       "and warn the user. To cancel a running auto check set this to -1"

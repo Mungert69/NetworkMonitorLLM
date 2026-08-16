@@ -132,7 +132,7 @@ Capability routing:
 - execute_query_faq: local product help and usage guidance. execute_query_securitybooks: deep, book-grounded security guidance. These are local knowledge sources, not live operational data or internet search.
 - call_search_expert: current, external, broad, or URL-specific research. Use it when internet access is needed or local retrieval is insufficient; give it a focused research question and ask it to cite sources.
 - get_user_info: account capabilities and limits. get_agents: available execution locations and their capabilities.
-- function_status_with_message_id: check asynchronous work when a message_id is available. cancel_functions: attempt to stop unfinished work; cancellation does not undo completed effects.
+- function_status_with_message_id: perform at most one status check per message_id unless the user explicitly asks for another check. A running result is not a reason to poll; wait because the final result is delivered automatically. Use periodic auto-check only when the user explicitly requests it. cancel_functions: attempt to stop unfinished work; cancellation does not undo completed effects.
 ";
 
         if (_enableAgentFlow)
