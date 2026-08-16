@@ -581,6 +581,72 @@ public class OpenAIRunnerTests
         Assert.True(totalTokens <= 12);
     }
 
+    [Fact]
+    public async Task ExpertStatusThenFinalResponse_PreservesPendingCallUntilFinalResponse()
+    {
+        var runner = CreateRunner(new MLParams { MaxFunctionCallsInARow = 3 });
+        var api = new RecordingLlmApi();
+        var llmApiField = typeof(OpenAIRunner).GetField("_llmApi", BindingFlags.NonPublic | BindingFlags.Instance);
+        Assert.NotNull(llmApiField);
+        llmApiField!.SetValue(runner, api);
+
+        const string messageId = "root123";
+        const string functionCallId = "call_1";
+        var pendingCallsField = typeof(OpenAIRunner).GetField(
+            "_pendingFunctionCalls",
+            BindingFlags.NonPublic | BindingFlags.Instance);
+        Assert.NotNull(pendingCallsField);
+        var pendingCalls = Assert.IsType<System.Collections.Concurrent.ConcurrentDictionary<string, ChatMessage>>(
+            pendingCallsField!.GetValue(runner));
+        pendingCalls[messageId] = new ChatMessage
+        {
+            Role = "assistant",
+            ToolCalls = new List<ToolCall>
+            {
+                new()
+                {
+                    Id = functionCallId,
+                    Type = "function",
+                    FunctionCall = new FunctionCall
+                    {
+                        Name = "call_security_expert",
+                        Arguments = "{\"message\":\"run long scan\"}"
+                    }
+                }
+            }
+        };
+
+        var status = CreateServiceObject("expert is still running");
+        status.SourceLlm = "monitor";
+        status.DestinationLlm = "monitor";
+        status.MessageID = messageId;
+        status.FunctionCallId = functionCallId;
+        status.FunctionName = "call_security_expert";
+        status.SetAsResponseStatus();
+
+        await runner.SendInputAndGetResponse(status);
+
+        Assert.True(pendingCalls.ContainsKey(messageId));
+        Assert.Single(api.Requests);
+        Assert.Contains(api.Requests[0], message =>
+            message.Content?.Contains("expert is still running", StringComparison.Ordinal) == true);
+
+        var finalResponse = CreateServiceObject("real expert result");
+        finalResponse.SourceLlm = "monitor";
+        finalResponse.DestinationLlm = "monitor";
+        finalResponse.MessageID = messageId;
+        finalResponse.FunctionCallId = functionCallId;
+        finalResponse.FunctionName = "call_security_expert";
+        finalResponse.SetAsResponseComplete();
+
+        await runner.SendInputAndGetResponse(finalResponse);
+
+        Assert.False(pendingCalls.ContainsKey(messageId));
+        Assert.Equal(2, api.Requests.Count);
+        Assert.Contains(api.Requests[1], message =>
+            message.Content?.Contains("real expert result", StringComparison.Ordinal) == true);
+    }
+
     private static OpenAIRunner CreateRunner(MLParams mlParams, IToolsBuilder? toolsBuilder = null)
     {
         mlParams.LlmProvider = "OpenAI";
@@ -718,6 +784,54 @@ public class OpenAIRunnerTests
                                 Role = "assistant",
                                 Content = ""
                             }
+                        }
+                    }
+                }
+            });
+        }
+
+        public List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, bool noThink = false) =>
+            new() { ChatMessage.FromSystem("") };
+
+        public List<ChatMessage> GetResumeSystemPrompt(string currentTime, LLMServiceObj serviceObj) =>
+            new() { ChatMessage.FromSystem("") };
+
+        public string GetFunctionNamesAsString(string separator = ", ") => string.Empty;
+
+        public string WrapFunctionResponse(string name, string funcStr) => funcStr;
+    }
+
+    private sealed class RecordingLlmApi : ILLMApi
+    {
+        public LLMConfig Config { get; } = new();
+        public int SystemPromptCount { get; } = 1;
+        public List<List<ChatMessage>> Requests { get; } = new();
+
+        public Task<ChatCompletionCreateResponseSuccess> CreateCompletionAsync(
+            List<ChatMessage> messages,
+            int maxTokens,
+            LLMServiceObj serviceObj)
+        {
+            Requests.Add(messages.Select(message => new ChatMessage
+            {
+                Role = message.Role,
+                Content = message.Content,
+                ToolCallId = message.ToolCallId,
+                Name = message.Name,
+                ToolCalls = message.ToolCalls
+            }).ToList());
+
+            return Task.FromResult(new ChatCompletionCreateResponseSuccess
+            {
+                Success = true,
+                Response = new ChatCompletionCreateResponse
+                {
+                    Choices = new List<ChatChoiceResponse>
+                    {
+                        new()
+                        {
+                            FinishReason = "stop",
+                            Message = ChatMessage.FromAssistant("acknowledged")
                         }
                     }
                 }
