@@ -92,6 +92,33 @@ public class ExpertTools
         };
     }
 
+    public static FunctionDefinition BuildLivePenetrationExpertFunction()
+    {
+        return new FunctionDefinition
+        {
+            Name = "call_live_penetration_expert",
+            Description = "Communicate an authorized stateful Metasploit engagement to the Live Penetration Expert. Use this when jobs, handlers, Meterpreter or shell sessions, routing, or other msfconsole state must survive across multiple interactions. Use the ordinary penetration expert for bounded module research or one-off tests.",
+            Parameters = new PropertyDefinition
+            {
+                Type = "object",
+                Properties = new Dictionary<string, PropertyDefinition>
+                {
+                    ["message"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "A complete authorized penetration-testing request including target, scope, known services, callback requirements, and desired outcome."
+                    },
+                    ["agent_location"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Agent location to use for the complete live console session."
+                    }
+                },
+                Required = new List<string> { "message", "agent_location" }
+            }
+        };
+    }
+
     public static FunctionDefinition BuildSearchExpertFunction()
     {
         return new FunctionDefinition

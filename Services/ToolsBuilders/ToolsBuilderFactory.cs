@@ -63,6 +63,7 @@ public sealed class ToolsBuilderFactory : IToolsBuilderFactory
             { "connect",     () => new ConnectExpertToolsBuilder() },
             { "nmap",        () => new SecurityExpertToolsBuilder() },
             { "meta",        () => new PenetrationExpertToolsBuilder() },
+            { "metalive",    () => new LivePenetrationExpertToolsBuilder() },
             { "search",      () => new SearchExpertToolsBuilder() },
             { "memory",      () => new MemoryExpertToolsBuilder() },
             { "quantum",     () => new QuantumExpertToolsBuilder() },

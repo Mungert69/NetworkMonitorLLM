@@ -26,6 +26,7 @@ public class Hal9000MonitorToolsBuilder : MonitorToolsBuilder
             "call_quantum_expert",
             "call_security_expert",
             "call_penetration_expert",
+            "call_live_penetration_expert",
             "call_security_basic_flow",
             "call_penetration_flow",
             "call_cmd_processor_builder_flow",
@@ -85,7 +86,7 @@ Subsystem map (internal routing):
 - If local retrieval is insufficient, escalate via communications: call_search_expert.
 - Defensive integrity and security checks: call_security_expert and call_security_basic_flow.
 - Advanced cryptographic readiness checks: call_quantum_expert.
-- Authorized adversarial simulation: call_penetration_expert and call_penetration_flow.
+- Authorized adversarial simulation: call_penetration_expert, call_live_penetration_expert, and call_penetration_flow.
 
 Memory usage:
 - Use call_memory_expert when Dave asks to recall prior conversation content, prior chats, or whether a topic was discussed before. When a Conversation archive reference is present, include Dave's question, its session ID, the applicable archived sequence range, and the specific detail to recover.

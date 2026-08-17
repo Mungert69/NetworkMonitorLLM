@@ -35,6 +35,7 @@ public class LLMService : ILLMService
     {"monitor", "Monitor"},
     {"nmap", "Security"},
     {"meta", "Penetration"},
+    {"metalive", "Live Penetration"},
     {"cmdprocessor", "Cmd Processor"},
     {"search", "Search"},
     {"quantum", "Quantum"},

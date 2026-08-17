@@ -22,6 +22,7 @@ public class MonitorToolsBuilder : ToolsBuilderBase
     private readonly FunctionDefinition fn_call_security_expert;
     private readonly FunctionDefinition fn_run_busybox;
     private readonly FunctionDefinition fn_call_penetration_expert;
+    private readonly FunctionDefinition fn_call_live_penetration_expert;
     private readonly FunctionDefinition fn_get_agents;
     private readonly FunctionDefinition fn_call_search_expert;
     private readonly FunctionDefinition fn_call_cmd_processor_expert;
@@ -51,6 +52,7 @@ public class MonitorToolsBuilder : ToolsBuilderBase
 
         fn_call_security_expert = ExpertTools.BuildSecurityExpertFunction();
         fn_call_penetration_expert = ExpertTools.BuildPenetrationExpertFunction();
+        fn_call_live_penetration_expert = ExpertTools.BuildLivePenetrationExpertFunction();
         fn_call_search_expert = ExpertTools.BuildSearchExpertFunction();
         fn_call_cmd_processor_expert = ExpertTools.BuildCmdProcessorExpertFunction();
         fn_call_connect_expert = ExpertTools.BuildConnectExpertFunction();
@@ -99,6 +101,7 @@ public class MonitorToolsBuilder : ToolsBuilderBase
              _tools.Add(new ToolDefinition() { Function = fn_call_quantum_expert, Type = "function" });
             _tools.Add(new ToolDefinition() { Function = fn_call_security_expert, Type = "function" });
             _tools.Add(new ToolDefinition() { Function = fn_call_penetration_expert, Type = "function" });   
+            _tools.Add(new ToolDefinition() { Function = fn_call_live_penetration_expert, Type = "function" });
         }
 
     }
@@ -153,6 +156,7 @@ Specialist routing available in this session:
 - call_security_expert: defensive one-time network and TLS assessment using Nmap or OpenSSL, including ports, services, certificates, protocols, and ciphers. Prefer this over penetration testing for ordinary scans.
 - call_quantum_expert: post-quantum readiness—TLS KEM support, quantum-safe certificates, algorithm information, or quantum-focused port assessment.
 - call_penetration_expert: authorized adversarial testing and Metasploit module discovery or execution. Do not use it for an ordinary Nmap/OpenSSL scan.
+- call_live_penetration_expert: authorized stateful Metasploit work where handlers, jobs, routes, Meterpreter, or shell sessions must persist. Supply one agent_location and keep it unchanged for the engagement.
 ";
         }
 
