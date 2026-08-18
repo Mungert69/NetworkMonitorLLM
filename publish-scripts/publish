@@ -44,6 +44,7 @@ fi
 # EU instances
 ./publish-instance eu Nmap "${PUBLISH_INSTANCE_ARGS[@]}"
 ./publish-instance eu Meta "${PUBLISH_INSTANCE_ARGS[@]}"
+./publish-instance eu Metalive "${PUBLISH_INSTANCE_ARGS[@]}"
 ./publish-instance eu Search "${PUBLISH_INSTANCE_ARGS[@]}"
 ./publish-instance eu CmdProcessor "${PUBLISH_INSTANCE_ARGS[@]}"
 ./publish-instance eu ReportData "${PUBLISH_INSTANCE_ARGS[@]}"
