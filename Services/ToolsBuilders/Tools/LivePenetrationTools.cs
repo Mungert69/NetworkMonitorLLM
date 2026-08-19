@@ -12,7 +12,9 @@ public static class LivePenetrationTools
         {
             Name = "interact_msfconsole",
             Description = "Interact with the persistent msfconsole owned by this live penetration session. " +
-                          "Commands and Metasploit jobs/sessions remain available between calls when the same agent_location is used.",
+                          "Commands and Metasploit jobs/sessions remain available between calls when the same agent_location is used. " +
+                          "Responses include busy and commandComplete. Large output is returned as a bounded beginning and latest end " +
+                          "with outputTruncated and omittedCharacters metadata; refine the console command instead of retrieving an entire omitted listing.",
             Parameters = new PropertyDefinition
             {
                 Type = "object",
