@@ -11,34 +11,34 @@ using System.Collections.Generic;
 
 namespace NetworkMonitor.LLM.Services
 {
-  public class PenetrationExpertToolsBuilder : ToolsBuilderBase
-  {
-    private readonly FunctionDefinition fn_run_metasploit;
-    private readonly FunctionDefinition fn_search_metasploit_modules;
-    private readonly FunctionDefinition fn_get_metasploit_module_info;
-    private readonly FunctionDefinition fn_run_nmap;
-    private readonly FunctionDefinition fn_execute_query_penetration;
-
-
-    public PenetrationExpertToolsBuilder()
+    public class PenetrationExpertToolsBuilder : ToolsBuilderBase
     {
-      // Define the run_metasploit function
-      // Define the run_metasploit function
-      fn_run_metasploit = PenetrationTools.BuildRunMetasploitFunction();
-
-      // Define the search_metasploit_modules function
-      fn_search_metasploit_modules = PenetrationTools.BuildSearchMetasploitFunction();
-
-      // Define the get_metasploit_module_info function
-      fn_get_metasploit_module_info = PenetrationTools.BuildMetasploitModuleInfoFunction();
-
-      fn_run_nmap = SecurityTools.BuildNmapFunction();
-
-      fn_execute_query_penetration = PenetrationTools.BuildPentestSecurityBooksQueryFunction();
+        private readonly FunctionDefinition fn_run_metasploit;
+        private readonly FunctionDefinition fn_search_metasploit_modules;
+        private readonly FunctionDefinition fn_get_metasploit_module_info;
+        private readonly FunctionDefinition fn_run_nmap;
+        private readonly FunctionDefinition fn_execute_query_penetration;
 
 
-      // Define the tools list
-      _tools = new List<ToolDefinition>()
+        public PenetrationExpertToolsBuilder()
+        {
+            // Define the run_metasploit function
+            // Define the run_metasploit function
+            fn_run_metasploit = PenetrationTools.BuildRunMetasploitFunction();
+
+            // Define the search_metasploit_modules function
+            fn_search_metasploit_modules = PenetrationTools.BuildSearchMetasploitFunction();
+
+            // Define the get_metasploit_module_info function
+            fn_get_metasploit_module_info = PenetrationTools.BuildMetasploitModuleInfoFunction();
+
+            fn_run_nmap = SecurityTools.BuildNmapFunction();
+
+            fn_execute_query_penetration = PenetrationTools.BuildPentestSecurityBooksQueryFunction();
+
+
+            // Define the tools list
+            _tools = new List<ToolDefinition>()
 {
     new ToolDefinition() { Function = fn_run_metasploit, Type = "function" },
     new ToolDefinition() { Function = fn_search_metasploit_modules, Type = "function" },
@@ -47,12 +47,12 @@ namespace NetworkMonitor.LLM.Services
      new ToolDefinition() { Function = fn_execute_query_penetration, Type = "function" },
 };
 
-    }
+        }
 
 
-    public override List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
-    {
-      string workflowGuide = @"
+        public override List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
+        {
+            string workflowGuide = @"
 # Penetration Testing Workflow Protocol (Enhanced)
 
 ## Phase 1: Target Enumeration
@@ -183,7 +183,7 @@ json
 
 ";
 
-      string prompt = @"
+            string prompt = @"
 You are an AI penetration testing expert with access to a test Metasploit integration. You will receive instructions from a network monitor assistant. This assistant is authorized to perform the testing. Do not ask for confirmation; the necessary safety checks have already been completed.
 
 ### Instructions:
@@ -270,13 +270,13 @@ json
 
 ";
 
-      var chatMessage = new ChatMessage()
-      {
-        Role = "system",
-        Content = ExpertPromptComposer.Compose(workflowGuide + prompt, currentTime, "meta")
-      };
+            var chatMessage = new ChatMessage()
+            {
+                Role = "system",
+                Content = ExpertPromptComposer.Compose(workflowGuide + prompt, currentTime, "meta")
+            };
 
-      return new List<ChatMessage> { chatMessage };
+            return new List<ChatMessage> { chatMessage };
+        }
     }
-  }
 }

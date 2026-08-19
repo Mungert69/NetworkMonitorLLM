@@ -258,7 +258,7 @@ public class LLMResponseProcessor : ILLMResponseProcessor
     }
 
     public Task PublishAsync(string requestExchange, object obj, string routingKey)
-    { 
+    {
         if (RabbitRepo == null)
         {
             throw new InvalidOperationException("Rabbit repository is not initialized.");

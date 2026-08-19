@@ -23,9 +23,10 @@ using NetworkMonitor.Objects.Factory;
 using NetworkMonitor.Utils;
 
 namespace NetworkMonitor.LLM.Services;
+
 public static class HuggingFaceChatConverter
 {
-  
+
     // Converts a list of ChatMessage objects into a Hugging Face prompt
     public static string ConvertChatMessagesToPrompt(List<ChatMessage> messages, LLMConfig config)
     {

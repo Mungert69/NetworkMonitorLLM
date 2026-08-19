@@ -27,7 +27,7 @@ namespace NetworkMonitor.LLM.Services
 
         public CmdProcessorExpertToolsBuilder()
         {
-            
+
             fn_get_cmd_processor_list = CmdProcessorTools.BuildListFunction();
             fn_get_cmd_processor_help = CmdProcessorTools.BuildHelpFunction();
             fn_get_cmd_processor_source_code = CmdProcessorTools.BuildSourceCodeFunction();
@@ -52,7 +52,7 @@ namespace NetworkMonitor.LLM.Services
             string overridePrompt = $@"You are an automated Cmd Processor manager opertating withn the Network Monitor Assistant. You creates, interacts and manage Command Processors. 
 A Command Processor is a .NET class that runs on an agent and can be invoked via run_cmd_processor.
  {Prompts.CmdProcessorPrompt()}";
-            
+
             string contentPart2 = @" If the user requests to add a cmd processor, call the function add_cmd_processor with parameters cmd_processor_type, the agent_location.
 
 The user can also: delete a cmd processor (delete_cmd_processor), or get the help file for a cmd processor (get_cmd_processor_help), view the .net source code that the cmd processor runs (get_cmd_processor_source_code) and run a cmd processor (run_cmd_processor).

@@ -15,7 +15,7 @@ namespace NetworkMonitor.LLM.Services
     {
 
         public TokenBroadcasterFunc_3_1(ILLMResponseProcessor responseProcessor, ILogger logger, bool xmlFunctionParsing, HashSet<string> ignoreParameters)
-             : base(responseProcessor, logger,xmlFunctionParsing,ignoreParameters)
+             : base(responseProcessor, logger, xmlFunctionParsing, ignoreParameters)
         {
 
         }
@@ -50,8 +50,8 @@ namespace NetworkMonitor.LLM.Services
             {
                 string functionName = match.Groups[1].Value;
                 string jsonArguments = match.Groups[2].Value;
-                jsonArguments=JsonSanitizer.RepairJson(jsonArguments,_ignoreParameters);
-   
+                jsonArguments = JsonSanitizer.RepairJson(jsonArguments, _ignoreParameters);
+
                 return (jsonArguments, functionName);
 
             }

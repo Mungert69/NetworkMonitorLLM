@@ -14,16 +14,17 @@ using System.Security.Cryptography;
 using System.Linq;
 using NetworkMonitor.Objects;
 namespace NetworkMonitor.LLM.Services;
+
 public class TokenBroadcasterFunc_2_4 : TokenBroadcasterBase
 {
 
-    public TokenBroadcasterFunc_2_4(ILLMResponseProcessor responseProcessor, ILogger logger,bool xmlFunctionParsing, HashSet<string> ignoreParameters)
-         : base(responseProcessor, logger,xmlFunctionParsing,ignoreParameters)
+    public TokenBroadcasterFunc_2_4(ILLMResponseProcessor responseProcessor, ILogger logger, bool xmlFunctionParsing, HashSet<string> ignoreParameters)
+         : base(responseProcessor, logger, xmlFunctionParsing, ignoreParameters)
     {
-      
+
     }
 
-  
+
 
     public override async Task BroadcastAsync(ProcessWrapper process, LLMServiceObj serviceObj, string userInput)
     {
@@ -41,7 +42,7 @@ public class TokenBroadcasterFunc_2_4 : TokenBroadcasterBase
                 byte[] buffer = new byte[50];
                 int charRead = await process.StandardOutput.ReadAsync(buffer, 0, buffer.Length, _cancellationTokenSource.Token);
                 string textChunk = Encoding.UTF8.GetString(buffer, 0, charRead);
-                await SendLLMPrimaryChunk(serviceObj,textChunk);
+                await SendLLMPrimaryChunk(serviceObj, textChunk);
                 llmOutFull.Append(textChunk);
                 tokenBuilder.Append(textChunk);
                 //Console.WriteLine(textChunk);
@@ -58,7 +59,7 @@ public class TokenBroadcasterFunc_2_4 : TokenBroadcasterBase
                 {
                     foreach (var messageSegment in messageSegments)
                     {
-                        if (serviceObj.IsFunctionCallResponse) await SendLLMPrimaryChunk( serviceObj,"</functioncall-complete>");
+                        if (serviceObj.IsFunctionCallResponse) await SendLLMPrimaryChunk(serviceObj, "</functioncall-complete>");
                         await ProcessMessageSegment(messageSegment, serviceObj);
                     }
                     if (!_isPrimaryLlm) forwardSegments = messageSegments;
@@ -77,9 +78,10 @@ public class TokenBroadcasterFunc_2_4 : TokenBroadcasterBase
                     if (forwardSegments.Count > 0)
                     {
                         var assistantSegment = forwardSegments.Where(a => a.From.Contains("assistant")).FirstOrDefault();
-                        if (assistantSegment != null) {
+                        if (assistantSegment != null)
+                        {
                             llmOutput = assistantSegment.Content.Replace("<|stop|>", "");
-                            if (!_isSystemLlm) llmOutput = assistantSegment.Content.Replace("\n", "") ;   
+                            if (!_isSystemLlm) llmOutput = assistantSegment.Content.Replace("\n", "");
                         }
                     }
                 }
@@ -94,12 +96,12 @@ public class TokenBroadcasterFunc_2_4 : TokenBroadcasterBase
         catch (OperationCanceledException)
         {
             _logger.LogInformation("Read operation canceled due to CancellationToken.");
-            await SendLLMPrimaryChunk(serviceObj,"\n");
-           
+            await SendLLMPrimaryChunk(serviceObj, "\n");
+
         }
         finally
         {
-          await SendLLMPrimaryChunk(serviceObj, "</llm-listening>");    
+            await SendLLMPrimaryChunk(serviceObj, "</llm-listening>");
         }
 
         _logger.LogInformation(" --> Finished LLM Interaction ");
@@ -166,7 +168,7 @@ public class TokenBroadcasterFunc_2_4 : TokenBroadcasterBase
                 switch (tag)
                 {
                     case "from":
-                    
+
                         if (currentSegment == null)
                         {
                             currentSegment = new MessageSegment();
@@ -223,10 +225,10 @@ public class TokenBroadcasterFunc_2_4 : TokenBroadcasterBase
                 //responseServiceObj = new LLMServiceObj() { SessionId = sessionId, UserInput = userInput, SourceLlm = sourceLlm, DestinationLlm = destinationLlm };
                 responseServiceObj.LlmMessage = "</functioncall>";
                 responseServiceObj.SetAsCall();
-                if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);         
+                if (_isPrimaryLlm) await _responseProcessor.ProcessLLMOutput(responseServiceObj);
                 else
                 {
-                    var forwardFuncServiceObj = new LLMServiceObj(responseServiceObj,fs => fs.SetAsResponseRunning());
+                    var forwardFuncServiceObj = new LLMServiceObj(responseServiceObj, fs => fs.SetAsResponseRunning());
                     forwardFuncServiceObj.LlmMessage = $"Please wait calling function. Be patient this may take some time";
                     forwardFuncServiceObj.FunctionName = messageSegment.Recipient;
                     // await _responseProcessor.ProcessLLMOutput(forwardFuncServiceObj);
@@ -275,7 +277,7 @@ public class TokenBroadcasterFunc_2_4 : TokenBroadcasterBase
             newLine = newLine.Substring(0, lastClosingBraceIndex + 1);
             foundEnd = true;
         }
-        if (foundEnd) return (true, JsonSanitizer.RepairJson(newLine,_ignoreParameters));
+        if (foundEnd) return (true, JsonSanitizer.RepairJson(newLine, _ignoreParameters));
         else return (false, input);
     }
 }

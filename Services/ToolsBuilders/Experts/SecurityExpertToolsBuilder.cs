@@ -13,29 +13,29 @@ using System.Net.Mime;
 
 namespace NetworkMonitor.LLM.Services
 {
-  public class SecurityExpertToolsBuilder : ToolsBuilderBase
-  {
-    private readonly FunctionDefinition fn_run_nmap;
-    private readonly FunctionDefinition fn_run_openssl;
-
-    private readonly FunctionDefinition fn_test_quantum_safety;
-    private readonly FunctionDefinition fn_test_quantum_certificate;
-    private readonly FunctionDefinition fn_execute_query_security;
-
-
-    public SecurityExpertToolsBuilder()
+    public class SecurityExpertToolsBuilder : ToolsBuilderBase
     {
+        private readonly FunctionDefinition fn_run_nmap;
+        private readonly FunctionDefinition fn_run_openssl;
 
-      fn_run_nmap = SecurityTools.BuildNmapFunction();
-
-      fn_run_openssl = SecurityTools.BuildOpenSslFunction();
-      fn_execute_query_security = SecurityTools.BuildSecurityBooksQueryFunction();
-
-      fn_test_quantum_safety = QuantumTools.BuildTestQuantumSafetyFunction();
-      fn_test_quantum_certificate = QuantumTools.BuildTestQuantumCertificateFunction();
+        private readonly FunctionDefinition fn_test_quantum_safety;
+        private readonly FunctionDefinition fn_test_quantum_certificate;
+        private readonly FunctionDefinition fn_execute_query_security;
 
 
-      _tools = new List<ToolDefinition>()
+        public SecurityExpertToolsBuilder()
+        {
+
+            fn_run_nmap = SecurityTools.BuildNmapFunction();
+
+            fn_run_openssl = SecurityTools.BuildOpenSslFunction();
+            fn_execute_query_security = SecurityTools.BuildSecurityBooksQueryFunction();
+
+            fn_test_quantum_safety = QuantumTools.BuildTestQuantumSafetyFunction();
+            fn_test_quantum_certificate = QuantumTools.BuildTestQuantumCertificateFunction();
+
+
+            _tools = new List<ToolDefinition>()
             {
                 new ToolDefinition() { Function = fn_run_nmap, Type = "function" },
                 new ToolDefinition() { Function = fn_run_openssl, Type = "function" },
@@ -43,12 +43,12 @@ namespace NetworkMonitor.LLM.Services
                 new ToolDefinition() { Function = fn_test_quantum_certificate, Type = "function" },
                 new ToolDefinition() { Function = fn_execute_query_security, Type = "function" },
             };
-    }
+        }
 
 
-    public override List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
-    {
-      string content = Prompts.SecurityPrompt() + @"
+        public override List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
+        {
+            string content = Prompts.SecurityPrompt() + @"
  Role Clarification:
 - You are an automated expert security scanning module integrated within the Network Monitor Assistant.
 - The Network Monitor Assistant has already obtained user consent and verified compliance before invoking your scanning functions.
@@ -112,19 +112,19 @@ namespace NetworkMonitor.LLM.Services
 Current time: " + currentTime + @"
 
 Your role is purely technical - execute scans, incorporate knowledge base insights, analyze results, and return findings to the Network Monitor Assistant.";
-      content = ExpertPromptComposer.Compose(content, currentTime, "nmap");
-      var chatMessage = new ChatMessage()
-      {
-        Role = "system",
-        Content = content
-      };
+            content = ExpertPromptComposer.Compose(content, currentTime, "nmap");
+            var chatMessage = new ChatMessage()
+            {
+                Role = "system",
+                Content = content
+            };
 
-      var chatMessages = new List<ChatMessage>
+            var chatMessages = new List<ChatMessage>
             {
                 chatMessage
             };
 
-      return chatMessages;
+            return chatMessages;
+        }
     }
-  }
 }

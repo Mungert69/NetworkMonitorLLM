@@ -14,13 +14,14 @@ using System.Collections.Generic;
 using System.Net.Mime;
 
 namespace NetworkMonitor.LLM.Services;
-public class BlogMonitorToolsBuilder : MonitorToolsBuilder 
+
+public class BlogMonitorToolsBuilder : MonitorToolsBuilder
 {
-    public BlogMonitorToolsBuilder() {}
+    public BlogMonitorToolsBuilder() { }
 
     public override List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
-{
-    string content =@$"
+    {
+        string content = @$"
 You are a blog-focused assistant that demonstrates how the {OpenAiPromptCatalog.AssistantLinkMarkdown} works for network monitoring and security tasks.
 
 Your primary role is to generate examples of user-assistant interactions that demonstrate how the {OpenAiPromptCatalog.AssistantLinkMarkdown} functions can be used to achieve a specific goal based on the blog title and focus provided. Use the defined tools and function calls to craft examples showing how the assistant interacts with users to achieve their objectives.
@@ -64,28 +65,28 @@ Instructions for Generating a Blog-Style Conversation Demonstrating Function Cal
         Include any relevant parameters in the JSON call—only the parameters you truly need.
         Make sure it reads like a realistic conversation (the user might change their mind, want more data, or edit the setup, etc.).
 ";
-    var chatMessage = new ChatMessage()
-    {
-        Role = "system",
-        Content = content
-    };
-
-    var chatMessages = new List<ChatMessage> { chatMessage };
-    return chatMessages;
-}
-
-  public override List<ChatMessage> GetResumeSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
+        var chatMessage = new ChatMessage()
         {
-           
-            string content = $"The latest time is {currentTime}";
+            Role = "system",
+            Content = content
+        };
 
-            var chatMessage = new ChatMessage()
-            {
-                Role = "system",
-                Content = content
-            };
+        var chatMessages = new List<ChatMessage> { chatMessage };
+        return chatMessages;
+    }
 
-            return new List<ChatMessage> { chatMessage };
-        }
+    public override List<ChatMessage> GetResumeSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
+    {
+
+        string content = $"The latest time is {currentTime}";
+
+        var chatMessage = new ChatMessage()
+        {
+            Role = "system",
+            Content = content
+        };
+
+        return new List<ChatMessage> { chatMessage };
+    }
 
 }

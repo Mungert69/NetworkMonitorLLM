@@ -26,12 +26,12 @@ public class BlankToolsBuilder : ToolsBuilderBase
 
     public override List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)
     {
-         var chatMessage = new ChatMessage()
+        var chatMessage = new ChatMessage()
         {
             Role = "system",
             Content = ""
         };
-        return new List<ChatMessage>() { chatMessage};
+        return new List<ChatMessage>() { chatMessage };
     }
 
     public override List<ChatMessage> GetResumeSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)

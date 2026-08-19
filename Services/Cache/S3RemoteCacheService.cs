@@ -21,7 +21,7 @@ public class S3RemoteCacheService : IRemoteCacheService
     {
         _s3Client = s3Client ?? throw new ArgumentNullException(nameof(s3Client));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        
+
         var s3Options = options?.Value ?? throw new ArgumentNullException(nameof(options));
         _bucketName = s3Options.BucketName ?? throw new ArgumentException("BucketName is required", nameof(options));
     }
@@ -35,7 +35,7 @@ public class S3RemoteCacheService : IRemoteCacheService
         }
 
         var key = GetObjectKey(fileHash);
-        
+
         try
         {
             var request = new GetObjectMetadataRequest
@@ -43,7 +43,7 @@ public class S3RemoteCacheService : IRemoteCacheService
                 BucketName = _bucketName,
                 Key = key
             };
-            
+
             await _s3Client.GetObjectMetadataAsync(request);
             return true;
         }
@@ -66,7 +66,7 @@ public class S3RemoteCacheService : IRemoteCacheService
         }
 
         var key = GetObjectKey(fileHash);
-        
+
         try
         {
             var request = new GetObjectRequest
@@ -74,11 +74,11 @@ public class S3RemoteCacheService : IRemoteCacheService
                 BucketName = _bucketName,
                 Key = key
             };
-            
+
             using var response = await _s3Client.GetObjectAsync(request);
             using var memoryStream = new MemoryStream();
             await response.ResponseStream.CopyToAsync(memoryStream);
-            
+
             _logger.LogInformation("Successfully downloaded context file {FileName} (hash: {FileHash}) from S3", fileName, fileHash);
             return memoryStream.ToArray();
         }
@@ -102,7 +102,7 @@ public class S3RemoteCacheService : IRemoteCacheService
         }
 
         var key = GetObjectKey(fileHash);
-        
+
         try
         {
             var request = new PutObjectRequest
@@ -112,7 +112,7 @@ public class S3RemoteCacheService : IRemoteCacheService
                 InputStream = new MemoryStream(fileData),
                 ContentType = "application/octet-stream"
             };
-            
+
             await _s3Client.PutObjectAsync(request);
             _logger.LogInformation("Successfully uploaded context file {FileName} (hash: {FileHash}) to S3", fileName, fileHash);
         }

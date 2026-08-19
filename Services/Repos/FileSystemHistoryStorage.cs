@@ -85,9 +85,9 @@ public class FileSystemHistoryStorage : IHistoryStorage
         foreach (var file in files)
         {
             var json = await File.ReadAllTextAsync(file);
-            
-              var historyDisplayName = JsonConvert.DeserializeObject<HistoryDisplayName>(json); 
-         if (historyDisplayName != null)
+
+            var historyDisplayName = JsonConvert.DeserializeObject<HistoryDisplayName>(json);
+            if (historyDisplayName != null)
             {
                 historyDisplayNames.Add(historyDisplayName);
             }
@@ -99,21 +99,21 @@ public class FileSystemHistoryStorage : IHistoryStorage
     public async Task SaveHistoryAsync(HistoryDisplayName historyDisplayName)
     {
         var filePath = Path.Combine(_storagePath, $"{historyDisplayName.StartUnixTime}_{historyDisplayName.SessionId}.json");
-       var json = JsonConvert.SerializeObject(historyDisplayName, new JsonSerializerSettings
-{
-    ContractResolver = new CamelCasePropertyNamesContractResolver(),
-    Formatting = Formatting.Indented
-});
+        var json = JsonConvert.SerializeObject(historyDisplayName, new JsonSerializerSettings
+        {
+            ContractResolver = new CamelCasePropertyNamesContractResolver(),
+            Formatting = Formatting.Indented
+        });
 
-       await File.WriteAllTextAsync(filePath, json);
+        await File.WriteAllTextAsync(filePath, json);
     }
 
     public async Task<HistoryDisplayName?> LoadHistoryAsync(string sessionId)
     {
-    var searchPattern = $"*_{sessionId}.json";
+        var searchPattern = $"*_{sessionId}.json";
 
-    // Get all files matching the pattern
-    var files = Directory.GetFiles(_storagePath, searchPattern);
+        // Get all files matching the pattern
+        var files = Directory.GetFiles(_storagePath, searchPattern);
 
         if (files.Length == 0)
         {
@@ -122,22 +122,22 @@ public class FileSystemHistoryStorage : IHistoryStorage
 
         var filePath = files[0]; // Assuming sessionId is unique
         var json = await File.ReadAllTextAsync(filePath);
-         // Deserialize using Newtonsoft.Json
-        return JsonConvert.DeserializeObject<HistoryDisplayName>(json); 
+        // Deserialize using Newtonsoft.Json
+        return JsonConvert.DeserializeObject<HistoryDisplayName>(json);
     }
 
-   public async Task DeleteHistoryAsync(string sessionId)
-{
-    var files = await Task.Run(() => Directory.GetFiles(_storagePath, $"*_{sessionId}.json"));
-
-    foreach (var filePath in files)
+    public async Task DeleteHistoryAsync(string sessionId)
     {
-        if (File.Exists(filePath))
+        var files = await Task.Run(() => Directory.GetFiles(_storagePath, $"*_{sessionId}.json"));
+
+        foreach (var filePath in files)
         {
-            await Task.Run(() => File.Delete(filePath)); // Offload file deletion to another thread
+            if (File.Exists(filePath))
+            {
+                await Task.Run(() => File.Delete(filePath)); // Offload file deletion to another thread
+            }
         }
     }
-}
 
     private static string BuildStoragePath(string? serviceId)
     {

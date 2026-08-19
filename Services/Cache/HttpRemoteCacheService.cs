@@ -25,12 +25,12 @@ public class HttpRemoteCacheService : IRemoteCacheService
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        
+
         _baseUrl = config.BaseUrl ?? throw new ArgumentException("BaseUrl is required");
         _apiKey = config.ApiKey ?? throw new ArgumentException("ApiKey is required");
         _timeoutSeconds = config.TimeoutSeconds > 0 ? config.TimeoutSeconds : 30;
         _retryAttempts = config.RetryAttempts > 0 ? config.RetryAttempts : 3;
-        
+
         // Configure HttpClient timeout
         _httpClient.Timeout = TimeSpan.FromSeconds(_timeoutSeconds);
     }
@@ -83,7 +83,7 @@ public class HttpRemoteCacheService : IRemoteCacheService
                 AddAuthHeaders(req);
                 return req;
             });
-            
+
             var fileData = await response.Content.ReadAsByteArrayAsync();
             _logger.LogInformation("Successfully downloaded context file {FileName} (hash: {FileHash})", fileName, fileHash);
             return fileData;
@@ -174,7 +174,7 @@ public class HttpRemoteCacheService : IRemoteCacheService
                     request.RequestUri?.ToString() ?? string.Empty,
                     (int)response.StatusCode,
                     response.ReasonPhrase);
-                
+
                 // If not successful, throw to trigger retry
                 response.EnsureSuccessStatusCode();
                 return response; // This won't be reached if EnsureSuccessStatusCode throws
@@ -182,18 +182,18 @@ public class HttpRemoteCacheService : IRemoteCacheService
             catch (Exception ex)
             {
                 lastException = ex;
-                
+
                 if (attempt == _retryAttempts)
                 {
-                    _logger.LogWarning("Operation failed after {RetryAttempts} attempts. Last error: {ErrorMessage}", 
+                    _logger.LogWarning("Operation failed after {RetryAttempts} attempts. Last error: {ErrorMessage}",
                         _retryAttempts, ex.Message);
                     break;
                 }
-                
+
                 var delay = TimeSpan.FromSeconds(Math.Pow(2, attempt - 1)); // Exponential backoff
-                _logger.LogWarning("Operation failed on attempt {Attempt} of {RetryAttempts}. Retrying in {Delay} seconds. Error: {ErrorMessage}", 
+                _logger.LogWarning("Operation failed on attempt {Attempt} of {RetryAttempts}. Retrying in {Delay} seconds. Error: {ErrorMessage}",
                     attempt, _retryAttempts, delay.TotalSeconds, ex.Message);
-                
+
                 await Task.Delay(delay);
             }
         }

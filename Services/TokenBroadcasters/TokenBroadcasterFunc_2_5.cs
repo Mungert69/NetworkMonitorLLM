@@ -10,13 +10,14 @@ using Microsoft.Extensions.Logging;
 using NetworkMonitor.Objects.ServiceMessage;
 using NetworkMonitor.Objects;
 namespace NetworkMonitor.LLM.Services;
+
 public class TokenBroadcasterFunc_2_5 : TokenBroadcasterBase
 {
 
     public TokenBroadcasterFunc_2_5(ILLMResponseProcessor responseProcessor, ILogger logger, bool xmlFunctionParsing, HashSet<string> ignoreParameters)
-         : base(responseProcessor, logger,xmlFunctionParsing,ignoreParameters)
+         : base(responseProcessor, logger, xmlFunctionParsing, ignoreParameters)
     {
-    
+
     }
 
 
@@ -68,7 +69,7 @@ public class TokenBroadcasterFunc_2_5 : TokenBroadcasterBase
             }
 
             // Sanitize and add the extracted JSON and function name to the list
-            functionCalls.Add((JsonSanitizer.RepairJson(jsonContent,_ignoreParameters), functionName));
+            functionCalls.Add((JsonSanitizer.RepairJson(jsonContent, _ignoreParameters), functionName));
 
             // Update currentIndex to continue searching after this function call
             currentIndex = tokenIndex + specialToken.Length + jsonEndIndex + 1;

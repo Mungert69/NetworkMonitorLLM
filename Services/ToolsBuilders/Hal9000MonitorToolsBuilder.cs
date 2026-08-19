@@ -33,7 +33,7 @@ public class Hal9000MonitorToolsBuilder : MonitorToolsBuilder
             "execute_query_faq",
             "execute_query_securitybooks",
             "run_busybox_command"
-      
+
         };
 
         _tools = _tools

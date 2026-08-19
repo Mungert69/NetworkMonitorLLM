@@ -52,7 +52,7 @@ public class LLMService : ILLMService
     private ConcurrentDictionary<string, Session> _sessions = new ConcurrentDictionary<string, Session>();
     private readonly ConcurrentDictionary<string, SemaphoreSlim> _sessionStartLocks = new();
 
-    public LLMService(ILogger<LLMService> logger, IRabbitRepo rabbitRepo, SystemParams systemParams, MLParams mlParams,IServiceProvider serviceProvider, ILLMFactory llmFactory)
+    public LLMService(ILogger<LLMService> logger, IRabbitRepo rabbitRepo, SystemParams systemParams, MLParams mlParams, IServiceProvider serviceProvider, ILLMFactory llmFactory)
     {
 
         _serviceProvider = serviceProvider;
@@ -108,71 +108,71 @@ public class LLMService : ILLMService
                 }
 
 
-            bool exists = _sessions.TryGetValue(llmServiceObj.SessionId, out var checkSession);
-            //bool isSwapLLMType = false;
-            bool isRunnerNull = checkSession == null || checkSession.Runner == null || string.IsNullOrEmpty(checkSession?.Runner?.Type);
+                bool exists = _sessions.TryGetValue(llmServiceObj.SessionId, out var checkSession);
+                //bool isSwapLLMType = false;
+                bool isRunnerNull = checkSession == null || checkSession.Runner == null || string.IsNullOrEmpty(checkSession?.Runner?.Type);
 
-            //if (!isRunnerNull && checkSession.Runner.Type != llmServiceObj.LLMRunnerType) isSwapLLMType = true;
+                //if (!isRunnerNull && checkSession.Runner.Type != llmServiceObj.LLMRunnerType) isSwapLLMType = true;
 
-            // Create a new runner if there is not one . Or the RunnerType needs to be swapped. Or is the type is the same but its is a failed State
-            bool isCreateNewRunner = isRunnerNull || checkSession?.Runner?.IsStateFailed == true;
+                // Create a new runner if there is not one . Or the RunnerType needs to be swapped. Or is the type is the same but its is a failed State
+                bool isCreateNewRunner = isRunnerNull || checkSession?.Runner?.IsStateFailed == true;
 
-            if (isCreateNewRunner)
-            {
-                if (!isRunnerNull)
-                    await SafeRemoveRunnerProcess(checkSession, llmServiceObj.SessionId);
-
-                ILLMRunner runner = await _llmFactory.CreateRunner(llmServiceObj.LLMRunnerType, llmServiceObj);
-                if (!runner.IsEnabled)
+                if (isCreateNewRunner)
                 {
-                    await SetResultMessageAsync(llmServiceObj, $"{llmServiceObj.LLMRunnerType} {_serviceID} not started as it is disabled.", true, "llmServiceMessage");
-                    return llmServiceObj;
-                }
+                    if (!isRunnerNull)
+                        await SafeRemoveRunnerProcess(checkSession, llmServiceObj.SessionId);
 
-                string extraMessage = llmServiceObj.LLMRunnerType == "TestLLM"
-                    ? $" , this can take up to {_mlParams.LlmSystemPromptTimeout} seconds..."
-                    : "";
-                await SetResultMessageAsync(llmServiceObj, $"Starting {llmServiceObj.LLMRunnerType} {GetDisplayName(_serviceID)} Expert{extraMessage}", true, "llmServiceMessage", true);
-
-                await runner.StartProcess(llmServiceObj);
-                // Only add a new session if it does not exist
-                if (checkSession == null)
-                {
-                    _sessions[llmServiceObj.SessionId] = new Session
+                    ILLMRunner runner = await _llmFactory.CreateRunner(llmServiceObj.LLMRunnerType, llmServiceObj);
+                    if (!runner.IsEnabled)
                     {
-                        Runner = runner,
-                        FullSessionId = llmServiceObj.SessionId,
-                        HistoryDisplayName = new HistoryDisplayName
+                        await SetResultMessageAsync(llmServiceObj, $"{llmServiceObj.LLMRunnerType} {_serviceID} not started as it is disabled.", true, "llmServiceMessage");
+                        return llmServiceObj;
+                    }
+
+                    string extraMessage = llmServiceObj.LLMRunnerType == "TestLLM"
+                        ? $" , this can take up to {_mlParams.LlmSystemPromptTimeout} seconds..."
+                        : "";
+                    await SetResultMessageAsync(llmServiceObj, $"Starting {llmServiceObj.LLMRunnerType} {GetDisplayName(_serviceID)} Expert{extraMessage}", true, "llmServiceMessage", true);
+
+                    await runner.StartProcess(llmServiceObj);
+                    // Only add a new session if it does not exist
+                    if (checkSession == null)
+                    {
+                        _sessions[llmServiceObj.SessionId] = new Session
                         {
-                            StartUnixTime = llmServiceObj.GetClientStartUnixTime(),
-                            SessionId = llmServiceObj.SessionId,
-                            Name = "",
-                            LlmType = llmServiceObj.LLMRunnerType,
-                            UserId = llmServiceObj.UserInfo?.UserID!
-                        }
-                    };
+                            Runner = runner,
+                            FullSessionId = llmServiceObj.SessionId,
+                            HistoryDisplayName = new HistoryDisplayName
+                            {
+                                StartUnixTime = llmServiceObj.GetClientStartUnixTime(),
+                                SessionId = llmServiceObj.SessionId,
+                                Name = "",
+                                LlmType = llmServiceObj.LLMRunnerType,
+                                UserId = llmServiceObj.UserInfo?.UserID!
+                            }
+                        };
+                    }
+                    else
+                    {
+                        checkSession.Runner = runner;
+                    }
+                    //var responseServiceObj = new LLMServiceObj(serviceObj);
+                    //responseServiceObj.LlmMessage = $"<Assistant:> Hi I'm {runner.Type} how can I help you. \n\n";
+                    //responseServiceObj..ResultMessage = "Sending Success Output";
+                    //responseServiceObj..ResultSuccess = true;
+                    //await PublishToRabbitMQAsync("llmServiceMessage", responseServiceObj, false);
+
+                    //await SetResultMessageAsync(llmServiceObj, $"Success {runner.Type} {_serviceID} Assistant Started", true, "llmServiceMessage", true);
+                    if (_serviceID == "monitor") await SetResultMessageAsync(llmServiceObj, $"Hi i'm {runner.Type} your Network Monitor Assistant. How can I help you.", true, "llmServiceMessage", true);
+
+
                 }
                 else
                 {
-                    checkSession.Runner = runner;
+                    //await SetResultMessageAsync(llmServiceObj, $"Info: {llmServiceObj.LLMRunnerType} {_serviceID} Assistant already running so it was not reloaded", true, "llmServiceMessage", true);
                 }
-                //var responseServiceObj = new LLMServiceObj(serviceObj);
-                //responseServiceObj.LlmMessage = $"<Assistant:> Hi I'm {runner.Type} how can I help you. \n\n";
-                //responseServiceObj..ResultMessage = "Sending Success Output";
-                //responseServiceObj..ResultSuccess = true;
-                //await PublishToRabbitMQAsync("llmServiceMessage", responseServiceObj, false);
 
-                //await SetResultMessageAsync(llmServiceObj, $"Success {runner.Type} {_serviceID} Assistant Started", true, "llmServiceMessage", true);
-                if (_serviceID == "monitor") await SetResultMessageAsync(llmServiceObj, $"Hi i'm {runner.Type} your Network Monitor Assistant. How can I help you.", true, "llmServiceMessage", true);
-
-
-            }
-            else
-            {
-                //await SetResultMessageAsync(llmServiceObj, $"Info: {llmServiceObj.LLMRunnerType} {_serviceID} Assistant already running so it was not reloaded", true, "llmServiceMessage", true);
-            }
-
-            await PublishToRabbitMQAsync("llmServiceStarted", llmServiceObj, false);
+                await PublishToRabbitMQAsync("llmServiceStarted", llmServiceObj, false);
             }
             catch (Exception e)
             {

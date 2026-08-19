@@ -105,7 +105,7 @@ namespace NetworkMonitor.LLM.Services
                 var kv = part.Split('=', 2);
                 if (kv.Length != 2) continue;
 
-                var key   = kv[0].Trim();
+                var key = kv[0].Trim();
                 var value = kv[1].Trim();
                 dict[key] = ParseLiteral(value);
             }
@@ -143,9 +143,9 @@ namespace NetworkMonitor.LLM.Services
         private static object? ParseLiteral(string raw)
         {
             // Booleans / None
-            if (raw.Equals("True",  StringComparison.OrdinalIgnoreCase)) return true;
+            if (raw.Equals("True", StringComparison.OrdinalIgnoreCase)) return true;
             if (raw.Equals("False", StringComparison.OrdinalIgnoreCase)) return false;
-            if (raw.Equals("None",  StringComparison.OrdinalIgnoreCase)) return null;
+            if (raw.Equals("None", StringComparison.OrdinalIgnoreCase)) return null;
 
             // Quoted string
             if ((raw.StartsWith("'") && raw.EndsWith("'")) ||

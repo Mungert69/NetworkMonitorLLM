@@ -76,7 +76,7 @@ namespace NetworkMonitor.LLM.Services
         private Dictionary<string, object?> ParseGemmaDict(string input)
         {
             var dict = new Dictionary<string, object?>();
-            
+
             // Remove outer braces if present
             var trimmed = input.Trim();
             if (trimmed.StartsWith("{") && trimmed.EndsWith("}"))
@@ -112,7 +112,7 @@ namespace NetworkMonitor.LLM.Services
         private static string ParseKey(string keyStr)
         {
             keyStr = keyStr.Trim();
-            
+
             // Check for <|"|> delimiters
             if (keyStr.StartsWith("<|\"|>") && keyStr.EndsWith("<|\"|>"))
             {
@@ -246,7 +246,7 @@ namespace NetworkMonitor.LLM.Services
 
                 if (c == '\'' && !inDoubleQuote && !inGemmaString) inSingleQuote = !inSingleQuote;
                 else if (c == '"' && !inSingleQuote && !inGemmaString) inDoubleQuote = !inDoubleQuote;
-                
+
                 if (!inSingleQuote && !inDoubleQuote && !inGemmaString)
                 {
                     if (c == '{' || c == '[' || c == '(') depth++;

@@ -1,4 +1,5 @@
 namespace NetworkMonitor.LLM.Services.Objects;
+
 public class MessageSegment
 {
     public string From { get; set; } = ""; // "user", "assistant", or "function"

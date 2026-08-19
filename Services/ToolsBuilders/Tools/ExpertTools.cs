@@ -60,7 +60,7 @@ public class ExpertTools
                         Description = "The agent location that will execute the secutiry assessment."
                     }
                 },
-                Required = new List<string> { "message","agent_location" }
+                Required = new List<string> { "message", "agent_location" }
             }
         };
     }
@@ -87,7 +87,7 @@ public class ExpertTools
                         Description = "The agent location that will execute the penetration test."
                     }
                 },
-                Required = new List<string> { "message","agent_location" }
+                Required = new List<string> { "message", "agent_location" }
             }
         };
     }
@@ -141,7 +141,7 @@ public class ExpertTools
                         Description = "The agent location that will perform the web search"
                     }
                 },
-                Required = new List<string> { "message","agent_location"}
+                Required = new List<string> { "message", "agent_location" }
             }
         };
     }
@@ -168,7 +168,7 @@ public class ExpertTools
                         Description = "The agent location on which the cmd processors should be managed."
                     }
                 },
-                Required = new List<string> { "message","agent_location" }
+                Required = new List<string> { "message", "agent_location" }
             }
         };
     }
@@ -222,7 +222,7 @@ public class ExpertTools
                         Description = "The agent location on which the connect types should be managed."
                     }
                 },
-                Required = new List<string> { "message","agent_location" }
+                Required = new List<string> { "message", "agent_location" }
             }
         };
     }
@@ -253,7 +253,7 @@ public class ExpertTools
                         Description = "The agent location that will execute the quantum assessment."
                     }
                 },
-                Required = new List<string> { "message","agent_location" }
+                Required = new List<string> { "message", "agent_location" }
             }
         };
     }

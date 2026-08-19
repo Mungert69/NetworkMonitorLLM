@@ -194,7 +194,10 @@ public class LLMFactoryTests
             {
                 HistoryDisplayName = new HistoryDisplayName
                 {
-                    SessionId = "sess_user1_TurboLLM", Name = "Redis history", LlmType = "TurboLLM", UserId = "user1"
+                    SessionId = "sess_user1_TurboLLM",
+                    Name = "Redis history",
+                    LlmType = "TurboLLM",
+                    UserId = "user1"
                 }
             }
         };

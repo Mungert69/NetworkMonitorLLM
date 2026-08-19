@@ -26,7 +26,7 @@ namespace NetworkMonitor.LLM.Services
             var logBuilder = new StringBuilder();
 
             logBuilder.AppendLine($"--- {title} ---");
-            
+
             foreach (var message in messages)
             {
                 var role = message.Role?.ToString() ?? string.Empty;

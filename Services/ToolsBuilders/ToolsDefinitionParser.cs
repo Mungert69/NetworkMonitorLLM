@@ -10,6 +10,7 @@ using Betalgo.Ranul.OpenAI.ObjectModels.SharedModels;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 namespace NetworkMonitor.LLM.Services;
+
 public class ToolDefinitionParser
 {
     public static List<ToolDefinition> ParseFromJson(string json)
@@ -19,7 +20,7 @@ public class ToolDefinitionParser
 
         foreach (var item in jArray)
         {
-            if (item["type"] != null && item["function"]!=null)
+            if (item["type"] != null && item["function"] != null)
             {
                 var tool = new ToolDefinition
                 {

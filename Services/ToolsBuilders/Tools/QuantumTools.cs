@@ -119,32 +119,32 @@ public class QuantumTools
         };
     }
 
-  public static FunctionDefinition BuildQuantumAlgoInfoFunction()
-{
-    return new FunctionDefinition
+    public static FunctionDefinition BuildQuantumAlgoInfoFunction()
     {
-        Name = "get_quantum_algorithm_info",
-        Description = "Retrieves detailed information about a specific quantum-safe algorithm. Use this to understand properties and security levels of PQC algorithms.",
-        Parameters = new PropertyDefinition
+        return new FunctionDefinition
         {
-            Type = "object",
-            Properties = new Dictionary<string, PropertyDefinition>
+            Name = "get_quantum_algorithm_info",
+            Description = "Retrieves detailed information about a specific quantum-safe algorithm. Use this to understand properties and security levels of PQC algorithms.",
+            Parameters = new PropertyDefinition
             {
-                ["algorithm_name"] = new PropertyDefinition
+                Type = "object",
+                Properties = new Dictionary<string, PropertyDefinition>
                 {
-                    Type = "string",
-                    Description = "Required. Quantum-safe algorithm name. Examples: 'mlkem768', 'mldsa44', 'falcon512', 'slhdsa128s', 'x25519_mlkem768'."
+                    ["algorithm_name"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Required. Quantum-safe algorithm name. Examples: 'mlkem768', 'mldsa44', 'falcon512', 'slhdsa128s', 'x25519_mlkem768'."
+                    },
+                    ["agent_location"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Optional. Preferred agent location for geographic-specific testing."
+                    }
                 },
-                ["agent_location"] = new PropertyDefinition
-                {
-                    Type = "string",
-                    Description = "Optional. Preferred agent location for geographic-specific testing."
-                }
-            },
-            Required = new List<string> { "algorithm_name" }
-        }
-    };
-}
+                Required = new List<string> { "algorithm_name" }
+            }
+        };
+    }
     public static FunctionDefinition BuildTestQuantumCertificateFunction()
     {
         return new FunctionDefinition

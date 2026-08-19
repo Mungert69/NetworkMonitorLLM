@@ -39,7 +39,7 @@ namespace NetworkMonitor.LLM.Services
         {
             var results = new List<(string json, string functionName)>();
 
-          
+
 
             var segments = ExtractSegments(input);
             foreach (var segment in segments)

@@ -42,7 +42,7 @@ public class ChatResponseBuilder
         _tokenBroadcaster.Init(config);
     }
 
-     private string CleanThinking(string response)
+    private string CleanThinking(string response)
     {
         if (string.IsNullOrEmpty(response))
         {
@@ -177,7 +177,7 @@ public class ChatResponseBuilder
                 Message = new ChatMessage
                 {
                     Role = choice.Message.Role,
-                    Content =  CleanThinking(choice.Message.Content),
+                    Content = CleanThinking(choice.Message.Content),
                     ToolCalls = choice.Message.ToolCalls == null
                         ? null
                         : choice.Message.ToolCalls.Select(toolCall => new ToolCall

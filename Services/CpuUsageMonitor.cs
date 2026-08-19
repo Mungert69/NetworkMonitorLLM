@@ -61,14 +61,14 @@ public class CpuUsageMonitor : ICpuUsageMonitor, IHostedService, IDisposable
     {
         try
         {
-              _logger.LogInformation("Starting CPU monitor...");
-        _timer = new Timer(SampleCpuUsage, null, 0, _sampleIntervalMs);
-         }
+            _logger.LogInformation("Starting CPU monitor...");
+            _timer = new Timer(SampleCpuUsage, null, 0, _sampleIntervalMs);
+        }
         catch (Exception e)
         {
             _logger.LogError($" Error : failed to start CPU timer . Error was : {e.Message}");
         }
-      
+
         return Task.CompletedTask;
     }
 
@@ -260,7 +260,7 @@ public class CpuUsageMonitor : ICpuUsageMonitor, IHostedService, IDisposable
             long avail = ParseMemValue(lines, "MemAvailable");
             long swap = ParseMemValue(lines, "SwapFree");
             long total = avail + swap;
-            long need = memoryInMB * 1024L; 
+            long need = memoryInMB * 1024L;
 
             _logger.LogInformation($"Memory needed: {need} kB, available: {total} kB");
             return total > need;

@@ -24,8 +24,8 @@ namespace NetworkMonitor.LLM.Services
 
         public HuggingFaceDatasetStorage(MLParams mlParams, SystemParams systemParams)
         {
-            _dataRepoId=mlParams.DataRepoId;
-            _token=mlParams.HFToken;
+            _dataRepoId = mlParams.DataRepoId;
+            _token = mlParams.HFToken;
             _httpClient = new HttpClient();
             _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {_token}");
             _serviceId = SanitizeServiceId(systemParams.ServiceID);
@@ -34,7 +34,7 @@ namespace NetworkMonitor.LLM.Services
         public async Task<ConcurrentDictionary<string, Session>> LoadAllSessionsAsync()
         {
             var sessions = new ConcurrentDictionary<string, Session>();
-            
+
             try
             {
                 var files = await ListFilesInRepo();
@@ -76,7 +76,7 @@ namespace NetworkMonitor.LLM.Services
         {
             var historyDisplayNames = new List<HistoryDisplayName>();
             var effectiveServiceId = string.IsNullOrWhiteSpace(serviceId) ? _serviceId : SanitizeServiceId(serviceId);
-            
+
             try
             {
                 var files = await ListFilesInRepo();
@@ -169,7 +169,7 @@ namespace NetworkMonitor.LLM.Services
         {
             var response = await _httpClient.GetAsync($"{ApiBaseUrl}{_dataRepoId}/tree/main");
             response.EnsureSuccessStatusCode();
-            
+
             var content = await response.Content.ReadAsStringAsync();
             var files = JsonConvert.DeserializeObject<List<HfFileInfo>>(content) ?? new List<HfFileInfo>();
             return files
@@ -191,7 +191,7 @@ namespace NetworkMonitor.LLM.Services
             {
                 Content = new StringContent(content)
             };
-            
+
             var response = await _httpClient.SendAsync(request);
             response.EnsureSuccessStatusCode();
         }

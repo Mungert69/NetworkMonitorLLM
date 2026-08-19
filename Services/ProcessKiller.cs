@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using NetworkMonitor.Objects;
 namespace NetworkMonitor.LLM.Services;
+
 public static class ProcessKiller
 {
     public static void ForceKillProcess(ProcessWrapper process)
@@ -51,8 +52,8 @@ public static class ProcessKiller
             };
 
             using var taskKillProcess = Process.Start(startInfo);
-            if (taskKillProcess==null) 
-             {
+            if (taskKillProcess == null)
+            {
                 Console.WriteLine($"taskkill failed for PID={processId}. Process.Start(startInfo) is null");
                 return;
             }
@@ -85,8 +86,8 @@ public static class ProcessKiller
             };
 
             using var killProcess = Process.Start(startInfo);
-             if (killProcess==null) 
-             {
+            if (killProcess == null)
+            {
                 Console.WriteLine($"killProcess failed for PID={processId}. Process.Start(startInfo) is null");
                 return;
             }

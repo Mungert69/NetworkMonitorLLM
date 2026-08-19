@@ -75,7 +75,7 @@ public class LLMProcessRunner : ILLMRunner, ILocalLlmContextProvider
         _restoreLocalLlmContext = !string.IsNullOrEmpty(_localLlmContext);
     }
 
-    public LLMProcessRunner(ILogger<LLMProcessRunner> logger, ILLMResponseProcessor responseProcessor,   SystemParams systemParams,  MLParams mlParams, LLMServiceObj startServiceObj, SemaphoreSlim? processRunnerSemaphore, IAudioGenerator audioGenerator, ICpuUsageMonitor cpuUsageMonitor, IQueryCoordinator queryCoordinator, ISystemPromptWriter systemPromptWriter, List<ChatMessage> history)
+    public LLMProcessRunner(ILogger<LLMProcessRunner> logger, ILLMResponseProcessor responseProcessor, SystemParams systemParams, MLParams mlParams, LLMServiceObj startServiceObj, SemaphoreSlim? processRunnerSemaphore, IAudioGenerator audioGenerator, ICpuUsageMonitor cpuUsageMonitor, IQueryCoordinator queryCoordinator, ISystemPromptWriter systemPromptWriter, List<ChatMessage> history)
     {
         _logger = logger;
         _responseProcessor = responseProcessor;
@@ -174,7 +174,7 @@ public class LLMProcessRunner : ILLMRunner, ILocalLlmContextProvider
         }
         _config = LLMConfigFactory.GetConfig(_mlParams.LlmVersion);
         _systemPromptWriter.EnsurePromptFile(serviceObj, _config);
-        
+
         if (!_isEnabled || _isStateStarting) return;
         _isStateStarting = true;
         _isStateReady = false;
@@ -444,7 +444,7 @@ public class LLMProcessRunner : ILLMRunner, ILocalLlmContextProvider
         // Replace line breaks with spaces
         string userInput = pendingServiceObj.UserInput.Replace("\r\n", " ").Replace("\n", " ");
 
-       
+
         // Return the formatted response
         return string.Format(_config.FunctionResponseTemplate, pendingServiceObj.FunctionName, userInput);
     }
@@ -453,9 +453,9 @@ public class LLMProcessRunner : ILLMRunner, ILocalLlmContextProvider
     {
         var shouldRecord = _sendOutput
             && serviceObj.IsPrimaryLlm;
-           
+
         _logger.LogInformation($" [History] ShouldRecordHistory: shouldRecord={shouldRecord}, _sendOutput={_sendOutput}, IsPrimaryLlm={serviceObj.IsPrimaryLlm}, IsFunctionCall={serviceObj.IsFunctionCall}, IsFunctionCallResponse={serviceObj.IsFunctionCallResponse}, IsFunctionCallStatus={serviceObj.IsFunctionCallStatus}, IsFunctionStillRunning={serviceObj.IsFunctionStillRunning}, UserInputStarts=<|={serviceObj.UserInput.StartsWith("<|", StringComparison.Ordinal)}");
-        
+
         return shouldRecord;
     }
 
@@ -532,17 +532,17 @@ public class LLMProcessRunner : ILLMRunner, ILocalLlmContextProvider
         }
 
         _logger.LogInformation($" [History] ReplayHistory: STARTING - sessionId={sessionId}, total history count={_history.Count}, filtered count for replay={historySnapshot.Count}");
-        
+
         int userCount = 0;
         int assistantCount = 0;
-        
+
         foreach (var message in historySnapshot)
         {
             if (message.Role == "user") userCount++;
             else if (message.Role == "assistant") assistantCount++;
-            
+
             _logger.LogInformation($" [History] ReplayHistory: REPLAYING message - Role={message.Role}, ContentLength={message.Content?.Length ?? 0}, ContentPreview={(message.Content?.Length > 50 ? message.Content.Substring(0, 50) + "..." : message.Content)}");
-            
+
             var responseServiceObj = new LLMServiceObj
             {
                 SessionId = sessionId,
@@ -553,7 +553,7 @@ public class LLMProcessRunner : ILLMRunner, ILocalLlmContextProvider
 
             await _responseProcessor.ProcessLLMOutput(responseServiceObj);
         }
-        
+
         _logger.LogInformation($" [History] ReplayHistory: COMPLETED - replayed {historySnapshot.Count} messages (user={userCount}, assistant={assistantCount})");
     }
 
@@ -729,7 +729,7 @@ public class LLMProcessRunner : ILLMRunner, ILocalLlmContextProvider
              }));
 
 
-                _systemMessages.Clear();
+                    _systemMessages.Clear();
                     preAssistantMessage = string.Join("", _assistantMessages.Select(entry =>
                   {
                       var assistantMessage = entry.Value?.ToString() ?? string.Empty;
@@ -741,7 +741,7 @@ public class LLMProcessRunner : ILLMRunner, ILocalLlmContextProvider
                     userInput = string.Format(_config.UserInputTemplate, userInput);
                 }
 
-             
+
             }
 
 
@@ -790,7 +790,7 @@ public class LLMProcessRunner : ILLMRunner, ILocalLlmContextProvider
                         : tokenBroadcaster.ResponseContent;
 
                     _localLlmContext += llmInput + responseContent;
-                    
+
                     _logger.LogInformation($" [History] About to add assistant message to history - shouldRecordHistory={shouldRecordHistory}, responseContent length={responseContent.Length}, tokenBroadcaster.ResponseContent total length={tokenBroadcaster.ResponseContent.Length}, responseContentStartLength={responseContentStartLength}");
                     AddAssistantHistoryMessage(responseContent);
                     _logger.LogInformation($" [History] After adding assistant message - current history count={_history.Count}");
@@ -956,5 +956,5 @@ public class LLMProcessRunner : ILLMRunner, ILocalLlmContextProvider
             _logger.LogError(notifyEx, "Failed to send user-facing TestLLM error message.");
         }
     }
-    
+
 }

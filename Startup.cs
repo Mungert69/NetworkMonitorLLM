@@ -142,14 +142,14 @@ namespace NetworkMonitor.LLM
             services.AddSingleton<IQueryCoordinator, QueryCoordinator>();
             services.AddSingleton<IFunctionDefinitionRegistry, FunctionDefinitionRegistry>();
             services.AddSingleton<IToolsBuilderFactory, ToolsBuilderFactory>();
-            
+
             // Configure Remote Cache Services
             // Register Remote Cache Service Factory
             services.AddSingleton<IRemoteCacheServiceFactory, RemoteCacheServiceFactory>();
-            
+
             // Register System Prompt Writer
             services.AddSingleton<ISystemPromptWriter, SystemPromptWriter>();
-            
+
             services.AddSingleton<MLParams>(sp =>
             {
                 var systemParamsHelper = sp.GetRequiredService<ISystemParamsHelper>();

@@ -28,6 +28,7 @@ using Newtonsoft.Json;
 using Moq;
 using Xunit;
 namespace NetworkMonitor.LLM.Services;
+
 public class ChatResponseBuilderTests
 {
     private readonly Mock<ILLMResponseProcessor> _mockResponseProcessor;

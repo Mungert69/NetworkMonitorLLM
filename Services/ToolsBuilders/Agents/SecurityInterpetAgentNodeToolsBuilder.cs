@@ -15,7 +15,7 @@ namespace NetworkMonitor.LLM.Services
         public SecurityInterpretNodeToolsBuilder()
         {
             // No tools here; just a reporting/interpreter LLM.
-            _tools = new List<ToolDefinition>(); 
+            _tools = new List<ToolDefinition>();
         }
 
         public override List<ChatMessage> GetSystemPrompt(string currentTime, LLMServiceObj serviceObj, string llmType)

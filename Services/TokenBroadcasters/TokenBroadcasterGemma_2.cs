@@ -11,51 +11,52 @@ using NetworkMonitor.Objects.ServiceMessage;
 using NetworkMonitor.Objects;
 using System.Text.RegularExpressions;
 namespace NetworkMonitor.LLM.Services;
+
 public class TokenBroadcasterGemma_2 : TokenBroadcasterBase
 {
 
     public TokenBroadcasterGemma_2(ILLMResponseProcessor responseProcessor, ILogger logger, bool xmlFunctionParsing, HashSet<string> ignoreParameters)
-         : base(responseProcessor, logger,xmlFunctionParsing,ignoreParameters)
+         : base(responseProcessor, logger, xmlFunctionParsing, ignoreParameters)
     {
 
     }
-   
 
-       public override List<(string json, string functionName)> ParseInputForJson(string input)
+
+    public override List<(string json, string functionName)> ParseInputForJson(string input)
+    {
+        var functionsCalls = new List<(string json, string functionName)>();
+        if (input.Contains("Funtion response:"))
         {
-            var functionsCalls = new List<(string json, string functionName)>();
-            if (input.Contains("Funtion response:"))
-            {
-                functionsCalls.Add((input, ""));
-                return functionsCalls;
-            }
-            string newLine = string.Empty;
-            // bool foundStart = false;
-            bool foundEnd = false;
-            int startIndex = input.IndexOf('{');
-            // If '{' is not found or is too far into the input, return the original input
-            if (startIndex == -1)
-            {
-                functionsCalls.Add((input, ""));
-                return functionsCalls;
-            }
-            newLine = input.Substring(startIndex);
-            int lastClosingBraceIndex = newLine.LastIndexOf('}');
-            if (lastClosingBraceIndex != -1)
-            {
-                newLine = newLine.Substring(0, lastClosingBraceIndex + 1);
-                foundEnd = true;
-            }
-            if (foundEnd)
-            {
-                functionsCalls.Add((JsonSanitizer.RepairJson(newLine,_ignoreParameters), ""));
-                return functionsCalls;
-            }
-            else
-            {
-                functionsCalls.Add((input, ""));
-                return functionsCalls;
-            }
+            functionsCalls.Add((input, ""));
+            return functionsCalls;
         }
+        string newLine = string.Empty;
+        // bool foundStart = false;
+        bool foundEnd = false;
+        int startIndex = input.IndexOf('{');
+        // If '{' is not found or is too far into the input, return the original input
+        if (startIndex == -1)
+        {
+            functionsCalls.Add((input, ""));
+            return functionsCalls;
+        }
+        newLine = input.Substring(startIndex);
+        int lastClosingBraceIndex = newLine.LastIndexOf('}');
+        if (lastClosingBraceIndex != -1)
+        {
+            newLine = newLine.Substring(0, lastClosingBraceIndex + 1);
+            foundEnd = true;
+        }
+        if (foundEnd)
+        {
+            functionsCalls.Add((JsonSanitizer.RepairJson(newLine, _ignoreParameters), ""));
+            return functionsCalls;
+        }
+        else
+        {
+            functionsCalls.Add((input, ""));
+            return functionsCalls;
+        }
+    }
 
 }

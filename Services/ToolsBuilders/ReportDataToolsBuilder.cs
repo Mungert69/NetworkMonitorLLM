@@ -16,7 +16,7 @@ namespace NetworkMonitor.LLM.Services
 
         public ReportDataToolsBuilder()
         {
-           
+
             _tools = new List<ToolDefinition>();
         }
 
@@ -81,7 +81,7 @@ Expert Recommendations: Offer actionable recommendations based on the observed d
 
 Reminder: Focus on summarizing key trends without listing individual data points. Each field in the JSON output should provide essential insights to ensure an informative, concise summary.
 ";
-           
+
 
             var chatMessage = ChatMessage.FromSystem(content);
             var chatMessages = new List<ChatMessage>();

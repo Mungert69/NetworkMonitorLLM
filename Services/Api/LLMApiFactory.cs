@@ -40,7 +40,7 @@ public interface ILLMApi
 
 public class LLMApiFactory
 {
-    public  ILLMApi CreateApi(
+    public ILLMApi CreateApi(
  ILogger logger,
  MLParams mlParams,
  IToolsBuilder toolsBuilder,
@@ -51,7 +51,7 @@ string provider,
  OpenAIService openAiService // you already pass this today for OpenAI HTTP
 )
     {
-        
+
         if (string.Equals(provider, "OpenAI", StringComparison.OrdinalIgnoreCase))
         {
             // your existing HTTP (what you showed)
@@ -70,7 +70,7 @@ string provider,
             var rabbit = new RabbitTransport(responseProcessor.RabbitRepo, systemParams.ThisSystemUrl, systemParams.RabbitRoutingKey, logger);
             return new OpenAIRabbitApi(logger, mlParams, toolsBuilder, serviceID, responseProcessor, rabbit);
         }
-         if (string.Equals(provider, "HuggingFaceRabbit", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(provider, "HuggingFaceRabbit", StringComparison.OrdinalIgnoreCase))
         {
 
             var rabbit = new RabbitTransport(responseProcessor.RabbitRepo, systemParams.ThisSystemUrl, systemParams.RabbitRoutingKey, logger);

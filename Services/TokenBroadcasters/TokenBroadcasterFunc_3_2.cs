@@ -10,20 +10,21 @@ using Microsoft.Extensions.Logging;
 using NetworkMonitor.Objects.ServiceMessage;
 using NetworkMonitor.Objects;
 namespace NetworkMonitor.LLM.Services;
+
 public class TokenBroadcasterFunc_3_2 : TokenBroadcasterBase
 {
 
     public TokenBroadcasterFunc_3_2(ILLMResponseProcessor responseProcessor, ILogger logger, bool xmlFunctionParsing, HashSet<string> ignoreParameters)
-         : base(responseProcessor, logger,xmlFunctionParsing,ignoreParameters)
+         : base(responseProcessor, logger, xmlFunctionParsing, ignoreParameters)
     {
 
     }
 
-   
+
     // Updated ParseInputForJson to handle multiple function calls
     public override List<(string json, string functionName)> ParseInputForJson(string input)
     {
-        input=RemoveThinking(input,"think");
+        input = RemoveThinking(input, "think");
         var functionCalls = new List<(string json, string functionName)>();
 
         int tagStart = input.IndexOf(_assistantHeader);
@@ -46,7 +47,7 @@ public class TokenBroadcasterFunc_3_2 : TokenBroadcasterBase
             if (jsonEnd == -1) break;
 
             string jsonContent = noHeaderLine.Substring(jsonStart, jsonEnd - jsonStart).Trim();
-            functionCalls.Add((JsonSanitizer.RepairJson(jsonContent,_ignoreParameters), functionName));
+            functionCalls.Add((JsonSanitizer.RepairJson(jsonContent, _ignoreParameters), functionName));
 
             // Move to the next function call in the input (if any)
             tagStart = input.IndexOf(_assistantHeader, jsonEnd);

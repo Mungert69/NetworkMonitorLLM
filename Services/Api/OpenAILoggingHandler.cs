@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 namespace NetworkMonitor.LLM.Services;
+
 internal sealed class OpenAILoggingHandler : DelegatingHandler
 {
     private readonly ILogger _logger;

@@ -98,9 +98,9 @@ public class MonitorToolsBuilder : ToolsBuilderBase
         }
         else
         {
-             _tools.Add(new ToolDefinition() { Function = fn_call_quantum_expert, Type = "function" });
+            _tools.Add(new ToolDefinition() { Function = fn_call_quantum_expert, Type = "function" });
             _tools.Add(new ToolDefinition() { Function = fn_call_security_expert, Type = "function" });
-            _tools.Add(new ToolDefinition() { Function = fn_call_penetration_expert, Type = "function" });   
+            _tools.Add(new ToolDefinition() { Function = fn_call_penetration_expert, Type = "function" });
             _tools.Add(new ToolDefinition() { Function = fn_call_live_penetration_expert, Type = "function" });
         }
 

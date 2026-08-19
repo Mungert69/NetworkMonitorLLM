@@ -10,11 +10,12 @@ using Microsoft.Extensions.Logging;
 using NetworkMonitor.Objects.ServiceMessage;
 using NetworkMonitor.Objects;
 namespace NetworkMonitor.LLM.Services;
-public class TokenBroadcasterQwen_3: TokenBroadcasterBase
+
+public class TokenBroadcasterQwen_3 : TokenBroadcasterBase
 {
 
     public TokenBroadcasterQwen_3(ILLMResponseProcessor responseProcessor, ILogger logger, bool xmlFunctionParsing, HashSet<string> ignoreParameters)
-        : base(responseProcessor, logger,xmlFunctionParsing,ignoreParameters)
+        : base(responseProcessor, logger, xmlFunctionParsing, ignoreParameters)
     {
 
     }
@@ -25,38 +26,38 @@ public class TokenBroadcasterQwen_3: TokenBroadcasterBase
     }
 
 
-   public override List<(string json, string functionName)> ParseInputForJson(string input)
-{
-    if (string.IsNullOrEmpty(input))
+    public override List<(string json, string functionName)> ParseInputForJson(string input)
     {
-        return new List<(string json, string functionName)>();
+        if (string.IsNullOrEmpty(input))
+        {
+            return new List<(string json, string functionName)>();
+        }
+
+        // remove thinking note qwen3 config has thinking begin and end token defs.
+        input = RemoveThinking(input);
+        var functionCalls = new List<(string json, string functionName)>();
+        int tagStart = input.IndexOf("<tool_call>");
+        int tagEnd;
+
+        while (tagStart != -1)
+        {
+            // Move the starting index after "<tool_call>"
+            tagStart += "<tool_call>".Length;
+            tagEnd = input.IndexOf("</tool_call>", tagStart);
+
+            // If no matching end tag is found, break the loop
+            if (tagEnd == -1) break;
+
+            // Extract the JSON content between the tags and trim newlines & spaces
+            string jsonContent = input.Substring(tagStart, tagEnd - tagStart).Trim('\n', ' ', '\r');
+
+            functionCalls.Add((JsonSanitizer.RepairJson(jsonContent, _ignoreParameters), string.Empty));
+
+            // Look for the next "<tool_call>" tag after the current end tag
+            tagStart = input.IndexOf("<tool_call>", tagEnd + "</tool_call>".Length);
+        }
+
+        return functionCalls;
     }
-
-    // remove thinking note qwen3 config has thinking begin and end token defs.
-    input = RemoveThinking(input);
-    var functionCalls = new List<(string json, string functionName)>();
-    int tagStart = input.IndexOf("<tool_call>");
-    int tagEnd;
-
-    while (tagStart != -1)
-    {
-        // Move the starting index after "<tool_call>"
-        tagStart += "<tool_call>".Length;
-        tagEnd = input.IndexOf("</tool_call>", tagStart);
-
-        // If no matching end tag is found, break the loop
-        if (tagEnd == -1) break;
-
-        // Extract the JSON content between the tags and trim newlines & spaces
-        string jsonContent = input.Substring(tagStart, tagEnd - tagStart).Trim('\n', ' ', '\r');
-
-        functionCalls.Add((JsonSanitizer.RepairJson(jsonContent, _ignoreParameters), string.Empty));
-
-        // Look for the next "<tool_call>" tag after the current end tag
-        tagStart = input.IndexOf("<tool_call>", tagEnd + "</tool_call>".Length);
-    }
-
-    return functionCalls;
-}
 
 }

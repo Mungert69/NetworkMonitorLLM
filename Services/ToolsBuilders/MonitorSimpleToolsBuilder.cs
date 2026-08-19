@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.Net.Mime;
 
 namespace NetworkMonitor.LLM.Services;
+
 public class MonitorSimpleToolsBuilder : ToolsBuilderBase
 {
     private readonly FunctionDefinition fn_function_status_with_message_id;

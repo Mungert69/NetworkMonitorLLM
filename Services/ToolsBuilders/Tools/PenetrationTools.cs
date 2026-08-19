@@ -24,7 +24,7 @@ public class PenetrationTools
             Description = "Executes a Metasploit module with parameter validation. Structure requests as: " +
                           "1. First search modules with search_metasploit_modules " +
                           "2. Get module details with get_metasploit_module_info " +
-                          "3. Execute with required parameters. " ,
+                          "3. Execute with required parameters. ",
             Parameters = new PropertyDefinition
             {
                 Type = "object",
@@ -63,7 +63,7 @@ public class PenetrationTools
                         Description = "Pagination for large outputs. Start with 1. Increment if 'truncated' flag is set."
                     }
                 },
-                Required = new List<string> { "module_name", "target","agent_location" }
+                Required = new List<string> { "module_name", "target", "agent_location" }
             }
         };
     }
@@ -131,7 +131,7 @@ public class PenetrationTools
                         Description = "Agent location that will run the search."
                     }
                 },
-                Required = new List<string> { "keywords" ,"agent_location"}
+                Required = new List<string> { "keywords", "agent_location" }
             }
         };
     }
@@ -179,7 +179,7 @@ public class PenetrationTools
                         Description = "Pagination for large outputs. Start with 1. Increment if 'truncated' flag is set."
                     }
                 },
-                Required = new List<string> { "module_name","agent_location" }
+                Required = new List<string> { "module_name", "agent_location" }
             }
         };
     }

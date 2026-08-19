@@ -67,7 +67,7 @@ namespace NetworkMonitor.LLM.Services
         public bool IsAddAssistant { get => _isAddAssistant; set => _isAddAssistant = value; }
         public bool UseHttpProcess { get => _useHttpProcess; set => _useHttpProcess = value; }
 
-        
+
         protected TokenBroadcasterBase(ILLMResponseProcessor responseProcessor, ILogger logger, bool xmlFunctionParsing, HashSet<string> ignoreParameters)
         {
             _responseProcessor = responseProcessor;
@@ -93,7 +93,7 @@ namespace NetworkMonitor.LLM.Services
             _cancellationTokenSource = new CancellationTokenSource();
         }
 
-        
+
         protected virtual string RemoveThinking(string input, string thinkTag = "think")
         {
             string pattern = "";
@@ -355,7 +355,7 @@ namespace NetworkMonitor.LLM.Services
             else functionCalls = ParseInputForJson(line);
 
             bool makeAssistantMessage = false;
-          
+
             if (makeAssistantMessage) _assistantMessage = new StringBuilder($"I have called the following functions ");
             bool isDuplicateSet = false;
             bool isDuplicate = false;

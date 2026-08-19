@@ -10,11 +10,12 @@ using Microsoft.Extensions.Logging;
 using NetworkMonitor.Objects.ServiceMessage;
 using NetworkMonitor.Objects;
 namespace NetworkMonitor.LLM.Services;
+
 public class TokenBroadcasterStandard : TokenBroadcasterBase
 {
 
     public TokenBroadcasterStandard(ILLMResponseProcessor responseProcessor, ILogger logger, bool xmlFunctionParsing, HashSet<string> ignoreParameters)
-         : base(responseProcessor, logger,xmlFunctionParsing,ignoreParameters)
+         : base(responseProcessor, logger, xmlFunctionParsing, ignoreParameters)
     {
 
     }

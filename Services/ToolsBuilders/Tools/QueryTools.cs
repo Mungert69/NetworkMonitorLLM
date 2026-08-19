@@ -147,7 +147,7 @@ For pure follow-up calls, query_text may be empty if anchor/filter parameters ar
                         Description = "Optional. Restrict retrieval to chunk_index <= this value."
                     }
                 },
-                Required = new List<string> { "query_text", "index_name","vector_search_mode" }
+                Required = new List<string> { "query_text", "index_name", "vector_search_mode" }
             }
         };
     }

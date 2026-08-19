@@ -79,34 +79,34 @@ Reminder:
                        new TokenBroadcasterFunc_2_5(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)
 
             },
-"llama_3.1" => new LLMConfig
-{
-    UserReplace = "<|start_header_id|>user<|end_header_id|>\\\n\\\n",
-    FunctionReplace = "<|start_header_id|>ipython<|end_header_id|>\\\n\\\n",
-    AssistantHeader = "<|start_header_id|>assistant<|end_header_id|>\n\n",
+            "llama_3.1" => new LLMConfig
+            {
+                UserReplace = "<|start_header_id|>user<|end_header_id|>\\\n\\\n",
+                FunctionReplace = "<|start_header_id|>ipython<|end_header_id|>\\\n\\\n",
+                AssistantHeader = "<|start_header_id|>assistant<|end_header_id|>\n\n",
 
-    UserInputTemplate = "<|start_header_id|>user<|end_header_id|>\\\n\\\n{0}",
+                UserInputTemplate = "<|start_header_id|>user<|end_header_id|>\\\n\\\n{0}",
 
-    AssistantMessageTemplate =
-        "<|start_header_id|>assistant<|end_header_id|>\\\n\\\n{0}<|eot_id|>",
+                AssistantMessageTemplate =
+                    "<|start_header_id|>assistant<|end_header_id|>\\\n\\\n{0}<|eot_id|>",
 
-    SystemMessageTemplate =
-        "<|start_header_id|>system<|end_header_id|>\\\n\\\n{0}<|eot_id|>",
+                SystemMessageTemplate =
+                    "<|start_header_id|>system<|end_header_id|>\\\n\\\n{0}<|eot_id|>",
 
-    EOTToken = "<|eot_id|>",
-    EOMToken = "<|eom_id|>",
+                EOTToken = "<|eot_id|>",
+                EOMToken = "<|eom_id|>",
 
-    FunctionResponseTemplate =
-        "<|start_header_id|>ipython<|end_header_id|>\\\n\\\n{1}<|eot_id|>",
+                FunctionResponseTemplate =
+                    "<|start_header_id|>ipython<|end_header_id|>\\\n\\\n{1}<|eot_id|>",
 
-    FunctionBuilder =
-        "<function={{function_name}}>{{arguments_json}}</function>",
+                FunctionBuilder =
+                    "<function={{function_name}}>{{arguments_json}}</function>",
 
-    FunctionResponse = "{1}",
+                FunctionResponse = "{1}",
 
-    FunctionDefsWrap = "{0}",
+                FunctionDefsWrap = "{0}",
 
-    PromptFooter = @"
+                PromptFooter = @"
 Think very carefully before calling functions.
 
 If you choose to call a function, ONLY reply in the following format:
@@ -136,13 +136,13 @@ Rules:
 - Only use this function-call format when actually calling a function.
 ",
 
-    CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
-        new TokenBroadcasterFunc_3_1(
-            responseProcessor,
-            logger,
-            xmlFunctionParsing,
-            IgnoreParameters)
-},
+                CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
+                    new TokenBroadcasterFunc_3_1(
+                        responseProcessor,
+                        logger,
+                        xmlFunctionParsing,
+                        IgnoreParameters)
+            },
             "func_3.1" => new LLMConfig
             {
                 UserReplace = "<|start_header_id|>user<|end_header_id|>\\\n\\\n",
@@ -871,7 +871,7 @@ If no tool is suitable, state that explicitly. If the user's input lacks require
                 FunctionDefsWrap = "{0}",
 
                 // Optional footer (helps the model keep channels straight)
-                PromptFooter =@"",
+                PromptFooter = @"",
 
                 CreateBroadcaster = (responseProcessor, logger, xmlFunctionParsing) =>
                        new TokenBroadcasterGptOss(responseProcessor, logger, xmlFunctionParsing, IgnoreParameters)

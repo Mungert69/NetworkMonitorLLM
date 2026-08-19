@@ -29,7 +29,7 @@ public interface IRabbitListener
     Task<ResultObj> Setup();
 
 
-   
+
 }
 
 public class RabbitListener : RabbitListenerBase, IRabbitListener
@@ -386,7 +386,7 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
         return result;
     }
 
-    public ResultObj GetFunctionRegistry(bool filter=false)
+    public ResultObj GetFunctionRegistry(bool filter = false)
     {
         var result = new ResultObj();
         result.Success = false;
@@ -395,8 +395,8 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
         try
         {
             string funcRegJson;
-            if (filter) funcRegJson= _registryCache.GetFilteredFunctionCatalogJson();
-            else funcRegJson= _registryCache.GetFunctionCatalogJson();
+            if (filter) funcRegJson = _registryCache.GetFilteredFunctionCatalogJson();
+            else funcRegJson = _registryCache.GetFunctionCatalogJson();
             result.Success = true;
             result.Message = $"Success : Got GetFunctionCatalogJson : {funcRegJson}";
             result.Data = funcRegJson;
@@ -413,5 +413,5 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
         return result;
     }
 
-     
+
 }

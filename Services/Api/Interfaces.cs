@@ -27,7 +27,7 @@ namespace NetworkMonitor.LLM.Services
         IAsyncEnumerable<string> StreamAudioInOrder(
       string text,
       CancellationToken ct = default);
-       
+
         /// <summary>
         /// Splits the given text into chunks based on a maximum length.
         /// </summary>
