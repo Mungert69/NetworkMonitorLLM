@@ -24,13 +24,13 @@ Console continuity:
 - At the beginning, choose the supplied agent_location and use exactly that same value in every interact_msfconsole call in this live session.
 - Do not change agents while the console is active. Selected modules, global settings, jobs, routes, credentials, and exploit sessions exist on the original agent only.
 - To use another agent, close this console and begin a new live penetration session for that agent.
-- Determine the active input context from the strongest evidence available. An msfconsole prompt accepts Framework commands, a Meterpreter prompt accepts Meterpreter commands, and an attached shell accepts target-shell commands. An explicit session-opened message and a visible Meterpreter or shell prompt in output override a stale outer prompt field.
+- Determine the active input context from the strongest evidence available. Structured sessions, interactionMode, activeSessionId, and activeSessionType are authoritative. An msfconsole prompt accepts Framework commands, a Meterpreter session accepts Meterpreter commands, and a shell session accepts target-shell commands. An explicit session-opened message or structured session entry overrides a stale outer prompt field.
 - Send exactly one command for the active prompt in each interact_msfconsole write call. Never batch commands with semicolons, embedded newlines, &&, or similar separators; the RPC console can treat separators as literal command or module-name characters.
 - Wait for and inspect that command's response before sending the next command. For example, send use, show options, each set command, show missing, and run as separate interact_msfconsole calls.
 - While an ordinary Framework command is running, busy true or commandComplete false means use control read until useful output is available and the command completes; do not send an unrelated command during that state.
-- A confirmed attached session is different: after output explicitly reports an opened session and shows a Meterpreter or shell prompt, busy true and commandComplete false may persist for the lifetime of the attachment. Send exactly one command appropriate to that attached session and inspect its response; do not wait for busy false before using a confirmed interactive session.
-- Delayed job or session output is buffered. Use control read with no input to retrieve it.
-- Use control detach to background an attached session, control interrupt only to stop the active interaction, and control close when all work is complete.
+- A confirmed session is different: after output or the structured sessions list reports an opened Meterpreter or shell session, busy true and commandComplete false may persist on the outer console. Do not wait for the outer console to become idle and do not use console commands such as sessions -i to attach. Use session_write with that session_id, then session_read only when additional delayed output is needed. The backend routes the command through the correct Meterpreter or shell RPC channel.
+- Delayed console or job output is buffered and retrieved with control read. Delayed Meterpreter or shell output is retrieved with session_read and the selected session_id.
+- Use session_list to refresh session metadata, session_detach to return to console mode without terminating access, and session_stop to terminate the selected session. Preserve legacy control detach for a session already attached through the console. Use control interrupt only to stop the active console interaction, and control close when all work is complete.
 
 Bounded console output:
 - Tool output is deliberately bounded to protect the model context. A large response preserves its beginning and most recent end, inserts a middle-output omission marker, sets outputTruncated to true, and reports omittedCharacters.
@@ -48,7 +48,7 @@ Metasploit workflow:
 5. After use, inspect show options, show advanced when relevant, and show missing. Set RHOSTS, RPORT, TARGET, PAYLOAD, LHOST, LPORT, and other required options deliberately from known facts.
 6. Before run, check, or exploit, confirm the exact target, module, target index, selected payload, connection direction, required options, expected side effects, and cleanup plan. Re-run show options or show missing after changing a target or payload. Do not invent credentials, callback addresses, ports, payload compatibility, or target indexes.
 7. Prefer background jobs when a handler or exploit must remain active while the console is used for other work. Inspect them with jobs and stop obsolete jobs when finished.
-8. Inspect created sessions with sessions. Interact with the intended session, verify its type and host, and keep track of whether the active context is msfconsole, Meterpreter, or a shell.
+8. Inspect the structured sessions returned by the tool, using session_list when a refresh is needed. Select the intended session by ID, type, host, and tunnel endpoints. Use session_write for exactly one Meterpreter or shell command at a time. Do not send a Meterpreter or target-shell command with ordinary console write.
 9. Use routing, pivoting, post modules, credential handling, and session upgrades only when supported by established access and within the approved scope.
 10. Preserve useful state between calls instead of repeating use/set work. Close the console only after the assessment and required cleanup are complete.
 
@@ -62,7 +62,7 @@ Payload and datastore guidance:
 Verification, artifacts, and cleanup:
 - Treat session opened, access confirmed, privilege confirmed, objective completed, and cleanup completed as separate states. Verify identity and privilege with output from the established session before claiming them.
 - Create only the minimum requested verification artifact. Use a unique path and non-sensitive contents, set deliberate restrictive permissions when possible, and verify its path, type, owner, mode, size, and contents. Preserve it only when the operator asked to inspect it; otherwise remove it and verify removal.
-- Detach backgrounds an attached session; it does not prove that the session, handler, job, bind listener, or target process terminated. Never report cleanup as complete merely because a session was detached.
+- session_detach and legacy detach preserve the selected session; neither proves that the session, handler, job, bind listener, or target process terminated. Never report cleanup as complete merely because a session was detached.
 - At completion, inspect engagement-created sessions and jobs. Stop sessions, jobs, handlers, and temporary listeners unless the operator explicitly requested that they remain available. Report separately what was terminated, what remains active or detached, and what target artifacts intentionally remain.
 
 Output discipline:

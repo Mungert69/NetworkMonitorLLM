@@ -13,6 +13,9 @@ public static class LivePenetrationTools
             Name = "interact_msfconsole",
             Description = "Interact with the persistent msfconsole owned by this live penetration session. " +
                           "Commands and Metasploit jobs/sessions remain available between calls when the same agent_location is used. " +
+                          "Responses include structured sessions, interactionMode, activeSessionId, and activeSessionType. " +
+                          "Use session_write and session_read with session_id to interact directly with Meterpreter or shell sessions; " +
+                          "this avoids relying on a stale outer console prompt. " +
                           "Responses include busy and commandComplete. Large output is returned as a bounded beginning and latest end " +
                           "with outputTruncated and omittedCharacters metadata; refine the console command instead of retrieving an entire omitted listing. " +
                           "For an ordinary running Framework command, read until it completes. After output confirms an attached shell or Meterpreter prompt, " +
@@ -32,9 +35,22 @@ public static class LivePenetrationTools
                     ["control"] = new PropertyDefinition
                     {
                         Type = "string",
-                        Enum = new List<string> { "write", "read", "detach", "interrupt", "close" },
+                        Enum = new List<string>
+                        {
+                            "write", "read", "detach", "interrupt", "close",
+                            "session_list", "session_write", "session_read", "session_detach", "session_stop"
+                        },
                         Description = "write (default), read buffered output, detach the active session, interrupt it, or close the console. " +
-                                      "Detach backgrounds an attached session and does not terminate the session, handler, job, listener, or target process."
+                                      "Use session_list to refresh structured session metadata; session_write/session_read with session_id " +
+                                      "route directly through the correct Meterpreter or shell RPC channel. session_detach returns the tool to " +
+                                      "console mode without stopping the target session; session_stop terminates only the selected session. " +
+                                      "Legacy detach backgrounds a console-attached session and does not terminate the session, handler, job, listener, or target process."
+                    },
+                    ["session_id"] = new PropertyDefinition
+                    {
+                        Type = "string",
+                        Description = "Metasploit session ID required by session_write, session_read, session_detach, and session_stop. " +
+                                      "Choose it from the structured sessions returned by the tool."
                     },
                     ["agent_location"] = new PropertyDefinition
                     {
