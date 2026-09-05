@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using NetworkMonitor.Objects;
 using System.Text.RegularExpressions;
 
 public interface ICpuUsageMonitor
@@ -18,25 +19,28 @@ public interface ICpuUsageMonitor
     bool IsMemoryAvailable(int memoryInMB);
 }
 
-public class CpuUsageMonitor : ICpuUsageMonitor, IHostedService, IDisposable
+public class CpuUsageMonitor : BackgroundService, ICpuUsageMonitor
 {
     private readonly ILogger<CpuUsageMonitor> _logger;
-    private readonly int _sampleIntervalMs = 1000;
-    private readonly int _rollingAverageDurationMs = 60000;
+    private readonly bool _enabled;
+    private readonly TimeSpan _sampleInterval;
+    private readonly int _sampleCapacity;
     private readonly Queue<float> _cpuUsageSamples = new();
-    private Timer? _timer;
     private float _currentAverageCpuUsage;
 
-    public CpuUsageMonitor(ILogger<CpuUsageMonitor> logger)
+    public CpuUsageMonitor(ILogger<CpuUsageMonitor> logger, MLParams mlParams)
     {
         _logger = logger;
+        _enabled = mlParams.CpuUsageMonitorEnabled;
+        _sampleInterval = TimeSpan.FromSeconds(Math.Max(1, mlParams.CpuUsageMonitorSampleIntervalSeconds));
+        _sampleCapacity = Math.Max(1, (int)Math.Ceiling(TimeSpan.FromMinutes(1).TotalSeconds / _sampleInterval.TotalSeconds));
     }
 
     public float GetCurrentAverageCpuUsage() => _currentAverageCpuUsage;
 
     public int RecommendCpuCount(int maxCpu, float targetCpuUsage = 50f)
     {
-        if (_currentAverageCpuUsage <= 5)
+        if (!_enabled || _currentAverageCpuUsage <= 5)
             return maxCpu;
 
         float usageRatio = _currentAverageCpuUsage / targetCpuUsage;
@@ -57,27 +61,29 @@ public class CpuUsageMonitor : ICpuUsageMonitor, IHostedService, IDisposable
         return recommended;
     }
 
-    public Task StartAsync(CancellationToken cancellationToken)
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        try
+        if (!_enabled)
         {
-            _logger.LogInformation("Starting CPU monitor...");
-            _timer = new Timer(SampleCpuUsage, null, 0, _sampleIntervalMs);
-        }
-        catch (Exception e)
-        {
-            _logger.LogError($" Error : failed to start CPU timer . Error was : {e.Message}");
+            _logger.LogInformation("CPU usage monitor is disabled.");
+            return;
         }
 
-        return Task.CompletedTask;
+        _logger.LogInformation("Starting CPU usage monitor with a {SampleInterval} sample interval.", _sampleInterval);
+        using var timer = new PeriodicTimer(_sampleInterval);
+        do
+        {
+            await SampleCpuUsage();
+        }
+        while (await timer.WaitForNextTickAsync(stoppingToken));
     }
 
-    private async void SampleCpuUsage(object? state)
+    private async Task SampleCpuUsage()
     {
         float usage = await GetTotalSystemCpuUsage();
         _cpuUsageSamples.Enqueue(usage);
 
-        while (_cpuUsageSamples.Count > _rollingAverageDurationMs / _sampleIntervalMs)
+        while (_cpuUsageSamples.Count > _sampleCapacity)
             _cpuUsageSamples.Dequeue();
 
         _currentAverageCpuUsage = _cpuUsageSamples.Count > 0
@@ -161,13 +167,6 @@ public class CpuUsageMonitor : ICpuUsageMonitor, IHostedService, IDisposable
     {
         public long Total { get; init; }
         public long Idle { get; init; }
-    }
-
-    public Task StopAsync(CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Stopping CPU monitor...");
-        _timer?.Change(Timeout.Infinite, 0);
-        return Task.CompletedTask;
     }
 
     public bool IsSwapTooHigh(float maxSwapUsagePercentage = 50f)
@@ -272,8 +271,4 @@ public class CpuUsageMonitor : ICpuUsageMonitor, IHostedService, IDisposable
         }
     }
 
-    public void Dispose()
-    {
-        _timer?.Dispose();
-    }
 }

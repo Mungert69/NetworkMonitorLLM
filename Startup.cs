@@ -138,7 +138,8 @@ namespace NetworkMonitor.LLM
             services.AddSingleton<ILocalLlmSessionStore, LocalLlmSessionStore>();
             services.AddSingleton(_cancellationTokenSource);
             services.Configure<HostOptions>(s => s.ShutdownTimeout = TimeSpan.FromSeconds(30));
-            services.AddSingleton<ICpuUsageMonitor, CpuUsageMonitor>();
+            services.AddSingleton<CpuUsageMonitor>();
+            services.AddSingleton<ICpuUsageMonitor>(provider => provider.GetRequiredService<CpuUsageMonitor>());
             services.AddSingleton<IQueryCoordinator, QueryCoordinator>();
             services.AddSingleton<IFunctionDefinitionRegistry, FunctionDefinitionRegistry>();
             services.AddSingleton<IToolsBuilderFactory, ToolsBuilderFactory>();
@@ -164,7 +165,7 @@ namespace NetworkMonitor.LLM
                return systemParams;
            });
 
-            services.AddHostedService<CpuUsageMonitor>();
+            services.AddHostedService(provider => provider.GetRequiredService<CpuUsageMonitor>());
 
             services.AddAsyncServiceInitialization()
                 .AddInitAction<IRabbitRepo>(async (rabbitRepo) =>
