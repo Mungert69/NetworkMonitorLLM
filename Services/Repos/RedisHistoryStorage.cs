@@ -24,7 +24,6 @@ namespace NetworkMonitor.LLM.Services
         private readonly ILogger _logger;
         private readonly string _serviceId;
         private readonly IRabbitRepo? _rabbitRepo;
-        private readonly string _serviceAuthKey;
 
         public RedisHistoryStorage(ILogger<RedisHistoryStorage> logger, SystemParams systemParams, IRabbitRepo? rabbitRepo = null)
         {
@@ -33,7 +32,6 @@ namespace NetworkMonitor.LLM.Services
             _redis = ConnectionMultiplexer.Connect(configuration);
             _db = _redis.GetDatabase();
             _serviceId = SanitizeServiceId(systemParams.ServiceID);
-            _serviceAuthKey = ServiceAuthKeyHydrator.Resolve(systemParams, _logger, nameof(RedisHistoryStorage));
             _rabbitRepo = rabbitRepo;
             _keyPrefix = $"history:{_serviceId}:";
             _indexKey = $"idx:history:{_serviceId}:all";
@@ -234,7 +232,6 @@ namespace NetworkMonitor.LLM.Services
             {
                 Operation = HistoryStoreOperation.upsert,
                 AppID = _serviceId,
-                AuthKey = _serviceAuthKey,
                 ServiceId = _serviceId,
                 SessionId = historyDisplayName.SessionId,
                 UserId = historyDisplayName.UserId,
@@ -274,7 +271,6 @@ namespace NetworkMonitor.LLM.Services
             {
                 Operation = HistoryStoreOperation.delete,
                 AppID = _serviceId,
-                AuthKey = _serviceAuthKey,
                 ServiceId = _serviceId,
                 SessionId = sessionId,
                 MessageID = Guid.NewGuid().ToString("N"),

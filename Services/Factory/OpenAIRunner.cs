@@ -57,7 +57,6 @@ public class OpenAIRunner : ILLMRunner, IHistorySequenceAwareRunner
     private bool _isEnabled = true;
     //private bool _isFuncCalled;
     private readonly string _serviceID;
-    private readonly string _serviceAuthKey;
     private int _maxTokens = 32000;
     private int _responseTokens = 4000;
     private int _promptTokens = 28000;
@@ -134,7 +133,6 @@ public class OpenAIRunner : ILLMRunner, IHistorySequenceAwareRunner
         _openAiService = openAiService;
         _openAIRunnerSemaphore = openAIRunnerSemaphore ?? new SemaphoreSlim(1, 1);
         _serviceID = systemParams.ServiceID!;
-        _serviceAuthKey = ServiceAuthKeyHydrator.Resolve(systemParams, _logger, nameof(OpenAIRunner));
         _mlParams = mlParams;
         bool enableAgentFlow = _mlParams.EnableAgentFlow;
         _noThink = _mlParams.LlmNoThink;
@@ -359,7 +357,6 @@ public class OpenAIRunner : ILLMRunner, IHistorySequenceAwareRunner
                     VectorSearchMode = _mlParams.VectorSearchMode,
                     MessageID = serviceObj.MessageID,
                     AppID = _serviceID,
-                    AuthKey = _serviceAuthKey,
                     RoutingKey = "",
                     LLMRunnerType = serviceObj.LLMRunnerType,
                     ResponseExchange = $"{_serviceID.ToLowerInvariant()}QueryIndexResult"

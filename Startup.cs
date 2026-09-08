@@ -9,6 +9,7 @@ using NetworkMonitor.LLM.Services;
 using NetworkMonitor.LLM.Services.Cache;
 using NetworkMonitor.Objects;
 using NetworkMonitor.Objects.Repository;
+using NetworkMonitor.Objects.ServiceMessage;
 using NetworkMonitor.Coordinator;
 using NetworkMonitor.Utils;
 using NetworkMonitor.Utils.Helpers;
@@ -128,7 +129,9 @@ namespace NetworkMonitor.LLM
 
             services.AddSingleton<IAudioGenerator, AudioGenerator>();
             services.AddSingleton<IRabbitListener, RabbitListener>();
-            services.AddSingleton<IRabbitRepo, RabbitRepo>();
+            services.AddSingleton<RabbitRepo>();
+            services.AddSingleton<ILlmMessageHmacService, LlmMessageHmacService>();
+            services.AddSingleton<IRabbitRepo>(sp => new LlmHmacRabbitRepo(sp.GetRequiredService<RabbitRepo>(), sp.GetRequiredService<ILlmMessageHmacService>()));
             services.AddSingleton<IFileRepo, FileRepo>();
             services.AddSingleton<ISystemParamsHelper, SystemParamsHelper>();
             services.AddTransient<ILLMResponseProcessor, LLMResponseProcessor>();
@@ -159,9 +162,7 @@ namespace NetworkMonitor.LLM
             services.AddSingleton<SystemParams>(sp =>
            {
                var systemParamsHelper = sp.GetRequiredService<ISystemParamsHelper>();
-               var logger = sp.GetRequiredService<ILogger<Startup>>();
                var systemParams = systemParamsHelper.GetSystemParams();
-               ServiceAuthKeyHydrator.Resolve(systemParams, logger, nameof(Startup));
                return systemParams;
            });
 

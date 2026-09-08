@@ -41,7 +41,8 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
     private readonly string _exchangeType;
     private readonly string _routingKey;
 
-    public RabbitListener(ILLMService llmService, ILogger<RabbitListenerBase> logger, SystemParams systemParams, IQueryCoordinator queryCoordinator, IFunctionDefinitionRegistry registryCache) : base(logger, DeriveSystemUrl(systemParams))
+    private readonly ILlmMessageHmacService? _llmMessageHmacService;
+    public RabbitListener(ILLMService llmService, ILogger<RabbitListenerBase> logger, SystemParams systemParams, IQueryCoordinator queryCoordinator, IFunctionDefinitionRegistry registryCache, ILlmMessageHmacService? llmMessageHmacService = null) : base(logger, DeriveSystemUrl(systemParams))
     {
 
         _llmService = llmService;
@@ -50,6 +51,7 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
         _routingKey = systemParams.RabbitRoutingKey;
         _queryCoordinator = queryCoordinator;
         _registryCache = registryCache;
+        _llmMessageHmacService = llmMessageHmacService;
 
     }
 
@@ -172,10 +174,9 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
                               });
                               break;
                           case "queryIndexResult":
-                              await RegisterConsumerHandlerAsync(rabbitMQObj, 1, "queryIndexResult", (model, ea) =>
+                              await RegisterConsumerHandlerAsync(rabbitMQObj, 1, "queryIndexResult", async (model, ea) =>
                               {
-                                  QueryIndexResult(ConvertToObject<QueryIndexRequest>(model, ea));
-                                  return Task.CompletedTask;
+                                  await QueryIndexResult(ConvertToObject<QueryIndexRequest>(model, ea));
                               });
                               break;
                           case "getFunctionRegistry":
@@ -209,6 +210,7 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
     public async Task<ResultObj> StartSession(LLMServiceObj? llmServiceObj)
     {
         var result = new ResultObj();
+        if (!await ValidateHmacAsync("llmStartSession", llmServiceObj, result)) return result;
         result.Success = false;
         result.Message = "MessageAPI : StartSession : ";
         if (llmServiceObj == null)
@@ -241,6 +243,7 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
     public async Task<ResultObj> RemoveSession(LLMServiceObj? llmServiceObj)
     {
         var result = new ResultObj();
+        if (!await ValidateHmacAsync("llmRemoveSession", llmServiceObj, result)) return result;
         result.Success = false;
         result.Message = "MessageAPI : RemoveSession : ";
         if (llmServiceObj == null)
@@ -268,6 +271,7 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
     public async Task<ResultObj> UserInput(LLMServiceObj? serviceObj)
     {
         var result = new ResultObj();
+        if (!await ValidateHmacAsync("llmUserInput", serviceObj, result)) return result;
         result.Success = false;
         result.Message = "MessageAPI : UserInput : ";
         if (serviceObj == null)
@@ -312,6 +316,7 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
     public async Task<ResultObj> StopRequest(LLMServiceObj? serviceObj)
     {
         var result = new ResultObj();
+        if (!await ValidateHmacAsync("llmStopRequest", serviceObj, result)) return result;
         result.Success = false;
         result.Message = "MessageAPI : StopRequest : ";
         if (serviceObj == null)
@@ -346,7 +351,7 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
         return result;
     }
 
-    public ResultObj QueryIndexResult(QueryIndexRequest? queryIndexRequest)
+    public async Task<ResultObj> QueryIndexResult(QueryIndexRequest? queryIndexRequest)
     {
         var result = new ResultObj();
         result.Success = false;
@@ -359,6 +364,7 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
             result.Success = false;
             return result;
         }
+        if (!await ValidateHmacAsync("queryIndexResult", queryIndexRequest, result, queryIndexRequest.AppID)) return result;
 
         try
         {
@@ -413,5 +419,15 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
         return result;
     }
 
+    private async Task<bool> ValidateHmacAsync(string operation, IBackendSignedMessage? message, ResultObj result)
+        => await ValidateHmacAsync(operation, message, result, _serviceID).ConfigureAwait(false);
 
+    private async Task<bool> ValidateHmacAsync(string operation, IBackendSignedMessage? message, ResultObj result, string target)
+    {
+        if (message != null && _llmMessageHmacService != null && await _llmMessageHmacService.VerifyAsync(operation, target, message).ConfigureAwait(false)) return true;
+        result.Success = false;
+        result.Message += " Error : invalid backend HMAC.";
+        _logger.LogError("LLM message rejected. Operation={Operation} ServiceID={ServiceID}.", operation, _serviceID);
+        return false;
+    }
 }
