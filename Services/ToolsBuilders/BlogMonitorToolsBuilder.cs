@@ -1,8 +1,9 @@
 using NetworkMonitor.Objects.ServiceMessage;
 using NetworkMonitor.Utils;
 using NetworkMonitor.Objects;
+using NetworkMonitor.Objects.Api.Services;
 using NetworkMonitor.Objects.Factory;
-using NetworkMonitor.Data.Services;
+using NetworkMonitor.LLM.Services;
 using Betalgo.Ranul.OpenAI;
 using Betalgo.Ranul.OpenAI.Builders;
 using Betalgo.Ranul.OpenAI.Managers;

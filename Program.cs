@@ -2,7 +2,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using NetworkMonitor.Data;
 using NetworkMonitor.Objects.Factory;
 using Microsoft.AspNetCore.Hosting;
 using System;
