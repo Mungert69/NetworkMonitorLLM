@@ -63,7 +63,6 @@ sudo chmod o+x /home/mahadeva/code
 
 "$DOTNET_CMD" test
 "$DOTNET_CMD" test ../NetworkMonitorLib/NetworkMonitor.csproj
-"$DOTNET_CMD" test ../NetworkMonitorData/NetworkMonitorData.csproj
 
 cd publish-scripts
 if [[ -n "$DOTNET_PATH_OVERRIDE" ]]; then

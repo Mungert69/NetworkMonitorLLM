@@ -51,9 +51,6 @@ fi
 echo "Ensuring world traverse on parent directories ..."
 sudo chmod o+x /home/mahadeva
 sudo chmod o+x /home/mahadeva/code
-#dotnet test 
-#dotnet test ../NetworkMonitorLib/NetworkMonitor.csproj
-#dotnet test ../NetworkMonitorData/NetworkMonitorData.csproj
 
 cd publish-scripts
 if [[ -n "$DOTNET_PATH_OVERRIDE" ]]; then
