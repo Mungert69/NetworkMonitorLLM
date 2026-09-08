@@ -48,8 +48,8 @@ public class MemoryToolsBuilderTests
         Assert.NotNull(fn.Parameters);
         var parameters = fn.Parameters!;
         Assert.Contains("session_id", parameters.Required!);
-        Assert.Contains("start_turn_index", parameters.Required);
-        Assert.Contains("end_turn_index", parameters.Required);
+        Assert.Contains("start_turn_index", parameters.Required!);
+        Assert.Contains("end_turn_index", parameters.Required!);
         Assert.True(parameters.Properties!.ContainsKey("offset"));
         Assert.Contains("20", fn.Description);
     }

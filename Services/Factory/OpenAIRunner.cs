@@ -910,7 +910,7 @@ public class OpenAIRunner : ILLMRunner, IHistorySequenceAwareRunner
                 toolCall?.FunctionCall?.Name,
                 AsyncCompletionNotificationToolName,
                 StringComparison.Ordinal) ||
-            string.IsNullOrWhiteSpace(toolCall.Id))
+            string.IsNullOrWhiteSpace(toolCall?.Id))
         {
             return false;
         }

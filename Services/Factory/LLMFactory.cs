@@ -239,11 +239,11 @@ public class LLMFactory : ILLMFactory
 
                 if (UsesLocalPersistentContext(session.HistoryDisplayName?.LlmType))
                 {
-                    await _localLlmSessionStore.SaveAsync(session.HistoryDisplayName);
+                    await _localLlmSessionStore.SaveAsync(session.HistoryDisplayName!);
                 }
                 else
                 {
-                    await _historyStorage.SaveHistoryAsync(session.HistoryDisplayName);
+                    await _historyStorage.SaveHistoryAsync(session.HistoryDisplayName!);
                 }
             }
         }

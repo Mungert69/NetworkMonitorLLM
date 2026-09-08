@@ -146,7 +146,7 @@ public class HttpRemoteCacheService : IRemoteCacheService
 
     private async Task<HttpResponseMessage> ExecuteWithRetryAsync(Func<HttpRequestMessage> buildRequest)
     {
-        Exception lastException = null;
+        Exception? lastException = null;
 
         for (int attempt = 1; attempt <= _retryAttempts; attempt++)
         {

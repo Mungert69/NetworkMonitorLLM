@@ -15,10 +15,13 @@ public class MemoryToolsIntegrationTests
     {
         var fn = MemoryQueryTools.BuildMemoryQueryFunction();
 
+        Assert.NotNull(fn);
         Assert.Equal("execute_query_memory", fn.Name);
         Assert.NotNull(fn.Parameters);
-        Assert.Contains("message", fn.Parameters.Required);
-        Assert.True(fn.Parameters.Properties.ContainsKey("message"));
+        Assert.Contains("message", fn.Parameters!.Required!);
+#pragma warning disable CS8602 // Dereference of a possibly null reference (Assert.NotNull(fn) above guarantees fn is not null)
+        Assert.True(fn.Parameters!.Properties.ContainsKey("message"));
+#pragma warning restore CS8602
         Assert.True(fn.Parameters.Properties.ContainsKey("top_k"));
         Assert.False(fn.Parameters.Properties.ContainsKey("session_only"));
         Assert.False(fn.Parameters.Properties.ContainsKey("index_name"));
@@ -30,10 +33,13 @@ public class MemoryToolsIntegrationTests
     {
         var fn = ExpertTools.BuildMemoryExpertFunction();
 
+        Assert.NotNull(fn);
         Assert.Equal("call_memory_expert", fn.Name);
         Assert.NotNull(fn.Parameters);
-        Assert.Contains("message", fn.Parameters.Required);
-        Assert.True(fn.Parameters.Properties.ContainsKey("message"));
+        Assert.Contains("message", fn.Parameters!.Required!);
+#pragma warning disable CS8602
+        Assert.True(fn.Parameters!.Properties.ContainsKey("message"));
+#pragma warning restore CS8602
         Assert.False(fn.Parameters.Properties.ContainsKey("user_id"));
         Assert.False(fn.Parameters.Properties.ContainsKey("session_id"));
     }
@@ -43,12 +49,15 @@ public class MemoryToolsIntegrationTests
     {
         var fn = MemoryQueryTools.BuildMemoryTurnRangeFunction();
 
+        Assert.NotNull(fn);
         Assert.Equal("get_memory_turn_range", fn.Name);
         Assert.NotNull(fn.Parameters);
-        Assert.Contains("session_id", fn.Parameters.Required);
-        Assert.Contains("start_turn_index", fn.Parameters.Required);
-        Assert.Contains("end_turn_index", fn.Parameters.Required);
-        Assert.True(fn.Parameters.Properties.ContainsKey("offset"));
+        Assert.Contains("session_id", fn.Parameters!.Required!);
+        Assert.Contains("start_turn_index", fn.Parameters!.Required!);
+        Assert.Contains("end_turn_index", fn.Parameters!.Required!);
+#pragma warning disable CS8602
+        Assert.True(fn.Parameters!.Properties.ContainsKey("offset"));
+#pragma warning restore CS8602
         Assert.Contains("20", fn.Description);
     }
 
@@ -85,7 +94,7 @@ public class MemoryToolsIntegrationTests
         var builder = factory.Create("memory");
 
         Assert.IsType<MemoryExpertToolsBuilder>(builder);
-        Assert.True(factory.AvailableIds().Any(id => id.Equals("memory", StringComparison.OrdinalIgnoreCase)));
+        Assert.Contains("memory", factory.AvailableIds(), StringComparer.OrdinalIgnoreCase);
         Assert.Contains("execute_query_memory", builder.Tools.Select(t => t.Function?.Name));
         Assert.Contains("get_memory_turn_range", builder.Tools.Select(t => t.Function?.Name));
     }
