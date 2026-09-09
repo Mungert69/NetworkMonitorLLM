@@ -19,13 +19,11 @@ public class MemoryToolsIntegrationTests
         Assert.Equal("execute_query_memory", fn.Name);
         Assert.NotNull(fn.Parameters);
         Assert.Contains("message", fn.Parameters!.Required!);
-#pragma warning disable CS8602 // Dereference of a possibly null reference (Assert.NotNull(fn) above guarantees fn is not null)
-        Assert.True(fn.Parameters!.Properties.ContainsKey("message"));
-#pragma warning restore CS8602
-        Assert.True(fn.Parameters.Properties.ContainsKey("top_k"));
-        Assert.False(fn.Parameters.Properties.ContainsKey("session_only"));
-        Assert.False(fn.Parameters.Properties.ContainsKey("index_name"));
-        Assert.False(fn.Parameters.Properties.ContainsKey("vector_search_mode"));
+        Assert.Contains("message", fn.Parameters!.Properties!.Keys);
+        Assert.Contains("top_k", fn.Parameters.Properties.Keys);
+        Assert.DoesNotContain("session_only", fn.Parameters.Properties.Keys);
+        Assert.DoesNotContain("index_name", fn.Parameters.Properties.Keys);
+        Assert.DoesNotContain("vector_search_mode", fn.Parameters.Properties.Keys);
     }
 
     [Fact]
@@ -37,11 +35,9 @@ public class MemoryToolsIntegrationTests
         Assert.Equal("call_memory_expert", fn.Name);
         Assert.NotNull(fn.Parameters);
         Assert.Contains("message", fn.Parameters!.Required!);
-#pragma warning disable CS8602
-        Assert.True(fn.Parameters!.Properties.ContainsKey("message"));
-#pragma warning restore CS8602
-        Assert.False(fn.Parameters.Properties.ContainsKey("user_id"));
-        Assert.False(fn.Parameters.Properties.ContainsKey("session_id"));
+        Assert.Contains("message", fn.Parameters!.Properties!.Keys);
+        Assert.DoesNotContain("user_id", fn.Parameters.Properties.Keys);
+        Assert.DoesNotContain("session_id", fn.Parameters.Properties.Keys);
     }
 
     [Fact]
@@ -55,9 +51,7 @@ public class MemoryToolsIntegrationTests
         Assert.Contains("session_id", fn.Parameters!.Required!);
         Assert.Contains("start_turn_index", fn.Parameters!.Required!);
         Assert.Contains("end_turn_index", fn.Parameters!.Required!);
-#pragma warning disable CS8602
-        Assert.True(fn.Parameters!.Properties.ContainsKey("offset"));
-#pragma warning restore CS8602
+        Assert.Contains("offset", fn.Parameters!.Properties!.Keys);
         Assert.Contains("20", fn.Description);
     }
 

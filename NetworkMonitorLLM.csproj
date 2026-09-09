@@ -43,7 +43,7 @@
     <None Update="Examples/Example">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="..\NetworkMonitorData\agent_schema.json" Link="Schemas\agent_schema.json">
+    <None Include="..\NetworkMonitorLib\Schemas\agent_schema.json" Link="Schemas\agent_schema.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </None>
