@@ -423,7 +423,8 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
 
     private async Task<bool> ValidateHmacAsync(string operation, IBackendSignedMessage? message, ResultObj result, string target)
     {
-        if (message != null && _llmMessageHmacService != null && await _llmMessageHmacService.VerifyAsync(operation, target, message).ConfigureAwait(false)) return true;
+        if (MessageSecurityPolicyRegistry.Requires(operation, target, MessageProtection.LlmHmac) &&
+            message != null && _llmMessageHmacService != null && await _llmMessageHmacService.VerifyAsync(operation, target, message).ConfigureAwait(false)) return true;
         result.Success = false;
         result.Message += " Error : invalid backend HMAC.";
         _logger.LogError("LLM message rejected. Operation={Operation} ServiceID={ServiceID}.", operation, _serviceID);

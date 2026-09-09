@@ -10,7 +10,7 @@
     <PublishReadyToRun>true</PublishReadyToRun>
     <ContainerBaseImage>mcr.microsoft.com/dotnet/runtime:10.0</ContainerBaseImage>
     <ContainerRepository>mungert/networkmonitorllm</ContainerRepository>
-    <ContainerImageTag>2.5.8</ContainerImageTag>
+    <ContainerImageTag>2.5.9</ContainerImageTag>
     <StartupObject>NetworkMonitor.LLM.Program</StartupObject>
     <NoWarn>CS8618</NoWarn>
   </PropertyGroup>
@@ -30,7 +30,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.9.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.10.0" />
     <PackageReference Include="Moq" Version="4.20.72" />
   </ItemGroup>
   <ItemGroup>
