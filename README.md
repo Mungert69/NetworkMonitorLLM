@@ -3,6 +3,11 @@
 
 ## NetworkMonitorLLM
 
+RabbitMQ session and query routes use a separate LLM HMAC trust domain. The operation
+and target rules are maintained centrally in the shared
+[message security policy](../NetworkMonitorLib/Objects/Repository/README.md), and the
+listener rejects messages that are not registered for LLM HMAC.
+
 # A Quantum Network Monitor Service Component
 
 # High-Level Purpose

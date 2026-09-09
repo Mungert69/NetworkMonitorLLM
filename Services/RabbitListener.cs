@@ -179,17 +179,15 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
                               });
                               break;
                           case "getFunctionRegistry":
-                              await RegisterConsumerHandlerAsync(rabbitMQObj, 1, "getFunctionRegistry", (_, _) =>
+                              await RegisterConsumerHandlerAsync(rabbitMQObj, 1, "getFunctionRegistry", async (model, ea) =>
                               {
-                                  GetFunctionRegistry();
-                                  return Task.CompletedTask;
+                                  await GetFunctionRegistryAsync(ConvertToObject<BackendControlCommand>(model, ea), false);
                               });
                               break;
                           case "getFunctionRegistryFiltered":
-                              await RegisterConsumerHandlerAsync(rabbitMQObj, 1, "getFilteredFunctionRegistry", (_, _) =>
+                              await RegisterConsumerHandlerAsync(rabbitMQObj, 1, "getFilteredFunctionRegistry", async (model, ea) =>
                               {
-                                  GetFunctionRegistry(true);
-                                  return Task.CompletedTask;
+                                  await GetFunctionRegistryAsync(ConvertToObject<BackendControlCommand>(model, ea), true);
                               });
                               break;
                       }
@@ -416,6 +414,14 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
         if (!result.Success) _logger.LogError(result.Message);
         else _logger.LogInformation(result.Message);
         return result;
+    }
+
+    private async Task<ResultObj> GetFunctionRegistryAsync(BackendControlCommand? command, bool filter)
+    {
+        var operation = filter ? "getFunctionRegistryFiltered" : "getFunctionRegistry";
+        var result = new ResultObj { Success = false, Message = "MessageAPI : GetFunctionRegistry : " };
+        if (!await ValidateHmacAsync(operation, command, result)) return result;
+        return GetFunctionRegistry(filter);
     }
 
     private async Task<bool> ValidateHmacAsync(string operation, IBackendSignedMessage? message, ResultObj result)
