@@ -7,7 +7,6 @@
          <RollForward>Minor</RollForward>
 
     <Nullable>enable</Nullable>
-    <PublishReadyToRun>true</PublishReadyToRun>
     <ContainerBaseImage>mcr.microsoft.com/dotnet/runtime:10.0</ContainerBaseImage>
     <ContainerRepository>mungert/networkmonitorllm</ContainerRepository>
     <ContainerImageTag>2.5.10</ContainerImageTag>
