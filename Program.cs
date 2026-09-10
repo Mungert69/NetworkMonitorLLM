@@ -2,6 +2,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 using NetworkMonitor.Objects.Factory;
 using Microsoft.AspNetCore.Hosting;
 using System;
@@ -17,6 +21,17 @@ namespace NetworkMonitor.LLM
             IConfigurationRoot config = new ConfigurationBuilder()
                 .AddJsonFile(appFile, optional: false)
                 .Build();
+
+            var serviceConfigFiles = config.GetSection("ServiceConfigFiles")
+                .Get<string[]>()?
+                .Where(file => !string.IsNullOrWhiteSpace(file))
+                .ToArray();
+
+            if (serviceConfigFiles is { Length: > 0 })
+            {
+                CreateMultiRuntimeHost(serviceConfigFiles).Build().Run();
+                return;
+            }
 
             IHost host = CreateHostBuilder(config, args).Build();
 
@@ -46,6 +61,14 @@ namespace NetworkMonitor.LLM
                     }
 
                     webBuilder.UseStartup<Startup>();
+                });
+
+        private static IHostBuilder CreateMultiRuntimeHost(IEnumerable<string> serviceConfigFiles) =>
+            Host.CreateDefaultBuilder()
+                .ConfigureServices(services =>
+                {
+                    services.AddSingleton(new ServiceRuntimeOptions(serviceConfigFiles.ToArray()));
+                    services.AddHostedService<MultiRuntimeHostedService>();
                 });
     }
 }

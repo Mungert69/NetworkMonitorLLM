@@ -44,13 +44,7 @@ public sealed class ToolsBuilderFactory : IToolsBuilderFactory
         _functionDefinitionRegistry = functionDefinitionRegistry;
         _mlParams = mlParams;
         _systemParams = systemParams;
-        ExpertPromptComposer.SetExtraPrompt(_mlParams.ExpertExtraPrompt);
-        ExpertPromptComposer.SetCameraReferenceIdentity(
-            _mlParams.CameraReferenceIdentityName,
-            _mlParams.CameraReferenceIdentityImageUrl,
-            _mlParams.CameraReferenceIdentityInstructions,
-            _mlParams.LlmUseInlineImageData,
-            _mlParams.LlmUseCacheHttpImageUrls);
+        ConfigurePromptComposer();
 
         _static = new(StringComparer.OrdinalIgnoreCase)
         {
@@ -76,6 +70,7 @@ public sealed class ToolsBuilderFactory : IToolsBuilderFactory
     // MAIN ENTRY POINT ----------------------------------------------------
     public IToolsBuilder Create(string toolsId, string? jsonSpec = null, bool enableAgentFlow = false, string? runnerType = null)
     {
+        ConfigurePromptComposer();
         // 1️⃣  Dynamic JSON path
         if (toolsId.Equals(JSON_DYNAMIC_ID, StringComparison.OrdinalIgnoreCase))
         {
@@ -110,6 +105,17 @@ public sealed class ToolsBuilderFactory : IToolsBuilderFactory
 
         // Fallback
         return new MonitorToolsBuilder(enableAgentFlow);
+    }
+
+    private void ConfigurePromptComposer()
+    {
+        ExpertPromptComposer.SetExtraPrompt(_mlParams.ExpertExtraPrompt);
+        ExpertPromptComposer.SetCameraReferenceIdentity(
+            _mlParams.CameraReferenceIdentityName,
+            _mlParams.CameraReferenceIdentityImageUrl,
+            _mlParams.CameraReferenceIdentityInstructions,
+            _mlParams.LlmUseInlineImageData,
+            _mlParams.LlmUseCacheHttpImageUrls);
     }
 
     public IEnumerable<string> AvailableIds() => _static.Keys;
