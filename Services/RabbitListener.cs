@@ -41,7 +41,7 @@ public class RabbitListener : RabbitListenerBase, IRabbitListener
     private readonly string _routingKey;
 
     private readonly ILlmMessageHmacService? _llmMessageHmacService;
-    public RabbitListener(ILLMService llmService, ILogger<RabbitListenerBase> logger, SystemParams systemParams, IQueryCoordinator queryCoordinator, IFunctionDefinitionRegistry registryCache, ILlmMessageHmacService? llmMessageHmacService = null) : base(logger, DeriveSystemUrl(systemParams))
+    public RabbitListener(ILLMService llmService, ILogger<RabbitListenerBase> logger, SystemParams systemParams, IQueryCoordinator queryCoordinator, IFunctionDefinitionRegistry registryCache, ILlmMessageHmacService? llmMessageHmacService = null, IRabbitConnectionPool? connectionPool = null) : base(logger, DeriveSystemUrl(systemParams), connectionPool: connectionPool)
     {
 
         _llmService = llmService;

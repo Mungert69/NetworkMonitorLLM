@@ -2,6 +2,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using NetworkMonitor.Coordinator;
 using NetworkMonitor.LLM.Services;
 using NetworkMonitor.Objects.Repository;
 using NetworkMonitor.Utils.Helpers;
@@ -47,7 +48,7 @@ public sealed class ServiceRuntime : IAsyncDisposable
     public string ConfigurationFile { get; }
     public string ServiceId { get; }
 
-    public static ServiceRuntime Create(string configurationFile)
+    public static ServiceRuntime Create(string configurationFile, IRabbitConnectionPool? connectionPool = null)
     {
         var fullPath = ResolveConfigurationPath(configurationFile);
         var configurationDirectory = Path.GetDirectoryName(fullPath)!;
@@ -81,6 +82,21 @@ public sealed class ServiceRuntime : IAsyncDisposable
                 configuration,
                 serviceProvider.GetRequiredService<ILogger<SystemParamsHelper>>(),
                 initializeGlobalConfig: false));
+        if (connectionPool != null)
+        {
+            services.AddSingleton<RabbitRepo>(serviceProvider => new RabbitRepo(
+                serviceProvider.GetRequiredService<ILogger<RabbitRepo>>(),
+                serviceProvider.GetRequiredService<NetworkMonitor.Objects.SystemParams>(),
+                connectionPool));
+            services.AddSingleton<IRabbitListener>(serviceProvider => new RabbitListener(
+                serviceProvider.GetRequiredService<ILLMService>(),
+                serviceProvider.GetRequiredService<ILogger<RabbitListenerBase>>(),
+                serviceProvider.GetRequiredService<NetworkMonitor.Objects.SystemParams>(),
+                serviceProvider.GetRequiredService<IQueryCoordinator>(),
+                serviceProvider.GetRequiredService<IFunctionDefinitionRegistry>(),
+                serviceProvider.GetRequiredService<NetworkMonitor.Objects.ServiceMessage.ILlmMessageHmacService>(),
+                connectionPool));
+        }
         return new ServiceRuntime(fullPath, services.BuildServiceProvider());
     }
 
@@ -145,6 +161,7 @@ public sealed class MultiRuntimeHostedService : IHostedService
     private readonly ServiceRuntimeOptions _options;
     private readonly ILogger<MultiRuntimeHostedService> _logger;
     private readonly List<ServiceRuntime> _runtimes = new();
+    private readonly RabbitConnectionPool _connectionPool = new();
 
     public MultiRuntimeHostedService(ServiceRuntimeOptions options, ILogger<MultiRuntimeHostedService> logger)
     {
@@ -157,7 +174,7 @@ public sealed class MultiRuntimeHostedService : IHostedService
         var seenServiceIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var configurationFile in _options.ConfigurationFiles)
         {
-            var runtime = ServiceRuntime.Create(configurationFile);
+            var runtime = ServiceRuntime.Create(configurationFile, _connectionPool);
             if (!seenServiceIds.Add(runtime.ServiceId))
             {
                 await runtime.DisposeAsync();
@@ -184,5 +201,6 @@ public sealed class MultiRuntimeHostedService : IHostedService
         foreach (var runtime in _runtimes.AsEnumerable().Reverse())
             await runtime.DisposeAsync();
         _runtimes.Clear();
+        await _connectionPool.DisposeAsync();
     }
 }
