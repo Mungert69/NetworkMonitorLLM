@@ -343,6 +343,9 @@ healthchecksdb
 /Report20210116-1159.diagsession
 appsettings.json
 appsettings*
+# This file only selects the already-local, per-service appsettings files; it
+# contains no credentials and is required by the multi-profile deployment.
+!appsettings-multi-eu.json
 https.pfx
 https-freenetworkmonitor.pfx
 *.sentinel

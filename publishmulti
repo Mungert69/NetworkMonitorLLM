@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-exec "$(dirname "$0")/publish-scripts/publish-multi-eu" "$@"
+exec sudo "$(dirname "$0")/publish-scripts/publish-multi-eu" "$@"
