@@ -50,9 +50,27 @@ public sealed class ServiceRuntime : IAsyncDisposable
     public static ServiceRuntime Create(string configurationFile)
     {
         var fullPath = ResolveConfigurationPath(configurationFile);
+        var configurationDirectory = Path.GetDirectoryName(fullPath)!;
         var configuration = new ConfigurationBuilder()
-            .SetBasePath(Path.GetDirectoryName(fullPath)!)
+            .SetBasePath(configurationDirectory)
             .AddJsonFile(Path.GetFileName(fullPath), optional: false)
+            .Build();
+
+        // Some services (notably the HMAC Rabbit wrapper) consume secrets
+        // directly from IConfiguration while their DI graph is being built.
+        // Load the profile's .env before that point, then rebuild so those
+        // values are available to every service registration.
+        var envFile = configuration["EnvPath"] ?? ".env";
+        var envPath = Path.IsPathRooted(envFile)
+            ? envFile
+            : Path.Combine(configurationDirectory, envFile);
+        if (File.Exists(envPath))
+            DotNetEnv.Env.Load(envPath);
+
+        configuration = new ConfigurationBuilder()
+            .SetBasePath(configurationDirectory)
+            .AddJsonFile(Path.GetFileName(fullPath), optional: false)
+            .AddEnvironmentVariables()
             .Build();
 
         var services = new ServiceCollection();
