@@ -23,7 +23,7 @@ done
 
 ROOTDIR="/home/mahadeva"
 TARGET_DIR="$ROOTDIR/code/services/llm-eu-multi"
-ENV_SOURCE="$ROOTDIR/code/securefiles/domain-env"
+ENV_SOURCE="$ROOTDIR/code/securefiles/llm-env"
 SERVICE="NM-LLM-EU-Multi.service"
 SERVICE_SOURCE="$(dirname "$0")/../service-files/$SERVICE"
 CONFIG_SOURCE="$(dirname "$0")/../appsettings-multi-eu.json"

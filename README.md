@@ -10,6 +10,12 @@ listener rejects messages that are not registered for LLM HMAC.
 
 # A Quantum Network Monitor Service Component
 
+## Deployment environment
+
+LLM publishing scripts use `/home/mahadeva/code/securefiles/llm-env`, not the
+shared `domain-env`. Populate it with the LLM's required non-Rabbit secrets and
+set `RabbitPassword` to the password for the `userllm` RabbitMQ account.
+
 # High-Level Purpose
 
 This codebase implements a **modular**, **multi-backend** Large Language Model (LLM) orchestration and chat system, designed for **network monitoring**, **security**, and **automation** tasks. It supports:
