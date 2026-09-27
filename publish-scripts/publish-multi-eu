@@ -85,7 +85,11 @@ rm -f "$TARGET_DIR/.env"
 ln -s "$ENV_SOURCE" "$TARGET_DIR/.env"
 
 for old_service in "${OLD_SERVICES[@]}"; do
-  systemctl disable --now "$old_service" || true
+  # Unit may already be gone (file deleted under /etc/systemd/system); skip quietly.
+  if ! systemctl list-unit-files --type=service --no-legend "$old_service" 2>/dev/null | grep -q .; then
+    continue
+  fi
+  systemctl disable --now "$old_service" >/dev/null 2>&1 || true
 done
 
 systemctl start "$SERVICE"
