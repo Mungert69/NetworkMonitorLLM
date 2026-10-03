@@ -67,6 +67,7 @@ public class MonitorSimpleToolsBuilder : ToolsBuilderBase
             new ToolDefinition() { Function = fn_edit_host, Type = "function" },
             new ToolDefinition() { Function = fn_get_host_data, Type = "function" },
             new ToolDefinition() { Function = fn_get_host_list, Type = "function" },
+            new ToolDefinition() { Function = MonitorTools.BuildGetAvailableEndpointsFunction(), Type = "function" },
             new ToolDefinition() { Function = fn_get_user_info, Type = "function" },
             new ToolDefinition() { Function = fn_get_agents, Type = "function" },
             new ToolDefinition() { Function = fn_run_nmap, Type = "function" },

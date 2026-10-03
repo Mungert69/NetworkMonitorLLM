@@ -25,6 +25,7 @@ public class MonitorSysToolsBuilder : ToolsBuilderBase
             new ToolDefinition { Function = fnEditHost, Type = "function" },
             new ToolDefinition { Function = fnGetHostData, Type = "function" },
             new ToolDefinition { Function = fnGetHostList, Type = "function" },
+            new ToolDefinition { Function = MonitorTools.BuildGetAvailableEndpointsFunction(), Type = "function" },
             new ToolDefinition { Function = fnResetAlerts, Type = "function" }
         };
     }
@@ -34,6 +35,7 @@ public class MonitorSysToolsBuilder : ToolsBuilderBase
         string content = "You are the Monitor System Expert for host lifecycle operations. ";
         content += "Your scope is monitoring-only functions: add_host, edit_host, get_host_data, get_host_list, reset_alerts, and supporting control/status functions. ";
         content += "You also own user context for this lane: use get_user_info when context is missing or needed before host changes. ";
+        content += "get_available_endpoints is optional discovery for an agent's custom and built-in endpoints; do not require it before every host action. Preserve requested endpoint names and never silently replace them with http. ";
         content += "Execute requested monitoring actions directly and return concise, plain-language summaries.";
         content = ExpertPromptComposer.Compose(content, currentTime, "monitorsys");
 

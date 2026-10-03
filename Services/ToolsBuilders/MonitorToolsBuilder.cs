@@ -79,6 +79,7 @@ public class MonitorToolsBuilder : ToolsBuilderBase
             new ToolDefinition() { Function = fn_call_monitor_expert, Type = "function" },
             new ToolDefinition() { Function = fn_get_user_info, Type = "function" },
             new ToolDefinition() { Function = fn_get_agents, Type = "function" },
+            new ToolDefinition() { Function = MonitorTools.BuildGetAvailableEndpointsFunction(), Type = "function" },
             new ToolDefinition() { Function = fn_call_search_expert, Type = "function" },
             new ToolDefinition() { Function = fn_call_cmd_processor_expert, Type = "function" },
             new ToolDefinition() { Function = fn_call_connect_expert, Type = "function" },

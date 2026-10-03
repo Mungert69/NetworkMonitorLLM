@@ -301,6 +301,24 @@ public class MonitorTools
         };
     }
 
+    public static FunctionDefinition BuildGetAvailableEndpointsFunction() => new()
+    {
+        Name = "get_available_endpoints",
+        Description = "Optionally discover built-in and registered custom monitoring endpoints. With agent_location, lists that accessible agent's endpoints. Without it, lists endpoints by currently eligible public/system agent used for automatic selection. Discovery is not required before add_host or edit_host and does not reserve capacity.",
+        Parameters = new PropertyDefinition
+        {
+            Type = "object",
+            Properties = new Dictionary<string, PropertyDefinition>
+            {
+                ["agent_location"] = new PropertyDefinition
+                {
+                    Type = "string",
+                    Description = "Optional. Exact agent location; omit for the automatic-selection public/system agent pool. A custom Connect normally requires the agent where it was registered."
+                }
+            }
+        }
+    };
+
     private static PropertyDefinition BuildEndpointPropertyDefinition()
     {
         var endpointTypes = EndPointTypeFactory.GetInternalTypes();
@@ -315,8 +333,7 @@ public class MonitorTools
         return new PropertyDefinition
         {
             Type = "string",
-            Enum = endpointTypes,
-            Description = $"The endpoint type for monitoring. Optional field. Endpoint types include: {endpointDescriptionDetails}."
+            Description = $"Optional endpoint name, including registered custom Connect names such as helloworld. Built-in examples: {endpointDescriptionDetails}. Omission defaults to http; preserve an explicitly requested endpoint and never retry with another endpoint without user direction. get_available_endpoints is optional discovery. For custom Connects, normally specify the agent_location where they were registered."
         };
     }
 }
