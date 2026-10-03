@@ -94,7 +94,7 @@ public class ConnectTools
                     ["source_code"] = new PropertyDefinition
                     {
                         Type = "string",
-                        Description = "The .NET source code implementing the connect. Must be a {ConnectType}Connect class. Make sure to include all using statements, methods and supporting classes."
+                        Description = "Complete .NET source for a {ConnectType}Connect class deriving NetConnect. Include using System.Collections.Generic and an expression-bodied override IReadOnlyCollection<string> StatusLabels returning 1-64 unique literal labels (maximum 128 characters each). Every ProcessStatus first argument and ProcessException second argument must match a declared label exactly. Put changing values in diagnostics, never PingInfo.Status. Correct validation errors before retrying."
                     },
                     ["agent_location"] = new PropertyDefinition
                     {

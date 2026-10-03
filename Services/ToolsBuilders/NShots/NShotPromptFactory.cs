@@ -576,6 +576,7 @@ namespace NetworkMonitor.Connection
 {
     public class TcpConnect : NetConnect
     {
+        public override System.Collections.Generic.IReadOnlyCollection<string> StatusLabels => new[] { ""Connected"", ""TimedOut"", ""Exception"" };
         public override async Task Connect()
         {
             Timer.Reset();
@@ -644,6 +645,7 @@ namespace NetworkMonitor.Connection
 {
     public class ApiHealthConnect : NetConnect
     {
+        public override IReadOnlyCollection<string> StatusLabels => new[] { ""API OK"", ""BadArgs"", ""NoProcessor"", ""ProbeFailed"", ""Timeout"", ""Exception"" };
         private const string ProcessorType = ""HttpProbe"";
         private static readonly List<ArgSpec> _schema = new()
         {
@@ -814,6 +816,7 @@ namespace NetworkMonitor.Connection
 {
     public class TlsDeepConnect : NetConnect
     {
+        public override System.Collections.Generic.IReadOnlyCollection<string> StatusLabels => new[] { ""TLS scan complete"", ""NoProcessor"", ""ScanFailed"", ""Timeout"", ""Exception"" };
         private const string ProcessorType = ""TlsDeepScan"";
 
         public override async Task Connect()
@@ -823,7 +826,7 @@ namespace NetworkMonitor.Connection
 
             try
             {
-                var processor = CmdProcessorProvider?.GetCmdProcessor(ProcessorType);
+                var processor = CmdProcessorProvider?.GetProcessor(ProcessorType);
                 if (processor == null)
                 {
                     ProcessException($""Cmd processor '{ProcessorType}' not available"", ""NoProcessor"");
