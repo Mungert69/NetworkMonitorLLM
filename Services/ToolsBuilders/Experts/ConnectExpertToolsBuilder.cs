@@ -51,6 +51,10 @@ Checklist before sending add_connect:
 - Class name must be {connect_type}Connect (public).
 - Override Connect() exactly: public override async Task Connect().
 - Call PreConnect() and PostConnect(), and use ProcessStatus/ProcessException for outcomes.
+- Declare public override IReadOnlyCollection<string> StatusLabels => new[] { ""Service available"", ""Service unavailable"", ""Timeout"", ""Exception"" }; include using System.Collections.Generic.
+- StatusLabels must be an expression-bodied new[]/string[]/collection expression of literal strings only: 1-64 unique nonempty labels, at most 128 characters each, no surrounding whitespace or control characters. Do not compute declarations from config, hosts, readings or time.
+- ProcessStatus's first argument and ProcessException's second argument must exactly match a declared label (case-sensitive). Include every failure/cancellation path. Put ports, addresses, measurements and variable error text in ProcessStatus's extraData or ProcessException's message argument, never a status label.
+- Do not assign MpiConnect.PingInfo.Status directly. The runtime freezes the vocabulary at load and checks the final result too; undeclared labels become ""Invalid connect status"" without changing the probe outcome or sample. Fix declaration/compilation errors returned by add_connect and resubmit; never claim an add succeeded without tool confirmation.
 - Do not create helper classes or static wrappers; all logic must live inside the derived NetConnect class.
 - Use Logger/CmdProcessorProvider only inside the derived class without any type prefix (e.g., use Logger?.LogInformation, not NetConnect.Logger).
 
@@ -90,6 +94,7 @@ public abstract class NetConnect : INetConnect
     protected int ExtendTimeoutMultiplier { get => _extendTimeoutMultiplier; set => _extendTimeoutMultiplier = value; }
 
     public abstract Task Connect();                                    // Implement your check here
+    public virtual IReadOnlyCollection<string> StatusLabels => Array.Empty<string>(); // Dynamic subclasses MUST override with literal labels
     public virtual void Init(
         ILogger logger,
         NetConnectConfig cfg,
@@ -140,7 +145,7 @@ public abstract class NetConnect : INetConnect
         message = StringUtils.Truncate(message, StatusObj.MessageMaxLength);
         _mpiConnect.Message = _mpiStatic.EndPointType.ToUpper() + "": Failed to connect: "" + message;
         _mpiConnect.IsUp = false;
-        _mpiConnect.PingInfo.Status = shortMessage;
+        _mpiConnect.PingInfo.Status = shortMessage; // Runtime validates against the frozen StatusLabels declaration
         _mpiConnect.PingInfo.RoundTripTime = UInt16.MaxValue;
     }
 
@@ -148,7 +153,7 @@ public abstract class NetConnect : INetConnect
     {
         if (!string.IsNullOrEmpty(extraData)) _mpiConnect.Message = reply + "" "" + extraData;
         else _mpiConnect.Message = reply;
-        _mpiConnect.PingInfo.Status = reply;
+        _mpiConnect.PingInfo.Status = reply; // Runtime validates against the frozen StatusLabels declaration
         _mpiConnect.PingInfo.RoundTripTime = timeTaken;
         _mpiConnect.IsUp = true;
     }
@@ -187,7 +192,7 @@ public class MPIStatic
 // Quick usage examples:
 // Logger?.LogInformation(""Starting connect for {Address}"", MpiStatic.Address);
 // var binPath = NetConfig?.CommandPath; // access global config values
-// var processor = CmdProcessorProvider?.GetCmdProcessor(""nmap""); // run a cmd processor if needed
+// var processor = CmdProcessorProvider?.GetProcessor(""Nmap""); // run a cmd processor if needed
 // var status = await BrowserHost!.RunWithPage(page => page.TitleAsync(), Cts.Token); // shared Chromium for full-page checks
 
 // MPIConnect result container (full)
@@ -205,7 +210,7 @@ public class PingInfo
 {
     public ulong ID { get; set; }
     public DateTime DateSent { get; set; }                      // UTC time of response
-    public string? Status { get; set; }                         // Human status string
+    public string? Status { get; set; }                         // Fixed declared label, not a measurement/diagnostic
     public ushort StatusID { get; set; }
     public ushort? RoundTripTime { get; set; }                  // ms
     public int RoundTripTimeInt { get; set; }
