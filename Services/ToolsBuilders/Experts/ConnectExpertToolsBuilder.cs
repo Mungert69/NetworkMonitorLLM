@@ -53,7 +53,8 @@ Checklist before sending add_connect:
 - Call PreConnect() and PostConnect(), and use ProcessStatus/ProcessException for outcomes.
 - Declare public override IReadOnlyCollection<string> StatusLabels => new[] { ""Service available"", ""Service unavailable"", ""Timeout"", ""Exception"" }; include using System.Collections.Generic.
 - StatusLabels must be an expression-bodied new[]/string[]/collection expression of literal strings only: 1-64 unique nonempty labels, at most 128 characters each, no surrounding whitespace or control characters. Do not compute declarations from config, hosts, readings or time.
-- ProcessStatus's first argument and ProcessException's second argument must exactly match a declared label (case-sensitive). Include every failure/cancellation path. Put ports, addresses, measurements and variable error text in ProcessStatus's extraData or ProcessException's message argument, never a status label.
+- ProcessStatus's first argument and ProcessException's second argument must exactly match a declared label (case-sensitive). Include every failure/cancellation path. Put ports, addresses, measurement diagnostics and variable error text in ProcessStatus's extraData or ProcessException's message argument, never a status label. The numeric measurement itself belongs in ProcessStatus's second argument, not only in extraData.
+- For normal timing Connects (Unit=""ms"", Scale=1), keep passing elapsed milliseconds as ProcessStatus's second argument, for example ProcessStatus(""Service available"", (ushort)Math.Min(Timer.ElapsedMilliseconds, ushort.MaxValue - 1), ""diagnostics""). For physical/count measurements, pass the encoded reading instead of elapsed time: displayed value = stored sample * Scale. Example: Unit=""bananas"", Scale=0.1, value=7 requires ProcessStatus(""Service available"", (ushort)(value * 10), ""value=7""); with Scale=1 pass (ushort)value. Validate/round the encoded reading before converting to ushort; successful samples must be between 0 and 65534, because 65535 is reserved for failure. Do not change the timer/cancellation lifecycle merely because the stored sample is a measurement. Do not mix elapsed milliseconds and physical readings within one measurement definition.
 - Do not assign MpiConnect.PingInfo.Status directly. The runtime freezes the vocabulary at load and checks the final result too; undeclared labels become ""Invalid connect status"" without changing the probe outcome or sample. Fix declaration/compilation errors returned by add_connect and resubmit; never claim an add succeeded without tool confirmation.
 - Numeric readings default to milliseconds with Scale=1. For a different measurement, override constant Unit and Scale properties (for example public override string Unit => ""V""; public override double Scale => 0.01; for stored hundredths of a volt). Scale must be finite and positive. Keep the same numeric meaning for every successful sample of an endpoint; use a new endpoint name if its meaning changes. Leave Type blank for the general/fallback definition. Optional MeasurementVariants declares constant EndpointMeasurementMetadata(Unit, Scale, Type) entries: one distinct Type matching a whole token in host Args selects it; zero or multiple distinct matches use the general definition. Repeated occurrences of the same token are not ambiguous. Do not assume arbitrary argument parsing is supported. No unit or scale belongs in the status label.
 - Do not create helper classes or static wrappers; all logic must live inside the derived NetConnect class.
@@ -154,6 +155,8 @@ public abstract class NetConnect : INetConnect
         _mpiConnect.PingInfo.RoundTripTime = UInt16.MaxValue;
     }
 
+    // timeTaken is the historical parameter name: pass elapsed ms for timing,
+    // or the encoded reading for a measurement (displayed sample * Scale).
     protected void ProcessStatus(string reply, ushort timeTaken, string extraData = """")
     {
         if (!string.IsNullOrEmpty(extraData)) _mpiConnect.Message = reply + "" "" + extraData;
@@ -217,7 +220,7 @@ public class PingInfo
     public DateTime DateSent { get; set; }                      // UTC time of response
     public string? Status { get; set; }                         // Fixed declared label, not a measurement/diagnostic
     public ushort StatusID { get; set; }
-    public ushort? RoundTripTime { get; set; }                  // ms
+    public ushort? RoundTripTime { get; set; }                  // Stored numeric sample: ms for timing; encoded reading for measurements
     public int RoundTripTimeInt { get; set; }
     public int MonitorPingInfoID { get; set; }
     public uint DateSentInt { get; set; }
