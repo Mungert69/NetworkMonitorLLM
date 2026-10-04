@@ -55,7 +55,7 @@ Checklist before sending add_connect:
 - StatusLabels must be an expression-bodied new[]/string[]/collection expression of literal strings only: 1-64 unique nonempty labels, at most 128 characters each, no surrounding whitespace or control characters. Do not compute declarations from config, hosts, readings or time.
 - ProcessStatus's first argument and ProcessException's second argument must exactly match a declared label (case-sensitive). Include every failure/cancellation path. Put ports, addresses, measurements and variable error text in ProcessStatus's extraData or ProcessException's message argument, never a status label.
 - Do not assign MpiConnect.PingInfo.Status directly. The runtime freezes the vocabulary at load and checks the final result too; undeclared labels become ""Invalid connect status"" without changing the probe outcome or sample. Fix declaration/compilation errors returned by add_connect and resubmit; never claim an add succeeded without tool confirmation.
-- Numeric readings default to milliseconds with Scale=1. For a different measurement, override constant Unit and Scale properties (for example public override string Unit => ""V""; public override double Scale => 0.01; for stored hundredths of a volt). Scale must be finite and positive. Keep the same numeric meaning for every successful sample of an endpoint; use a new endpoint name if its meaning changes. Type defaults to an empty string and is reserved for future measurement interpretation. No unit or scale belongs in the status label.
+- Numeric readings default to milliseconds with Scale=1. For a different measurement, override constant Unit and Scale properties (for example public override string Unit => ""V""; public override double Scale => 0.01; for stored hundredths of a volt). Scale must be finite and positive. Keep the same numeric meaning for every successful sample of an endpoint; use a new endpoint name if its meaning changes. Leave Type blank for the general/fallback definition. Optional MeasurementVariants declares constant EndpointMeasurementMetadata(Unit, Scale, Type) entries: one distinct Type matching a whole token in host Args selects it; zero or multiple distinct matches use the general definition. Repeated occurrences of the same token are not ambiguous. Do not assume arbitrary argument parsing is supported. No unit or scale belongs in the status label.
 - Do not create helper classes or static wrappers; all logic must live inside the derived NetConnect class.
 - Use Logger/CmdProcessorProvider only inside the derived class without any type prefix (e.g., use Logger?.LogInformation, not NetConnect.Logger).
 
@@ -98,7 +98,8 @@ public abstract class NetConnect : INetConnect
     public virtual IReadOnlyCollection<string> StatusLabels => Array.Empty<string>(); // Dynamic subclasses MUST override with literal labels
     public virtual string Unit => ""ms""; // Optional constant display unit, at most 32 characters
     public virtual double Scale => 1; // Optional positive display multiplier; stored samples remain unchanged
-    public virtual string Type => """"; // Optional constant measurement type, reserved for future interpretation
+    public virtual string Type => """"; // Blank is the general/fallback measurement definition
+    public virtual IReadOnlyCollection<EndpointMeasurementMetadata> MeasurementVariants => Array.Empty<EndpointMeasurementMetadata>(); // Optional constant subtype definitions
     public virtual void Init(
         ILogger logger,
         NetConnectConfig cfg,
