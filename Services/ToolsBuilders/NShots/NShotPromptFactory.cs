@@ -563,7 +563,7 @@ Examples:
                 "Please add a simple TCP connect check that runs periodically for my monitoring setup on agent London - UK",
                 @"<function_call name=""add_connect"">
     <parameters>
-        <connect_type>Tcp</connect_type>
+        <connect_type>TcpProbe</connect_type>
         <source_code>
         <![CDATA[
 using System;
@@ -574,8 +574,9 @@ using NetworkMonitor.Objects;
 
 namespace NetworkMonitor.Connection
 {
-    public class TcpConnect : NetConnect
+    public class TcpProbeConnect : NetConnect
     {
+        public override EndpointMeasurementMetadata Measurement => MeasurementAnalysisTemplates.Duration(""TCP connection establishment"");
         public override System.Collections.Generic.IReadOnlyCollection<string> StatusLabels => new[] { ""Connected"", ""TimedOut"", ""Exception"" };
         public override async Task Connect()
         {
@@ -583,23 +584,20 @@ namespace NetworkMonitor.Connection
             try
             {
                 PreConnect();
-                Logger?.LogInformation(""TcpConnect starting for {Address}"", MpiStatic.Address);
+                Logger?.LogInformation(""TcpProbeConnect starting for {Address}"", MpiStatic.Address);
                 var host = MpiStatic.Address;
                 var port = MpiStatic.Port == 0 ? 443 : MpiStatic.Port;
 
                 using var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
                 Timer.Start();
 
-                var connectTask = socket.ConnectAsync(host, port);
-                if (await Task.WhenAny(connectTask, Task.Delay(MpiStatic.Timeout)) != connectTask)
-                {
-                    ProcessException(""Connection timed out."", ""TimedOut"");
-                    return;
-                }
-
-                await connectTask;
+                await socket.ConnectAsync(host, port, Cts.Token);
                 Timer.Stop();
                 ProcessStatus(""Connected"", (ushort)Timer.ElapsedMilliseconds);
+            }
+            catch (OperationCanceledException)
+            {
+                ProcessException(""Connection timed out."", ""TimedOut"");
             }
             catch (Exception ex)
             {
@@ -617,12 +615,12 @@ namespace NetworkMonitor.Connection
         <agent_location>London - UK</agent_location>
     </parameters>
 </function_call>",
-                @"{""message"" : ""Success: added Tcp connect"", ""success"" : true, ""agent_location"" : ""London - UK"" }",
+                @"{""message"" : ""Success: added TcpProbe connect"", ""success"" : true, ""agent_location"" : ""London - UK"" }",
                 "add_connect"
             );
 
             messages.Add(ChatMessage.FromAssistant(
-                "I have added a Tcp connect type. You can now use endpoint type 'tcp' when configuring hosts."
+                "I have added a TcpProbe connect type. You can now use endpoint type 'tcpprobe' when configuring hosts."
             ));
 
             AddAssistantMessageWithToolCall(
@@ -645,6 +643,7 @@ namespace NetworkMonitor.Connection
 {
     public class ApiHealthConnect : NetConnect
     {
+        public override EndpointMeasurementMetadata Measurement => MeasurementAnalysisTemplates.Duration(""API health check"");
         public override IReadOnlyCollection<string> StatusLabels => new[] { ""API OK"", ""BadArgs"", ""NoProcessor"", ""ProbeFailed"", ""Timeout"", ""Exception"" };
         private const string ProcessorType = ""HttpProbe"";
         private static readonly List<ArgSpec> _schema = new()
@@ -699,6 +698,7 @@ namespace NetworkMonitor.Connection
                     args += $"" --contains {contains}"";
                 }
 
+                Timer.Start();
                 var result = await processor.RunCommand(args, Cts.Token, null);
                 if (!result.Success)
                 {
@@ -745,7 +745,7 @@ namespace NetworkMonitor.Connection
         <agent_location>London - UK</agent_location>
     </parameters>
 </function_call>",
-                @"{""message"" : ""Success: got the list of connect types for the agent. connect_types : ['icmp','http','https','tcp']"", ""success"" : true, ""agent_location"" : ""London - UK"" }",
+                @"{""message"" : ""Success: got the list of connect types for the agent. connect_types : ['icmp','http','https','tcp','tcpprobe','apihealth']"", ""success"" : true, ""agent_location"" : ""London - UK"" }",
                 "get_connect_list"
             );
 
@@ -755,19 +755,19 @@ namespace NetworkMonitor.Connection
 
             AddAssistantMessageWithToolCall(
                 messages,
-                "Please delete the Tcp connect type.",
+                "Please delete the TcpProbe connect type.",
                 @"<function_call name=""delete_connect"">
     <parameters>
-        <connect_type>Tcp</connect_type>
+        <connect_type>TcpProbe</connect_type>
         <agent_location>London - UK</agent_location>
     </parameters>
 </function_call>",
-                @"{""message"" : ""Success: deleted Tcp connect type"", ""success"" : true, ""agent_location"" : ""London - UK"" }",
+                @"{""message"" : ""Success: deleted TcpProbe connect type"", ""success"" : true, ""agent_location"" : ""London - UK"" }",
                 "delete_connect"
             );
 
             messages.Add(ChatMessage.FromAssistant(
-                "The Tcp connect type has been removed from the agent."
+                "The TcpProbe connect type has been removed from the agent."
             ));
 
             AddAssistantMessageWithToolCall(
@@ -805,7 +805,7 @@ namespace NetworkMonitor.Connection
                 "Now add a connect that invokes the TlsDeepScan cmd processor for each host.",
                 @"<function_call name=""add_connect"">
     <parameters>
-        <connect_type>TlsDeepConnect</connect_type>
+        <connect_type>TlsDeep</connect_type>
         <source_code>
         <![CDATA[
 using System;
@@ -816,6 +816,7 @@ namespace NetworkMonitor.Connection
 {
     public class TlsDeepConnect : NetConnect
     {
+        public override EndpointMeasurementMetadata Measurement => MeasurementAnalysisTemplates.Duration(""TLS scan completion"");
         public override System.Collections.Generic.IReadOnlyCollection<string> StatusLabels => new[] { ""TLS scan complete"", ""NoProcessor"", ""ScanFailed"", ""Timeout"", ""Exception"" };
         private const string ProcessorType = ""TlsDeepScan"";
 
@@ -835,6 +836,7 @@ namespace NetworkMonitor.Connection
 
                 var port = MpiStatic.Port == 0 ? 443 : MpiStatic.Port;
                 var args = $""--target {MpiStatic.Address} --port {port} --timeout {MpiStatic.Timeout}"";
+                Timer.Start();
                 var result = await processor.RunCommand(args, Cts.Token, null);
                 if (!result.Success)
                 {
@@ -865,13 +867,80 @@ namespace NetworkMonitor.Connection
         <agent_location>London - UK</agent_location>
     </parameters>
 </function_call>",
-                @"{""message"" : ""Success: added TlsDeepConnect connect"", ""success"" : true, ""agent_location"" : ""London - UK"" }",
+                @"{""message"" : ""Success: added TlsDeep connect"", ""success"" : true, ""agent_location"" : ""London - UK"" }",
                 "add_connect"
             );
 
             messages.Add(ChatMessage.FromAssistant(
-                "I have added the TlsDeepConnect connect type, which calls the TlsDeepScan cmd processor."
+                "I have added the TlsDeep connect type, which calls the TlsDeepScan cmd processor."
             ));
+
+            AddAssistantMessageWithToolCall(
+                messages,
+                "Add a SupplyVoltage connect on London - UK. Its HTTP URL returns a plain voltage number; record hundredths of a volt, including negative voltages.",
+                @"<function_call name=""add_connect"">
+    <parameters>
+        <connect_type>SupplyVoltage</connect_type>
+        <source_code>
+        <![CDATA[
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Net.Http;
+using System.Threading.Tasks;
+
+namespace NetworkMonitor.Connection
+{
+    public class SupplyVoltageConnect : NetConnect
+    {
+        public override IReadOnlyCollection<string> StatusLabels => new[] { ""Voltage received"", ""Invalid reading"", ""Timeout"", ""Exception"" };
+        public override EndpointMeasurementMetadata Measurement =>
+            MeasurementAnalysisTemplates.Metric(""Supply voltage"", ""V"") with { Scale = 0.01, Offset = -327.68 };
+
+        public override async Task Connect()
+        {
+            PreConnect();
+            try
+            {
+                using var client = new HttpClient();
+                var text = await client.GetStringAsync(MpiStatic.Address, Cts.Token);
+                if (!double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var volts)
+                    || !double.IsFinite(volts))
+                {
+                    ProcessException(""Expected a finite voltage number"", ""Invalid reading"");
+                    return;
+                }
+                var encoded = Math.Round((volts - Measurement.Offset) / Measurement.Scale, MidpointRounding.AwayFromZero);
+                if (!double.IsFinite(encoded) || encoded < 0 || encoded > 65534)
+                {
+                    ProcessException(""Voltage is outside the encoding range"", ""Invalid reading"");
+                    return;
+                }
+                ProcessStatus(""Voltage received"", (ushort)encoded, text);
+            }
+            catch (OperationCanceledException)
+            {
+                ProcessException(""Timeout"", ""Timeout"");
+            }
+            catch (Exception ex)
+            {
+                ProcessException(ex.Message, ""Exception"");
+            }
+            finally
+            {
+                PostConnect();
+            }
+        }
+    }
+}
+        ]]>
+        </source_code>
+        <agent_location>London - UK</agent_location>
+    </parameters>
+</function_call>",
+                @"{""message"" : ""Success: added SupplyVoltage connect"", ""success"" : true, ""agent_location"" : ""London - UK"" }",
+                "add_connect"
+            );
 
             return messages;
         }

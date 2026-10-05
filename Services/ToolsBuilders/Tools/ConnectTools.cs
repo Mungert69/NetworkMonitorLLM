@@ -89,12 +89,12 @@ public class ConnectTools
                     ["connect_type"] = new PropertyDefinition
                     {
                         Type = "string",
-                        Description = "The name of the connect to add. Use this name when referencing the connect later."
+                        Description = "The custom endpoint name to add, without the word Connect. Do not reuse a built-in endpoint name. Class name must be {connect_type}Connect. Use this endpoint name when referencing it later."
                     },
                     ["source_code"] = new PropertyDefinition
                     {
                         Type = "string",
-                        Description = "Complete .NET source for a {ConnectType}Connect class deriving NetConnect. Include using System.Collections.Generic and an expression-bodied override IReadOnlyCollection<string> StatusLabels returning 1-64 unique literal labels (maximum 128 characters each). Every ProcessStatus first argument and ProcessException second argument must match a declared label exactly. Put changing values in diagnostics, never PingInfo.Status. Correct validation errors before retrying."
+                        Description = "Complete .NET source for a {ConnectType}Connect class deriving NetConnect. Include using System.Collections.Generic and an expression-bodied override IReadOnlyCollection<string> StatusLabels returning 1-64 unique literal labels (maximum 128 characters each). Every ProcessStatus first argument and ProcessException second argument must match a declared label exactly. Put changing values in diagnostics, never PingInfo.Status. Declare the complete immutable EndpointMeasurementMetadata via Measurement; use Duration for elapsed ms and Metric for physical values. Encode successful samples using Scale and Offset into 0-65534; 65535 is the failure marker. TimingRatingThresholds apply only to genuine duration measurements in ms. Correct validation errors before retrying."
                     },
                     ["agent_location"] = new PropertyDefinition
                     {

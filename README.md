@@ -238,7 +238,11 @@ flowchart TD
 * **Add new message types**: Extend `RabbitListener` and `LLMService`.
 
 ## Connect expert N-shot
-The connect expert uses a separate N-shot flow to reflect periodic connect behavior and the `{ConnectType}Connect` class pattern.
+The connect expert uses a separate N-shot flow to reflect periodic connect behavior and the `{ConnectType}Connect` class pattern. Custom endpoint names must omit `Connect` and must not reuse built-in names.
+
+The shared contract is `NetConnect.Measurement`, an immutable `EndpointMeasurementMetadata` record. `MeasurementAnalysisTemplates.Duration` describes elapsed milliseconds; `Metric` describes physical values and supplies analysis guidance. Physical readings use `stored sample * Scale + Offset`; successful encoded samples range from 0 to 65534, with 65535 reserved for failure. Timing ratings are optional and only apply to genuine duration measurements in milliseconds.
+
+`Services/ToolsBuilders/NShots/NShotPromptFactory.cs` contains TCP probe, API health, TLS scan and signed supply-voltage examples. `ConnectExpertToolsBuilder.cs` supplies the matching base API and metadata reference. `ConnectTools.cs` reinforces the contract in the add-connect schema. Run `dotnet test NetworkMonitorLLM.csproj --no-restore -p:IsTestProject=true --filter FullyQualifiedName~ConnectExpertStatusContractTests` to validate the prompt and compile all examples against the current shared library.
 
 ---
 

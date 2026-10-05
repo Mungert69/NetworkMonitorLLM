@@ -1,5 +1,8 @@
 using NetworkMonitor.Objects.ServiceMessage;
+using System;
+using System.IO;
 using System.Linq;
+using Microsoft.CodeAnalysis;
 using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -16,6 +19,9 @@ public class ConnectExpertStatusContractTests
             .GetSystemPrompt("now", new LLMServiceObj(), "TurboLLM")).Content;
         Assert.Contains("public virtual EndpointMeasurementMetadata Measurement", prompt);
         Assert.Contains("physical value - Measurement.Offset", prompt);
+        Assert.Contains("public sealed record EndpointMeasurementMetadata", prompt);
+        Assert.Contains("TimingRatingThresholds? TimingRatingThresholds = null", prompt);
+        Assert.Contains("connect_type must not contain the word Connect", prompt);
         Assert.DoesNotContain("public virtual string Unit", prompt);
         Assert.DoesNotContain("public virtual double Scale", prompt);
         Assert.DoesNotContain("public override string Unit", prompt);
@@ -54,10 +60,22 @@ public class ConnectExpertStatusContractTests
         var text = string.Join("\n", NShotPromptFactory.GetStaticPrompt("connect", xml)
             .Select(m => m.Content));
         var examples = Regex.Matches(text, @"<!\[CDATA\[(.*?)\]\]>", RegexOptions.Singleline);
-        Assert.Equal(3, examples.Count);
+        Assert.Equal(4, examples.Count);
         foreach (Match example in examples)
         {
-            var root = CSharpSyntaxTree.ParseText(example.Groups[1].Value).GetRoot();
+            var tree = CSharpSyntaxTree.ParseText(example.Groups[1].Value);
+            var root = tree.GetRoot();
+            // Bind every example against the current library, not a copied base class.
+            var references = ((string)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")!).Split(Path.PathSeparator)
+                .Select(path => MetadataReference.CreateFromFile(path));
+            var compilation = CSharpCompilation.Create("ConnectExample", new[] { tree }, references,
+                new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+            Assert.Empty(compilation.GetDiagnostics().Where(d => d.Severity == DiagnosticSeverity.Error));
+            Assert.Single(root.DescendantNodes().OfType<PropertyDeclarationSyntax>(),
+                p => p.Identifier.ValueText == "Measurement");
+            var className = Assert.Single(root.DescendantNodes().OfType<ClassDeclarationSyntax>()).Identifier.ValueText;
+            if (className != "SupplyVoltageConnect")
+                Assert.Contains("Timer.Start()", example.Groups[1].Value);
             var property = Assert.Single(root.DescendantNodes().OfType<PropertyDeclarationSyntax>(),
                 p => p.Identifier.ValueText == "StatusLabels");
             var array = Assert.IsType<ImplicitArrayCreationExpressionSyntax>(property.ExpressionBody!.Expression);
