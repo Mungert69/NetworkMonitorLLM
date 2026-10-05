@@ -60,6 +60,16 @@ public class MonitorTools
                         Type = "string",
                         Description = "Optional. Extra arguments for command-style endpoint monitors. Use this to pass additional command-line style flags."
                     },
+                    ["low_threshold"] = new PropertyDefinition
+                    {
+                        Type = "number",
+                        Description = "Optional low measurement alert limit in the selected metric's actual units (e.g. volts or amps). Alert when a valid reading is below this value. Do not invent operating limits. Low must be less than high when both are set."
+                    },
+                    ["high_threshold"] = new PropertyDefinition
+                    {
+                        Type = "number",
+                        Description = "Optional high measurement alert limit in actual units. Alert when a valid reading exceeds this value; equality is within bounds. Alerts fire once until reset, independently of probe availability."
+                    },
                     ["timeout"] = new PropertyDefinition
                     {
                         Type = "number",
@@ -143,6 +153,24 @@ public class MonitorTools
                     {
                         Type = "string",
                         Description = "Optional. xtra arguments for command-style endpoint monitors. Use this to pass additional command-line style flags."
+                    },
+                    ["clear_low_threshold"] = new PropertyDefinition
+                    {
+                        Type = "boolean", Description = "Set true to disable the low limit. Omitted limits retain their values unless the endpoint, Args or legacy username changes; such changes clear old limits unless replacements are supplied."
+                    },
+                    ["clear_high_threshold"] = new PropertyDefinition
+                    {
+                        Type = "boolean", Description = "Set true to disable the high limit. A clear flag takes precedence over a supplied value."
+                    },
+                    ["low_threshold"] = new PropertyDefinition
+                    {
+                        Type = "number",
+                        Description = "Optional low measurement alert limit in the selected metric's actual units (e.g. volts or amps). Alert when a valid reading is below this value. Do not invent operating limits. Low must be less than high when both are set."
+                    },
+                    ["high_threshold"] = new PropertyDefinition
+                    {
+                        Type = "number",
+                        Description = "Optional high measurement alert limit in actual units. Alert when a valid reading exceeds this value; equality is within bounds. Alerts fire once until reset, independently of probe availability."
                     },
                     ["timeout"] = new PropertyDefinition
                     {
