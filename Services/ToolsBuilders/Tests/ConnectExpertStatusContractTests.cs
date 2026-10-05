@@ -10,6 +10,18 @@ namespace NetworkMonitor.LLM.Services;
 public class ConnectExpertStatusContractTests
 {
     [Fact]
+    public void PromptUsesCompleteMeasurementContract()
+    {
+        var prompt = Assert.Single(new ConnectExpertToolsBuilder()
+            .GetSystemPrompt("now", new LLMServiceObj(), "TurboLLM")).Content;
+        Assert.Contains("public virtual EndpointMeasurementMetadata Measurement", prompt);
+        Assert.Contains("physical value - Measurement.Offset", prompt);
+        Assert.DoesNotContain("public virtual string Unit", prompt);
+        Assert.DoesNotContain("public virtual double Scale", prompt);
+        Assert.DoesNotContain("public override string Unit", prompt);
+    }
+
+    [Fact]
     public void Prompt_ExplainsDeclarationDiagnosticsAndRetry()
     {
         var prompt = Assert.Single(new ConnectExpertToolsBuilder()
