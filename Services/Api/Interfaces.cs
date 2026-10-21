@@ -15,6 +15,11 @@ using System.Runtime.CompilerServices;
 
 namespace NetworkMonitor.LLM.Services
 {
+    public interface IVoiceAudioGenerator
+    {
+        IAudioGenerator ForVoice(bool halVoice);
+    }
+
     public interface IAudioGenerator
     {
         /// <summary>

@@ -94,7 +94,10 @@ public class LLMProcessRunner : ILLMRunner, ILocalLlmContextProvider
         _queryCoordinator = queryCoordinator;
         _systemPromptWriter = systemPromptWriter;
         _history = history;
-        _audioStreamProvider = new AudioStreamProvider(audioGenerator, _responseProcessor, _logger, Type);
+        _audioStreamProvider = new AudioStreamProvider(audioGenerator, _responseProcessor, _logger, Type,
+            MonitorSessionRole.UsesHalVoice(MonitorSessionRole.Resolve(
+                startServiceObj.ToolsDefinitionId ?? _serviceID, systemParams, mlParams,
+                startServiceObj.LLMRunnerType, startServiceObj.SessionId)));
     }
 
 

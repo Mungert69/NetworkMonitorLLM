@@ -16,9 +16,10 @@ using System.Diagnostics;
 
 namespace NetworkMonitor.LLM.Services
 {
-    public class AudioGenerator : IAudioGenerator
+    public class AudioGenerator : IAudioGenerator, IVoiceAudioGenerator
     {
         private readonly ILogger _logger;
+        private readonly Lazy<AudioGenerator>? _halGenerator;
         private readonly Uri[] _workers;                          // e.g. https://space-a.hf.space, ...
         private readonly ConcurrentDictionary<Uri, Circuit> _circuits = new();
         private static readonly HttpClient _http = new HttpClient()
@@ -38,6 +39,12 @@ namespace NetworkMonitor.LLM.Services
         private readonly HedgePolicy _hedgePolicy;
 
         public AudioGenerator(ILogger<OpenAIRunner> logger, SystemParams systemParams, IWorkerMetricsStore? metricsStore = null)
+            : this(logger, systemParams, metricsStore, false)
+        {
+        }
+
+        private AudioGenerator(ILogger<OpenAIRunner> logger, SystemParams systemParams,
+            IWorkerMetricsStore? metricsStore, bool halVoice)
         {
             _logger = logger;
 
@@ -62,17 +69,22 @@ namespace NetworkMonitor.LLM.Services
                 }
             }
 
-            _workers = workerList
-                .Distinct()
-                .ToArray();
-
-            if (_workers.Length == 0)
+            if (workerList.Count == 0)
                 throw new InvalidOperationException("No AudioServiceUrls configured.");
+
+            _workers = SelectWorkers(workerList, halVoice);
 
             _logger.LogInformation("TTS workers: {Workers}", string.Join(", ", _workers.Select(u => u.ToString())));
 
             // Load persisted worker latency metrics
             _metricsStore = metricsStore ?? new FileWorkerMetricsStore(FileWorkerMetricsStore.DefaultPath());
+            if (!halVoice)
+            {
+                // Snapshot configuration; each pool owns its retry and hedging state.
+                var halSettings = new SystemParams { AudioServiceUrls = workerList.Select(u => u.ToString()).ToList() };
+                _halGenerator = new Lazy<AudioGenerator>(() => new AudioGenerator(logger, halSettings, _metricsStore, true));
+            }
+
             var loaded = _metricsStore.LoadAll();
             foreach (var kvp in loaded)
             {
@@ -98,6 +110,20 @@ namespace NetworkMonitor.LLM.Services
                 ColdOverheadGuessMs = 1200,
                 ColdPerCharGuessMs = 45
             };
+        }
+
+        internal static Uri[] SelectWorkers(IEnumerable<Uri> workers, bool halVoice) => workers
+            .Where(worker => worker.Host.StartsWith("haltranscribe.", StringComparison.OrdinalIgnoreCase) == halVoice)
+            .Distinct()
+            .ToArray();
+
+        public IAudioGenerator ForVoice(bool halVoice) => halVoice && _halGenerator != null
+            ? _halGenerator.Value : this;
+
+        private void EnsureWorkers()
+        {
+            if (_workers.Length == 0)
+                throw new InvalidOperationException("No TTS workers configured for the selected voice pool.");
         }
 
         // ----- Public API -----
@@ -215,6 +241,7 @@ namespace NetworkMonitor.LLM.Services
             string text,
             [EnumeratorCancellation] CancellationToken ct = default)
         {
+            EnsureWorkers();
             var chunks = GetChunksFromText(text, 500);
             int N = chunks.Count;
             if (N == 0) yield break;
@@ -461,6 +488,7 @@ namespace NetworkMonitor.LLM.Services
 
         private async Task<(Uri worker, string filename)> GenerateOnBestWorker(string text)
         {
+            EnsureWorkers();
             if (_workers.Length == 1)
             {
                 var w = _workers[0];

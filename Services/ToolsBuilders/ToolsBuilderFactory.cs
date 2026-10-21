@@ -158,7 +158,7 @@ public sealed class ToolsBuilderFactory : IToolsBuilderFactory
             return false;
         }
 
-        var role = MonitorSessionRole.FromSessionId(sessionId) ?? ResolvePrimaryMonitorRole(runnerType);
+        var role = MonitorSessionRole.Resolve(toolsId, _systemParams, _mlParams, runnerType, sessionId);
         if (string.IsNullOrWhiteSpace(role))
         {
             return false;
@@ -190,15 +190,4 @@ public sealed class ToolsBuilderFactory : IToolsBuilderFactory
         }
     }
 
-    private string ResolvePrimaryMonitorRole(string? runnerType)
-    {
-        if (!string.IsNullOrWhiteSpace(runnerType) &&
-            _mlParams.PrimaryMonitorRoleByRunner.TryGetValue(runnerType, out var byRunnerRole) &&
-            !string.IsNullOrWhiteSpace(byRunnerRole))
-        {
-            return byRunnerRole;
-        }
-
-        return _mlParams.PrimaryMonitorRole;
-    }
 }

@@ -19,9 +19,11 @@ public sealed class AudioStreamProvider
         IAudioGenerator audioGenerator,
         ILLMResponseProcessor responseProcessor,
         ILogger logger,
-        string streamNamespace)
+        string streamNamespace,
+        bool halVoice = false)
     {
-        _audioGenerator = audioGenerator;
+        _audioGenerator = audioGenerator is IVoiceAudioGenerator router
+            ? router.ForVoice(halVoice) : audioGenerator;
         _responseProcessor = responseProcessor;
         _logger = logger;
         _streamNamespace = string.IsNullOrWhiteSpace(streamNamespace) ? "default" : streamNamespace.Trim();

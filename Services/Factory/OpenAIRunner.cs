@@ -181,7 +181,8 @@ public class OpenAIRunner : ILLMRunner, IHistorySequenceAwareRunner
         if (_maxTokens > _mlParams.LlmOpenAICtxSize) _maxTokens = _mlParams.LlmOpenAICtxSize;
         _responseTokens = _maxTokens / _mlParams.LlmCtxRatio;
         _promptTokens = _maxTokens - _responseTokens;
-        _audioStreamProvider = new AudioStreamProvider(audioGenerator, _responseProcessor, _logger, _type);
+        _audioStreamProvider = new AudioStreamProvider(audioGenerator, _responseProcessor, _logger, _type,
+            toolsBuilder is Hal9000MonitorToolsBuilder || toolsBuilder is Hal9000MonitorSimpleToolsBuilder);
 
 
     }
