@@ -214,14 +214,16 @@ public class LLMService : ILLMService
             .Select(kvp => kvp.Value)
             .ToList();
 
-        if (removeSessions == null || removeSessions.Count == 0)
+        if (removeSessions.Count == 0)
         {
-            return await SetResultMessageAsync(
-                llmServiceObj,
-                $"Error: No sessions running for sessionId {sessionId}.",
-                false,
-                "llmServiceMessage"
-            );
+            // Cleanup is broadcast to every worker; some never hosted this conversation.
+            // Do not publish a removal acknowledgement for a session this worker does not own.
+            _logger.LogDebug("No sessions to remove for sessionId {SessionId}", sessionId);
+            return new ResultObj
+            {
+                Success = true,
+                Message = $"No sessions to remove for sessionId {sessionId}."
+            };
         }
 
         var success = true;

@@ -19,6 +19,23 @@ namespace NetworkMonitor.LLM.Services;
 public class LLMServiceTests
 {
     [Fact]
+    public async Task RemoveAllSessionIdProcesses_UnhostedSessionSucceedsWithoutPublishing()
+    {
+        var rabbit = new Mock<IRabbitRepo>(MockBehavior.Strict);
+        var factory = new Mock<ILLMFactory>(MockBehavior.Strict);
+        var service = CreateService(rabbit.Object, factory.Object, "monitor");
+
+        var result = await service.RemoveAllSessionIdProcesses(new LLMServiceObj
+        {
+            SessionId = "old-conversation_user_TurboLLM"
+        });
+
+        Assert.True(result.Success);
+        rabbit.VerifyNoOtherCalls();
+        factory.VerifyNoOtherCalls();
+    }
+
+    [Fact]
     public async Task StartProcess_CreatesRunnerAndPublishesMessages()
     {
         var rabbit = new Mock<IRabbitRepo>();
