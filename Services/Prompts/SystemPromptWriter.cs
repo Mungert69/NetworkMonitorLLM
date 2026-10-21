@@ -67,7 +67,8 @@ public sealed class SystemPromptWriter : ISystemPromptWriter
             toolsId,
             serviceObj.JsonToolsBuilderSpec,
             enableAgentFlow,
-            serviceObj.LLMRunnerType);
+            serviceObj.LLMRunnerType,
+            serviceObj.SessionId);
 
         string toolsJson = BuildToolsJsonForPrompt(toolsBuilder.Tools);
         if (string.IsNullOrWhiteSpace(toolsJson))
@@ -130,7 +131,7 @@ public sealed class SystemPromptWriter : ISystemPromptWriter
             JoinStaticShotsAndTail(staticShots, cacheTail, config)));
         string runPrompt = AppendRunToken(basePrompt, config);
 
-        string runPromptName = _mlParams.LlmSystemPrompt;
+        string runPromptName = MonitorSessionRole.PromptFileName(_mlParams.LlmSystemPrompt, serviceObj.SessionId);
         string basePromptName = DeriveBasePromptName(runPromptName);
 
         string runPromptPath = Path.Combine(_mlParams.LlmModelPath, runPromptName);

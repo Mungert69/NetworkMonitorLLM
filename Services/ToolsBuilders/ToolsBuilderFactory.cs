@@ -12,7 +12,7 @@ public interface IToolsBuilderFactory
     /// <summary>Create a tools builder by its identifier.</summary>
     /// <param name="toolsId">The tools identifier (e.g. "nmap", "json_dynamic").</param>
     /// <param name="jsonSpec">When using "json_dynamic", the serialized <see cref="ToolBuilderSpec"/>.</param>
-    IToolsBuilder Create(string toolsId, string? jsonSpec = null, bool enableAgentFlow = false, string? runnerType = null);
+    IToolsBuilder Create(string toolsId, string? jsonSpec = null, bool enableAgentFlow = false, string? runnerType = null, string? sessionId = null);
 
     /// <summary>All statically-registered tools IDs.</summary>
     IEnumerable<string> AvailableIds();
@@ -68,7 +68,7 @@ public sealed class ToolsBuilderFactory : IToolsBuilderFactory
     }
 
     // MAIN ENTRY POINT ----------------------------------------------------
-    public IToolsBuilder Create(string toolsId, string? jsonSpec = null, bool enableAgentFlow = false, string? runnerType = null)
+    public IToolsBuilder Create(string toolsId, string? jsonSpec = null, bool enableAgentFlow = false, string? runnerType = null, string? sessionId = null)
     {
         ConfigurePromptComposer();
         // 1️⃣  Dynamic JSON path
@@ -87,7 +87,7 @@ public sealed class ToolsBuilderFactory : IToolsBuilderFactory
                 _ => new JsonDrivenToolsBuilder(spec, _functionDefinitionRegistry));
         }
 
-        if (TryCreatePrimaryMonitorBuilder(toolsId, runnerType, enableAgentFlow, out var monitorBuilder))
+        if (TryCreatePrimaryMonitorBuilder(toolsId, runnerType, enableAgentFlow, sessionId, out var monitorBuilder))
         {
             return monitorBuilder;
         }
@@ -150,7 +150,7 @@ public sealed class ToolsBuilderFactory : IToolsBuilderFactory
         return _systemParams.UserFacingServiceId?.Equals("monitor", StringComparison.OrdinalIgnoreCase) == true;
     }
 
-    private bool TryCreatePrimaryMonitorBuilder(string toolsId, string? runnerType, bool enableAgentFlow, out IToolsBuilder builder)
+    private bool TryCreatePrimaryMonitorBuilder(string toolsId, string? runnerType, bool enableAgentFlow, string? sessionId, out IToolsBuilder builder)
     {
         builder = null!;
         if (!IsMonitorToolsId(toolsId) || !IsMonitorUserFacingService())
@@ -158,7 +158,7 @@ public sealed class ToolsBuilderFactory : IToolsBuilderFactory
             return false;
         }
 
-        var role = ResolvePrimaryMonitorRole(runnerType);
+        var role = MonitorSessionRole.FromSessionId(sessionId) ?? ResolvePrimaryMonitorRole(runnerType);
         if (string.IsNullOrWhiteSpace(role))
         {
             return false;
@@ -176,6 +176,8 @@ public sealed class ToolsBuilderFactory : IToolsBuilderFactory
             case "hal":
                 builder = new Hal9000MonitorToolsBuilder(enableAgentFlow);
                 return true;
+            case "hal9000simple":
+            case "halsimple":
             case "hal9000_simple":
             case "hal_simple":
                 builder = new Hal9000MonitorSimpleToolsBuilder();

@@ -149,7 +149,8 @@ public class OpenAIRunner : ILLMRunner, IHistorySequenceAwareRunner
     toolsId,
     serviceObj.JsonToolsBuilderSpec,
     enableAgentFlow,
-    serviceObj.LLMRunnerType
+    serviceObj.LLMRunnerType,
+    serviceObj.SessionId
 );
         _hasMemoryExpertTool = toolsBuilder.Tools.Any(tool =>
             string.Equals(

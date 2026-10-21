@@ -121,7 +121,7 @@ public class OpenAIRunnerTests
             .Returns(Task.CompletedTask);
 
         var toolsFactory = new Mock<IToolsBuilderFactory>();
-        toolsFactory.Setup(t => t.Create(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<string>()))
+        toolsFactory.Setup(t => t.Create(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()))
             .Returns(new FakeToolsBuilder());
 
         var mlParams = new MLParams
@@ -188,7 +188,7 @@ public class OpenAIRunnerTests
             .Returns(Task.CompletedTask);
 
         var toolsFactory = new Mock<IToolsBuilderFactory>();
-        toolsFactory.Setup(t => t.Create(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<string>()))
+        toolsFactory.Setup(t => t.Create(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()))
             .Returns(new FakeToolsBuilder());
 
         var mlParams = new MLParams
@@ -417,7 +417,7 @@ public class OpenAIRunnerTests
             .Returns(Task.CompletedTask);
 
         var toolsFactory = new Mock<IToolsBuilderFactory>();
-        toolsFactory.Setup(t => t.Create(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<string>()))
+        toolsFactory.Setup(t => t.Create(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()))
             .Returns(new FakeToolsBuilder());
 
         var mlParams = new MLParams
@@ -476,7 +476,7 @@ public class OpenAIRunnerTests
         responseProcessor.SetupGet(r => r.RabbitRepo).Returns(Mock.Of<NetworkMonitor.Objects.Repository.IRabbitRepo>());
 
         var toolsFactory = new Mock<IToolsBuilderFactory>();
-        toolsFactory.Setup(t => t.Create(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<string>()))
+        toolsFactory.Setup(t => t.Create(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()))
             .Returns(new FakeToolsBuilder());
 
         var mlParams = new MLParams
@@ -659,7 +659,7 @@ public class OpenAIRunnerTests
             .Returns(Mock.Of<NetworkMonitor.Objects.Repository.IRabbitRepo>());
 
         var toolsFactory = new Mock<IToolsBuilderFactory>();
-        toolsFactory.Setup(t => t.Create(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<string>()))
+        toolsFactory.Setup(t => t.Create(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()))
             .Returns(toolsBuilder ?? new FakeToolsBuilder());
 
         var serviceObj = CreateServiceObject("hello");

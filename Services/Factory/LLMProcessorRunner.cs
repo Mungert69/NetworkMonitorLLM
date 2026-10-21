@@ -42,6 +42,10 @@ public class LLMProcessRunner : ILLMRunner, ILocalLlmContextProvider
     private LLMConfig _config;
     private LLMServiceObj _startServiceoObj;
     private readonly ISystemPromptWriter _systemPromptWriter;
+    // Prompt generation updates shared cache settings; capture them before another session starts.
+    private static readonly object PromptPreparationLock = new();
+    private string? _sessionPromptName;
+    private string? _sessionContextFileName;
     private readonly List<ChatMessage> _history;
     private readonly object _historyLock = new();
     private string _localLlmContext = string.Empty;
@@ -127,10 +131,10 @@ public class LLMProcessRunner : ILLMRunner, ILocalLlmContextProvider
 
         string permissionSuffix = "";
 
-        var promptName = mlParams.LlmSystemPrompt + permissionSuffix;
+        var promptName = (_sessionPromptName ?? mlParams.LlmSystemPrompt) + permissionSuffix;
         string contextFileName;
 
-        string[] splitFileName = mlParams.LlmContextFileName.Split(new string[] { ".gguf" }, StringSplitOptions.None);
+        string[] splitFileName = (_sessionContextFileName ?? mlParams.LlmContextFileName).Split(new string[] { ".gguf" }, StringSplitOptions.None);
 
         if (splitFileName.Length > 1)
         {
@@ -138,7 +142,7 @@ public class LLMProcessRunner : ILLMRunner, ILocalLlmContextProvider
         }
         else
         {
-            contextFileName = mlParams.LlmContextFileName + permissionSuffix;
+            contextFileName = (_sessionContextFileName ?? mlParams.LlmContextFileName) + permissionSuffix;
         }
         string reversePrompt = $"-r \"{_config.EOTToken}\" ";
         if (!string.IsNullOrEmpty(_config.EOMToken)) reversePrompt += $"-r \"{_config.EOMToken}\" ";
@@ -173,7 +177,12 @@ public class LLMProcessRunner : ILLMRunner, ILocalLlmContextProvider
             throw new Exception(" Test LLM is running low on memory resources. Please switch to TurboLLM");
         }
         _config = LLMConfigFactory.GetConfig(_mlParams.LlmVersion);
-        _systemPromptWriter.EnsurePromptFile(serviceObj, _config);
+        lock (PromptPreparationLock)
+        {
+            _systemPromptWriter.EnsurePromptFile(serviceObj, _config);
+            _sessionPromptName = MonitorSessionRole.PromptFileName(_mlParams.LlmSystemPrompt, serviceObj.SessionId);
+            _sessionContextFileName = _mlParams.LlmContextFileName;
+        }
 
         if (!_isEnabled || _isStateStarting) return;
         _isStateStarting = true;
