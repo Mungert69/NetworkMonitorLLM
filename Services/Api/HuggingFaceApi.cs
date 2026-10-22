@@ -273,7 +273,7 @@ public class HuggingFaceApi : ILLMApi
                 ["stream"] = _isStream,
                 ["temperature"] = _temperature,
                 ["response_format"] = new { type = "text" },
-		["sort"] = "price"
+                ["provider"] = new { sort = "price" }
             };
 
             if (!string.IsNullOrEmpty(_mlParams.LlmThinking))
