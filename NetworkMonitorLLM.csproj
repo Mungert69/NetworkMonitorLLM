@@ -7,7 +7,6 @@
          <RollForward>Minor</RollForward>
 
     <Nullable>enable</Nullable>
-    <ContainerBaseImage>mcr.microsoft.com/dotnet/runtime:10.0</ContainerBaseImage>
     <ContainerRepository>mungert/networkmonitorllm</ContainerRepository>
     <ContainerImageTag>2.5.15</ContainerImageTag>
     <StartupObject>NetworkMonitor.LLM.Program</StartupObject>
@@ -55,5 +54,18 @@
     <ProjectReference Include="..\NetworkMonitorLib\NetworkMonitor.csproj" />
   </ItemGroup>
 
+
+
+  <!-- Match SDK-published containers to the local ASP.NET Core runtime. -->
+  <Target Name="SelectLocalContainerRuntime" BeforeTargets="ComputeContainerBaseImage">
+    <Exec Command="dotnet --list-runtimes | awk '$1 == &quot;Microsoft.AspNetCore.App&quot; { print $2 }' | sort -V | tail -n1"
+          ConsoleToMSBuild="true" StandardOutputImportance="Low">
+      <Output TaskParameter="ConsoleOutput" PropertyName="LocalAspNetVersion" />
+    </Exec>
+    <Error Condition="'$(LocalAspNetVersion)' == ''" Text="No local ASP.NET Core runtime found by dotnet --list-runtimes." />
+    <PropertyGroup>
+      <ContainerBaseImage>mcr.microsoft.com/dotnet/aspnet:$(LocalAspNetVersion)</ContainerBaseImage>
+    </PropertyGroup>
+  </Target>
 
 </Project>

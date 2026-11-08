@@ -1,0 +1,11 @@
+#!/bin/sh
+set -eu
+ASPNET_VERSION=$(dotnet --list-runtimes | awk '$1 == "Microsoft.AspNetCore.App" { print $2 }' | sort -V | tail -n1)
+: "${ASPNET_VERSION:?No local ASP.NET Core runtime found by dotnet --list-runtimes}"
+DOTNET_SDK_VERSION=$(dotnet --version)
+: "${DOTNET_SDK_VERSION:?No local .NET SDK found}"
+cd "$(dirname "$0")"
+DOCKERFILE=${1:?Usage: build-docker Dockerfile [docker buildx options]}
+shift
+exec docker buildx build "$@" --build-arg ASPNET_VERSION="$ASPNET_VERSION" \
+  --build-arg DOTNET_SDK_VERSION="$DOTNET_SDK_VERSION" -f "$DOCKERFILE" .

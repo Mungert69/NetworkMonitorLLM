@@ -7,16 +7,21 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Install dependencies
 RUN apt update && \
     apt upgrade -y && \
-    apt-get install -y build-essential git cmake clang pkg-config ccache wget vim
+    apt-get install -y build-essential git cmake clang pkg-config ccache wget vim ca-certificates libicu74 libssl3t64
 
-# Install .NET 9.0
-RUN wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh && \
-    chmod +x dotnet-install.sh && \
-    ./dotnet-install.sh --channel 9.0 && \
-    export DOTNET_ROOT=/root/.dotnet && \
-    export PATH=$PATH:$DOTNET_ROOT:$DOTNET_ROOT/tools && \
-    echo 'export DOTNET_ROOT=/root/.dotnet' >> /root/.bashrc && \
-    echo 'export PATH=$PATH:$DOTNET_ROOT:$DOTNET_ROOT/tools' >> /root/.bashrc
+# Install the host SDK and exact local ASP.NET Core runtime.
+ARG DOTNET_SDK_VERSION
+ARG ASPNET_VERSION
+ENV DOTNET_ROOT=/usr/share/dotnet
+ENV PATH="${DOTNET_ROOT}:${PATH}"
+RUN set -eu; \
+    : "${DOTNET_SDK_VERSION:?DOTNET_SDK_VERSION must be supplied with --build-arg}"; \
+    : "${ASPNET_VERSION:?ASPNET_VERSION must be supplied with --build-arg}"; \
+    wget https://dot.net/v1/dotnet-install.sh -O /tmp/dotnet-install.sh; \
+    bash /tmp/dotnet-install.sh --install-dir "${DOTNET_ROOT}" --version "${DOTNET_SDK_VERSION}"; \
+    bash /tmp/dotnet-install.sh --install-dir "${DOTNET_ROOT}" --runtime aspnetcore --version "${ASPNET_VERSION}"; \
+    rm -f /tmp/dotnet-install.sh
+
 
 # Install CUDA Toolkit and Libraries
 RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/cuda-ubuntu2404.pin && \
