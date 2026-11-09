@@ -58,7 +58,7 @@ public class MonitorTools
                     ["args"] = new PropertyDefinition
                     {
                         Type = "string",
-                        Description = "Optional. Extra arguments for command-style endpoint monitors. Use this to pass additional command-line style flags."
+                        Description = "Optional command-line flags. For blebroadcast use --format <format> --metric <metric>, one metric per monitor; put the key in password. Use get_available_endpoints with endpoint and format filters to discover valid arguments and metrics."
                     },
                     ["low_threshold"] = new PropertyDefinition
                     {
@@ -152,7 +152,7 @@ public class MonitorTools
                     ["args"] = new PropertyDefinition
                     {
                         Type = "string",
-                        Description = "Optional. xtra arguments for command-style endpoint monitors. Use this to pass additional command-line style flags."
+                        Description = "Optional command-line flags. For blebroadcast use --format <format> --metric <metric>, one metric per monitor; put the key in password. Discover valid arguments and metrics through get_available_endpoints."
                     },
                     ["clear_low_threshold"] = new PropertyDefinition
                     {
@@ -214,7 +214,7 @@ public class MonitorTools
                 Type = "object",
                 Properties = new Dictionary<string, PropertyDefinition>
                 {
-                    ["detail_response"] = new PropertyDefinition { Type = "boolean", Description = "Set to true for comprehensive monitoring data including reponse time statistics, agent location, and other info." },
+                    ["detail_response"] = new PropertyDefinition { Type = "boolean", Description = "Set true for detailed statistics and deduplicated measurement_contexts with descriptions, kinds and analysis guidance. Each row references its definition by measurement_context_id; values already use the declared unit. Request details when interpreting an unfamiliar metric." },
                     ["dataset_id"] = new PropertyDefinition { Type = "number", Description = "Dataset identifier (0 = latest data). For historical data, set to null and specify date range." },
                     ["id"] = new PropertyDefinition { Type = "number", Description = "Filter by host ID" },
                     ["address"] = new PropertyDefinition { Type = "string", Description = "Filter by host address (supports partial matchesa and wildcards * and ?)" },
@@ -251,7 +251,7 @@ public class MonitorTools
                 Type = "object",
                 Properties = new Dictionary<string, PropertyDefinition>
                 {
-                    ["detail_response"] = new PropertyDefinition { Type = "boolean", Description = "Set to true to include full configuration details (beyond just ID and address)." },
+                    ["detail_response"] = new PropertyDefinition { Type = "boolean", Description = "Set true to include configuration details, including Args and the selected BLE metric and unit." },
                     ["id"] = new PropertyDefinition { Type = "number", Description = "Filter by host ID" },
                     ["address"] = new PropertyDefinition { Type = "string", Description = "Filter by host address (supports partial matchesa and wildcards * and ?)" },
                     ["email"] = new PropertyDefinition { Type = "string", Description = "Filter by associated email" },
@@ -332,7 +332,7 @@ public class MonitorTools
     public static FunctionDefinition BuildGetAvailableEndpointsFunction() => new()
     {
         Name = "get_available_endpoints",
-        Description = "Optionally discover built-in and registered custom monitoring endpoints. With agent_location, lists that accessible agent's endpoints. Without it, lists endpoints by currently eligible public/system agent used for automatic selection. Discovery is not required before add_host or edit_host and does not reserve capacity.",
+        Description = "Optionally discover built-in and registered custom monitoring endpoints. With agent_location, lists that accessible agent's endpoints. Without it, lists endpoints by currently eligible public/system agent used for automatic selection. Use endpoint, then format, record and metric filters for progressively narrower configuration details. Discovery is not required before add_host or edit_host and does not reserve capacity.",
         Parameters = new PropertyDefinition
         {
             Type = "object",
@@ -342,7 +342,11 @@ public class MonitorTools
                 {
                     Type = "string",
                     Description = "Optional. Exact agent location; omit for the automatic-selection public/system agent pool. A custom Connect normally requires the agent where it was registered."
-                }
+                },
+                ["endpoint"] = new PropertyDefinition { Type = "string", Description = "Optional endpoint name. Omit all filters for compact names by agent; specify an endpoint for configuration documentation and next choices." },
+                ["format"] = new PropertyDefinition { Type = "string", Description = "Optional BLE format, after endpoint: victron, ruuvi, bthome, raw, aesgcm or aesctr. Returns key requirements and metrics or record choices." },
+                ["record"] = new PropertyDefinition { Type = "string", Description = "Optional Victron device record from discovery, e.g. solar_charger. Restricts metrics to that record. Discovery filter only; not a host Args flag." },
+                ["metric"] = new PropertyDefinition { Type = "string", Description = "Optional metric after format (and record where relevant). Returns its units, meaning, analysis guidance and configuration example." }
             }
         }
     };

@@ -40,6 +40,17 @@ public class MonitorEndpointDiscoveryTests
     }
 
     [Fact]
+    public void DiscoverySupportsProgressiveFiltersAndDataExplainsContextReferences()
+    {
+        var properties = MonitorTools.BuildGetAvailableEndpointsFunction().Parameters!.Properties!;
+        foreach (var name in new[] { "endpoint", "format", "record", "metric" })
+            Assert.Equal("string", properties[name].Type);
+        Assert.Contains("measurement_context_id", MonitorTools.BuildGetHostDataFunction().Parameters!.Properties!["detail_response"].Description);
+        foreach (var function in new[] { MonitorTools.BuildAddHostFunction(), MonitorTools.BuildEditHostFunction() })
+            Assert.Contains("get_available_endpoints", function.Parameters!.Properties!["args"].Description);
+    }
+
+    [Fact]
     public void DiscoveryDoesNotRequireAnAgentOrMakeDiscoveryMandatory()
     {
         var function = MonitorTools.BuildGetAvailableEndpointsFunction();
