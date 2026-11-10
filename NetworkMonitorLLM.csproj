@@ -2,13 +2,13 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFramework>net11.0</TargetFramework>
     <TargetLatestRuntimePatch>true</TargetLatestRuntimePatch>
          <RollForward>Minor</RollForward>
 
     <Nullable>enable</Nullable>
     <ContainerRepository>mungert/networkmonitorllm</ContainerRepository>
-    <ContainerImageTag>2.5.16</ContainerImageTag>
+    <ContainerImageTag>2.6.0</ContainerImageTag>
     <StartupObject>NetworkMonitor.LLM.Program</StartupObject>
     <NoWarn>CS8618</NoWarn>
   </PropertyGroup>
@@ -18,7 +18,7 @@
     <PackageReference Include="HostInitActions" Version="1.3.1" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="StackExchange.Redis" Version="3.4.31" />
-    <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="10.0.14" />
+    <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="11.0.0" />
   </ItemGroup>
 
   <ItemGroup>
