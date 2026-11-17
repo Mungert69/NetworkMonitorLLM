@@ -17,3 +17,9 @@ deployment assets.
 Updated the generated-page convention to use GitHub Wiki's filename-based page
 routes. Pages stay organized in local folders, while published links use each
 unique filename without its local folder path.
+
+## [2026-11-17] ingest | upstream provider detection
+
+Documented Hugging Face upstream provider resolution (`LlmHfProvider`, `Auto`
+detection from `LlmHFUrl`) and the OpenRouter-only provider routing block in
+the API adapters page.

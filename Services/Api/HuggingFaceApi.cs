@@ -44,6 +44,8 @@ public class HuggingFaceApi : ILLMApi
     private readonly MLParams _mlParams;
     private readonly LLMConfig _config;
     private readonly bool _supportsStructuredTools;
+    private readonly HuggingFaceProvider _provider;
+    private readonly bool _supportsProviderRouting;
 
     public LLMConfig Config => _config;
     private bool _isStream;
@@ -84,7 +86,9 @@ public class HuggingFaceApi : ILLMApi
 
         _config = LLMConfigFactory.GetConfig(_modelVersion);
         _supportsStructuredTools = mlParams.LlmHfSupportsFunctionCalling;
-        _logger.LogInformation($"Initialized Hugging Face API with URL: {_apiUrl} using model id {_modelID}");
+        _provider = HuggingFaceProviderResolver.Resolve(mlParams.LlmHfProvider, _apiUrl);
+        _supportsProviderRouting = HuggingFaceProviderResolver.SupportsProviderRouting(_provider);
+        _logger.LogInformation($"Initialized Hugging Face API with URL: {_apiUrl} using model id {_modelID} provider {HuggingFaceProviderResolver.Describe(_provider)} provider routing {(_supportsProviderRouting ? "enabled" : "disabled")}");
     }
 
     public string WrapFunctionResponse(string name, string funcStr)
@@ -272,9 +276,12 @@ public class HuggingFaceApi : ILLMApi
                 ["max_tokens"] = maxTokens,
                 ["stream"] = _isStream,
                 ["temperature"] = _temperature,
-                ["response_format"] = new { type = "text" },
-                ["provider"] = new { sort = "price" }
+                ["response_format"] = new { type = "text" }
             };
+
+            // The provider block is an OpenRouter routing hint. Other providers (Novita, Hugging Face)
+            // reject the unknown field, so it is only sent when the provider supports it.
+            AddProviderRouting(payloadDict);
 
             if (!string.IsNullOrEmpty(_mlParams.LlmThinking))
             {
@@ -294,22 +301,38 @@ public class HuggingFaceApi : ILLMApi
             return payloadDict;
         }
 
-        return new
+        var textPayload = new Dictionary<string, object?>
         {
-            model = _modelID,
-            messages = messages.Select(m => new
+            ["model"] = _modelID,
+            ["messages"] = messages.Select(m => new
             {
                 role = (!_mlParams.LlmUseToolRoleForFunctionResponses && string.Equals(m.Role?.ToString(), "tool", StringComparison.OrdinalIgnoreCase))
                     ? "user"
                     : m.Role?.ToString(),
                 content = FlattenContentForTextOnly(m)
             }).ToList(),
-            max_tokens = maxTokens,
-            stream = _isStream,
-            temperature = _temperature,
-            response_format = new { type = "text" },
-            reasoning_effort = (string?)null
+            ["max_tokens"] = maxTokens,
+            ["stream"] = _isStream,
+            ["temperature"] = _temperature,
+            ["response_format"] = new { type = "text" },
+            ["reasoning_effort"] = (string?)null
         };
+
+        AddProviderRouting(textPayload);
+
+        return textPayload;
+    }
+
+    /// <summary>
+    /// Adds the OpenRouter provider routing block. Other providers (Novita, Hugging Face)
+    /// reject the unknown field, so it is only sent when the provider supports it.
+    /// </summary>
+    private void AddProviderRouting(Dictionary<string, object?> payload)
+    {
+        if (_supportsProviderRouting)
+        {
+            payload["provider"] = new { sort = "price" };
+        }
     }
 
     private static string FlattenContentForTextOnly(ChatMessage message)

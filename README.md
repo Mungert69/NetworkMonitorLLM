@@ -104,6 +104,24 @@ Notes:
   configured `.env` file or process environment. `.env` remains supported and
   reads an environment variable named `LlmHFKey` for backwards compatibility.
 
+### Upstream provider detection
+
+The HuggingFace style API talks to several OpenAI compatible upstream providers.
+They accept different request fields, so the provider is resolved once at start up:
+
+- `LlmHfProvider` (optional) forces the provider: `OpenRouter`, `Novita`,
+  `HuggingFace`, `Unknown` or `Auto` (default).
+- When `Auto` is used (or the setting is missing) the provider is detected from
+  the host of `LlmHFUrl` (`openrouter.ai` → OpenRouter, `novita.ai` → Novita,
+  `huggingface.co` → Hugging Face).
+
+The resolved provider decides whether the OpenRouter routing block
+(`"provider": { "sort": "price" }`) is included in the request payload. It is
+only sent to OpenRouter, because other providers (Novita) reject the unknown
+field. The block is applied to both the structured-tool payload and the
+text-only payload. The resolved provider and the routing decision are logged at
+start up.
+
 ## Provider Routing
 
 Runner selection is fixed in code:
